@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DividendMapper — What We're Building</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #F8FAFC;
+    color: #334155;
+    width: 1100px;
+    margin: 0 auto;
+    padding: 48px 0 64px;
+  }
+
+  h1, h2, h3, h4 { font-family: 'Plus Jakarta Sans', sans-serif; }
+
+  /* ─── HEADER ─────────────────────────────────────────── */
+  .header {
+    text-align: center;
+    margin-bottom: 56px;
+  }
+  .logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .logo-icon {
+    width: 44px; height: 44px;
+  }
+  .logo-text {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+  .logo-text span { color: #0EA874; }
+  .tagline {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 42px;
+    font-weight: 800;
+    color: #0F172A;
+    letter-spacing: -1px;
+    line-height: 1.15;
+    margin-bottom: 14px;
+  }
+  .tagline em { color: #0EA874; font-style: normal; }
+  .subtitle {
+    font-size: 17px;
+    color: #64748B;
+    max-width: 560px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  /* ─── SECTION ────────────────────────────────────────── */
+  .section { margin-bottom: 48px; }
+  .section-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #0EA874;
+    margin-bottom: 10px;
+  }
+  .section-title {
+    font-size: 26px;
+    font-weight: 700;
+    color: #0F172A;
+    letter-spacing: -0.4px;
+    margin-bottom: 24px;
+  }
+
+  /* ─── PROBLEM ────────────────────────────────────────── */
+  .problem-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .problem-card {
+    background: white;
+    border: 1.5px solid #E2E8F0;
+    border-radius: 14px;
+    padding: 22px;
+    position: relative;
+    overflow: hidden;
+  }
+  .problem-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: #DC2626;
+    border-radius: 14px 14px 0 0;
+  }
+  .problem-emoji { font-size: 28px; margin-bottom: 12px; display: block; }
+  .problem-card h4 {
+    font-size: 15px;
+    font-weight: 700;
+    color: #0F172A;
+    margin-bottom: 6px;
+  }
+  .problem-card p {
+    font-size: 13.5px;
+    color: #64748B;
+    line-height: 1.55;
+  }
+
+  /* ─── HOW IT WORKS ───────────────────────────────────── */
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    position: relative;
+  }
+  .steps::before {
+    content: '';
+    position: absolute;
+    top: 36px;
+    left: 12.5%;
+    right: 12.5%;
+    height: 2px;
+    background: linear-gradient(to right, #0EA874, #34D399, #0EA874);
+    z-index: 0;
+  }
+  .step {
+    text-align: center;
+    padding: 0 12px;
+    position: relative;
+    z-index: 1;
+  }
+  .step-num {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    background: #0EA874;
+    color: white;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+    box-shadow: 0 0 0 4px #ECFDF5, 0 0 0 6px #A7F3D0;
+  }
+  .step h4 {
+    font-size: 14.5px;
+    font-weight: 700;
+    color: #0F172A;
+    margin-bottom: 6px;
+  }
+  .step p {
+    font-size: 13px;
+    color: #64748B;
+    line-height: 1.5;
+  }
+
+  /* ─── FEATURES ───────────────────────────────────────── */
+  .features-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .feature-card {
+    background: white;
+    border: 1.5px solid #E2E8F0;
+    border-radius: 14px;
+    padding: 24px;
+    display: flex;
+    gap: 18px;
+    align-items: flex-start;
+    transition: border-color 0.2s;
+  }
+  .feature-icon {
+    width: 46px; height: 46px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 22px;
+  }
+  .feature-card h4 {
+    font-size: 15px;
+    font-weight: 700;
+    color: #0F172A;
+    margin-bottom: 5px;
+  }
+  .feature-card p {
+    font-size: 13.5px;
+    color: #64748B;
+    line-height: 1.5;
+  }
+  .badge {
+    display: inline-block;
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 99px;
+    margin-top: 6px;
+  }
+  .badge-green { background: #D1FAE5; color: #047857; }
+  .badge-amber { background: #FEF3C7; color: #92400E; }
+  .badge-blue  { background: #DBEAFE; color: #1E40AF; }
+
+  /* ─── DASHBOARD MOCKUP ───────────────────────────────── */
+  .mockup-wrap {
+    background: #0F172A;
+    border-radius: 18px;
+    padding: 28px;
+    margin-bottom: 48px;
+  }
+  .mockup-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 22px;
+  }
+  .mockup-logo {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    color: white;
+  }
+  .mockup-logo span { color: #0EA874; }
+  .mockup-toggle {
+    display: flex;
+    background: #1E293B;
+    border-radius: 99px;
+    padding: 3px;
+    gap: 2px;
+  }
+  .mockup-btn {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 99px;
+    color: #94A3B8;
+  }
+  .mockup-btn.active {
+    background: #0EA874;
+    color: white;
+  }
+  .mockup-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .mockup-metric {
+    background: #1E293B;
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .mockup-metric-label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #64748B;
+    margin-bottom: 6px;
+  }
+  .mockup-metric-value {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: white;
+    letter-spacing: -0.5px;
+  }
+  .mockup-metric-sub {
+    font-size: 11px;
+    margin-top: 3px;
+  }
+  .text-green { color: #34D399; }
+  .text-amber { color: #F59E0B; }
+  .text-red   { color: #F87171; }
+
+  .mockup-bottom {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 12px;
+  }
+  .mockup-chart-card {
+    background: #1E293B;
+    border-radius: 10px;
+    padding: 16px;
+  }
+  .mockup-chart-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: #94A3B8;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .bar-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    height: 70px;
+  }
+  .bar {
+    flex: 1;
+    border-radius: 4px 4px 0 0;
+    background: #0EA874;
+    opacity: 0.8;
+    position: relative;
+  }
+  .bar.amber { background: #F59E0B; opacity: 0.9; }
+  .bar-labels {
+    display: flex;
+    gap: 6px;
+    margin-top: 5px;
+  }
+  .bar-label {
+    flex: 1;
+    text-align: center;
+    font-size: 9px;
+    color: #64748B;
+  }
+  .mockup-holdings {
+    background: #1E293B;
+    border-radius: 10px;
+    padding: 16px;
+  }
+  .holding-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 7px 0;
+    border-bottom: 1px solid #334155;
+  }
+  .holding-row:last-child { border-bottom: none; }
+  .holding-ticker {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: white;
+  }
+  .holding-name {
+    font-size: 10px;
+    color: #64748B;
+    margin-top: 1px;
+  }
+  .holding-income {
+    font-size: 13px;
+    font-weight: 600;
+    color: #F59E0B;
+  }
+  .holding-yield {
+    font-size: 10px;
+    color: #34D399;
+    text-align: right;
+    margin-top: 1px;
+  }
+
+  /* ─── BROKERS ────────────────────────────────────────── */
+  .brokers-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+  .broker-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: white;
+    border: 1.5px solid #E2E8F0;
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #0F172A;
+  }
+  .broker-chip .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+  }
+  .dot-green { background: #0EA874; }
+  .dot-amber { background: #F59E0B; }
+  .dot-blue  { background: #3B82F6; }
+
+  /* ─── AUDIENCE ───────────────────────────────────────── */
+  .audience-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .audience-card {
+    border-radius: 14px;
+    padding: 24px;
+    border: 1.5px solid transparent;
+  }
+  .audience-uk {
+    background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%);
+    border-color: #A7F3D0;
+  }
+  .audience-us {
+    background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%);
+    border-color: #BFDBFE;
+  }
+  .audience-flag { font-size: 36px; margin-bottom: 12px; display: block; }
+  .audience-card h4 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #0F172A;
+    margin-bottom: 8px;
+  }
+  .audience-card ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .audience-card li {
+    font-size: 13.5px;
+    color: #334155;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .audience-card li::before {
+    content: '✓';
+    font-weight: 700;
+    font-size: 12px;
+    color: #0EA874;
+  }
+
+  /* ─── PLAN ───────────────────────────────────────────── */
+  .phases {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+  .phase-card {
+    border-radius: 14px;
+    padding: 22px;
+    position: relative;
+    overflow: hidden;
+  }
+  .phase-now {
+    background: #0F172A;
+    color: white;
+  }
+  .phase-soon {
+    background: white;
+    border: 1.5px solid #E2E8F0;
+  }
+  .phase-future {
+    background: white;
+    border: 1.5px dashed #CBD5E1;
+  }
+  .phase-tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 3px 9px;
+    border-radius: 99px;
+    margin-bottom: 12px;
+  }
+  .tag-now   { background: #0EA874; color: white; }
+  .tag-soon  { background: #FEF3C7; color: #92400E; }
+  .tag-future{ background: #F1F5F9; color: #64748B; }
+  .phase-card h4 {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .phase-now h4 { color: white; }
+  .phase-soon h4, .phase-future h4 { color: #0F172A; }
+  .phase-period {
+    font-size: 12px;
+    margin-bottom: 12px;
+  }
+  .phase-now .phase-period { color: #94A3B8; }
+  .phase-soon .phase-period, .phase-future .phase-period { color: #94A3B8; }
+  .phase-items {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .phase-item {
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .phase-now .phase-item { color: #CBD5E1; }
+  .phase-soon .phase-item, .phase-future .phase-item { color: #475569; }
+  .phase-item::before { content: '→'; font-size: 11px; opacity: 0.7; }
+  .phase-mrr {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    font-size: 12px;
+  }
+  .phase-now .phase-mrr { border-color: rgba(255,255,255,0.15); color: #34D399; }
+  .phase-soon .phase-mrr { border-color: #E2E8F0; color: #0EA874; }
+  .phase-future .phase-mrr { border-color: #E2E8F0; color: #0EA874; }
+  .phase-mrr strong { font-size: 18px; font-weight: 700; display: block; }
+
+  /* ─── OPPORTUNITY ────────────────────────────────────── */
+  .opportunity {
+    background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+    border-radius: 18px;
+    padding: 36px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 32px;
+    align-items: center;
+    margin-bottom: 48px;
+  }
+  .opportunity h3 {
+    font-size: 22px;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 8px;
+  }
+  .opportunity p {
+    font-size: 14.5px;
+    color: #94A3B8;
+    line-height: 1.6;
+    max-width: 480px;
+  }
+  .opportunity-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 200px;
+  }
+  .stat {
+    text-align: right;
+  }
+  .stat-value {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    color: #0EA874;
+    letter-spacing: -0.5px;
+    line-height: 1;
+  }
+  .stat-label {
+    font-size: 12px;
+    color: #64748B;
+    margin-top: 2px;
+  }
+
+  /* ─── FOOTER ─────────────────────────────────────────── */
+  .footer {
+    text-align: center;
+    margin-top: 16px;
+  }
+  .footer-tagline {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: #0F172A;
+  }
+  .footer-tagline span { color: #0EA874; }
+  .footer-sub {
+    font-size: 13px;
+    color: #94A3B8;
+    margin-top: 4px;
+  }
+
+  /* ─── DIVIDER ────────────────────────────────────────── */
+  .divider {
+    height: 1px;
+    background: #E2E8F0;
+    margin: 48px 0;
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="logo">
+    <svg class="logo-icon" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="44" height="44" rx="12" fill="#0F172A"/>
+      <path d="M22 8C18.5 8 15.5 10.5 15.5 14C15.5 17.5 18.5 20 22 20C25.5 20 28.5 22.5 28.5 26C28.5 29.5 25.5 32 22 32" stroke="#0EA874" stroke-width="2.5" stroke-linecap="round"/>
+      <circle cx="22" cy="8" r="2.5" fill="#0EA874"/>
+      <circle cx="22" cy="32" r="2.5" fill="#0EA874"/>
+      <path d="M22 32 L22 38" stroke="#0EA874" stroke-width="2.5" stroke-linecap="round"/>
+      <circle cx="22" cy="38" r="3" fill="#0EA874"/>
+      <path d="M18 36 L22 38 L26 36" stroke="#0EA874" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <div class="logo-text">Dividend<span>Mapper</span></div>
+  </div>
+  <div class="tagline">Know your dividend income.<br><em>Before it happens.</em></div>
+  <p class="subtitle">A web app for investors who want to see exactly what their shares will pay them — this month, this year, and in retirement.</p>
+</div>
+
+<div class="divider"></div>
+
+<!-- THE PROBLEM -->
+<div class="section">
+  <div class="section-label">The problem we're solving</div>
+  <div class="section-title">Most dividend investors have no idea what's coming</div>
+  <div class="problem-grid">
+    <div class="problem-card">
+      <span class="problem-emoji">📊</span>
+      <h4>Spreadsheet chaos</h4>
+      <p>Hours spent copying dividend dates, amounts and yields into a spreadsheet that's always out of date and breaks whenever something changes.</p>
+    </div>
+    <div class="problem-card">
+      <span class="problem-emoji">🏦</span>
+      <h4>Brokers don't show the full picture</h4>
+      <p>Trading 212, Hargreaves Lansdown, Schwab, Fidelity — they each show only their own account, never your total income across everything you own.</p>
+    </div>
+    <div class="problem-card">
+      <span class="problem-emoji">🤷</span>
+      <h4>No UK/US tax awareness</h4>
+      <p>ISA dividends are tax-free. SIPP is different again. US investors have 401k and IRA rules. No existing tool handles all of this in one place.</p>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- HOW IT WORKS -->
+<div class="section">
+  <div class="section-label">How it works</div>
+  <div class="section-title">Four steps from signup to financial clarity</div>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <h4>Connect your broker</h4>
+      <p>Link Trading 212, Schwab, Fidelity or others. Or import a CSV. Your holdings sync automatically every night.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <h4>See your income map</h4>
+      <p>Every dividend across every account shown in one dashboard — total income, by month, by holding.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <h4>Plan ahead</h4>
+      <p>Know your dividend income 1, 5, 20 years from now. Calculate exactly when your dividends could replace your salary.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <h4>Stay tax-smart</h4>
+      <p>ISA and SIPP dividends tracked separately. UK allowance warnings. US qualified dividend treatment. All automatic.</p>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- DASHBOARD MOCKUP -->
+<div class="mockup-wrap">
+  <div class="mockup-bar">
+    <div class="mockup-logo">Dividend<span>Mapper</span></div>
+    <div style="display:flex;gap:16px;align-items:center;">
+      <div style="font-size:12px;color:#64748B;">Dashboard · Holdings · Calendar · Projections</div>
+      <div class="mockup-toggle">
+        <div class="mockup-btn active">🇬🇧 UK</div>
+        <div class="mockup-btn">🇺🇸 US</div>
+      </div>
+    </div>
+  </div>
+  <div class="mockup-metrics">
+    <div class="mockup-metric">
+      <div class="mockup-metric-label">Annual income</div>
+      <div class="mockup-metric-value">£6,240</div>
+      <div class="mockup-metric-sub text-green">↑ 12.4% vs last year</div>
+    </div>
+    <div class="mockup-metric">
+      <div class="mockup-metric-label">This month</div>
+      <div class="mockup-metric-value text-amber">£420</div>
+      <div class="mockup-metric-sub" style="color:#64748B;">3 payments due</div>
+    </div>
+    <div class="mockup-metric">
+      <div class="mockup-metric-label">Portfolio yield</div>
+      <div class="mockup-metric-value">4.7%</div>
+      <div class="mockup-metric-sub" style="color:#64748B;">Yield on cost: 5.2%</div>
+    </div>
+    <div class="mockup-metric">
+      <div class="mockup-metric-label">FIRE progress</div>
+      <div class="mockup-metric-value">61%</div>
+      <div class="mockup-metric-sub text-green">£3,800 of £6,000 target</div>
+    </div>
+  </div>
+  <div class="mockup-bottom">
+    <div class="mockup-chart-card">
+      <div class="mockup-chart-title">Monthly dividend income — 2025</div>
+      <div class="bar-chart">
+        <div class="bar" style="height:45%"></div>
+        <div class="bar" style="height:30%"></div>
+        <div class="bar amber" style="height:70%"></div>
+        <div class="bar" style="height:40%"></div>
+        <div class="bar" style="height:35%"></div>
+        <div class="bar amber" style="height:80%"></div>
+        <div class="bar" style="height:42%"></div>
+        <div class="bar" style="height:38%"></div>
+        <div class="bar amber" style="height:90%"></div>
+        <div class="bar" style="height:44%"></div>
+        <div class="bar" style="height:36%"></div>
+        <div class="bar amber" style="height:85%;opacity:0.4;border:1px dashed #F59E0B;background:transparent;"></div>
+      </div>
+      <div class="bar-labels">
+        <div class="bar-label">Jan</div><div class="bar-label">Feb</div><div class="bar-label">Mar</div>
+        <div class="bar-label">Apr</div><div class="bar-label">May</div><div class="bar-label">Jun</div>
+        <div class="bar-label">Jul</div><div class="bar-label">Aug</div><div class="bar-label">Sep</div>
+        <div class="bar-label">Oct</div><div class="bar-label">Nov</div><div class="bar-label">Dec</div>
+      </div>
+    </div>
+    <div class="mockup-holdings">
+      <div class="mockup-chart-title">Holdings</div>
+      <div class="holding-row">
+        <div><div class="holding-ticker">VWRP</div><div class="holding-name">Vanguard All-World · ISA</div></div>
+        <div><div class="holding-income">£1,840/yr</div><div class="holding-yield">↑ 1.82%</div></div>
+      </div>
+      <div class="holding-row">
+        <div><div class="holding-ticker">SCHD</div><div class="holding-name">Schwab Div Equity · ISA</div></div>
+        <div><div class="holding-income">£2,100/yr</div><div class="holding-yield">↑ 3.41%</div></div>
+      </div>
+      <div class="holding-row">
+        <div><div class="holding-ticker">LGEN</div><div class="holding-name">Legal & General · GIA</div></div>
+        <div><div class="holding-income">£960/yr</div><div class="holding-yield">↑ 8.9%</div></div>
+      </div>
+      <div class="holding-row">
+        <div><div class="holding-ticker">AV.</div><div class="holding-name">Aviva · SIPP</div></div>
+        <div><div class="holding-income">£480/yr</div><div class="holding-yield text-green">↑ 7.1%</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BROKER INTEGRATIONS -->
+<div class="section">
+  <div class="section-label">Works with your accounts</div>
+  <div class="section-title">Sync automatically — no manual entry</div>
+  <div class="brokers-row">
+    <div class="broker-chip"><span class="dot dot-green"></span>Trading 212</div>
+    <div class="broker-chip"><span class="dot dot-green"></span>Hargreaves Lansdown</div>
+    <div class="broker-chip"><span class="dot dot-green"></span>AJ Bell</div>
+    <div class="broker-chip"><span class="dot dot-green"></span>Freetrade</div>
+    <div class="broker-chip"><span class="dot dot-blue"></span>Charles Schwab</div>
+    <div class="broker-chip"><span class="dot dot-blue"></span>Fidelity</div>
+    <div class="broker-chip"><span class="dot dot-blue"></span>Robinhood</div>
+    <div class="broker-chip"><span class="dot dot-blue"></span>Interactive Brokers</div>
+    <div class="broker-chip"><span class="dot dot-amber"></span>CSV Import</div>
+  </div>
+  <p style="font-size:13px;color:#94A3B8;">🇬🇧 UK brokers shown in green · 🇺🇸 US brokers shown in blue · Launches progressively over 5 months</p>
+</div>
+
+<div class="divider"></div>
+
+<!-- WHO IT'S FOR -->
+<div class="section">
+  <div class="section-label">Who it's for</div>
+  <div class="section-title">Built for UK and US dividend investors</div>
+  <div class="audience-grid">
+    <div class="audience-card audience-uk">
+      <span class="audience-flag">🇬🇧</span>
+      <h4>UK investors</h4>
+      <ul>
+        <li>ISA holders who want tax-free dividend tracking</li>
+        <li>SIPP investors planning retirement income</li>
+        <li>Trading 212 users (4.5 million accounts)</li>
+        <li>Hargreaves Lansdown & AJ Bell customers</li>
+        <li>Anyone on the path to financial independence</li>
+      </ul>
+    </div>
+    <div class="audience-card audience-us">
+      <span class="audience-flag">🇺🇸</span>
+      <h4>US investors</h4>
+      <ul>
+        <li>401(k) and IRA investors tracking income</li>
+        <li>Schwab and Fidelity dividend investors</li>
+        <li>SCHD, VYM, JEPI holders wanting income projections</li>
+        <li>Dividend growth investors tracking yield-on-cost</li>
+        <li>Anyone planning to live off dividends in retirement</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- KEY FEATURES -->
+<div class="section">
+  <div class="section-label">Key features</div>
+  <div class="section-title">Everything a dividend investor needs</div>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon" style="background:#ECFDF5;">🗓️</div>
+      <div>
+        <h4>Dividend Calendar</h4>
+        <p>See every upcoming ex-dividend date and payment across all your accounts. Get email alerts the week before.</p>
+        <span class="badge badge-green">Free</span>
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon" style="background:#FEF3C7;">🔗</div>
+      <div>
+        <h4>Broker Auto-Sync</h4>
+        <p>Connect Trading 212 in 30 seconds. Your holdings and dividend history pull in automatically every night.</p>
+        <span class="badge badge-amber">Pro — £15/mo</span>
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon" style="background:#ECFDF5;">📈</div>
+      <div>
+        <h4>Retirement Calculator</h4>
+        <p>Enter your target monthly income. We calculate your FIRE number, how long it takes, and what dividends cover it — in bear, base and bull scenarios.</p>
+        <span class="badge badge-green">Free</span>
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon" style="background:#FEF3C7;">🔍</div>
+      <div>
+        <h4>Stock Valuation (DCF)</h4>
+        <p>Type a ticker and get an intrinsic value based on projected dividends. Sensitivity table shows how price changes with different growth assumptions.</p>
+        <span class="badge badge-green">Free</span>
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon" style="background:#DBEAFE;">🏛️</div>
+      <div>
+        <h4>Tax Wrapper Awareness</h4>
+        <p>ISA dividends tracked as tax-free. SIPP, GIA and 401k all handled separately and correctly. UK £500 dividend allowance flagged automatically.</p>
+        <span class="badge badge-amber">Pro — £15/mo</span>
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon" style="background:#F3E8FF;">🤖</div>
+      <div>
+        <h4>AI Portfolio Analyst</h4>
+        <p>Get a plain-English analysis of your dividend safety, diversification, and income growth trajectory. Like a financial advisor, without the fees.</p>
+        <span class="badge badge-blue">Premium — £45/mo</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- THE OPPORTUNITY -->
+<div class="opportunity">
+  <div>
+    <h3>Why now? Why this?</h3>
+    <p>Dividend investing is growing fast — millions of people in the UK and US are building income portfolios for financial independence. The tools they have today are either manual spreadsheets, expensive institutional software, or broker apps that only show one account. There is no clean, affordable, broker-connected tracker built specifically for dividend income investors. That's exactly what DividendMapper is.</p>
+  </div>
+  <div class="opportunity-stats">
+    <div class="stat">
+      <div class="stat-value">90M+</div>
+      <div class="stat-label">addressable broker accounts (UK + US)</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">£15</div>
+      <div class="stat-label">per month — half the cost of competitors</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">£35K</div>
+      <div class="stat-label">MRR target by Month 12</div>
+    </div>
+  </div>
+</div>
+
+<!-- THE PLAN -->
+<div class="section">
+  <div class="section-label">The plan</div>
+  <div class="section-title">Building in phases — first version ships in 2 weeks</div>
+  <div class="phases">
+    <div class="phase-card phase-now">
+      <span class="phase-tag tag-now">Shipping now</span>
+      <h4>Phase 1 — Free Tools</h4>
+      <div class="phase-period">Weeks 1–2</div>
+      <div class="phase-items">
+        <div class="phase-item">Retirement income calculator</div>
+        <div class="phase-item">Dividend stock valuation tool</div>
+        <div class="phase-item">UK 🇬🇧 and US 🇺🇸 modes</div>
+        <div class="phase-item">Waitlist page live</div>
+        <div class="phase-item">SEO foundation content</div>
+      </div>
+      <div class="phase-mrr"><strong>£0 → £600</strong>First paying users</div>
+    </div>
+    <div class="phase-card phase-soon">
+      <span class="phase-tag tag-soon">Weeks 3–11</span>
+      <h4>Phase 2 & 3 — Accounts + T212</h4>
+      <div class="phase-period">Sign-up, portfolio & broker sync</div>
+      <div class="phase-items">
+        <div class="phase-item">User accounts and login</div>
+        <div class="phase-item">Manual portfolio entry</div>
+        <div class="phase-item">Stripe payments (Pro plan)</div>
+        <div class="phase-item">Trading 212 auto-sync</div>
+        <div class="phase-item">Dividend calendar + alerts</div>
+      </div>
+      <div class="phase-mrr"><strong>£3,000 → £5,600</strong>UK growth spike at T212 launch</div>
+    </div>
+    <div class="phase-card phase-future">
+      <span class="phase-tag tag-future">Weeks 12–21+</span>
+      <h4>Phase 4–6 — US + Premium</h4>
+      <div class="phase-period">Scale to both markets</div>
+      <div class="phase-items">
+        <div class="phase-item">Schwab, Fidelity, Robinhood sync</div>
+        <div class="phase-item">HL, AJ Bell CSV import</div>
+        <div class="phase-item">Interactive Brokers</div>
+        <div class="phase-item">AI analyst (Premium)</div>
+        <div class="phase-item">Tax reports for HMRC / IRS</div>
+      </div>
+      <div class="phase-mrr"><strong>£9,500 → £35,000</strong>US market opens at Month 7</div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <div class="footer-tagline">dividendmapper<span>.com</span></div>
+  <div class="footer-sub">Building the dividend tracker the UK and US markets are missing · May 2026</div>
+</div>
+
+</body>
+</html>

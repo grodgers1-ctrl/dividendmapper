@@ -57,5 +57,6 @@ next-env.d.ts
 # planning artefacts (kept locally only)
 *.pdf
 
-# Claude Code local settings
+# Claude Code local settings (per-user — contains absolute paths)
 .claude/settings.local.json
+.claude/launch.json

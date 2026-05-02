@@ -1,0 +1,200 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ──────────────────────────────────────────────────────────────────────────
+   DividendMapper brand tokens — Tailwind v4 @theme
+   Brand spec: planning/brand/01-colour-palette.md
+   ────────────────────────────────────────────────────────────────────────── */
+
+@theme inline {
+  /* Three fonts, three jobs (planning/brand/02-typography.md) */
+  --font-sans: var(--font-body);
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+  --font-mono: var(--font-mono);
+  --font-heading: var(--font-display);
+
+  /* Brand emerald scale — primary action / brand mark / focus rings */
+  --color-brand-50:  #ECFDF5;
+  --color-brand-100: #D1FAE5;
+  --color-brand-200: #A7F3D0;
+  --color-brand-400: #34D399;
+  --color-brand-500: #0EA874; /* primary brand */
+  --color-brand-600: #059669; /* CTA buttons (AA on white) */
+  --color-brand-700: #047857;
+  --color-brand-900: #064E3B;
+
+  /* Income amber — dividend amounts and income-event highlights only */
+  --color-income-50:  #FFFBEB;
+  --color-income-100: #FEF3C7;
+  --color-income-500: #F59E0B;
+  --color-income-600: #D97706;
+  --color-income-900: #78350F;
+
+  /* Market-data semantic — never reuse for UI states */
+  --color-positive: #16A34A;
+  --color-negative: #DC2626;
+
+  /* shadcn semantic tokens — mapped to vars set in :root / .dark */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Light mode — slate page background, white surfaces, brand-green primary
+   ────────────────────────────────────────────────────────────────────────── */
+
+:root {
+  --radius: 0.625rem; /* 10px — applied to cards, inputs, etc. */
+
+  --background: #F8FAFC;       /* slate-50 — page bg */
+  --foreground: #0F172A;       /* slate-900 — headings, body */
+
+  --card: #FFFFFF;
+  --card-foreground: #0F172A;
+
+  --popover: #FFFFFF;
+  --popover-foreground: #0F172A;
+
+  --primary: #059669;          /* brand-600 — CTA buttons (AA on white) */
+  --primary-foreground: #FFFFFF;
+
+  --secondary: #F1F5F9;        /* slate-100 — neutral surface raised */
+  --secondary-foreground: #0F172A;
+
+  --muted: #F1F5F9;
+  --muted-foreground: #64748B; /* slate-500 — secondary text */
+
+  --accent: #F59E0B;           /* income amber — used by data-display only */
+  --accent-foreground: #0F172A;
+
+  --destructive: #DC2626;
+
+  --border: #E2E8F0;           /* slate-200 */
+  --input: #E2E8F0;
+  --ring: #0EA874;             /* brand-500 — focus rings */
+
+  /* Multi-series chart palette (planning/brand/01-colour-palette.md §Data Visualisation) */
+  --chart-1: #0EA874;          /* brand green */
+  --chart-2: #2563EB;          /* blue-600 */
+  --chart-3: #7C3AED;          /* violet-600 */
+  --chart-4: #DB2777;          /* pink-600 */
+  --chart-5: #D97706;          /* amber-600 */
+
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #0F172A;
+  --sidebar-primary: #059669;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #F1F5F9;
+  --sidebar-accent-foreground: #0F172A;
+  --sidebar-border: #E2E8F0;
+  --sidebar-ring: #0EA874;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Dark mode — slate-950 page bg, slate-900 cards, brand stays the same hue
+   ────────────────────────────────────────────────────────────────────────── */
+
+.dark {
+  --background: #020617;       /* slate-950 */
+  --foreground: #F8FAFC;       /* slate-50 — softer than pure white */
+
+  --card: #0F172A;             /* slate-900 */
+  --card-foreground: #F8FAFC;
+
+  --popover: #0F172A;
+  --popover-foreground: #F8FAFC;
+
+  --primary: #0EA874;          /* brand-500 reads better on dark */
+  --primary-foreground: #FFFFFF;
+
+  --secondary: #1E293B;        /* slate-800 — raised surface */
+  --secondary-foreground: #F8FAFC;
+
+  --muted: #1E293B;
+  --muted-foreground: #94A3B8; /* slate-400 */
+
+  --accent: #F59E0B;
+  --accent-foreground: #0F172A;
+
+  --destructive: #DC2626;
+
+  --border: #334155;           /* slate-700 — lighter, not darker, on dark */
+  --input: #334155;
+  --ring: #34D399;             /* brand-400 — readable on slate-950 */
+
+  --chart-1: #34D399;          /* brand-400 */
+  --chart-2: #60A5FA;
+  --chart-3: #A78BFA;
+  --chart-4: #F472B6;
+  --chart-5: #FBBF24;
+
+  --sidebar: #0F172A;
+  --sidebar-foreground: #F8FAFC;
+  --sidebar-primary: #0EA874;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #1E293B;
+  --sidebar-accent-foreground: #F8FAFC;
+  --sidebar-border: #334155;
+  --sidebar-ring: #34D399;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-body antialiased;
+  }
+  html {
+    @apply font-body;
+  }
+  /* Default headings to display font */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display tracking-tight;
+  }
+  /* Tabular numerals for any monospace span — financial figures align */
+  .font-mono {
+    font-variant-numeric: tabular-nums;
+  }
+}
