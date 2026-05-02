@@ -8,9 +8,14 @@ import { cn } from "@/lib/utils";
 interface ScenariosTableProps {
   result: RetirementResult;
   retirementAge: number;
+  currentAge: number;
 }
 
-export function ScenariosTable({ result, retirementAge }: ScenariosTableProps) {
+export function ScenariosTable({
+  result,
+  retirementAge,
+  currentAge,
+}: ScenariosTableProps) {
   const { config } = useLocale();
   const cols = [
     { key: "bear" as const, label: "Bear", scenario: result.scenarios.bear },
@@ -29,7 +34,7 @@ export function ScenariosTable({ result, retirementAge }: ScenariosTableProps) {
           Scenario summary
         </h3>
         <p className="mt-1 text-sm text-muted-foreground">
-          What each scenario looks like at age {retirementAge}.
+          What each scenario looks like at retirement.
         </p>
       </header>
 
@@ -37,7 +42,12 @@ export function ScenariosTable({ result, retirementAge }: ScenariosTableProps) {
         <table className="w-full min-w-[640px] border-collapse text-sm">
           <thead>
             <tr className="border-b border-border bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground">
-              <th className="px-4 py-3 text-left font-medium md:px-6">Metric</th>
+              <th className="px-4 py-3 text-left font-medium md:px-6">
+                Metric
+                <span className="mt-0.5 block text-[10px] font-normal normal-case tracking-normal text-muted-foreground">
+                  At age {retirementAge}
+                </span>
+              </th>
               {cols.map((c) => (
                 <th
                   key={c.key}
@@ -48,6 +58,16 @@ export function ScenariosTable({ result, retirementAge }: ScenariosTableProps) {
                   )}
                 >
                   {c.label}
+                  <span
+                    className={cn(
+                      "mt-0.5 block text-[10px] font-normal normal-case tracking-normal",
+                      c.key === "base"
+                        ? "text-brand-700/70 dark:text-brand-400/70"
+                        : "text-muted-foreground"
+                    )}
+                  >
+                    Age {retirementAge}
+                  </span>
                 </th>
               ))}
             </tr>
@@ -76,19 +96,17 @@ export function ScenariosTable({ result, retirementAge }: ScenariosTableProps) {
                 return `${sign}${formatCurrency(Math.abs(s.vsTarget), config)}`;
               }}
               valueClass={(s) =>
-                s.vsTarget >= 0
-                  ? "text-positive"
-                  : "text-negative"
+                s.vsTarget >= 0 ? "text-positive" : "text-negative"
               }
             />
             <Row
               label="Years to FIRE number"
               cols={cols}
-              format={(s) =>
-                s.yearsToFire === null
-                  ? "—"
-                  : `${s.yearsToFire.toFixed(1)} yrs`
-              }
+              format={(s) => {
+                if (s.yearsToFire === null) return "—";
+                const ageAtFire = currentAge + s.yearsToFire;
+                return `${s.yearsToFire.toFixed(1)} yrs · age ${ageAtFire.toFixed(0)}`;
+              }}
             />
           </tbody>
         </table>

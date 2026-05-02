@@ -5,6 +5,7 @@ import {
   Area,
   AreaChart,
   CartesianGrid,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -17,9 +18,14 @@ import type { ProjectionPoint } from "@/lib/calculators/retirement";
 interface ProjectionChartProps {
   data: ProjectionPoint[];
   retirementAge: number;
+  statePensionAge: number;
 }
 
-export function ProjectionChart({ data, retirementAge }: ProjectionChartProps) {
+export function ProjectionChart({
+  data,
+  retirementAge,
+  statePensionAge,
+}: ProjectionChartProps) {
   const { config } = useLocale();
 
   return (
@@ -86,6 +92,36 @@ export function ProjectionChart({ data, retirementAge }: ProjectionChartProps) {
               cursor={{ stroke: "var(--color-border)", strokeWidth: 1 }}
               content={<ChartTooltip />}
             />
+
+            <ReferenceLine
+              x={retirementAge}
+              stroke={config.locale === "uk" ? "var(--color-brand-500)" : "var(--color-brand-500)"}
+              strokeDasharray="2 4"
+              strokeOpacity={0.5}
+              label={{
+                value: "Retire",
+                position: "insideTopLeft",
+                fill: "var(--color-muted-foreground)",
+                fontSize: 11,
+                offset: 6,
+              }}
+            />
+            {statePensionAge >= data[0]?.age &&
+              statePensionAge <= data[data.length - 1]?.age && (
+                <ReferenceLine
+                  x={statePensionAge}
+                  stroke="var(--color-income-500)"
+                  strokeDasharray="2 4"
+                  strokeOpacity={0.6}
+                  label={{
+                    value: config.retirement.stateLabel,
+                    position: "insideTopRight",
+                    fill: "var(--color-muted-foreground)",
+                    fontSize: 11,
+                    offset: 6,
+                  }}
+                />
+              )}
 
             {/* Order matters — bear/bull behind base */}
             <Area

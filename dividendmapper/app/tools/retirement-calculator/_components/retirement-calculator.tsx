@@ -8,6 +8,8 @@ import {
 } from "@/lib/calculators/retirement";
 import { InputsPanel } from "./inputs-panel";
 import { FireCard } from "./fire-card";
+import { LumpSumCard } from "./lump-sum-card";
+import { NetWorthCard } from "./net-worth-card";
 import { ProjectionChart } from "./projection-chart";
 import { ScenariosTable } from "./scenarios-table";
 
@@ -20,10 +22,16 @@ const UK_DEFAULTS: RetirementInputs = {
   dividendYield: 0.04,
   reinvestDividends: true,
   targetMonthlyIncome: 3000,
+  statePensionAge: 67,
   isaAllocation: 0.8,
   sippAllocation: 0.2,
   includeStatePension: true,
-  statePensionWeekly: 221.2,
+  statePensionWeekly: 241.3, // 2026/27 full new State Pension
+  takeLumpSum: true,
+  lumpSumReinvestPct: 1, // Default: leave it all invested
+  lumpSumMortgagePct: 0,
+  lumpSumCashPct: 0,
+  propertyGrowthRate: 0.02, // UK long-run real ≈ 2%
 };
 
 const US_DEFAULTS: RetirementInputs = {
@@ -35,10 +43,12 @@ const US_DEFAULTS: RetirementInputs = {
   dividendYield: 0.04,
   reinvestDividends: true,
   targetMonthlyIncome: 5000,
-  monthlyK401: 1583,
-  annualIRA: 7000,
+  statePensionAge: 67,
+  monthlyK401: 2042,
+  annualIRA: 7500,
   includeSocialSecurity: true,
-  socialSecurityMonthly: 1800,
+  socialSecurityMonthly: 2071, // 2026 average retired-worker benefit
+  propertyGrowthRate: 0.03, // US long-run nominal ≈ 3%
 };
 
 export function RetirementCalculator() {
@@ -55,14 +65,20 @@ export function RetirementCalculator() {
     setInputs((prev) => ({
       ...prev,
       targetMonthlyIncome: defaults.targetMonthlyIncome,
+      statePensionAge: defaults.statePensionAge,
       isaAllocation: defaults.isaAllocation,
       sippAllocation: defaults.sippAllocation,
       includeStatePension: defaults.includeStatePension,
       statePensionWeekly: defaults.statePensionWeekly,
+      takeLumpSum: defaults.takeLumpSum,
+      lumpSumReinvestPct: defaults.lumpSumReinvestPct,
+      lumpSumMortgagePct: defaults.lumpSumMortgagePct,
+      lumpSumCashPct: defaults.lumpSumCashPct,
       monthlyK401: defaults.monthlyK401,
       annualIRA: defaults.annualIRA,
       includeSocialSecurity: defaults.includeSocialSecurity,
       socialSecurityMonthly: defaults.socialSecurityMonthly,
+      propertyGrowthRate: defaults.propertyGrowthRate,
     }));
     lastLocaleRef.current = config.locale;
   }, [config.locale]);
@@ -80,12 +96,28 @@ export function RetirementCalculator() {
         currentPortfolio={inputs.currentPortfolio}
         targetMonthlyIncome={inputs.targetMonthlyIncome}
         dividendYield={inputs.dividendYield}
+        retirementAge={inputs.retirementAge}
+        statePensionAge={inputs.statePensionAge}
       />
+      {config.locale === "uk" && (
+        <LumpSumCard
+          result={result}
+          enabled={inputs.takeLumpSum !== false}
+          retirementAge={inputs.retirementAge}
+          accessAge={config.retirement.accessAge}
+        />
+      )}
+      <NetWorthCard result={result} retirementAge={inputs.retirementAge} />
       <ProjectionChart
         data={result.projection}
         retirementAge={inputs.retirementAge}
+        statePensionAge={inputs.statePensionAge}
       />
-      <ScenariosTable result={result} retirementAge={inputs.retirementAge} />
+      <ScenariosTable
+        result={result}
+        retirementAge={inputs.retirementAge}
+        currentAge={inputs.currentAge}
+      />
     </div>
   );
 }
