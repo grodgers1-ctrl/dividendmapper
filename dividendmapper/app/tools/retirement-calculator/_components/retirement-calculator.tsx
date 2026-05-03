@@ -5,11 +5,14 @@ import { useLocale } from "@/lib/locale/context";
 import {
   calculateRetirement,
   type RetirementInputs,
+  type RetirementResult,
 } from "@/lib/calculators/retirement";
+import { formatCurrency } from "@/lib/locale/format";
 import { InputsPanel } from "./inputs-panel";
 import { FireCard } from "./fire-card";
 import { LumpSumCard } from "./lump-sum-card";
 import { IncomeBreakdownChart } from "./income-breakdown-chart";
+import { LeversCard } from "./levers-card";
 import { NetWorthCard } from "./net-worth-card";
 import { ProjectionChart } from "./projection-chart";
 import { ScenariosTable } from "./scenarios-table";
@@ -92,9 +95,14 @@ export function RetirementCalculator() {
     [inputs, config.locale]
   );
 
+  const handleReset = React.useCallback(() => {
+    setInputs(config.locale === "uk" ? UK_DEFAULTS : US_DEFAULTS);
+  }, [config.locale]);
+
   return (
     <div className="space-y-6">
-      <InputsPanel inputs={inputs} setInputs={setInputs} />
+      <MobileLiveSummary result={result} retirementAge={inputs.retirementAge} />
+      <InputsPanel inputs={inputs} setInputs={setInputs} onReset={handleReset} />
       <FireCard
         result={result}
         currentPortfolio={inputs.currentPortfolio}
@@ -128,6 +136,46 @@ export function RetirementCalculator() {
         retirementAge={inputs.retirementAge}
         currentAge={inputs.currentAge}
       />
+      <LeversCard inputs={inputs} result={result} />
+    </div>
+  );
+}
+
+/**
+ * Mobile-only sticky bar showing the live FIRE number + Base monthly income.
+ * Pins below the site header (h-16) so the headline figures stay visible while
+ * the user adjusts sliders and the page scrolls. Hidden on md+ where the FIRE
+ * card sits comfortably alongside the inputs.
+ */
+function MobileLiveSummary({
+  result,
+  retirementAge,
+}: {
+  result: RetirementResult;
+  retirementAge: number;
+}) {
+  const { config } = useLocale();
+  return (
+    <div className="sticky top-16 z-20 -mx-4 border-b border-border bg-background/90 px-4 py-2.5 backdrop-blur md:hidden">
+      <div className="flex items-baseline justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+            FIRE number
+          </p>
+          <p className="font-mono text-lg font-semibold tabular-nums text-foreground">
+            {formatCurrency(result.fireNumber, config, true)}
+          </p>
+        </div>
+        <div className="min-w-0 text-right">
+          <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+            Base · age {retirementAge}
+          </p>
+          <p className="font-mono text-lg font-semibold tabular-nums text-foreground">
+            {formatCurrency(result.scenarios.base.monthlyDividendIncome, config)}
+            /mo
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

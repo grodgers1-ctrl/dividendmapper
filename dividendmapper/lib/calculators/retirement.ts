@@ -552,6 +552,92 @@ function weightedAvg(bear: number, base: number, bull: number): number {
   );
 }
 
+export type Lever = "monthlyContribution" | "retirementAge" | "annualReturn";
+
+/**
+ * Binary-search the smallest value of `lever` that brings the Base scenario's
+ * end-of-projection portfolio up to the FIRE number. Returns null if no value
+ * within practical bounds solves it. The calc is monotonic in each lever (more
+ * money / more time / higher returns → bigger portfolio), so binary search
+ * converges cleanly in ~30 iterations.
+ */
+export function solveForLever(
+  inputs: RetirementInputs,
+  locale: Locale,
+  lever: Lever
+): number | null {
+  const bounds = LEVER_BOUNDS[lever];
+  // Establish current value as the lower bound — we only show "more of this".
+  const currentValue = readLever(inputs, lever);
+  let lo = currentValue;
+  let hi = bounds.max;
+
+  // If even maxing the lever can't solve it, no answer.
+  if (!solvesAt(hi)) return null;
+  // If the current value already solves it, no change needed.
+  if (solvesAt(lo)) return lo;
+
+  for (let i = 0; i < 30; i++) {
+    const mid = (lo + hi) / 2;
+    if (solvesAt(mid)) hi = mid;
+    else lo = mid;
+  }
+  // Round to a friendly precision per lever.
+  return roundLever(lever, hi);
+
+  function solvesAt(x: number): boolean {
+    const next = writeLever(inputs, lever, x);
+    const r = calculateRetirement(next, locale);
+    return r.scenarios.base.portfolioAtRetirement >= r.fireNumber;
+  }
+}
+
+const LEVER_BOUNDS: Record<Lever, { min: number; max: number }> = {
+  monthlyContribution: { min: 0, max: 100000 },
+  retirementAge: { min: 18, max: 80 },
+  annualReturn: { min: 0, max: 0.3 },
+};
+
+function readLever(inputs: RetirementInputs, lever: Lever): number {
+  switch (lever) {
+    case "monthlyContribution":
+      return inputs.monthlyContribution;
+    case "retirementAge":
+      return inputs.retirementAge;
+    case "annualReturn":
+      return inputs.annualReturn;
+  }
+}
+
+function writeLever(
+  inputs: RetirementInputs,
+  lever: Lever,
+  value: number
+): RetirementInputs {
+  switch (lever) {
+    case "monthlyContribution":
+      return { ...inputs, monthlyContribution: value };
+    case "retirementAge":
+      // Whole-year ages — ceil so we don't suggest fractional ages.
+      return { ...inputs, retirementAge: Math.ceil(value) };
+    case "annualReturn":
+      return { ...inputs, annualReturn: value };
+  }
+}
+
+function roundLever(lever: Lever, value: number): number {
+  switch (lever) {
+    case "monthlyContribution":
+      // Round up to next £/$1 — most users think in whole units.
+      return Math.ceil(value);
+    case "retirementAge":
+      return Math.ceil(value);
+    case "annualReturn":
+      // Round up to nearest 0.1 percentage point.
+      return Math.ceil(value * 1000) / 1000;
+  }
+}
+
 function buildWrapperSplits(
   inputs: RetirementInputs,
   locale: Locale

@@ -127,7 +127,7 @@ function Row({
   valueClass?: (s: ScenarioResult) => string;
 }) {
   return (
-    <tr className="text-sm">
+    <tr className="text-sm transition-colors md:hover:bg-muted/30">
       <th
         scope="row"
         className="px-4 py-3 text-left font-medium text-foreground md:px-6"

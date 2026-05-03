@@ -94,6 +94,7 @@ export function NumberField({
           value={text}
           placeholder={placeholder}
           onChange={(e) => commit(e.target.value)}
+          onFocus={(e) => e.currentTarget.select()}
           onBlur={commitOnBlur}
           min={min}
           max={max}

@@ -52,10 +52,13 @@ export function SliderField({
         max={max}
         step={step}
       >
-        <Slider.Control className="flex h-5 w-full items-center">
+        {/* touch-action: pan-y on the control + none on the thumb stops a
+            horizontal slider drag from triggering vertical page scroll on
+            mobile — the cause of the "cards move around" feeling. */}
+        <Slider.Control className="flex h-5 w-full items-center [touch-action:pan-y]">
           <Slider.Track className="relative h-1.5 w-full rounded-full bg-muted">
             <Slider.Indicator className="absolute h-full rounded-full bg-brand-500" />
-            <Slider.Thumb className="block size-4 rounded-full border-2 border-brand-500 bg-background shadow-sm transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background data-[dragging]:scale-110" />
+            <Slider.Thumb className="block size-4 rounded-full border-2 border-brand-500 bg-background shadow-sm transition-transform [touch-action:none] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background data-[dragging]:scale-110" />
           </Slider.Track>
         </Slider.Control>
       </Slider.Root>

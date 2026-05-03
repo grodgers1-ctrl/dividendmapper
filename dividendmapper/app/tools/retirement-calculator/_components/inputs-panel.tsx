@@ -10,9 +10,10 @@ import type { RetirementInputs } from "@/lib/calculators/retirement";
 interface InputsPanelProps {
   inputs: RetirementInputs;
   setInputs: React.Dispatch<React.SetStateAction<RetirementInputs>>;
+  onReset: () => void;
 }
 
-export function InputsPanel({ inputs, setInputs }: InputsPanelProps) {
+export function InputsPanel({ inputs, setInputs, onReset }: InputsPanelProps) {
   const { config } = useLocale();
   const symbol = config.currencySymbol;
 
@@ -56,12 +57,21 @@ export function InputsPanel({ inputs, setInputs }: InputsPanelProps) {
             Your numbers
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Adjust the inputs — every output below recalculates instantly.
+            Adjust the inputs and every output below recalculates instantly.
           </p>
         </div>
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
-          {config.locale === "uk" ? "🇬🇧 UK mode" : "🇺🇸 US mode"}
-        </span>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onReset}
+            className="rounded-full border border-border bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:border-brand-500 hover:text-foreground"
+          >
+            Reset
+          </button>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
+            {config.locale === "uk" ? "🇬🇧 UK mode" : "🇺🇸 US mode"}
+          </span>
+        </div>
       </header>
 
       {/* Shared inputs */}
@@ -147,7 +157,7 @@ export function InputsPanel({ inputs, setInputs }: InputsPanelProps) {
           onChange={(v) => patch({ targetMonthlyIncome: v })}
           min={0}
           prefix={symbol}
-          helpText={`Today's ${config.currencyCode} — ignore inflation, assume returns are real if you prefer.`}
+          helpText={`Enter in today's ${config.currencyCode}. The calculator works in real terms — your expected return assumption should already be net of inflation (so 7% nominal − 3% inflation ≈ 4% real if you'd rather think in nominal terms).`}
         />
         <ToggleField
           id="reinvest"
