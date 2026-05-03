@@ -9,6 +9,7 @@ import {
 import { InputsPanel } from "./inputs-panel";
 import { FireCard } from "./fire-card";
 import { LumpSumCard } from "./lump-sum-card";
+import { IncomeBreakdownChart } from "./income-breakdown-chart";
 import { NetWorthCard } from "./net-worth-card";
 import { ProjectionChart } from "./projection-chart";
 import { ScenariosTable } from "./scenarios-table";
@@ -38,14 +39,14 @@ const US_DEFAULTS: RetirementInputs = {
   currentAge: 30,
   retirementAge: 55,
   currentPortfolio: 0,
-  monthlyContribution: 800,
+  monthlyContribution: 200, // brokerage / taxable, on top of 401(k) + IRA
   annualReturn: 0.07,
   dividendYield: 0.04,
   reinvestDividends: true,
   targetMonthlyIncome: 5000,
-  statePensionAge: 67,
-  monthlyK401: 2042,
-  annualIRA: 7500,
+  statePensionAge: 67, // FRA for those born 1960+
+  monthlyK401: 2042, // $24,500 / 12 — 2026 §402(g) limit
+  annualIRA: 7500, // 2026 IRA limit (Notice 2025-67)
   includeSocialSecurity: true,
   socialSecurityMonthly: 2071, // 2026 average retired-worker benefit
   propertyGrowthRate: 0.03, // US long-run nominal ≈ 3%
@@ -56,14 +57,17 @@ export function RetirementCalculator() {
   const [inputs, setInputs] = React.useState<RetirementInputs>(UK_DEFAULTS);
 
   // When the locale flips, swap to that locale's default target income +
-  // benefit fields. Preserve the user's portfolio numbers (they're locale-
-  // agnostic) so a UK-built scenario doesn't reset on a US toggle.
+  // benefit fields. Also reset monthlyContribution because its semantics
+  // change across locales: in UK it's the total split into ISA/SIPP/GIA, in
+  // US it's just the taxable brokerage bucket alongside the explicit
+  // 401(k) / IRA inputs.
   const lastLocaleRef = React.useRef(config.locale);
   React.useEffect(() => {
     if (lastLocaleRef.current === config.locale) return;
     const defaults = config.locale === "uk" ? UK_DEFAULTS : US_DEFAULTS;
     setInputs((prev) => ({
       ...prev,
+      monthlyContribution: defaults.monthlyContribution,
       targetMonthlyIncome: defaults.targetMonthlyIncome,
       statePensionAge: defaults.statePensionAge,
       isaAllocation: defaults.isaAllocation,
@@ -107,6 +111,12 @@ export function RetirementCalculator() {
           accessAge={config.retirement.accessAge}
         />
       )}
+      <IncomeBreakdownChart
+        result={result}
+        dividendYield={inputs.dividendYield}
+        retirementAge={inputs.retirementAge}
+        statePensionAge={inputs.statePensionAge}
+      />
       <NetWorthCard result={result} retirementAge={inputs.retirementAge} />
       <ProjectionChart
         data={result.projection}

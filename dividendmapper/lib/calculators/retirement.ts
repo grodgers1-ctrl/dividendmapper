@@ -556,14 +556,38 @@ function buildWrapperSplits(
   inputs: RetirementInputs,
   locale: Locale
 ): WrapperSplits {
-  if (locale !== "uk") {
-    // US (and others) — single bucket. Everything in `gia` so totals match.
+  // Wrapper slot semantics (kept as isa/sipp/gia for backward compatibility,
+  // but they really mean "tax-free / tax-deferred / taxable"):
+  //   UK  → ISA / SIPP / GIA
+  //   US  → IRA (or Roth) / 401(k) / Brokerage
+  if (locale === "us") {
+    // US — three independent contribution streams. monthlyContribution acts as
+    // the brokerage/taxable bucket; 401(k) and IRA inputs sit alongside.
+    const monthlySipp = Math.max(0, inputs.monthlyK401 ?? 0);
+    const monthlyIsa = Math.max(0, (inputs.annualIRA ?? 0) / 12);
+    const monthlyGia = Math.max(0, inputs.monthlyContribution);
+
+    // Split current portfolio in the same proportions as monthly contributions
+    // (defensible default — users with a different actual split can adjust the
+    // current-portfolio input). If contributions are all zero, drop everything
+    // into the brokerage bucket since that's the most flexible wrapper to model.
+    const totalMonthly = monthlySipp + monthlyIsa + monthlyGia;
+    const sippShare = totalMonthly > 0 ? monthlySipp / totalMonthly : 0;
+    const isaShare = totalMonthly > 0 ? monthlyIsa / totalMonthly : 0;
+    const giaShare = totalMonthly > 0 ? monthlyGia / totalMonthly : 1;
+
     return {
-      isa: { start: 0, monthly: 0 },
-      sipp: { start: 0, monthly: 0 },
+      isa: {
+        start: inputs.currentPortfolio * isaShare,
+        monthly: monthlyIsa,
+      },
+      sipp: {
+        start: inputs.currentPortfolio * sippShare,
+        monthly: monthlySipp,
+      },
       gia: {
-        start: inputs.currentPortfolio,
-        monthly: inputs.monthlyContribution,
+        start: inputs.currentPortfolio * giaShare,
+        monthly: monthlyGia,
       },
     };
   }

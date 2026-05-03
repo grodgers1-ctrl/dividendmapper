@@ -5,7 +5,6 @@ import { useLocale } from "@/lib/locale/context";
 import { SliderField } from "@/components/ui/slider-field";
 import { NumberField } from "@/components/ui/number-field";
 import { ToggleField } from "@/components/ui/toggle-field";
-import { formatCurrency } from "@/lib/locale/format";
 import type { RetirementInputs } from "@/lib/calculators/retirement";
 
 interface InputsPanelProps {
@@ -102,11 +101,20 @@ export function InputsPanel({ inputs, setInputs }: InputsPanelProps) {
         />
         <NumberField
           id="monthly-contribution"
-          label="Monthly contribution"
+          label={
+            config.locale === "us"
+              ? "Brokerage contribution (monthly)"
+              : "Monthly contribution"
+          }
           value={inputs.monthlyContribution}
           onChange={(v) => patch({ monthlyContribution: v })}
           min={0}
           prefix={symbol}
+          helpText={
+            config.locale === "us"
+              ? "Taxable brokerage savings only — 401(k) and IRA are separate fields below."
+              : undefined
+          }
         />
 
         <SliderField
@@ -158,22 +166,8 @@ export function InputsPanel({ inputs, setInputs }: InputsPanelProps) {
         </>
       )}
 
-      {/* US-specific inputs — placeholder until Day 6 */}
-      {config.locale === "us" && (
-        <div className="mt-8 rounded-lg border border-dashed border-border bg-background p-4">
-          <p className="text-sm font-medium text-foreground">
-            US-mode inputs ship Day 6 of the sprint.
-          </p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            The shared inputs above already calculate against {formatCurrency(
-              inputs.targetMonthlyIncome,
-              config
-            )}{" "}
-            in {config.currencyCode}. 401(k) / IRA / Social Security panels land
-            tomorrow.
-          </p>
-        </div>
-      )}
+      {/* US-specific inputs */}
+      {config.locale === "us" && <UsExtras inputs={inputs} patch={patch} />}
 
       <PropertyPanel inputs={inputs} patch={patch} />
     </section>
@@ -360,6 +354,95 @@ function UkLumpSum({
           />
         </div>
       )}
+    </div>
+  );
+}
+
+function UsExtras({
+  inputs,
+  patch,
+}: {
+  inputs: RetirementInputs;
+  patch: (p: Partial<RetirementInputs>) => void;
+}) {
+  // 2026 IRS limits — IRS Notice 2025-67. Source of truth:
+  //   planning/research/us-retirement-rules.md
+  const K401_LIMIT_ANNUAL = 24500;
+  const IRA_LIMIT_ANNUAL = 7500;
+  // Monthly entries naturally round up (24,500 / 12 = 2,041.67, users type 2,042),
+  // so we allow up to one month of slack before flagging as over-limit.
+  const k401Annual = (inputs.monthlyK401 ?? 0) * 12;
+  const overK401 = k401Annual > K401_LIMIT_ANNUAL + (K401_LIMIT_ANNUAL / 12);
+  const overIra = (inputs.annualIRA ?? 0) > IRA_LIMIT_ANNUAL;
+
+  return (
+    <div className="mt-8 border-t border-border pt-6">
+      <h3 className="font-display text-base font-semibold text-foreground">
+        US tax wrappers
+      </h3>
+      <p className="mt-1 text-sm text-muted-foreground">
+        401(k) and IRA contributions are tracked separately so we can flag the
+        2026 limits and split your dividend income across tax-advantaged and
+        taxable accounts.
+      </p>
+
+      <div className="mt-5 grid gap-5 md:grid-cols-2">
+        <NumberField
+          id="monthly-401k"
+          label="401(k) contribution (monthly)"
+          value={inputs.monthlyK401 ?? 0}
+          onChange={(v) => patch({ monthlyK401: v })}
+          min={0}
+          prefix="$"
+          helpText={
+            overK401
+              ? `Above the 2026 §402(g) limit of $24,500/yr ($2,042/mo). Catch-up contributions kick in at 50+.`
+              : "2026 employee deferral limit: $24,500/yr ($2,042/mo). Catch-up at 50+."
+          }
+        />
+        <NumberField
+          id="annual-ira"
+          label="IRA / Roth IRA contribution (annual)"
+          value={inputs.annualIRA ?? 0}
+          onChange={(v) => patch({ annualIRA: v })}
+          min={0}
+          prefix="$"
+          helpText={
+            overIra
+              ? "Above the 2026 IRA limit of $7,500. Catch-up adds $1,100 at age 50+."
+              : "2026 limit: $7,500 (Trad + Roth combined). Catch-up adds $1,100 at 50+."
+          }
+        />
+      </div>
+
+      <div className="mt-6 grid gap-5 md:grid-cols-2">
+        <ToggleField
+          id="include-social-security"
+          label="Include Social Security"
+          checked={inputs.includeSocialSecurity ?? true}
+          onChange={(v) => patch({ includeSocialSecurity: v })}
+          helpText="Social Security supplements your portfolio income from your claim age onwards."
+        />
+        <NumberField
+          id="social-security-monthly"
+          label="Social Security ($/month)"
+          value={inputs.socialSecurityMonthly ?? 2071}
+          onChange={(v) => patch({ socialSecurityMonthly: v })}
+          min={0}
+          prefix="$"
+          helpText="2026 average retired-worker benefit ≈ $2,071. Find your estimate at ssa.gov/myaccount."
+        />
+        <SliderField
+          id="ss-claim-age"
+          label="Social Security claim age"
+          value={inputs.statePensionAge}
+          onChange={(v) => patch({ statePensionAge: v })}
+          min={62}
+          max={70}
+          displayValue={inputs.statePensionAge}
+          helpText="Claim 62 → 70. FRA = 67 (born 1960+). Each year delayed past FRA adds ~8% (Delayed Retirement Credits)."
+        />
+      </div>
     </div>
   );
 }
