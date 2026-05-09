@@ -8,6 +8,17 @@ This document is the source of truth for facts about the Trading 212 SIPP produc
 
 > **Why this file exists.** Day 9's first draft of the T212 SIPP review claimed an October 2023 launch (wrong — the SIPP only got FCA approval in February 2026). The "0% fee" framing also missed the £90/yr Gaudi operator fee. We're keeping the canonical facts here so the next person writing T212 copy can grab them in one read.
 
+## Source hierarchy
+
+When sources disagree, trust them in this order:
+
+1. **T212 help centre articles** — primary, but only cover what's launched.
+2. **T212 staff posts on the community forum** (look for the "Leader" badge or T212 employee status) — primary for roadmap, eligibility edge cases, and product details not yet documented in help. Cite the exact post URL.
+3. **T212 customer-side community posts** — anecdotal, useful for rollout-state signals but not for factual claims.
+4. **Industry coverage (Finance Magnates, Tech Loy, Tradeinformer, Patel review)** — secondary. Useful for context and the worked-example fee comparisons, but specific product claims have been wrong before. Example: Finance Magnates implied T212 would include crypto ETNs after the FCA's October 2025 reversal; T212 staff later confirmed they explicitly do not plan to.
+
+If the research doc says one thing and a T212 staff post says another, **the staff post wins** and the research doc gets updated.
+
 ---
 
 ## Timeline
@@ -19,7 +30,7 @@ This document is the source of truth for facts about the Trading 212 SIPP produc
 | October 2025 | FCA reverses its blanket ban on crypto ETNs in SIPPs, removing one regulatory blocker. | Finance Magnates |
 | **February 2026** | **FCA approval granted.** | [Tech Loy](https://www.techloy.com/trading-212-secures-fca-approval-to-launch-long-awaited-personal-pensions/) / [Finance Magnates](https://www.financemagnates.com/forex/trading-212-pushes-into-private-pensions-after-five-year-wait/) |
 | March 2026 onwards | Waitlist rollout begins. T212 help centre states "SIPP accounts are now live and are being gradually rolled out to clients on the waitlist." | [T212 help centre](https://helpcentre.trading212.com/hc/en-us/articles/30767684244637-What-is-a-SIPP-Account) |
-| May 2026 (current) | Rollout still in progress. Most users still don't have access. | T212 community thread (post #501) |
+| May 2026 (current) | Rollout still in progress. T212 staff (KrisG, Leader badge): "We are already gradually onboarding people from the waitlist so it's just a matter of time until you receive your invite." Most users still don't have access. | [T212 community thread post #501](https://community.trading212.com/t/is-there-a-possibility-of-a-t212-pension-platform-sipp/4366/501) |
 
 ---
 
@@ -68,13 +79,15 @@ The HL figure is dominated by FX, not platform fee.
 
 - **UK and US listed stocks and ETFs** — confirmed, full coverage
 - **European, Asian and emerging-market exchange coverage** — narrower than HL or Fidelity. Patel: "does not offer the same breadth as HL or Fidelity for European, Asian, and emerging market exchanges." Search the universe before transferring if you hold these.
-- **Crypto ETNs** — FCA's October 2025 reversal allows these in SIPPs and T212 includes them.
+- **Multi-currency holdings** — supported. Deposits and withdrawals are GBP-only (required for the tax-relief calculation), but once funds are in the account you can convert to other currencies. (Per [KrisG, T212 staff, May 2026](https://community.trading212.com/t/is-there-a-possibility-of-a-t212-pension-platform-sipp/4366/501).)
 
 **NOT supported:**
+- **Crypto ETNs** — explicitly **not planned**, per T212 staff (KrisG, May 2026 community post). This contradicts the Finance Magnates article that implied T212 would include them after the FCA's October 2025 reversal — Finance Magnates was wrong / speculative; T212's own staff has confirmed no plans.
 - Direct gilts or corporate bonds (would need bond ETFs)
 - Mutual funds (T212 doesn't offer fund-of-funds)
 - Managed portfolios or advised products
 - Anything illiquid: unlisted shares, VCTs, EIS, structured products
+- **API trading** in the SIPP — "looking into" but not currently available (KrisG, May 2026)
 
 **Still unclear / verify before quoting:**
 - Investment trusts inside the SIPP wrapper specifically — confirmed for ISA but no source verifies SIPP coverage
@@ -113,6 +126,7 @@ T212 has stated drawdown is on the roadmap but **no public ship date** has been 
 - **UK resident** (Crown servant exceptions noted in T212 help)
 - National Insurance Number required
 - Identity verification via standard T212 onboarding
+- **Channel Islands residents: not eligible to open new accounts.** Existing UK-resident SIPP holders who later move to the Channel Islands can keep their account but cannot make further contributions. (KrisG, T212 staff, May 2026 community post.)
 
 ---
 
@@ -191,8 +205,10 @@ These claims appear in T212 SIPP coverage online but I haven't found primary-sou
 - [Trading 212 "blocked" from launching SIPPs by FCA — Tradeinformer](https://tradeinformer.com/broker-news/exclusive-trading-212-blocked-from-launching-sipps-by-fca)
 
 **Community / live signal:**
-- [Main SIPP discussion thread (4,000+ posts)](https://community.trading212.com/t/is-there-a-possibility-of-a-t212-pension-platform-sipp/4366) — best place to track rollout progress
+- [Main SIPP discussion thread (500+ posts)](https://community.trading212.com/t/is-there-a-possibility-of-a-t212-pension-platform-sipp/4366) — best place to track rollout progress; primary source for current product details when staff (Leader badge) post answers
 - [SIPP Q&A only thread](https://community.trading212.com/t/sipp-q-and-a-only/90955)
+- Specific staff posts cited above:
+  - [Post #501 — KrisG, May 2026](https://community.trading212.com/t/is-there-a-possibility-of-a-t212-pension-platform-sipp/4366/501) — confirmed: rollout still gradual; multi-currency in-account but GBP-only deposits/withdrawals; **no plans for crypto ETNs**; API trading "looking into"; no Channel Islands new accounts.
 
 **Comparator pages:**
 - [InvestEngine SIPP](https://investengine.com/sipp/)
