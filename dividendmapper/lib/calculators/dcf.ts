@@ -76,6 +76,30 @@ export interface DcfDividendProjectionPoint {
   bull: number;
 }
 
+/**
+ * Decomposition of intrinsic value into the two components a 2-stage DDM
+ * actually computes: present value of explicit Phase 1 dividends, and the
+ * present value of the terminal Gordon-Growth tail.
+ *
+ * Only meaningful in Advanced (2-stage) mode. Simple mode collapses to a
+ * single permanent stream with no natural decomposition, so the orchestrator
+ * leaves this null in Simple mode.
+ */
+export interface PvDecomposition {
+  /** Sum of PV of dividends in years 1..phase1Years. */
+  phase1PV: number;
+  /** PV of the Gordon-Growth terminal value, discounted from end of Phase 1. */
+  terminalPV: number;
+  /** phase1PV + terminalPV — equal to the Base intrinsic value. */
+  total: number;
+}
+
+export interface YocPoint {
+  year: number;
+  /** Yield on today's cost basis in this year, given Base growth. */
+  yieldOnCost: number;
+}
+
 export interface DcfResult {
   scenarios: {
     bear: DcfScenario;
@@ -93,6 +117,14 @@ export interface DcfResult {
   sensitivity: DcfSensitivity;
   /** Yield-on-cost at the current price = D₀ / P. null if price ≤ 0. */
   breakEvenYield: number | null;
+  /** Yield-on-cost trajectory over 10 years using Base growth. Empty if break-even is null. */
+  yieldOnCostTrajectory: YocPoint[];
+  /**
+   * 2-stage PV decomposition, Base scenario only. null in Simple mode and
+   * also null if the underlying calc returned null (growth ≥ discount in
+   * either phase, or invalid inputs).
+   */
+  decomposition: PvDecomposition | null;
 }
 
 const PROB_WEIGHTS = { bear: 0.25, base: 0.5, bull: 0.25 } as const;
@@ -117,21 +149,41 @@ export function twoStageDDMValue(
   terminalGrowth: number,
   discount: number
 ): number | null {
+  const parts = twoStageDDMParts(d0, phase1Growth, phase1Years, terminalGrowth, discount);
+  return parts ? parts.total : null;
+}
+
+/**
+ * Same maths as twoStageDDMValue, but returns the two components separately
+ * so the UI can show "X% of value comes from the next N years; Y% from the
+ * terminal tail".
+ */
+export function twoStageDDMParts(
+  d0: number,
+  phase1Growth: number,
+  phase1Years: number,
+  terminalGrowth: number,
+  discount: number
+): PvDecomposition | null {
   if (!Number.isFinite(d0) || d0 <= 0) return null;
   if (!Number.isFinite(discount)) return null;
   if (terminalGrowth >= discount) return null;
   const years = Math.max(0, Math.round(phase1Years));
-  if (years === 0) return gordonGrowthValue(d0, terminalGrowth, discount);
+  if (years === 0) {
+    const terminal = gordonGrowthValue(d0, terminalGrowth, discount);
+    if (terminal === null) return null;
+    return { phase1PV: 0, terminalPV: terminal, total: terminal };
+  }
 
-  let pv = 0;
+  let phase1PV = 0;
   let div = d0;
   for (let t = 1; t <= years; t++) {
     div *= 1 + phase1Growth;
-    pv += div / Math.pow(1 + discount, t);
+    phase1PV += div / Math.pow(1 + discount, t);
   }
-  const terminal = (div * (1 + terminalGrowth)) / (discount - terminalGrowth);
-  pv += terminal / Math.pow(1 + discount, years);
-  return pv;
+  const terminalUndiscounted = (div * (1 + terminalGrowth)) / (discount - terminalGrowth);
+  const terminalPV = terminalUndiscounted / Math.pow(1 + discount, years);
+  return { phase1PV, terminalPV, total: phase1PV + terminalPV };
 }
 
 /* ─────────────────────────────────── orchestrator */
@@ -140,17 +192,27 @@ export function calculateDcf(inputs: DcfInputs): DcfResult {
   const baseGrowth = inputs.mode === "simple" ? inputs.growthRate : inputs.phase1Growth;
   const baseDiscount = inputs.discountRate;
 
-  // Bull = +2pp growth and −1.5pp discount, but with a guard: the spread
-  // (discount − growth) must stay ≥ 2pp. With user-default UK inputs (growth
-  // 4%, discount 8.5%) the raw Bull lands at growth 6% / discount 7% — a 1pp
-  // spread that produces an absurd intrinsic (£127 vs £24 price) and pulls
-  // the probability-weighted figure with it. Clamping the spread at 2pp
-  // keeps Bull genuinely optimistic without breaking the model.
+  // Bull = +2pp growth and −1.5pp discount.
+  //
+  // In Simple mode the model needs growth < discount. With UK defaults (4%
+  // growth / 8.5% discount) the raw Bull lands at 6% / 7% — a 1pp spread that
+  // produces an absurd £127 intrinsic vs £24 price. Clamp Bull's discount so
+  // (discount − bullGrowth) stays ≥ 2pp; keeps Bull genuinely optimistic
+  // without breaking the model.
+  //
+  // In Advanced (2-stage) mode the binding constraint is terminalGrowth <
+  // discount, not phase1Growth < discount. Phase 1 can grow faster than the
+  // discount rate because it's a finite horizon. So we skip the clamp here —
+  // applying it would erroneously make Bull's discount *higher* than Base's
+  // (e.g. with phase1=8%, the clamp would force bullDiscount ≥ 12%), making
+  // Bull more pessimistic than Base. The natural model constraint (terminal
+  // unchanged across scenarios) keeps the answer bounded on its own.
   const bullGrowth = baseGrowth + 0.02;
-  const bullDiscount = Math.max(
-    Math.max(0.001, baseDiscount - 0.015),
-    bullGrowth + 0.02
-  );
+  const proposedBullDiscount = Math.max(0.001, baseDiscount - 0.015);
+  const bullDiscount =
+    inputs.mode === "simple"
+      ? Math.max(proposedBullDiscount, bullGrowth + 0.02)
+      : proposedBullDiscount;
 
   const scenarios = {
     bear: buildScenario(inputs, baseGrowth - 0.02, baseDiscount + 0.015),
@@ -171,6 +233,17 @@ export function calculateDcf(inputs: DcfInputs): DcfResult {
     inputs.currentPrice > 0 && inputs.currentDividend > 0
       ? inputs.currentDividend / inputs.currentPrice
       : null;
+  const yieldOnCostTrajectory = projectYieldOnCost(inputs, baseGrowth);
+  const decomposition =
+    inputs.mode === "advanced"
+      ? twoStageDDMParts(
+          inputs.currentDividend,
+          baseGrowth,
+          inputs.phase1Years,
+          inputs.terminalGrowth,
+          baseDiscount
+        )
+      : null;
 
   return {
     scenarios,
@@ -179,7 +252,26 @@ export function calculateDcf(inputs: DcfInputs): DcfResult {
     dividendProjection,
     sensitivity,
     breakEvenYield,
+    yieldOnCostTrajectory,
+    decomposition,
   };
+}
+
+function projectYieldOnCost(inputs: DcfInputs, baseGrowth: number): YocPoint[] {
+  if (!(inputs.currentPrice > 0) || !(inputs.currentDividend > 0)) return [];
+  const out: YocPoint[] = [];
+  let div = inputs.currentDividend;
+  // Year 0: today's yield (the "break-even" yield).
+  out.push({ year: 0, yieldOnCost: div / inputs.currentPrice });
+  for (let y = 1; y <= 10; y++) {
+    if (inputs.mode === "advanced" && y > Math.round(inputs.phase1Years)) {
+      div *= 1 + inputs.terminalGrowth;
+    } else {
+      div *= 1 + baseGrowth;
+    }
+    out.push({ year: y, yieldOnCost: div / inputs.currentPrice });
+  }
+  return out;
 }
 
 function buildScenario(

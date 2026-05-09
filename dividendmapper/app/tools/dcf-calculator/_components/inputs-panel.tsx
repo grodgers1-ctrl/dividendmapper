@@ -97,7 +97,12 @@ export function InputsPanel({
       />
       <CurrencyBanner currency={currency} />
 
-      <div className="mt-8 grid gap-5 md:grid-cols-2">
+      <ModeToggle
+        mode={inputs.mode}
+        onChange={(mode) => patch({ mode })}
+      />
+
+      <div className="mt-6 grid gap-5 md:grid-cols-2">
         <NumberField
           id="dcf-dividend"
           label={
@@ -174,40 +179,49 @@ export function InputsPanel({
           onChange={(v) => patch({ discountRate: v })}
         />
 
-        <SliderField
-          id="dcf-growth"
-          label={
-            <LabelWithInfo
-              title="Dividend growth rate (permanent)"
-              infoLabel="What's the dividend growth rate?"
-            >
-              <p>
-                <strong>Dividend growth rate.</strong> How fast you expect the
-                dividend to grow each year, forever.
-              </p>
-              <p className="mt-2 text-muted-foreground">
-                Ticker lookup pre-fills a 3-year CAGR from past payments — a
-                useful starting point but not a forecast. Real-world dividend
-                growth varies with payout ratios, business cycles, and
-                management decisions. 3–5% is a sober long-run figure for
-                mature payers.
-              </p>
-              <p className="mt-2 text-muted-foreground">
-                Must stay below your discount rate or the model returns
-                infinity (a stock paying ever-growing dividends faster than
-                you discount them is, in theory, worth everything).
-              </p>
-            </LabelWithInfo>
-          }
-          value={Math.round(inputs.growthRate * 1000) / 10}
-          onChange={(v) => patch({ growthRate: v / 100 })}
-          min={0}
-          max={12}
-          step={0.1}
-          displayValue={`${(inputs.growthRate * 100).toFixed(1)}%`}
-          helpText="Must stay below your discount rate. 3–5% is a sober long-run figure."
-        />
-        <GrowthHint growth={inputs.growthRate} discount={inputs.discountRate} />
+        {inputs.mode === "simple" ? (
+          <>
+            <SliderField
+              id="dcf-growth"
+              label={
+                <LabelWithInfo
+                  title="Dividend growth rate (permanent)"
+                  infoLabel="What's the dividend growth rate?"
+                >
+                  <p>
+                    <strong>Dividend growth rate.</strong> How fast you expect
+                    the dividend to grow each year, forever.
+                  </p>
+                  <p className="mt-2 text-muted-foreground">
+                    Ticker lookup pre-fills a 3-year CAGR from past payments
+                    — a useful starting point but not a forecast. Real-world
+                    dividend growth varies with payout ratios, business cycles,
+                    and management decisions. 3–5% is a sober long-run figure
+                    for mature payers.
+                  </p>
+                  <p className="mt-2 text-muted-foreground">
+                    Must stay below your discount rate or the model returns
+                    infinity (a stock paying ever-growing dividends faster than
+                    you discount them is, in theory, worth everything).
+                  </p>
+                </LabelWithInfo>
+              }
+              value={Math.round(inputs.growthRate * 1000) / 10}
+              onChange={(v) => patch({ growthRate: v / 100 })}
+              min={0}
+              max={12}
+              step={0.1}
+              displayValue={`${(inputs.growthRate * 100).toFixed(1)}%`}
+              helpText="Must stay below your discount rate. 3–5% is a sober long-run figure."
+            />
+            <GrowthHint
+              growth={inputs.growthRate}
+              discount={inputs.discountRate}
+            />
+          </>
+        ) : (
+          <AdvancedSliders inputs={inputs} patch={patch} />
+        )}
       </div>
 
       <footer className="mt-6 rounded-lg border border-dashed border-border bg-background/60 p-4 text-xs leading-relaxed text-muted-foreground">
@@ -449,6 +463,188 @@ function CurrencyBanner({
       — the listed currency for this ticker. Tax wrappers and risk-free rate
       still follow your locale toggle.
     </p>
+  );
+}
+
+function ModeToggle({
+  mode,
+  onChange,
+}: {
+  mode: "simple" | "advanced";
+  onChange: (mode: "simple" | "advanced") => void;
+}) {
+  const tabs: {
+    key: "simple" | "advanced";
+    label: string;
+    sub: string;
+  }[] = [
+    {
+      key: "simple",
+      label: "Simple",
+      sub: "Gordon Growth — one permanent rate",
+    },
+    {
+      key: "advanced",
+      label: "Advanced",
+      sub: "2-stage DDM — high-growth then terminal",
+    },
+  ];
+  return (
+    <div className="mt-6">
+      <div className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+        Valuation model
+        <InfoPopover label="Which model should I use?">
+          <p>
+            <strong>Simple (Gordon Growth).</strong> Best for mature dividend
+            payers whose growth is steady and approximately permanent — most
+            FTSE 100 income stocks, Dividend Aristocrats.
+          </p>
+          <p className="mt-2 text-muted-foreground">
+            <strong className="text-foreground">Advanced (2-stage DDM).</strong>{" "}
+            Better for growers — companies you expect to compound dividends
+            faster for a few years before settling to a slower long-run rate.
+            You set how long the high-growth phase lasts and what the terminal
+            rate looks like.
+          </p>
+        </InfoPopover>
+      </div>
+      <div
+        role="tablist"
+        aria-label="Valuation model"
+        className="mt-2 flex flex-col rounded-lg border border-border bg-background p-1 sm:flex-row"
+      >
+        {tabs.map((t) => (
+          <button
+            key={t.key}
+            type="button"
+            role="tab"
+            aria-selected={mode === t.key}
+            onClick={() => onChange(t.key)}
+            className={cn(
+              "flex-1 rounded-md px-3 py-2 text-left transition-colors sm:text-center",
+              mode === t.key
+                ? "bg-brand-500/15 text-foreground"
+                : "text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+            )}
+          >
+            <span className="block text-sm font-medium">{t.label}</span>
+            <span className="mt-0.5 block text-[11px] text-muted-foreground">
+              {t.sub}
+            </span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function AdvancedSliders({
+  inputs,
+  patch,
+}: {
+  inputs: DcfInputs;
+  patch: (p: Partial<DcfInputs>) => void;
+}) {
+  const phase1Pct = (inputs.phase1Growth * 100).toFixed(1);
+  const terminalPct = (inputs.terminalGrowth * 100).toFixed(1);
+  const valid = inputs.terminalGrowth < inputs.discountRate;
+  return (
+    <>
+      <SliderField
+        id="dcf-phase1-growth"
+        label={
+          <LabelWithInfo
+            title="Phase 1 growth rate"
+            infoLabel="What's the Phase 1 growth rate?"
+          >
+            <p>
+              <strong>Phase 1 growth rate.</strong> The rate at which dividends
+              grow during the high-growth phase — typically 3–10 years out.
+            </p>
+            <p className="mt-2 text-muted-foreground">
+              Higher than the terminal rate; this is the period when the
+              company is still expanding payouts faster than the long-run
+              economy. Ticker lookup pre-fills a 3-year CAGR from past
+              dividends as a starting point.
+            </p>
+          </LabelWithInfo>
+        }
+        value={Math.round(inputs.phase1Growth * 1000) / 10}
+        onChange={(v) => patch({ phase1Growth: v / 100 })}
+        min={0}
+        max={20}
+        step={0.5}
+        displayValue={`${phase1Pct}%`}
+        helpText="Faster than terminal — that's the whole point of Phase 1."
+      />
+      <SliderField
+        id="dcf-phase1-years"
+        label={
+          <LabelWithInfo
+            title="Phase 1 length (years)"
+            infoLabel="How many years should I pick?"
+          >
+            <p>
+              <strong>Phase 1 length.</strong> How many years you expect the
+              high-growth rate to last before the company settles into the
+              terminal rate.
+            </p>
+            <p className="mt-2 text-muted-foreground">
+              5–10 years is the most common range. Longer phases give the
+              high-growth assumption more weight in the answer; shorter phases
+              put more weight on the terminal assumption.
+            </p>
+          </LabelWithInfo>
+        }
+        value={Math.round(inputs.phase1Years)}
+        onChange={(v) => patch({ phase1Years: v })}
+        min={3}
+        max={15}
+        step={1}
+        displayValue={`${Math.round(inputs.phase1Years)} yrs`}
+      />
+      <SliderField
+        id="dcf-terminal-growth"
+        label={
+          <LabelWithInfo
+            title="Terminal growth rate"
+            infoLabel="What's the terminal growth rate?"
+          >
+            <p>
+              <strong>Terminal growth rate.</strong> What you expect the
+              dividend to grow at forever, after the high-growth phase ends.
+            </p>
+            <p className="mt-2 text-muted-foreground">
+              No company can outgrow the broader economy indefinitely, so a
+              sober terminal rate sits around long-run nominal GDP — 2–3% is
+              typical. Must stay below your discount rate or the model returns
+              infinity.
+            </p>
+          </LabelWithInfo>
+        }
+        value={Math.round(inputs.terminalGrowth * 1000) / 10}
+        onChange={(v) => patch({ terminalGrowth: v / 100 })}
+        min={0}
+        max={6}
+        step={0.1}
+        displayValue={`${terminalPct}%`}
+        helpText="2–3% is a sober long-run figure (≈ nominal GDP)."
+      />
+      {valid ? (
+        <p className="self-end text-xs text-muted-foreground">
+          Terminal spread{" "}
+          <span className="font-mono font-medium text-foreground">
+            {((inputs.discountRate - inputs.terminalGrowth) * 100).toFixed(1)}pp
+          </span>{" "}
+          between discount and terminal — the engine of the long-run answer.
+        </p>
+      ) : (
+        <p className="self-end text-xs text-negative">
+          Terminal ≥ discount: the model returns infinity. Lower the terminal
+          rate or raise the discount.
+        </p>
+      )}
+    </>
   );
 }
 

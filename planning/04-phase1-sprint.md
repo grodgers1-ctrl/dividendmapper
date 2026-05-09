@@ -773,8 +773,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
 | Day | Build | Marketing (parallel) |
 |-----|-------|---------------------|
 | **Day 6** | Retirement calculator — US mode, State Pension / Social Security panel, income breakdown chart. Locale toggle switches all labels and calculations correctly. | Finish T212 SIPP guide draft. Begin UK dividend tax guide draft. |
-| **Day 7** | DCF calculator — ticker lookup API route. Simple (Gordon Growth) mode: inputs, intrinsic value output, margin of safety, scenario table. | Continue Reddit participation (answer 2–3 threads, no product mention yet). |
-| **Day 8** | DCF calculator — 2-stage DDM mode, sensitivity table, dividend stream bar chart, break-even yield. Both locales. | Finalise blog posts. Prepare Reddit launch post drafts. |
+| **Day 7** ✅ | **DCF calculator — Simple mode shipped.** Ticker lookup API (`/api/market/quote`, EODHD .L / Polygon US, 15-min in-memory cache, GBX→GBP, 3-year dividend CAGR with outlier guard). Gordon Growth + 2-stage DDM in calc layer (advanced UI deferred). Inputs panel with currency-aware fields, info popovers on every jargon term, discount-rate presets. Result card with plain-English verdict line, intrinsic value, MOS badge. Scenarios table. **Sensitivity table moved up from Day 8** with heatmap colouring (green/amber/red by MOS band). 15-year dividend fan chart (Bear/Base/Bull) **moved up from Day 8**. Bull-spread ≥2pp clamp to stop absurd 1pp-spread intrinsic values. | Continue Reddit participation (answer 2–3 threads, no product mention yet). |
+| **Day 8** | DCF calculator — **2-stage DDM mode toggle in UI** (calc layer is done; just needs the InputsPanel sliders for phase1Growth / phase1Years / terminalGrowth). **Break-even yield card** (calc layer exposes `result.breakEvenYield`). **PV decomposition donut** (Phase 1 PV vs Terminal PV — only meaningful in 2-stage mode). Optional: intrinsic-vs-current-price scenario bar chart. | Finalise blog posts. Prepare Reddit launch post drafts. |
 | **Day 9** | Blog infrastructure (MDX pages). Publish T212 SIPP guide + dividend tax guide. All SEO metadata. Sitemap. Structured data. og:images. | Prepare Product Hunt listing. Brief 5–10 friends for Day 10 upvotes. |
 | **Day 10** | Full QA pass: Core Web Vitals check, both locales, mobile responsive, all calculator edge cases (growth rate ≥ discount rate, zero portfolio, max ages). **Deploy production.** | **Launch day.** See marketing plan launch sequence. |
 
@@ -795,22 +795,22 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
 ## Phase 1 Definition of Done
 
-- [ ] Waitlist page live and collecting emails in Supabase
-- [ ] UK locale: all labels, currency, tax wrappers, calculator inputs correct
-- [ ] US locale: all labels, currency, tax wrappers, calculator inputs correct
-- [ ] Locale toggle persists on page refresh (localStorage)
-- [ ] Retirement calculator: FIRE number, 3-scenario chart, income breakdown — all compute correctly
-- [ ] Retirement calculator: State Pension / Social Security income subtracted from target before FIRE calculation
-- [ ] DCF calculator: simple mode (Gordon Growth) returns correct intrinsic value
-- [ ] DCF calculator: advanced mode (2-stage DDM) returns correct intrinsic value
-- [ ] DCF calculator: sensitivity table renders without errors (growth ≥ discount shows "—" not NaN)
-- [ ] DCF calculator: ticker lookup returns current price and dividend data
-- [ ] Margin of safety badge shows correct colour (green / amber / red)
+- [x] Waitlist page live and collecting emails in Supabase
+- [x] UK locale: all labels, currency, tax wrappers, calculator inputs correct
+- [x] US locale: all labels, currency, tax wrappers, calculator inputs correct
+- [x] Locale toggle persists on page refresh (localStorage)
+- [x] Retirement calculator: FIRE number, 3-scenario chart, income breakdown — all compute correctly
+- [x] Retirement calculator: State Pension / Social Security income subtracted from target before FIRE calculation
+- [x] DCF calculator: simple mode (Gordon Growth) returns correct intrinsic value
+- [ ] DCF calculator: advanced mode (2-stage DDM) returns correct intrinsic value *(calc layer ✅, UI toggle pending Day 8)*
+- [x] DCF calculator: sensitivity table renders without errors (growth ≥ discount shows "—" not NaN)
+- [x] DCF calculator: ticker lookup returns current price and dividend data *(plus 3-year dividend CAGR auto-applied)*
+- [x] Margin of safety badge shows correct colour (green / amber / red)
 - [ ] All pages pass Core Web Vitals (LCP < 2.5s, CLS < 0.1, INP < 200ms)
 - [ ] Sitemap submitted to Google Search Console
 - [ ] Both blog posts published with internal links to calculators
 - [ ] og:image cards working (verified in Twitter Card Validator and LinkedIn Post Inspector)
-- [ ] Disclaimer present on all calculator pages: "This is not financial or tax advice."
+- [x] Disclaimer present on all calculator pages: "This is not financial or tax advice."
 - [ ] Mobile layout tested on 390px (iPhone) and 768px (iPad) widths
 
 ---

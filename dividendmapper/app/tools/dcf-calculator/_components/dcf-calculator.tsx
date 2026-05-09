@@ -8,6 +8,8 @@ import { ResultCard } from "./result-card";
 import { ScenariosTable } from "./scenarios-table";
 import { SensitivityTable } from "./sensitivity-table";
 import { DividendProjectionChart } from "./dividend-projection-chart";
+import { BreakEvenYieldCard } from "./break-even-yield-card";
+import { PvDecomposition } from "./pv-decomposition";
 
 const UK_DEFAULTS: DcfInputs = {
   mode: "simple",
@@ -80,6 +82,8 @@ export function DcfCalculator() {
         onReset={handleReset}
       />
       <ResultCard inputs={inputs} result={result} tickerName={tickerName} />
+      <BreakEvenYieldCard inputs={inputs} result={result} />
+      <PvDecomposition inputs={inputs} result={result} />
       <DividendProjectionChart inputs={inputs} result={result} />
       <ScenariosTable inputs={inputs} result={result} />
       <SensitivityTable inputs={inputs} result={result} />
