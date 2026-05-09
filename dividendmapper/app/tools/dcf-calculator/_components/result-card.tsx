@@ -1,0 +1,253 @@
+"use client";
+
+import { useLocale } from "@/lib/locale/context";
+import { formatPercent } from "@/lib/locale/format";
+import { classifyMos, type DcfInputs, type DcfResult, type MosBand } from "@/lib/calculators/dcf";
+import { cn } from "@/lib/utils";
+
+interface ResultCardProps {
+  inputs: DcfInputs;
+  result: DcfResult;
+}
+
+export function ResultCard({ inputs, result }: ResultCardProps) {
+  const { config } = useLocale();
+  const base = result.scenarios.base;
+  const weighted = result.weighted;
+
+  const mosBand = classifyMos(base.marginOfSafety);
+  const weightedBand = classifyMos(weighted.marginOfSafety);
+
+  return (
+    <section
+      aria-label="Intrinsic value summary"
+      className="rounded-xl border border-border bg-card p-6"
+    >
+      <div className="grid gap-6 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+        <div>
+          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            Intrinsic value · Base scenario
+          </p>
+          <p className="mt-3 font-mono text-4xl font-semibold tabular-nums text-foreground md:text-5xl">
+            {base.intrinsicValue !== null
+              ? perShareCurrency(base.intrinsicValue, config)
+              : "—"}
+          </p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            What the Gordon Growth Model says one share is worth, given your
+            inputs.{" "}
+            <span className="text-foreground">
+              Growth {(base.growth * 100).toFixed(1)}%, discount{" "}
+              {(base.discount * 100).toFixed(1)}%.
+            </span>
+          </p>
+
+          <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+            <div>
+              <dt className="text-xs uppercase tracking-wider text-muted-foreground">
+                Current price
+              </dt>
+              <dd className="mt-0.5 font-mono text-base font-medium tabular-nums text-foreground">
+                {inputs.currentPrice > 0
+                  ? perShareCurrency(inputs.currentPrice, config)
+                  : "—"}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs uppercase tracking-wider text-muted-foreground">
+                vs current price
+              </dt>
+              <dd
+                className={cn(
+                  "mt-0.5 font-mono text-base font-medium tabular-nums",
+                  base.vsCurrentPrice === null
+                    ? "text-foreground"
+                    : base.vsCurrentPrice >= 0
+                      ? "text-positive"
+                      : "text-negative"
+                )}
+              >
+                {base.vsCurrentPrice === null
+                  ? "—"
+                  : formatPercent(base.vsCurrentPrice * 100, 1)}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs uppercase tracking-wider text-muted-foreground">
+                Probability-weighted
+              </dt>
+              <dd className="mt-0.5 font-mono text-base font-medium tabular-nums text-foreground">
+                {weighted.intrinsicValue !== null
+                  ? perShareCurrency(weighted.intrinsicValue, config)
+                  : "—"}
+                {weighted.vsCurrentPrice !== null && (
+                  <span
+                    className={cn(
+                      "ml-2 text-xs",
+                      weighted.vsCurrentPrice >= 0
+                        ? "text-positive"
+                        : "text-negative"
+                    )}
+                  >
+                    {formatPercent(weighted.vsCurrentPrice * 100, 1)}
+                  </span>
+                )}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs uppercase tracking-wider text-muted-foreground">
+                Weighted MOS
+              </dt>
+              <dd className="mt-0.5 text-base">
+                <MosLabel band={weightedBand} mos={weighted.marginOfSafety} />
+              </dd>
+            </div>
+          </dl>
+        </div>
+
+        <MosBadge band={mosBand} mos={base.marginOfSafety} />
+      </div>
+    </section>
+  );
+}
+
+function MosBadge({
+  band,
+  mos,
+}: {
+  band: MosBand;
+  mos: number | null;
+}) {
+  const palette = BAND_PALETTES[band];
+  return (
+    <div
+      className={cn(
+        "flex flex-col justify-between rounded-xl border p-5",
+        palette.container
+      )}
+    >
+      <div>
+        <p
+          className={cn(
+            "text-xs font-medium uppercase tracking-wider",
+            palette.label
+          )}
+        >
+          Margin of safety
+        </p>
+        <p
+          className={cn(
+            "mt-2 font-mono text-3xl font-semibold tabular-nums md:text-4xl",
+            palette.value
+          )}
+        >
+          {mos === null ? "—" : `${(mos * 100).toFixed(1)}%`}
+        </p>
+        <p className={cn("mt-1 text-sm font-medium", palette.headline)}>
+          {palette.headline_text}
+        </p>
+      </div>
+      <p className={cn("mt-4 text-xs leading-relaxed", palette.body)}>
+        {palette.body_text}
+      </p>
+    </div>
+  );
+}
+
+function MosLabel({
+  band,
+  mos,
+}: {
+  band: MosBand;
+  mos: number | null;
+}) {
+  const palette = BAND_PALETTES[band];
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-2 rounded-full border px-2.5 py-0.5 text-xs font-medium",
+        palette.pill
+      )}
+    >
+      <span className={cn("h-1.5 w-1.5 rounded-full", palette.dot)} />
+      {mos === null ? "—" : `${(mos * 100).toFixed(1)}%`}{" "}
+      <span className="text-muted-foreground">
+        ({palette.headline_text.toLowerCase()})
+      </span>
+    </span>
+  );
+}
+
+interface BandPalette {
+  container: string;
+  label: string;
+  value: string;
+  headline: string;
+  headline_text: string;
+  body: string;
+  body_text: string;
+  pill: string;
+  dot: string;
+}
+
+const BAND_PALETTES: Record<MosBand, BandPalette> = {
+  attractive: {
+    container: "border-positive/30 bg-positive/5",
+    label: "text-positive",
+    value: "text-foreground",
+    headline: "text-positive",
+    headline_text: "Attractive",
+    body: "text-muted-foreground",
+    body_text:
+      "Intrinsic value sits more than 20% above the current price — the kind of cushion classic value investors look for.",
+    pill: "border-positive/30 bg-positive/5 text-foreground",
+    dot: "bg-positive",
+  },
+  fair: {
+    container:
+      "border-income-500/40 bg-income-50 dark:border-income-500/30 dark:bg-income-900/15",
+    label: "text-income-600 dark:text-income-100",
+    value: "text-foreground",
+    headline: "text-income-600 dark:text-income-100",
+    headline_text: "Fair value",
+    body: "text-muted-foreground",
+    body_text:
+      "Intrinsic value is in line with the current price — no obvious bargain, no obvious mispricing. Worth checking your assumptions before acting.",
+    pill: "border-income-500/40 bg-income-50 text-foreground dark:border-income-500/30 dark:bg-income-900/15",
+    dot: "bg-income-500",
+  },
+  overvalued: {
+    container: "border-negative/30 bg-negative/5",
+    label: "text-negative",
+    value: "text-foreground",
+    headline: "text-negative",
+    headline_text: "Overvalued",
+    body: "text-muted-foreground",
+    body_text:
+      "The model values the share below its current price. Either the market knows something your inputs don't, or your discount rate is too generous.",
+    pill: "border-negative/30 bg-negative/5 text-foreground",
+    dot: "bg-negative",
+  },
+  unknown: {
+    container: "border-border bg-background",
+    label: "text-muted-foreground",
+    value: "text-foreground",
+    headline: "text-muted-foreground",
+    headline_text: "Not enough data",
+    body: "text-muted-foreground",
+    body_text:
+      "Enter a positive dividend, current price, and a growth rate below your discount rate to see the margin of safety.",
+    pill: "border-border bg-muted text-muted-foreground",
+    dot: "bg-muted-foreground",
+  },
+};
+
+function perShareCurrency(value: number, config: ReturnType<typeof useLocale>["config"]): string {
+  // Stock prices want 2 decimal places at any scale — never compact notation.
+  return new Intl.NumberFormat(config.locale === "uk" ? "en-GB" : "en-US", {
+    style: "currency",
+    currency: config.currencyCode,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
+}
