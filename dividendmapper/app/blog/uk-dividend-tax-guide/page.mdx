@@ -1,0 +1,99 @@
+import { postMetadata } from "@/lib/blog/posts";
+import { PostHeader, PostFooter } from "@/components/blog/post-header";
+
+export const metadata = postMetadata("uk-dividend-tax-guide");
+
+<PostHeader slug="uk-dividend-tax-guide" />
+
+If you're holding dividend stocks outside an ISA in 2026/27, your tax bill probably went up. The ordinary dividend rate rose from 8.75% to 10.75% from 6 April this year. The higher-rate dividend rate went from 33.75% to 35.75%. The dividend allowance, the slice you pay nothing on, stayed at £500.
+
+Most articles on this topic stop at the rate table. That's not enough. The headline rates only matter once you understand which slice of your income they apply to, and how ISAs and SIPPs change the picture. Here's the practical version.
+
+## What you actually pay in 2026/27
+
+The dividend allowance is £500. The first £500 of dividend income is taxed at zero, regardless of your other income. After that:
+
+| Band | Rate | Where it applies |
+|---|---|---|
+| Ordinary | 10.75% | Within the basic-rate income band (£0 to £50,270) |
+| Upper | 35.75% | Within the higher-rate band (£50,271 to £125,140) |
+| Additional | 39.35% | Above £125,140 |
+
+Only the ordinary and upper rates moved this year, both by 2pp. The 39.35% additional rate is unchanged. If you're a basic-rate taxpayer with £2,000 of GIA dividends, your bill is £161.25 in 2026/27 versus £131.25 the year before. Not life-changing on £2,000, but it scales.
+
+## The "highest slice" rule
+
+Dividend income gets stacked on top of your earnings, in this order: non-savings income (salary, pensions, rent), then savings interest, then dividends. The Personal Allowance fills up the bottom of the stack first.
+
+This matters when you're near a band boundary. Imagine you earn £48,000 in salary and receive £4,000 in dividends from a GIA. The first £500 of dividends is covered by the allowance. The next £2,270 sits in your remaining basic-rate band, taxed at 10.75% (£244). The final £1,230 spills into the higher-rate band, taxed at 35.75% (£440). Total: £684 on £4,000 of dividends.
+
+If your salary had been £50,000 instead, every dividend pound above the allowance would land in the higher-rate band straight away. Same dividend income, very different bill. People are often surprised by this, especially if their salary has crept up across a tax year.
+
+## Why ISAs matter
+
+Inside a Stocks and Shares ISA, dividends are not taxed. No allowance, no rates, no Self Assessment line. The 2026/27 ISA limit is £20,000 across all ISA types combined.
+
+For a UK dividend investor, this is the simplest tax planning available. If your dividend income is going to exceed the £500 allowance, the next £20,000 of contributions probably belong inside an ISA before they go anywhere else. Our [retirement calculator](/tools/retirement-calculator) splits projected income across ISA, SIPP and GIA so you can see what shielding looks like at retirement.
+
+The thing to watch is the £20,000 cap. It refills every 6 April but doesn't roll over. Lose a year, lose the allowance.
+
+## SIPPs work differently
+
+A SIPP doesn't shield dividends from UK tax in the same way an ISA does. Dividends grow tax-free inside the wrapper, but withdrawals from the 75% taxable pot are taxed as non-savings income at your marginal rate when you draw them. The trade is simple: you got tax relief going in, you pay tax coming out.
+
+For a basic-rate taxpayer, that often nets out roughly the same as an ISA. For a higher-rate taxpayer who'll drop to basic rate in retirement, the SIPP wins because you got 40% relief in and pay 20% out. The Annual Allowance is £60,000 for 2026/27 (unchanged since April 2023), much higher than the £20,000 ISA cap.
+
+You can take the first 25% of a SIPP tax-free, capped at the £268,275 Lump Sum Allowance over your lifetime. The minimum access age is 55 in 2026/27, rising to 57 in April 2028. Triggering taxable income drops your future Annual Allowance to £10,000 (the MPAA), which can quietly wreck retirement contribution plans if you start drawdown in your late 50s while still earning.
+
+## Who actually pays dividend tax
+
+Most UK retail investors pay zero or close to zero dividend tax. The path runs roughly like this:
+
+- ISA holders pay nothing on whatever sits inside the wrapper. That covers a lot of people in a lot of years.
+- A basic-rate investor with no other income pays nothing because of the £12,570 Personal Allowance.
+- A basic-rate investor with a normal salary pays 10.75% on dividends above the £500 allowance. £1,000 of taxable dividends costs £53.75.
+- A higher-rate investor pays 35.75% on dividends in their higher-rate band. £1,000 there costs £357.50.
+
+If you're north of the £125,140 additional-rate threshold, every dividend pound above the allowance costs 39.35%. That hasn't moved since 2022, but you've also lost your Personal Allowance entirely between £100k and £125,140, which produces some genuinely strange marginal rates around that band.
+
+## Worked example: £30,000 of new contributions
+
+Say you have £30,000 to invest this tax year, and you expect roughly 4% in dividend income from the eventual portfolio. The mechanical priority for a basic-rate taxpayer:
+
+1. **First £20,000 into an ISA.** Dividend income inside is fully tax-free.
+2. **Next £10,000 into a GIA.** That portfolio will throw off about £400/year, comfortably under the £500 dividend allowance.
+
+For a higher-rate taxpayer with a generous SIPP allowance, the order often flips:
+
+1. **£20,000 into an ISA** (maxes the cap).
+2. **Whatever you can spare into a SIPP** for the 40% tax relief.
+3. **Anything left into a GIA**.
+
+Both paths assume you have access to a SIPP and that pension lock-up doesn't bother you. If you'll need the money before age 55, the GIA might still beat the SIPP for that slice, even with the dividend tax bill.
+
+## The bits that catch people out
+
+A few things that are easy to miss:
+
+- **The allowance is dividend-only.** You don't pay 0% on the first £500 of salary because the allowance only applies to dividend income.
+- **Reinvested dividends are still taxed.** An accumulating fund in a GIA still triggers a tax event each distribution, even though no cash leaves your account. UK platforms report this on your annual statement, but it surprises new investors.
+- **Foreign dividends.** US dividends in a UK GIA face 15% withholding (with a W-8BEN form on file) before UK tax. The W-8BEN is essential. Without it, withholding jumps to 30% and the UK system doesn't refund the difference.
+- **Distributions from investment trusts.** Most are taxed as dividends. A few (REITs, some bond-focused trusts) pay PIDs or interest distributions instead, taxed differently.
+
+## What's coming
+
+Two changes worth diarising:
+
+- **April 2027:** Cash ISA contributions cap at £12,000 within the £20,000 overall limit, for under-65s. Stocks and Shares ISA capacity is unaffected. If you're a heavy cash-ISA user, that's the year to plan around.
+- **April 2028:** Pension access age rises from 55 to 57.
+
+Beyond that, the Personal Allowance and income tax thresholds are frozen until April 2031. The dividend allowance has already shrunk from £5,000 in 2017/18 to £500 today. The trend is fairly clear: more dividend tax, less ISA flexibility, longer pension lock-up.
+
+The good news is that none of it changes the basic playbook. Use ISAs first. Then SIPPs if you can't lock the money up. Then GIAs, knowing you'll keep £500 of dividends per year tax-free regardless.
+
+This is illustrative, not advice. Your situation likely has wrinkles a blog post can't see. If anything in here is borderline for you, talk to a qualified adviser. Tax rules change, and we'll update this guide each April.
+
+<PostFooter
+  nextHref="/tools/retirement-calculator"
+  nextLabel="See your dividend income at retirement, by wrapper"
+/>

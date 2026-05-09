@@ -1,0 +1,92 @@
+/**
+ * Single source of truth for blog post metadata. The blog index, the sitemap,
+ * and each post's structured-data block all consume this list. When adding a
+ * new post:
+ *   1. Append an entry here
+ *   2. Create app/blog/{slug}/page.mdx
+ *   3. The sitemap and index pick it up automatically
+ */
+
+export interface BlogPost {
+  slug: string;
+  title: string;
+  /** One-line summary used in the index card and meta description. */
+  description: string;
+  /** Publication date in ISO 8601 (yyyy-mm-dd). */
+  publishedAt: string;
+  /** Last meaningful update — defaults to publishedAt when missing. */
+  updatedAt?: string;
+  /** Human reading-time estimate, e.g. "8 min". */
+  readingTime: string;
+  /** Short tags shown on the index card. Keep to 1-3. */
+  tags: string[];
+  /** Locale this post is primarily aimed at — affects index ordering by locale toggle. */
+  locale: "uk" | "us" | "both";
+}
+
+export const POSTS: BlogPost[] = [
+  {
+    slug: "uk-dividend-tax-guide",
+    title: "UK Dividend Tax Guide 2026/27",
+    description:
+      "What you actually pay on UK dividends in 2026/27. Allowance, rates, ISA and SIPP shielding, and worked examples for the gap year.",
+    publishedAt: "2026-05-10",
+    readingTime: "9 min",
+    tags: ["UK", "Tax"],
+    locale: "uk",
+  },
+  {
+    slug: "trading-212-sipp-review",
+    title: "Trading 212 SIPP Review: A Year In",
+    description:
+      "Honest look at the T212 SIPP: zero-fee structure, tax-relief mechanics, what it doesn't do, and where it sits vs HL and AJ Bell for dividend investors.",
+    publishedAt: "2026-05-10",
+    readingTime: "10 min",
+    tags: ["UK", "Broker", "SIPP"],
+    locale: "uk",
+  },
+];
+
+/** Looks up a post by slug. Throws if not found — fail loudly during build. */
+export function requirePost(slug: string): BlogPost {
+  const post = POSTS.find((p) => p.slug === slug);
+  if (!post) {
+    throw new Error(`No blog post with slug: ${slug}`);
+  }
+  return post;
+}
+
+/** Format a publication date for human display, e.g. "10 May 2026". */
+export function formatPublishedDate(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return iso;
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(date);
+}
+
+/**
+ * Build the Next.js Metadata object for a post page from the manifest.
+ * Each post's MDX file does `export const metadata = postMetadata("slug")`
+ * so the manifest stays the single source of truth for title, description,
+ * canonical URL, and OpenGraph fields.
+ */
+export function postMetadata(slug: string): import("next").Metadata {
+  const post = requirePost(slug);
+  return {
+    title: post.title,
+    description: post.description,
+    alternates: { canonical: `/blog/${slug}` },
+    openGraph: {
+      title: post.title,
+      description: post.description,
+      url: `/blog/${slug}`,
+      type: "article",
+      publishedTime: post.publishedAt,
+      modifiedTime: post.updatedAt ?? post.publishedAt,
+    },
+    twitter: { card: "summary_large_image" },
+  };
+}
