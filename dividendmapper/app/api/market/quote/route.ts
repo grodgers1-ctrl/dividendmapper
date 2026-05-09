@@ -30,6 +30,12 @@ export interface QuoteData {
   dividend: number | null;
   /** Trailing dividend yield = dividend / price. */
   dividendYield: number | null;
+  /**
+   * 3-year dividend CAGR (decimal). Compares last-12mo dividend total to the
+   * 12mo total exactly 3 years earlier. null if either window is empty or the
+   * result is wildly out of range (treated as a data quirk, not real growth).
+   */
+  dividendGrowth3yr: number | null;
   /** Listed currency, ISO code (e.g. "GBP", "USD", "GBX" for pence). */
   currency: string | null;
   exchange: string | null;
@@ -106,13 +112,23 @@ async function fetchEodhd(ticker: string): Promise<QuoteData> {
   // EODHD wants e.g. ULVR.L — already in this format. Strip ".LON" alias.
   const symbol = ticker.replace(/\.LON$/, ".L");
 
-  const [quoteRes, fundRes] = await Promise.all([
+  // Fetch quote, fundamentals (forward dividend, name, currency), and 5 years
+  // of dividend history (for the 3-year CAGR) in parallel.
+  const fromDate = new Date();
+  fromDate.setFullYear(fromDate.getFullYear() - 5);
+  const fromStr = fromDate.toISOString().slice(0, 10);
+
+  const [quoteRes, fundRes, divRes] = await Promise.all([
     fetch(
       `https://eodhd.com/api/real-time/${encodeURIComponent(symbol)}?api_token=${apiKey}&fmt=json`,
       { cache: "no-store" }
     ),
     fetch(
       `https://eodhd.com/api/fundamentals/${encodeURIComponent(symbol)}?api_token=${apiKey}`,
+      { cache: "no-store" }
+    ),
+    fetch(
+      `https://eodhd.com/api/div/${encodeURIComponent(symbol)}?api_token=${apiKey}&fmt=json&from=${fromStr}`,
       { cache: "no-store" }
     ),
   ]);
@@ -144,6 +160,16 @@ async function fetchEodhd(ticker: string): Promise<QuoteData> {
     }
   }
 
+  let dividendGrowth3yr: number | null = null;
+  if (divRes.ok) {
+    try {
+      const divList: unknown = await divRes.json();
+      dividendGrowth3yr = compute3yrCagrFromEodhd(divList);
+    } catch {
+      // History is best-effort — leave growth null and let the user type it.
+    }
+  }
+
   // EODHD reports LSE prices in pence (GBX) by default. Convert to GBP so the
   // calculator's currency symbol matches the dividend.
   const adjustedPrice =
@@ -161,11 +187,28 @@ async function fetchEodhd(ticker: string): Promise<QuoteData> {
     price: adjustedPrice,
     dividend,
     dividendYield,
+    dividendGrowth3yr,
     currency: adjustedCurrency,
     exchange,
     name,
     fetchedAt: new Date().toISOString(),
   };
+}
+
+function compute3yrCagrFromEodhd(divList: unknown): number | null {
+  if (!Array.isArray(divList) || divList.length === 0) return null;
+  const events: DividendEvent[] = [];
+  for (const ev of divList) {
+    if (typeof ev !== "object" || ev === null) continue;
+    const obj = ev as Record<string, unknown>;
+    const dateStr = pickString(obj.date) ?? pickString(obj.paymentDate);
+    const amt = pickNumber(obj.value) ?? pickNumber(obj.unadjustedValue);
+    if (!dateStr || amt === null) continue;
+    const date = new Date(dateStr);
+    if (Number.isNaN(date.getTime())) continue;
+    events.push({ date, amount: amt });
+  }
+  return compute3yrCagr(events);
 }
 
 /* ─────────────────────────────────── Polygon (US) */
@@ -179,8 +222,10 @@ async function fetchPolygon(ticker: string): Promise<QuoteData> {
       `https://api.polygon.io/v2/aggs/ticker/${encodeURIComponent(ticker)}/prev?adjusted=true&apiKey=${apiKey}`,
       { cache: "no-store" }
     ),
+    // 30 events ≈ 7+ years for a quarterly payer — comfortably covers the
+    // 36–48mo lookback window the CAGR calc needs.
     fetch(
-      `https://api.polygon.io/v3/reference/dividends?ticker=${encodeURIComponent(ticker)}&order=desc&limit=20&apiKey=${apiKey}`,
+      `https://api.polygon.io/v3/reference/dividends?ticker=${encodeURIComponent(ticker)}&order=desc&limit=30&apiKey=${apiKey}`,
       { cache: "no-store" }
     ),
     fetch(
@@ -198,12 +243,15 @@ async function fetchPolygon(ticker: string): Promise<QuoteData> {
   const price = pickNumber(read(snapshot, ["results", 0, "c"]));
 
   let dividend: number | null = null;
+  let dividendGrowth3yr: number | null = null;
   if (dividendsRes.ok) {
     try {
       const dividendsData: unknown = await dividendsRes.json();
-      dividend = sumLast12MonthsDividends(read(dividendsData, ["results"]));
+      const events = parsePolygonDividends(read(dividendsData, ["results"]));
+      dividend = sumLast12Months(events);
+      dividendGrowth3yr = compute3yrCagr(events);
     } catch {
-      // Ignore — leave dividend null.
+      // Ignore — leave dividend / growth null.
     }
   }
 
@@ -230,6 +278,7 @@ async function fetchPolygon(ticker: string): Promise<QuoteData> {
     price,
     dividend,
     dividendYield,
+    dividendGrowth3yr,
     currency,
     exchange: null,
     name,
@@ -237,26 +286,82 @@ async function fetchPolygon(ticker: string): Promise<QuoteData> {
   };
 }
 
-function sumLast12MonthsDividends(events: unknown): number | null {
-  if (!Array.isArray(events) || events.length === 0) return null;
-  const cutoff = new Date();
-  cutoff.setFullYear(cutoff.getFullYear() - 1);
-  let total = 0;
-  let any = false;
+function parsePolygonDividends(events: unknown): DividendEvent[] {
+  if (!Array.isArray(events)) return [];
+  const out: DividendEvent[] = [];
   for (const ev of events) {
     if (typeof ev !== "object" || ev === null) continue;
     const obj = ev as Record<string, unknown>;
     const dateStr = pickString(obj.ex_dividend_date);
-    const cash = pickNumber(obj.cash_amount);
-    if (!dateStr || cash === null) continue;
+    const amt = pickNumber(obj.cash_amount);
+    if (!dateStr || amt === null) continue;
     const date = new Date(dateStr);
     if (Number.isNaN(date.getTime())) continue;
-    if (date >= cutoff) {
-      total += cash;
+    out.push({ date, amount: amt });
+  }
+  return out;
+}
+
+/* ─────────────────────────────────── shared dividend-history maths */
+
+interface DividendEvent {
+  date: Date;
+  amount: number;
+}
+
+function sumLast12Months(events: DividendEvent[]): number | null {
+  if (events.length === 0) return null;
+  const now = new Date();
+  const oneYearAgo = addYears(now, -1);
+  let total = 0;
+  let any = false;
+  for (const ev of events) {
+    if (ev.date > oneYearAgo && ev.date <= now) {
+      total += ev.amount;
       any = true;
     }
   }
   return any && total > 0 ? total : null;
+}
+
+/**
+ * 3-year dividend CAGR.
+ *
+ * Compares the dividend total over the trailing 12 months to the total over
+ * the 12 months ending 3 years ago. Returns null when either window is empty
+ * (initiated/suspended payments) or when the result is wildly out of range
+ * (special dividends, recent split-adjusted hiccups). The user can always
+ * override the value the calculator pre-fills.
+ */
+function compute3yrCagr(events: DividendEvent[]): number | null {
+  if (events.length === 0) return null;
+  const now = new Date();
+  const recentStart = addYears(now, -1);
+  const oldEnd = addYears(now, -3);
+  const oldStart = addYears(now, -4);
+
+  let recentSum = 0;
+  let oldSum = 0;
+  for (const ev of events) {
+    if (ev.date > recentStart && ev.date <= now) recentSum += ev.amount;
+    else if (ev.date > oldStart && ev.date <= oldEnd) oldSum += ev.amount;
+  }
+  if (recentSum <= 0 || oldSum <= 0) return null;
+  const cagr = Math.pow(recentSum / oldSum, 1 / 3) - 1;
+  if (!Number.isFinite(cagr)) return null;
+  // Outlier guard: dividend CAGR outside this band is almost always a data
+  // artefact (stock split that wasn't fully back-adjusted, one-off special
+  // dividend, currency change). Asymmetric because cuts are more common than
+  // sustained 30%+ hikes — tightened on the negative side after observing
+  // SCHD's 3-for-1 split throwing -26% in May 2026.
+  if (cagr < -0.2 || cagr > 0.3) return null;
+  return cagr;
+}
+
+function addYears(date: Date, years: number): Date {
+  const out = new Date(date);
+  out.setFullYear(date.getFullYear() + years);
+  return out;
 }
 
 /* ─────────────────────────────────── small helpers */

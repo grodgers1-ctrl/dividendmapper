@@ -4,6 +4,8 @@ import * as React from "react";
 import { useLocale } from "@/lib/locale/context";
 import { SliderField } from "@/components/ui/slider-field";
 import { NumberField } from "@/components/ui/number-field";
+import { InfoPopover } from "@/components/ui/info-popover";
+import { resolveCurrency } from "@/lib/calculators/dcf-currency";
 import type { DcfInputs } from "@/lib/calculators/dcf";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +21,7 @@ export type LookupState =
       fetchedAt: string;
       cached: boolean;
       missingFields: string[];
+      growthApplied: number | null;
     }
   | { status: "error"; ticker: string; message: string };
 
@@ -38,7 +41,8 @@ export function InputsPanel({
   onReset,
 }: InputsPanelProps) {
   const { config } = useLocale();
-  const symbol = config.currencySymbol;
+  const currency = resolveCurrency(inputs.currency, config);
+  const symbol = currency.symbol;
 
   function patch(p: Partial<DcfInputs>) {
     setInputs((prev) => ({ ...prev, ...p }));
@@ -76,26 +80,46 @@ export function InputsPanel({
       <TickerLookup
         lookup={lookup}
         setLookup={setLookup}
-        onApply={(price, dividend) =>
+        onApply={(p) =>
           patch({
-            ...(typeof price === "number" ? { currentPrice: price } : {}),
-            ...(typeof dividend === "number"
-              ? { currentDividend: dividend }
+            ...(typeof p.price === "number" ? { currentPrice: p.price } : {}),
+            ...(typeof p.dividend === "number"
+              ? { currentDividend: p.dividend }
+              : {}),
+            ...(typeof p.growthRate === "number"
+              ? { growthRate: p.growthRate }
+              : {}),
+            ...(p.currency !== undefined
+              ? { currency: p.currency }
               : {}),
           })
         }
       />
+      <CurrencyBanner currency={currency} />
 
       <div className="mt-8 grid gap-5 md:grid-cols-2">
         <NumberField
           id="dcf-dividend"
-          label="Annual dividend per share"
+          label={
+            <LabelWithInfo title="Annual dividend per share" infoLabel="What's a dividend?">
+              <p>
+                <strong>Annual dividend per share.</strong> The total cash a
+                share paid out over a year — sum of the four quarterly
+                dividends, or the single annual one for UK stocks.
+              </p>
+              <p className="mt-2 text-muted-foreground">
+                Trailing-twelve-month (TTM) or forward both work, just be
+                consistent across stocks. Ticker lookup gives you the
+                forward annual figure where the upstream API has it.
+              </p>
+            </LabelWithInfo>
+          }
           value={inputs.currentDividend}
           onChange={(v) => patch({ currentDividend: v })}
           min={0}
           step={0.01}
           prefix={symbol}
-          helpText="The trailing-twelve-month or forward dividend per share — both work, just be consistent."
+          helpText="One company-wide number, not just your dividend cheque."
         />
         <NumberField
           id="dcf-price"
@@ -110,7 +134,24 @@ export function InputsPanel({
 
         <SliderField
           id="dcf-discount"
-          label="Required rate of return"
+          label={
+            <LabelWithInfo
+              title="Required rate of return"
+              infoLabel="What's the required rate of return?"
+            >
+              <p>
+                <strong>Required rate of return (discount rate).</strong> The
+                annual return you&rsquo;d demand from this stock to compensate
+                for its risk.
+              </p>
+              <p className="mt-2 text-muted-foreground">
+                A common starting point is the 10-year government bond yield
+                plus an equity risk premium of roughly 3–5pp. Higher = more
+                conservative valuation; if intrinsic value still beats price
+                at a high discount rate, the margin of safety is real.
+              </p>
+            </LabelWithInfo>
+          }
           value={Math.round(inputs.discountRate * 1000) / 10}
           onChange={(v) => patch({ discountRate: v / 100 })}
           min={4}
@@ -135,14 +176,36 @@ export function InputsPanel({
 
         <SliderField
           id="dcf-growth"
-          label="Dividend growth rate (permanent)"
+          label={
+            <LabelWithInfo
+              title="Dividend growth rate (permanent)"
+              infoLabel="What's the dividend growth rate?"
+            >
+              <p>
+                <strong>Dividend growth rate.</strong> How fast you expect the
+                dividend to grow each year, forever.
+              </p>
+              <p className="mt-2 text-muted-foreground">
+                Ticker lookup pre-fills a 3-year CAGR from past payments — a
+                useful starting point but not a forecast. Real-world dividend
+                growth varies with payout ratios, business cycles, and
+                management decisions. 3–5% is a sober long-run figure for
+                mature payers.
+              </p>
+              <p className="mt-2 text-muted-foreground">
+                Must stay below your discount rate or the model returns
+                infinity (a stock paying ever-growing dividends faster than
+                you discount them is, in theory, worth everything).
+              </p>
+            </LabelWithInfo>
+          }
           value={Math.round(inputs.growthRate * 1000) / 10}
           onChange={(v) => patch({ growthRate: v / 100 })}
           min={0}
           max={12}
           step={0.1}
           displayValue={`${(inputs.growthRate * 100).toFixed(1)}%`}
-          helpText="Must stay below your discount rate, or the model blows up to infinity. 3–5% is a sober long-run figure."
+          helpText="Must stay below your discount rate. 3–5% is a sober long-run figure."
         />
         <GrowthHint growth={inputs.growthRate} discount={inputs.discountRate} />
       </div>
@@ -166,7 +229,12 @@ function TickerLookup({
 }: {
   lookup: LookupState;
   setLookup: React.Dispatch<React.SetStateAction<LookupState>>;
-  onApply: (price: number | null, dividend: number | null) => void;
+  onApply: (patch: {
+    price?: number | null;
+    dividend?: number | null;
+    currency?: string | null;
+    growthRate?: number | null;
+  }) => void;
 }) {
   const [ticker, setTicker] = React.useState("");
 
@@ -192,6 +260,7 @@ function TickerLookup({
       const data = json.data as {
         price: number | null;
         dividend: number | null;
+        dividendGrowth3yr: number | null;
         source: "EODHD" | "Polygon";
         name: string | null;
         currency: string | null;
@@ -200,7 +269,13 @@ function TickerLookup({
       const missing: string[] = [];
       if (data.price === null) missing.push("price");
       if (data.dividend === null) missing.push("dividend");
-      onApply(data.price, data.dividend);
+      if (data.dividendGrowth3yr === null) missing.push("growth");
+      onApply({
+        price: data.price,
+        dividend: data.dividend,
+        currency: data.currency,
+        growthRate: data.dividendGrowth3yr,
+      });
       setLookup({
         status: "success",
         ticker: cleaned,
@@ -210,6 +285,7 @@ function TickerLookup({
         fetchedAt: data.fetchedAt,
         cached: Boolean(json.cached),
         missingFields: missing,
+        growthApplied: data.dividendGrowth3yr,
       });
     } catch {
       setLookup({
@@ -321,16 +397,75 @@ function LookupStatus({ lookup }: { lookup: LookupState }) {
         from {lookup.source}
         {lookup.cached ? " (cached)" : ""} · {dateLabel}
       </p>
-      {lookup.missingFields.length > 0 ? (
-        <p className="mt-1 text-muted-foreground">
-          Missing: {lookup.missingFields.join(", ")}. Type the rest in below.
-        </p>
-      ) : (
-        <p className="mt-1 text-muted-foreground">
-          Price and dividend applied. Growth and discount rate stay manual.
-        </p>
-      )}
+      <ul className="mt-1.5 space-y-0.5 text-muted-foreground">
+        <li>
+          Currency:{" "}
+          <span className="font-mono font-medium text-foreground">
+            {lookup.currency ?? "—"}
+          </span>
+        </li>
+        <li>
+          Dividend growth (3-year CAGR):{" "}
+          <span className="font-mono font-medium text-foreground">
+            {lookup.growthApplied !== null
+              ? `${(lookup.growthApplied * 100).toFixed(1)}%`
+              : "—"}
+          </span>
+          {lookup.growthApplied !== null && (
+            <>
+              {" "}
+              <span className="text-muted-foreground">
+                · auto-applied; review before relying on it
+              </span>
+            </>
+          )}
+        </li>
+        {lookup.missingFields.length > 0 && (
+          <li className="text-muted-foreground">
+            Missing: {lookup.missingFields.join(", ")}. Fill the rest in below.
+          </li>
+        )}
+      </ul>
+      <p className="mt-2 text-muted-foreground">
+        Discount rate stays manual — that&rsquo;s your call, not the
+        market&rsquo;s.
+      </p>
     </div>
+  );
+}
+
+function CurrencyBanner({
+  currency,
+}: {
+  currency: ReturnType<typeof resolveCurrency>;
+}) {
+  if (!currency.overridden) return null;
+  return (
+    <p className="mt-3 text-xs text-muted-foreground">
+      Showing in{" "}
+      <span className="font-mono font-medium text-foreground">
+        {currency.code}
+      </span>{" "}
+      — the listed currency for this ticker. Tax wrappers and risk-free rate
+      still follow your locale toggle.
+    </p>
+  );
+}
+
+function LabelWithInfo({
+  title,
+  infoLabel,
+  children,
+}: {
+  title: string;
+  infoLabel: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      {title}
+      <InfoPopover label={infoLabel}>{children}</InfoPopover>
+    </span>
   );
 }
 

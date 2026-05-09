@@ -16,7 +16,7 @@ export type DcfMode = "simple" | "advanced";
 
 export interface DcfInputs {
   mode: DcfMode;
-  /** Most recent annual dividend per share, in local currency (D₀). */
+  /** Most recent annual dividend per share, in this stock's currency (D₀). */
   currentDividend: number;
   /** Current quoted stock price, same currency as the dividend. */
   currentPrice: number;
@@ -30,6 +30,12 @@ export interface DcfInputs {
   phase1Years: number;
   /** Long-run terminal growth rate, advanced mode (decimal). */
   terminalGrowth: number;
+  /**
+   * The currency in which `currentDividend` and `currentPrice` are quoted.
+   * Set when a ticker is fetched (so e.g. TSLA stays in USD even when the
+   * locale toggle is set to UK). null = follow the user's locale.
+   */
+  currency: string | null;
 }
 
 export interface DcfScenario {

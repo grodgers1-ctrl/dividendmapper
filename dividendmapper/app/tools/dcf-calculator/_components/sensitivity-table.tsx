@@ -2,6 +2,12 @@
 
 import { useLocale } from "@/lib/locale/context";
 import type { DcfInputs, DcfResult } from "@/lib/calculators/dcf";
+import {
+  formatShareCurrency,
+  resolveCurrency,
+  type ResolvedCurrency,
+} from "@/lib/calculators/dcf-currency";
+import { InfoPopover } from "@/components/ui/info-popover";
 import { cn } from "@/lib/utils";
 
 interface SensitivityTableProps {
@@ -11,6 +17,7 @@ interface SensitivityTableProps {
 
 export function SensitivityTable({ inputs, result }: SensitivityTableProps) {
   const { config } = useLocale();
+  const currency = resolveCurrency(inputs.currency, config);
   const { growthRates, discountRates, values, baseRow, baseCol } =
     result.sensitivity;
 
@@ -20,13 +27,24 @@ export function SensitivityTable({ inputs, result }: SensitivityTableProps) {
       className="overflow-hidden rounded-xl border border-border bg-card"
     >
       <header className="border-b border-border px-4 py-4 md:px-6">
-        <h3 className="font-display text-lg font-semibold text-foreground">
+        <h3 className="flex items-center gap-1.5 font-display text-lg font-semibold text-foreground">
           Sensitivity table
+          <InfoPopover label="What's a sensitivity table?">
+            <p>
+              <strong>Sensitivity table.</strong> Shows how the intrinsic value
+              swings as you vary the two assumptions that drive most of the
+              answer: dividend growth (rows) and your required return (columns).
+            </p>
+            <p className="mt-2 text-muted-foreground">
+              Cells where growth ≥ discount can&rsquo;t be solved (the model
+              implies infinite value), so they show as &ldquo;—&rdquo;. The
+              base case — exactly your inputs — is highlighted in green.
+            </p>
+          </InfoPopover>
         </h3>
         <p className="mt-1 text-sm text-muted-foreground">
-          Intrinsic value at every combination of growth (rows) and discount
-          rate (columns). Base case is highlighted; cells where growth ≥
-          discount return infinity, so they show as &ldquo;—&rdquo;.
+          A range of values around your base case, so you can see whether the
+          intrinsic value is robust to small changes or fragile to them.
         </p>
       </header>
 
@@ -78,7 +96,7 @@ export function SensitivityTable({ inputs, result }: SensitivityTableProps) {
                       )}
                       aria-current={isBase ? "true" : undefined}
                     >
-                      {v === null ? "—" : perShare(v, config)}
+                      {v === null ? "—" : formatShareCurrency(v, currency, { compact: true })}
                     </td>
                   );
                 })}
@@ -107,23 +125,3 @@ export function SensitivityTable({ inputs, result }: SensitivityTableProps) {
   );
 }
 
-function perShare(
-  v: number,
-  config: ReturnType<typeof useLocale>["config"]
-): string {
-  // Compact for big numbers, plain currency otherwise — sensitivity cells get
-  // narrow on mobile.
-  if (v >= 1000) {
-    return new Intl.NumberFormat(config.locale === "uk" ? "en-GB" : "en-US", {
-      style: "currency",
-      currency: config.currencyCode,
-      maximumFractionDigits: 0,
-    }).format(v);
-  }
-  return new Intl.NumberFormat(config.locale === "uk" ? "en-GB" : "en-US", {
-    style: "currency",
-    currency: config.currencyCode,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(v);
-}

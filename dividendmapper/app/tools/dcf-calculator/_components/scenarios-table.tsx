@@ -8,6 +8,12 @@ import {
   type DcfResult,
   type DcfScenario,
 } from "@/lib/calculators/dcf";
+import {
+  formatShareCurrency,
+  resolveCurrency,
+  type ResolvedCurrency,
+} from "@/lib/calculators/dcf-currency";
+import { InfoPopover } from "@/components/ui/info-popover";
 import { cn } from "@/lib/utils";
 
 interface ScenariosTableProps {
@@ -25,6 +31,7 @@ interface Column {
 
 export function ScenariosTable({ inputs, result }: ScenariosTableProps) {
   const { config } = useLocale();
+  const currency = resolveCurrency(inputs.currency, config);
   const cols: Column[] = [
     { key: "bear", label: "Bear", scenario: result.scenarios.bear },
     {
@@ -48,13 +55,37 @@ export function ScenariosTable({ inputs, result }: ScenariosTableProps) {
       className="overflow-hidden rounded-xl border border-border bg-card"
     >
       <header className="border-b border-border px-4 py-4 md:px-6">
-        <h3 className="font-display text-lg font-semibold text-foreground">
+        <h3 className="flex items-center gap-1.5 font-display text-lg font-semibold text-foreground">
           Scenario summary
+          <InfoPopover label="What's a scenario?">
+            <p>
+              <strong>Bear / Base / Bull.</strong> Three views of the same
+              stock to stress-test the answer.
+            </p>
+            <ul className="mt-2 space-y-1 text-muted-foreground">
+              <li>
+                <strong className="text-foreground">Bear</strong> — your growth
+                rate minus 2pp, discount rate plus 1.5pp.
+              </li>
+              <li>
+                <strong className="text-foreground">Base</strong> — exactly
+                what you typed in.
+              </li>
+              <li>
+                <strong className="text-foreground">Bull</strong> — growth plus
+                2pp, discount minus 1.5pp.
+              </li>
+            </ul>
+            <p className="mt-2 text-muted-foreground">
+              The weighted column blends the three at 25 / 50 / 25 and skips
+              any scenario that produced infinity.
+            </p>
+          </InfoPopover>
         </h3>
         <p className="mt-1 text-sm text-muted-foreground">
-          Bear shifts your growth assumption down 2pp and your discount rate up
-          1.5pp; Bull does the opposite. The weighted column re-normalises to
-          25 / 50 / 25 across whichever scenarios produced a finite answer.
+          One number is comforting, but a 30-year forecast has a wide range.
+          Three scenarios show how much the answer moves when your assumptions
+          do.
         </p>
       </header>
 
@@ -97,11 +128,11 @@ export function ScenariosTable({ inputs, result }: ScenariosTableProps) {
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            <Row label="Intrinsic value" cols={cols} format={fmtIntrinsic(config)} />
+            <Row label="Intrinsic value" cols={cols} format={fmtIntrinsic(currency)} />
             <Row
               label={`vs current price (${
                 inputs.currentPrice > 0
-                  ? perShare(inputs.currentPrice, config)
+                  ? formatShareCurrency(inputs.currentPrice, currency)
                   : "—"
               })`}
               cols={cols}
@@ -182,8 +213,9 @@ function Row({
   );
 }
 
-function fmtIntrinsic(config: ReturnType<typeof useLocale>["config"]) {
-  return (v: number | null) => (v === null ? "—" : perShare(v, config));
+function fmtIntrinsic(currency: ResolvedCurrency) {
+  return (v: number | null) =>
+    v === null ? "—" : formatShareCurrency(v, currency);
 }
 
 function fmtVsPrice(v: number | null) {
@@ -208,14 +240,3 @@ function mosClass(band: ReturnType<typeof classifyMos>): string | undefined {
   }
 }
 
-function perShare(
-  v: number,
-  config: ReturnType<typeof useLocale>["config"]
-): string {
-  return new Intl.NumberFormat(config.locale === "uk" ? "en-GB" : "en-US", {
-    style: "currency",
-    currency: config.currencyCode,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(v);
-}

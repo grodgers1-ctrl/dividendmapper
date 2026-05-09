@@ -3,6 +3,11 @@
 import { useLocale } from "@/lib/locale/context";
 import { formatPercent } from "@/lib/locale/format";
 import { classifyMos, type DcfInputs, type DcfResult, type MosBand } from "@/lib/calculators/dcf";
+import {
+  formatShareCurrency,
+  resolveCurrency,
+} from "@/lib/calculators/dcf-currency";
+import { InfoPopover } from "@/components/ui/info-popover";
 import { cn } from "@/lib/utils";
 
 interface ResultCardProps {
@@ -12,6 +17,7 @@ interface ResultCardProps {
 
 export function ResultCard({ inputs, result }: ResultCardProps) {
   const { config } = useLocale();
+  const currency = resolveCurrency(inputs.currency, config);
   const base = result.scenarios.base;
   const weighted = result.weighted;
 
@@ -25,12 +31,31 @@ export function ResultCard({ inputs, result }: ResultCardProps) {
     >
       <div className="grid gap-6 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
         <div>
-          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          <p className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
             Intrinsic value · Base scenario
+            <InfoPopover label="What's the Gordon Growth Model?">
+              <p>
+                <strong>Gordon Growth Model.</strong> A simplification of the
+                Dividend Discount Model: it values a stock as if dividends grow
+                at one constant rate forever.
+              </p>
+              <p className="mt-2">
+                Formula:{" "}
+                <code className="rounded bg-muted px-1 py-0.5 font-mono">
+                  D₁ / (r − g)
+                </code>{" "}
+                where D₁ is next year&rsquo;s dividend, r is your required
+                return, and g is the growth rate.
+              </p>
+              <p className="mt-2 text-muted-foreground">
+                Best for stable, mature dividend payers; less suitable for
+                high-growth stocks where the constant-g assumption breaks down.
+              </p>
+            </InfoPopover>
           </p>
           <p className="mt-3 font-mono text-4xl font-semibold tabular-nums text-foreground md:text-5xl">
             {base.intrinsicValue !== null
-              ? perShareCurrency(base.intrinsicValue, config)
+              ? formatShareCurrency(base.intrinsicValue, currency)
               : "—"}
           </p>
           <p className="mt-2 text-sm text-muted-foreground">
@@ -49,7 +74,7 @@ export function ResultCard({ inputs, result }: ResultCardProps) {
               </dt>
               <dd className="mt-0.5 font-mono text-base font-medium tabular-nums text-foreground">
                 {inputs.currentPrice > 0
-                  ? perShareCurrency(inputs.currentPrice, config)
+                  ? formatShareCurrency(inputs.currentPrice, currency)
                   : "—"}
               </dd>
             </div>
@@ -73,12 +98,25 @@ export function ResultCard({ inputs, result }: ResultCardProps) {
               </dd>
             </div>
             <div>
-              <dt className="text-xs uppercase tracking-wider text-muted-foreground">
+              <dt className="flex items-center gap-1.5 text-xs uppercase tracking-wider text-muted-foreground">
                 Probability-weighted
+                <InfoPopover label="What's the probability-weighted value?">
+                  <p>
+                    <strong>Probability-weighted intrinsic value.</strong> The
+                    Bear, Base and Bull intrinsic values blended at 25 / 50 /
+                    25.
+                  </p>
+                  <p className="mt-2 text-muted-foreground">
+                    If a scenario produced infinity (growth ≥ discount), it
+                    drops out and the remaining scenarios re-normalise. Gives
+                    you a single number that respects your range of
+                    assumptions, not just the central case.
+                  </p>
+                </InfoPopover>
               </dt>
               <dd className="mt-0.5 font-mono text-base font-medium tabular-nums text-foreground">
                 {weighted.intrinsicValue !== null
-                  ? perShareCurrency(weighted.intrinsicValue, config)
+                  ? formatShareCurrency(weighted.intrinsicValue, currency)
                   : "—"}
                 {weighted.vsCurrentPrice !== null && (
                   <span
@@ -129,11 +167,27 @@ function MosBadge({
       <div>
         <p
           className={cn(
-            "text-xs font-medium uppercase tracking-wider",
+            "flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider",
             palette.label
           )}
         >
           Margin of safety
+          <InfoPopover label="What's the margin of safety?" align="end">
+            <p>
+              <strong>Margin of safety.</strong> The discount the intrinsic
+              value offers vs the current price:{" "}
+              <code className="rounded bg-muted px-1 py-0.5 font-mono">
+                (intrinsic − price) / intrinsic
+              </code>
+              .
+            </p>
+            <p className="mt-2 text-muted-foreground">
+              Benjamin Graham popularised aiming for at least 20% as a buffer
+              against errors in your assumptions. Above 20% is &ldquo;
+              attractive&rdquo;; 0–20% is &ldquo;fair value&rdquo;; below 0%
+              means the model says it&rsquo;s overvalued.
+            </p>
+          </InfoPopover>
         </p>
         <p
           className={cn(
@@ -242,12 +296,3 @@ const BAND_PALETTES: Record<MosBand, BandPalette> = {
   },
 };
 
-function perShareCurrency(value: number, config: ReturnType<typeof useLocale>["config"]): string {
-  // Stock prices want 2 decimal places at any scale — never compact notation.
-  return new Intl.NumberFormat(config.locale === "uk" ? "en-GB" : "en-US", {
-    style: "currency",
-    currency: config.currencyCode,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value);
-}

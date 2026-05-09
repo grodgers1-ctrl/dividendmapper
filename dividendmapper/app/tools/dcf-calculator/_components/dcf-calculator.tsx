@@ -19,6 +19,7 @@ const UK_DEFAULTS: DcfInputs = {
   phase1Growth: 0.08,
   phase1Years: 10,
   terminalGrowth: 0.025,
+  currency: null,
 };
 
 const US_DEFAULTS: DcfInputs = {
@@ -31,6 +32,7 @@ const US_DEFAULTS: DcfInputs = {
   phase1Growth: 0.1,
   phase1Years: 10,
   terminalGrowth: 0.025,
+  currency: null,
 };
 
 export function DcfCalculator() {
