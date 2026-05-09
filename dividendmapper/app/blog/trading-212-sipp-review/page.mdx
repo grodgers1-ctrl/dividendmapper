@@ -1,17 +1,48 @@
 import { postMetadata } from "@/lib/blog/posts";
 import { PostHeader, PostFooter } from "@/components/blog/post-header";
+import { FaqJsonLd } from "@/components/blog/faq-json-ld";
 
 export const metadata = postMetadata("trading-212-sipp-review");
 
 <PostHeader slug="trading-212-sipp-review" />
 
-Trading 212 launched a SIPP in October 2023 with zero brokerage fees. The pitch is simple: you pay nothing at the broker layer to hold the account, and nothing to trade UK or US stocks and ETFs.
+<FaqJsonLd
+  items={[
+    {
+      question: "Is the Trading 212 SIPP safe?",
+      answer:
+        "Trading 212 Markets Ltd is FCA-authorised and CASS-protected, meaning your assets are held separately from the firm. The SIPP wrapper is run by Gaudi Regulated Services, also FCA-authorised. Cash up to £85,000 is FSCS-protected; investments aren't directly FSCS-covered but the CASS regime provides a recovery path.",
+    },
+    {
+      question: "What does the Trading 212 SIPP actually cost?",
+      answer:
+        "Zero brokerage fees (no platform fee, no dealing commission, no setup fee), 0.15% FX on currency conversion, plus around £90 per year to Gaudi for the underlying SIPP wrapper. There's no exit fee or inactivity fee.",
+    },
+    {
+      question: "Can I take income from my Trading 212 SIPP at retirement?",
+      answer:
+        "As of mid-2026, the Trading 212 SIPP doesn't offer a drawdown product. To take income from age 55 (rising to 57 in April 2028) you'd need to transfer to a SIPP provider that offers Flexi-Access Drawdown, like HL, AJ Bell, or InvestEngine.",
+    },
+    {
+      question: "How does Trading 212 SIPP tax relief work?",
+      answer:
+        "You contribute net, T212 claims 25% basic-rate relief from HMRC and adds it to your account within 6 to 11 weeks. Higher-rate (40%) and additional-rate (45%) taxpayers claim the extra relief through Self Assessment. The 2026/27 Annual Allowance is £60,000.",
+    },
+    {
+      question: "When did the Trading 212 SIPP launch?",
+      answer:
+        "Trading 212 received FCA approval to launch its SIPP in February 2026, after first announcing the intention in April 2020. The product is now live and rolling out gradually to clients on the waitlist.",
+    },
+  ]}
+/>
 
-The pitch is honest as far as it goes. The bit most reviews skip is that T212 doesn't operate the SIPP itself. The wrapper is run by Gaudi Regulated Services, an FCA-authorised SIPP operator, in a partnership arrangement. Gaudi charges its own annual fee, around £75–£100/year as at March 2026. So the headline "0% SIPP" is really "0% on the brokerage, plus £75–£100/year to the operator". Still cheap. Just not zero.
+Trading 212 received FCA approval to launch a SIPP in February 2026, six years after first telling its community forum it intended to. The product is now live and being gradually rolled out to clients on the waitlist. If you don't have access yet, you're not alone.
 
-The other catches are real too. There's no drawdown. There are no managed portfolios. Customer service is app and email only, with no telephone support. None of that makes the product bad. It does mean the answer to "should I use it?" depends a lot on where you are in your investing life.
+The headline pitch is simple: you pay nothing at the broker layer to hold the account, and nothing to trade UK or US stocks and ETFs. The honest version takes one footnote, because Trading 212 doesn't operate the SIPP itself. The wrapper is run by Gaudi Regulated Services, an FCA-authorised SIPP operator, in a partnership arrangement. Gaudi charges its own annual fee, around £90/year as at early 2026. So the headline "0% SIPP" is really "0% on the brokerage, plus about £90/year to the operator". Still very cheap. Just not zero.
 
-Here's what the product actually does, what it doesn't, and where it sits relative to HL and AJ Bell.
+The other catches are real too. There's no drawdown product yet. There are no managed portfolios. Customer service is app and email only, with no telephone support. None of that makes the product bad. It does mean the answer to "should I use it?" depends a lot on where you are in your investing life.
+
+This is a first-look review based on the public documentation, the FCA approval announcement, and Alpesh Patel's [March 2026 review](https://www.campaignforamillion.com/post/trading-212-sipp-review-2026-the-zero-commission-platform-serious-investors-should-know-about) for cost numbers. We'll update it as the rollout widens and we have first-hand experience over a longer period.
 
 ## The fee story
 
@@ -45,13 +76,13 @@ The footnote: HL and AJ Bell run integrated SIPP operations, while T212 partners
 
 ## How tax relief works on T212
 
-The mechanics are the same as any SIPP. You pay in net, T212 claims 25% basic-rate relief from HMRC and adds it to your account. A £80 contribution becomes £100 in the SIPP after relief lands (which usually takes about 6–8 weeks).
+The mechanics are the same as any SIPP. You pay in net, T212 claims 25% basic-rate relief from HMRC and adds it to your account. An £80 contribution becomes £100 in the SIPP after relief lands. T212's [own help centre](https://helpcentre.trading212.com/hc/en-us/articles/30767684244637-What-is-a-SIPP-Account) gives a 6 to 11 week window for that to appear, which is roughly in line with industry norms.
 
 Higher and additional-rate taxpayers claim the extra 20% or 25% on Self Assessment. T212 doesn't do this for you. They give you the contribution figures you need to put on your return.
 
-The 2026/27 Annual Allowance is £60,000. T212 enforces it within the platform but doesn't see contributions you've made elsewhere (your workplace pension, for example). Going over the AA across all your pensions triggers a tax charge, and that's on you to track.
+The 2026/27 Annual Allowance is [£60,000](https://www.gov.uk/tax-on-your-private-pension/annual-allowance). T212 enforces it within the platform but doesn't see contributions you've made elsewhere (your workplace pension, for example). Going over the AA across all your pensions triggers a tax charge, and that's on you to track. Our [UK Dividend Tax Guide 2026/27](/blog/uk-dividend-tax-guide) covers the related allowances (ISA, dividend allowance, CGT) in more detail.
 
-If you have no relevant earnings (you're a stay-at-home parent, retired but pre-State-Pension, etc), you can still pay in £2,880 net and get £720 in relief, taking you to £3,600 gross. T212 supports this and it's a quietly powerful loophole for couples where one partner has no income.
+If you have no relevant earnings (you're a stay-at-home parent, retired but pre-State-Pension, etc), you can still pay in £2,880 net and get £720 in relief, taking you to £3,600 gross. T212 supports this and it's a quietly powerful tactic for couples where one partner has no income.
 
 ## What you can hold
 
@@ -72,6 +103,21 @@ What you can't hold inside the T212 SIPP at all:
 
 For a dividend portfolio of UK and US stocks plus a couple of broad-market ETFs, T212 has everything. For someone who wants 60% Vanguard LifeStrategy and 40% an active income fund, it doesn't.
 
+## If you only want ETFs: the InvestEngine angle
+
+T212's SIPP supports both individual stocks and ETFs. If you're a pure ETF investor, you're not really using what T212 specialises in. [InvestEngine](https://investengine.com/sipp/) is a more direct match for that use case:
+
+- Zero platform fees, like T212
+- Zero dealing commission, like T212
+- **Free FX on currency conversion** (vs T212's 0.15%)
+- Fractional shares on ETFs
+- **Drawdown supported at retirement** (vs T212's gap, see below)
+- £100 minimum to open
+
+The catch is the universe: InvestEngine is ETF-only. No individual stocks, no investment trusts, no Berkshire Hathaway, no SHEL.L direct. If you want to own ULVR.L for the dividend or pick a slug of US dividend aristocrats by ticker, InvestEngine isn't for you. For someone whose entire SIPP is "VWRP plus an income ETF and chill", it's genuinely cheaper than T212 and has drawdown live today.
+
+Side note for the structurally-curious: InvestEngine appears to use Quai Investment Services as their wrapper administrator, named in their nominee paperwork. Whether that becomes its own line item the way Gaudi does at T212 isn't something the public site spells out, so confirm directly before transferring.
+
 ## The drawdown gap
 
 This is the most-asked question in the T212 community and the answer hasn't changed: there's no drawdown product yet. When you reach 55 (rising to 57 in April 2028) you can't take income from your T212 SIPP without transferring it out to a provider that offers Flexi-Access Drawdown or annuities.
@@ -88,55 +134,85 @@ The transfer itself is straightforward (most UK SIPP providers handle inbound tr
 
 ## Customer service is the other gap
 
-T212 doesn't run phone support. Everything goes through in-app messages. In normal markets, you'll get a reply within a day. Around big events (the 2024 GameStop revival, the August 2024 yen carry-trade unwind), reply times stretched to 4–5 days for non-trivial issues.
+T212 doesn't run phone support. Everything goes through in-app messages and email. In normal markets you'll typically get a reply within a day or two; under heavy market events, reply times stretch and that has been a recurring complaint in the [T212 community forums](https://community.trading212.com/). For a SIPP, where mistakes in tax-relief reconciliation or beneficiary nominations matter, that's worth being honest about. HL and AJ Bell have phone support and pension specialists. T212 doesn't yet.
 
-For a SIPP, where mistakes in tax-relief reconciliation or beneficiary nominations matter, that's worth being honest about. HL and AJ Bell have phone support and pension specialists. T212 doesn't yet.
+## Versus the rest
 
-## Versus HL and AJ Bell, in practice
+The honest read across the four products most UK dividend investors actually compare:
 
-The honest read:
+**Trading 212 wins on:**
 
-**T212 wins on:**
+- Fees on a stocks-and-ETFs portfolio, by a wide margin
+- FX cost on cross-currency dividends (0.15%)
+- The mobile app, which most reviewers prefer to HL's
 
-- Fees, by a wide margin
-- The mobile app (most reviewers prefer it)
-- US dividend reinvestment (DRIP works on T212; HL only does DRIP on a subset of holdings)
-- FX cost on cross-currency dividends
+**InvestEngine wins on:**
+
+- Fees if you only want ETFs (free FX, no Gaudi-style operator fee)
+- Drawdown that works today, not "on the roadmap"
+- Managed-portfolio option for hands-off investors
 
 **HL and AJ Bell win on:**
 
-- Drawdown options at retirement
+- Drawdown options at retirement (mature, full-fat)
 - Phone support and pension specialists
 - Fund universe (HL has a wider list of mutual funds and managed products)
 - Decades of track record handling complex tax cases
 
-If you're under 50 and accumulating, the maths usually favours T212. If you're within a decade of retirement, the case for paying AJ Bell £120/year for the smoother retirement experience gets stronger.
+If you're an active stock-picker, T212 wins on cost. If you're a passive ETF investor, InvestEngine wins on cost and supports drawdown. If you're within a decade of retirement and want a single platform that takes you all the way through, the £120/year AJ Bell costs over T212 buys you the smoother retirement experience.
 
 ## Who it's for
 
 A T212 SIPP makes sense if:
 
-- You're self-directed and comfortable picking your own ETFs and stocks
-- You don't need advice
+- You're self-directed and pick your own UK and US individual stocks
 - You're at least a few years from drawing the pension
+- You don't need advice
 - You're happy with app-based support
 
 It probably doesn't make sense if:
 
+- You only invest in ETFs and don't need stocks (InvestEngine likely beats it)
+- You're 60+ and within touching distance of drawdown (until T212 ships their drawdown product)
 - You want an advised SIPP with a financial planner attached
-- You're 60+ and within touching distance of drawdown
 - You hold or want to hold mutual funds outside what T212 lists
 - You'd want phone support for tax-charge problems
 
-For most readers of this site (dividend-focused, UK, building toward retirement, comfortable with ETFs), T212 is the cheapest serious option. The 0% pricing is real, the platform works, and the gaps are fixable problems on T212's roadmap rather than fundamental ones.
+For dividend investors in their 30s, 40s and early 50s who pick individual UK and US stocks, T212 is the cheapest serious option once it's available to you. The 0% brokerage pricing is real, the platform works, and the gaps are fixable problems on the roadmap rather than fundamental ones. Once your dividend stream starts feeling significant, our [DCF calculator](/tools/dcf-calculator) is a useful sanity check on whether the next stock you're tempted by actually deserves the slot.
+
+## Frequently asked questions
+
+### Is the Trading 212 SIPP safe?
+
+Trading 212 Markets Ltd is FCA-authorised and CASS-protected, meaning your assets are held separately from the firm's own balance sheet, so a T212 failure doesn't put your portfolio at risk. The SIPP wrapper itself is run by [Gaudi Regulated Services](https://gaudiservices.co.uk/), which is also FCA-authorised. Cash deposits up to £85,000 are FSCS-protected. Investments aren't FSCS-covered as such, but the CASS regime gives you a recovery path if anything goes wrong.
+
+### What does the Trading 212 SIPP actually cost?
+
+Zero brokerage fees (no platform fee, no dealing commission, no ISA/SIPP setup fee), 0.15% FX on currency conversion, plus around £90/year to Gaudi for the underlying SIPP wrapper. There's no exit fee or inactivity fee.
+
+### Can I take income from my Trading 212 SIPP at retirement?
+
+As of mid-2026, the T212 SIPP doesn't offer a drawdown product. You can stop contributing at any time, but to actually take income from age 55 (rising to 57 in April 2028) you'd need to transfer the pot to a SIPP provider that offers Flexi-Access Drawdown (HL, AJ Bell, InvestEngine, and others). Transfer typically takes 4 to 8 weeks.
+
+### How does Trading 212 SIPP tax relief work?
+
+Pay in net, T212 claims 25% basic-rate relief from HMRC and adds it to your account within 6 to 11 weeks. Higher-rate (40%) and additional-rate (45%) taxpayers claim the extra relief through Self Assessment. The 2026/27 [Annual Allowance is £60,000](https://www.gov.uk/tax-on-your-private-pension/annual-allowance) across all your pensions; non-earners can still pay in £2,880 net (£3,600 gross after relief).
+
+### Can I transfer an existing SIPP into Trading 212?
+
+Yes, [T212's transfer page](https://helpcentre.trading212.com/hc/en-us/articles/30772347994653-What-is-a-SIPP-transfer) covers the process. Cash transfers are straightforward; in-specie (asset-by-asset) transfers depend on whether T212 supports each holding. Most major UK SIPP providers transfer in cleanly. Allow 4 to 8 weeks for the move.
+
+### What's the difference between Trading 212's SIPP and ISA?
+
+Different tax wrappers. Inside an [ISA](https://www.gov.uk/individual-savings-accounts), dividends and growth are tax-free, you can withdraw any time, and the annual subscription cap is £20,000. Inside a SIPP, you get income tax relief on the way in but pay income tax on most of the way out, with a £60,000 Annual Allowance and a 55-rising-to-57 access age. Most UK dividend investors fill the ISA first, then use the SIPP for higher-rate-relief contributions on top. Our [UK Dividend Tax Guide 2026/27](/blog/uk-dividend-tax-guide) walks through the order in detail.
 
 ## What we do with this on DividendMapper
 
-T212 is the first broker integration we're building. Phase 3 of the DividendMapper roadmap (around month 4 from launch) connects T212 ISA, SIPP and GIA accounts so your portfolio syncs automatically rather than via CSV. We picked T212 first partly because of this review's conclusion: a lot of UK dividend investors are already there, and the OAuth flow they offer is cleaner than the alternatives.
+T212 is the first broker integration we're building. Phase 3 of the DividendMapper roadmap (around month 4 from launch) connects T212 ISA, SIPP and GIA accounts so your portfolio syncs automatically rather than via CSV. We picked T212 first because a lot of UK dividend investors are already there and the OAuth flow they offer is cleaner than the alternatives.
 
 The platform will keep working with manual portfolio entry on every other broker. T212 just gets the auto-sync first.
 
-This is illustrative, not financial advice. Fees and product features change; we'll update this post each year.
+This is illustrative, not financial advice. Fees and product features change; we'll update this post as the rollout widens and as we accumulate more first-hand experience.
 
 <PostFooter
   nextHref="/tools/retirement-calculator"

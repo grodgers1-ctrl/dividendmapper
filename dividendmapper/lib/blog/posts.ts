@@ -37,9 +37,9 @@ export const POSTS: BlogPost[] = [
   },
   {
     slug: "trading-212-sipp-review",
-    title: "Trading 212 SIPP Review: A Year In",
+    title: "Trading 212 SIPP Review 2026: First Look",
     description:
-      "Honest look at the T212 SIPP: zero-fee structure, tax-relief mechanics, what it doesn't do, and where it sits vs HL and AJ Bell for dividend investors.",
+      "First look at the Trading 212 SIPP, freshly approved by the FCA in February 2026. Fee structure, the Gaudi operator fee most reviews skip, what's missing, and where it sits vs HL and AJ Bell.",
     publishedAt: "2026-05-10",
     readingTime: "10 min",
     tags: ["UK", "Broker", "SIPP"],

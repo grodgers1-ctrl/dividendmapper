@@ -1,11 +1,42 @@
 import { postMetadata } from "@/lib/blog/posts";
 import { PostHeader, PostFooter } from "@/components/blog/post-header";
+import { FaqJsonLd } from "@/components/blog/faq-json-ld";
 
 export const metadata = postMetadata("uk-dividend-tax-guide");
 
 <PostHeader slug="uk-dividend-tax-guide" />
 
-If you're holding dividend stocks outside an ISA in 2026/27, your tax bill probably went up. The ordinary dividend rate rose from 8.75% to 10.75% from 6 April this year. The higher-rate dividend rate went from 33.75% to 35.75%. The dividend allowance, the slice you pay nothing on, stayed at £500.
+<FaqJsonLd
+  items={[
+    {
+      question: "How much UK dividend tax do I pay in 2026/27?",
+      answer:
+        "The first £500 of dividend income is tax-free under the Dividend Allowance. Above that, basic-rate taxpayers pay 10.75%, higher-rate taxpayers pay 35.75%, and additional-rate taxpayers pay 39.35%. The basic and higher rates rose by 2pp on 6 April 2026.",
+    },
+    {
+      question: "Are dividends taxed inside an ISA?",
+      answer:
+        "No. Dividends, interest and capital gains inside a Stocks and Shares ISA are completely tax-free, with no allowance limit on dividend income and no Self Assessment reporting required. The 2026/27 ISA subscription limit is £20,000 across all adult ISA types combined.",
+    },
+    {
+      question: "How is dividend tax calculated when income spans tax bands?",
+      answer:
+        "Dividend income is treated as the highest slice of your income, stacked on top of earnings and savings interest. The Personal Allowance fills up the bottom first. If you earn £48,000 in salary and £4,000 in dividends, the first £500 of dividends is allowance-covered, the next £2,270 is taxed at 10.75% and the final £1,230 spills into the higher-rate band at 35.75%.",
+    },
+    {
+      question: "Do I have to declare dividends under £500?",
+      answer:
+        "If your only untaxed dividend income is under £500, you typically don't need to file Self Assessment for it. HMRC may still adjust your tax code to recover any tax due on dividends above the allowance. If you're already filing Self Assessment for other reasons, you should still declare all dividend income on your return.",
+    },
+    {
+      question: "Is dividend tax the same in Scotland?",
+      answer:
+        "Dividend tax rates are set by HMRC and apply UK-wide, so Scottish taxpayers pay the same dividend rates. However, Scotland's different income tax bands affect when dividend income tips into the higher-rate territory, which can produce slightly different effective rates on a Scottish taxpayer's dividends.",
+    },
+  ]}
+/>
+
+If you're holding dividend stocks outside an ISA in 2026/27, your tax bill probably went up. The ordinary dividend rate rose from 8.75% to 10.75% from 6 April this year. The higher-rate dividend rate went from 33.75% to 35.75%. The dividend allowance, the slice you pay nothing on, stayed at [£500](https://www.gov.uk/tax-on-dividends).
 
 Most articles on this topic stop at the rate table. That's not enough. The headline rates only matter once you understand which slice of your income they apply to, and how ISAs and SIPPs change the picture. Here's the practical version.
 
@@ -31,7 +62,7 @@ If your salary had been £50,000 instead, every dividend pound above the allowan
 
 ## Why ISAs matter
 
-Inside a Stocks and Shares ISA, dividends are not taxed. No allowance, no rates, no Self Assessment line. The 2026/27 ISA limit is £20,000 across all ISA types combined.
+Inside a [Stocks and Shares ISA](https://www.gov.uk/individual-savings-accounts), dividends are not taxed. No allowance, no rates, no Self Assessment line. The 2026/27 ISA limit is £20,000 across all ISA types combined.
 
 For a UK dividend investor, this is the simplest tax planning available. If your dividend income is going to exceed the £500 allowance, the next £20,000 of contributions probably belong inside an ISA before they go anywhere else. Our [retirement calculator](/tools/retirement-calculator) splits projected income across ISA, SIPP and GIA so you can see what shielding looks like at retirement.
 
@@ -39,11 +70,11 @@ The thing to watch is the £20,000 cap. It refills every 6 April but doesn't rol
 
 ## SIPPs work differently
 
-A SIPP doesn't shield dividends from UK tax in the same way an ISA does. Dividends grow tax-free inside the wrapper, but withdrawals from the 75% taxable pot are taxed as non-savings income at your marginal rate when you draw them. The trade is simple: you got tax relief going in, you pay tax coming out.
+A SIPP doesn't shield dividends from UK tax in the same way an ISA does. Dividends grow tax-free inside the wrapper, but withdrawals from the 75% taxable pot are taxed as non-savings income at your marginal rate when you draw them. The trade is simple: you got [tax relief going in](https://www.gov.uk/tax-on-your-private-pension/pension-tax-relief), you pay tax coming out.
 
-For a basic-rate taxpayer, that often nets out roughly the same as an ISA. For a higher-rate taxpayer who'll drop to basic rate in retirement, the SIPP wins because you got 40% relief in and pay 20% out. The Annual Allowance is £60,000 for 2026/27 (unchanged since April 2023), much higher than the £20,000 ISA cap.
+For a basic-rate taxpayer, that often nets out roughly the same as an ISA. For a higher-rate taxpayer who'll drop to basic rate in retirement, the SIPP wins because you got 40% relief in and pay 20% out. The [Annual Allowance is £60,000](https://www.gov.uk/tax-on-your-private-pension/annual-allowance) for 2026/27 (unchanged since April 2023), much higher than the £20,000 ISA cap. If you're shopping for a low-cost SIPP, our [Trading 212 SIPP review](/blog/trading-212-sipp-review) covers the cheapest option for self-directed dividend investors.
 
-You can take the first 25% of a SIPP tax-free, capped at the £268,275 Lump Sum Allowance over your lifetime. The minimum access age is 55 in 2026/27, rising to 57 in April 2028. Triggering taxable income drops your future Annual Allowance to £10,000 (the MPAA), which can quietly wreck retirement contribution plans if you start drawdown in your late 50s while still earning.
+You can take the first 25% of a SIPP tax-free, capped at the [£268,275 Lump Sum Allowance](https://www.gov.uk/tax-on-your-private-pension/lump-sum-allowance) over your lifetime. The minimum access age is 55 in 2026/27, rising to 57 in April 2028. Triggering taxable income drops your future Annual Allowance to £10,000 (the MPAA), which can quietly wreck retirement contribution plans if you start drawdown in your late 50s while still earning.
 
 ## Who actually pays dividend tax
 
@@ -77,7 +108,7 @@ A few things that are easy to miss:
 
 - **The allowance is dividend-only.** You don't pay 0% on the first £500 of salary because the allowance only applies to dividend income.
 - **Reinvested dividends are still taxed.** An accumulating fund in a GIA still triggers a tax event each distribution, even though no cash leaves your account. UK platforms report this on your annual statement, but it surprises new investors.
-- **Foreign dividends.** US dividends in a UK GIA face 15% withholding (with a W-8BEN form on file) before UK tax. The W-8BEN is essential. Without it, withholding jumps to 30% and the UK system doesn't refund the difference.
+- **Foreign dividends.** US dividends in a UK GIA face 15% withholding (with a [W-8BEN form](https://www.irs.gov/forms-pubs/about-form-w-8-ben) on file) before UK tax. The W-8BEN is essential. Without it, withholding jumps to 30% and the UK system doesn't refund the difference.
 - **Distributions from investment trusts.** Most are taxed as dividends. A few (REITs, some bond-focused trusts) pay PIDs or interest distributions instead, taxed differently.
 
 ## What's coming
