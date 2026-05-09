@@ -68,6 +68,14 @@ export interface DcfSensitivity {
   baseCol: number;
 }
 
+export interface DcfDividendProjectionPoint {
+  /** Year offset from today; year 0 is the latest reported dividend (D₀). */
+  year: number;
+  bear: number;
+  base: number;
+  bull: number;
+}
+
 export interface DcfResult {
   scenarios: {
     bear: DcfScenario;
@@ -80,6 +88,8 @@ export interface DcfResult {
     marginOfSafety: number | null;
   };
   dividendStream: DcfDividendStreamPoint[];
+  /** Year-by-year DPS for all three scenarios — used by the projection chart. */
+  dividendProjection: DcfDividendProjectionPoint[];
   sensitivity: DcfSensitivity;
   /** Yield-on-cost at the current price = D₀ / P. null if price ≤ 0. */
   breakEvenYield: number | null;
@@ -130,25 +140,46 @@ export function calculateDcf(inputs: DcfInputs): DcfResult {
   const baseGrowth = inputs.mode === "simple" ? inputs.growthRate : inputs.phase1Growth;
   const baseDiscount = inputs.discountRate;
 
+  // Bull = +2pp growth and −1.5pp discount, but with a guard: the spread
+  // (discount − growth) must stay ≥ 2pp. With user-default UK inputs (growth
+  // 4%, discount 8.5%) the raw Bull lands at growth 6% / discount 7% — a 1pp
+  // spread that produces an absurd intrinsic (£127 vs £24 price) and pulls
+  // the probability-weighted figure with it. Clamping the spread at 2pp
+  // keeps Bull genuinely optimistic without breaking the model.
+  const bullGrowth = baseGrowth + 0.02;
+  const bullDiscount = Math.max(
+    Math.max(0.001, baseDiscount - 0.015),
+    bullGrowth + 0.02
+  );
+
   const scenarios = {
     bear: buildScenario(inputs, baseGrowth - 0.02, baseDiscount + 0.015),
     base: buildScenario(inputs, baseGrowth, baseDiscount),
-    bull: buildScenario(
-      inputs,
-      baseGrowth + 0.02,
-      Math.max(0.001, baseDiscount - 0.015)
-    ),
+    bull: buildScenario(inputs, bullGrowth, bullDiscount),
   };
 
   const weighted = weightScenarios(scenarios, inputs.currentPrice);
   const dividendStream = projectDividendStream(inputs, baseGrowth);
+  const dividendProjection = projectDividendsAcrossScenarios(
+    inputs,
+    scenarios.bear,
+    scenarios.base,
+    scenarios.bull
+  );
   const sensitivity = buildSensitivity(inputs, baseGrowth, baseDiscount);
   const breakEvenYield =
     inputs.currentPrice > 0 && inputs.currentDividend > 0
       ? inputs.currentDividend / inputs.currentPrice
       : null;
 
-  return { scenarios, weighted, dividendStream, sensitivity, breakEvenYield };
+  return {
+    scenarios,
+    weighted,
+    dividendStream,
+    dividendProjection,
+    sensitivity,
+    breakEvenYield,
+  };
 }
 
 function buildScenario(
@@ -224,6 +255,32 @@ function weightScenarios(
     vsCurrentPrice: (intrinsic - currentPrice) / currentPrice,
     marginOfSafety: (intrinsic - currentPrice) / intrinsic,
   };
+}
+
+function projectDividendsAcrossScenarios(
+  inputs: DcfInputs,
+  bear: DcfScenario,
+  base: DcfScenario,
+  bull: DcfScenario
+): DcfDividendProjectionPoint[] {
+  const out: DcfDividendProjectionPoint[] = [];
+  const d0 = inputs.currentDividend;
+  if (!(d0 > 0)) return out;
+  // Year 0 anchor — all three scenarios start at the latest reported
+  // dividend, then fan out as growth differences compound.
+  out.push({ year: 0, bear: d0, base: d0, bull: d0 });
+  let bearD = d0;
+  let baseD = d0;
+  let bullD = d0;
+  // 15 years is the sweet spot: long enough to make the cone of uncertainty
+  // visible, short enough that the chart stays legible on mobile.
+  for (let y = 1; y <= 15; y++) {
+    bearD *= 1 + bear.growth;
+    baseD *= 1 + base.growth;
+    bullD *= 1 + bull.growth;
+    out.push({ year: y, bear: bearD, base: baseD, bull: bullD });
+  }
+  return out;
 }
 
 function projectDividendStream(

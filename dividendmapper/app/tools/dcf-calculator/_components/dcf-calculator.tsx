@@ -7,6 +7,7 @@ import { InputsPanel, type LookupState } from "./inputs-panel";
 import { ResultCard } from "./result-card";
 import { ScenariosTable } from "./scenarios-table";
 import { SensitivityTable } from "./sensitivity-table";
+import { DividendProjectionChart } from "./dividend-projection-chart";
 
 const UK_DEFAULTS: DcfInputs = {
   mode: "simple",
@@ -63,6 +64,12 @@ export function DcfCalculator() {
     setLookup({ status: "idle" });
   }, [config.locale]);
 
+  // The "you're valuing X" label uses the upstream company name when we have
+  // it (Polygon/EODHD usually do), falling back to the bare ticker. null when
+  // no ticker has been fetched in this session.
+  const tickerName =
+    lookup.status === "success" ? lookup.name ?? lookup.ticker : null;
+
   return (
     <div className="space-y-6">
       <InputsPanel
@@ -72,7 +79,8 @@ export function DcfCalculator() {
         setLookup={setLookup}
         onReset={handleReset}
       />
-      <ResultCard inputs={inputs} result={result} />
+      <ResultCard inputs={inputs} result={result} tickerName={tickerName} />
+      <DividendProjectionChart inputs={inputs} result={result} />
       <ScenariosTable inputs={inputs} result={result} />
       <SensitivityTable inputs={inputs} result={result} />
     </div>

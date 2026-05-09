@@ -2,10 +2,17 @@
 
 import { useLocale } from "@/lib/locale/context";
 import { formatPercent } from "@/lib/locale/format";
-import { classifyMos, type DcfInputs, type DcfResult, type MosBand } from "@/lib/calculators/dcf";
+import {
+  classifyMos,
+  type DcfInputs,
+  type DcfResult,
+  type DcfScenario,
+  type MosBand,
+} from "@/lib/calculators/dcf";
 import {
   formatShareCurrency,
   resolveCurrency,
+  type ResolvedCurrency,
 } from "@/lib/calculators/dcf-currency";
 import { InfoPopover } from "@/components/ui/info-popover";
 import { cn } from "@/lib/utils";
@@ -13,9 +20,11 @@ import { cn } from "@/lib/utils";
 interface ResultCardProps {
   inputs: DcfInputs;
   result: DcfResult;
+  /** Display name for the stock — usually a fetched company name. */
+  tickerName: string | null;
 }
 
-export function ResultCard({ inputs, result }: ResultCardProps) {
+export function ResultCard({ inputs, result, tickerName }: ResultCardProps) {
   const { config } = useLocale();
   const currency = resolveCurrency(inputs.currency, config);
   const base = result.scenarios.base;
@@ -29,6 +38,15 @@ export function ResultCard({ inputs, result }: ResultCardProps) {
       aria-label="Intrinsic value summary"
       className="rounded-xl border border-border bg-card p-6"
     >
+      <Verdict
+        tickerName={tickerName}
+        currentPrice={inputs.currentPrice}
+        currency={currency}
+        base={base}
+        bear={result.scenarios.bear}
+        bull={result.scenarios.bull}
+        mosBand={mosBand}
+      />
       <div className="grid gap-6 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
         <div>
           <p className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -242,6 +260,113 @@ interface BandPalette {
   body_text: string;
   pill: string;
   dot: string;
+}
+
+interface VerdictProps {
+  tickerName: string | null;
+  currentPrice: number;
+  currency: ResolvedCurrency;
+  base: DcfScenario;
+  bear: DcfScenario;
+  bull: DcfScenario;
+  mosBand: MosBand;
+}
+
+/**
+ * Plain-English headline above the figures: "At today's $78.42, Coca-Cola
+ * looks fairly valued. Bear sees it −12%, Bull sees it +64%."
+ *
+ * The job here is *translation*. Beginners shouldn't have to read a table
+ * before they understand whether the stock looks dear or cheap. Experienced
+ * investors will skip past it to the numbers; that's fine.
+ */
+function Verdict({
+  tickerName,
+  currentPrice,
+  currency,
+  base,
+  bear,
+  bull,
+  mosBand,
+}: VerdictProps) {
+  if (!(currentPrice > 0) || base.intrinsicValue === null) {
+    return (
+      <p className="mb-5 text-sm text-muted-foreground">
+        Fetch a ticker, or fill in the dividend, price and growth rate to see
+        the verdict.
+      </p>
+    );
+  }
+
+  const stockLabel = tickerName ?? "this stock";
+  const verdictText: Record<MosBand, string> = {
+    attractive: "looks attractively priced",
+    fair: "looks fairly priced",
+    overvalued: "looks expensive",
+    unknown: "is hard to read with these inputs",
+  };
+
+  const fmtPercent = (v: number | null) =>
+    v === null ? "—" : `${v >= 0 ? "+" : ""}${(v * 100).toFixed(0)}%`;
+
+  return (
+    <div className="mb-5">
+      <p className="text-sm leading-relaxed text-muted-foreground md:text-base">
+        At today&rsquo;s{" "}
+        <span className="font-mono font-medium text-foreground">
+          {formatShareCurrency(currentPrice, currency)}
+        </span>
+        ,{" "}
+        <span className="font-medium text-foreground">{stockLabel}</span>{" "}
+        <span className={cn("font-medium", VERDICT_TEXT[mosBand])}>
+          {verdictText[mosBand]}
+        </span>
+        .{" "}
+        <span className="text-foreground/80">
+          Base{" "}
+          <span
+            className={cn(
+              "font-mono",
+              colourForVsPrice(base.vsCurrentPrice)
+            )}
+          >
+            {fmtPercent(base.vsCurrentPrice)}
+          </span>
+          {" "}· Bear{" "}
+          <span
+            className={cn(
+              "font-mono",
+              colourForVsPrice(bear.vsCurrentPrice)
+            )}
+          >
+            {fmtPercent(bear.vsCurrentPrice)}
+          </span>
+          {" "}· Bull{" "}
+          <span
+            className={cn(
+              "font-mono",
+              colourForVsPrice(bull.vsCurrentPrice)
+            )}
+          >
+            {fmtPercent(bull.vsCurrentPrice)}
+          </span>
+          .
+        </span>
+      </p>
+    </div>
+  );
+}
+
+const VERDICT_TEXT: Record<MosBand, string> = {
+  attractive: "text-positive",
+  fair: "text-income-600 dark:text-income-100",
+  overvalued: "text-negative",
+  unknown: "text-muted-foreground",
+};
+
+function colourForVsPrice(v: number | null): string {
+  if (v === null) return "text-muted-foreground";
+  return v >= 0 ? "text-positive" : "text-negative";
 }
 
 const BAND_PALETTES: Record<MosBand, BandPalette> = {

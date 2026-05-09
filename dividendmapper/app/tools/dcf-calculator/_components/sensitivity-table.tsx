@@ -1,7 +1,7 @@
 "use client";
 
 import { useLocale } from "@/lib/locale/context";
-import type { DcfInputs, DcfResult } from "@/lib/calculators/dcf";
+import { classifyMos, type DcfInputs, type DcfResult, type MosBand } from "@/lib/calculators/dcf";
 import {
   formatShareCurrency,
   resolveCurrency,
@@ -31,14 +31,17 @@ export function SensitivityTable({ inputs, result }: SensitivityTableProps) {
           Sensitivity table
           <InfoPopover label="What's a sensitivity table?">
             <p>
-              <strong>Sensitivity table.</strong> Shows how the intrinsic value
-              swings as you vary the two assumptions that drive most of the
-              answer: dividend growth (rows) and your required return (columns).
+              <strong>Sensitivity heatmap.</strong> Shows how the intrinsic
+              value swings as you vary the two assumptions that drive most of
+              the answer: dividend growth (rows) and your required return
+              (columns).
             </p>
             <p className="mt-2 text-muted-foreground">
-              Cells where growth ≥ discount can&rsquo;t be solved (the model
-              implies infinite value), so they show as &ldquo;—&rdquo;. The
-              base case — exactly your inputs — is highlighted in green.
+              Cells are tinted by margin of safety vs the current price —
+              green &gt; 20%, amber 0–20%, red &lt; 0%. Cells where growth ≥
+              discount can&rsquo;t be solved (the model implies infinite
+              value), so they show as &ldquo;—&rdquo;. The base case — exactly
+              your inputs — has the green ring around it.
             </p>
           </InfoPopover>
         </h3>
@@ -83,18 +86,31 @@ export function SensitivityTable({ inputs, result }: SensitivityTableProps) {
                 {discountRates.map((_, c) => {
                   const v = values[r][c];
                   const isBase = r === baseRow && c === baseCol;
+                  const mos =
+                    v !== null && inputs.currentPrice > 0
+                      ? (v - inputs.currentPrice) / v
+                      : null;
+                  const band = classifyMos(mos);
                   return (
                     <td
                       key={c}
                       className={cn(
                         "px-3 py-2.5 text-right font-mono tabular-nums md:px-4",
+                        v === null
+                          ? "bg-muted/30 text-muted-foreground"
+                          : HEATMAP_BG[band],
                         isBase
-                          ? "bg-brand-500/10 font-semibold text-foreground ring-1 ring-inset ring-brand-500/40"
+                          ? "font-semibold text-foreground ring-1 ring-inset ring-brand-500/60"
                           : v === null
                             ? "text-muted-foreground"
-                            : "text-foreground"
+                            : HEATMAP_TEXT[band]
                       )}
                       aria-current={isBase ? "true" : undefined}
+                      title={
+                        mos !== null
+                          ? `MOS ${(mos * 100).toFixed(1)}% (${BAND_LABEL[band]})`
+                          : undefined
+                      }
                     >
                       {v === null ? "—" : formatShareCurrency(v, currency, { compact: true })}
                     </td>
@@ -106,22 +122,64 @@ export function SensitivityTable({ inputs, result }: SensitivityTableProps) {
         </table>
       </div>
 
-      <footer className="border-t border-border bg-background px-4 py-3 text-xs text-muted-foreground md:px-6">
-        Shown around your base case (growth{" "}
-        <span className="font-mono font-medium text-foreground">
-          {(
-            (inputs.mode === "simple" ? inputs.growthRate : inputs.phase1Growth) *
-            100
-          ).toFixed(1)}
-          %
+      <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-border bg-background px-4 py-3 text-xs text-muted-foreground md:px-6">
+        <span>
+          Shown around your base case (growth{" "}
+          <span className="font-mono font-medium text-foreground">
+            {(
+              (inputs.mode === "simple" ? inputs.growthRate : inputs.phase1Growth) *
+              100
+            ).toFixed(1)}
+            %
+          </span>
+          , discount{" "}
+          <span className="font-mono font-medium text-foreground">
+            {(inputs.discountRate * 100).toFixed(1)}%
+          </span>
+          ).
         </span>
-        , discount{" "}
-        <span className="font-mono font-medium text-foreground">
-          {(inputs.discountRate * 100).toFixed(1)}%
-        </span>
-        ). Values are rounded to whole percentage points for the headers.
+        <HeatmapLegend />
       </footer>
     </section>
   );
 }
 
+const HEATMAP_BG: Record<MosBand, string> = {
+  attractive: "bg-positive/10 hover:bg-positive/15",
+  fair: "bg-income-500/10 hover:bg-income-500/15",
+  overvalued: "bg-negative/10 hover:bg-negative/15",
+  unknown: "",
+};
+
+const HEATMAP_TEXT: Record<MosBand, string> = {
+  attractive: "text-foreground",
+  fair: "text-foreground",
+  overvalued: "text-foreground",
+  unknown: "text-foreground",
+};
+
+const BAND_LABEL: Record<MosBand, string> = {
+  attractive: "attractive",
+  fair: "fair value",
+  overvalued: "overvalued",
+  unknown: "no price",
+};
+
+function HeatmapLegend() {
+  return (
+    <ul className="flex items-center gap-3" aria-label="Heatmap colour legend">
+      <li className="flex items-center gap-1.5">
+        <span aria-hidden className="h-2.5 w-2.5 rounded-sm bg-positive/30" />
+        &gt; 20%
+      </li>
+      <li className="flex items-center gap-1.5">
+        <span aria-hidden className="h-2.5 w-2.5 rounded-sm bg-income-500/30" />
+        0–20%
+      </li>
+      <li className="flex items-center gap-1.5">
+        <span aria-hidden className="h-2.5 w-2.5 rounded-sm bg-negative/30" />
+        &lt; 0%
+      </li>
+    </ul>
+  );
+}
