@@ -950,6 +950,23 @@ Items deferred from the 10-day sprint because they don't block launch, but shoul
 
 ---
 
+### Blog breadcrumb width alignment
+
+**What:** The breadcrumb nav (and footer disclaimer) inside `/blog` pins to `max-w-3xl`, while the global header and `/tools` breadcrumb both pin to `max-w-7xl lg:px-8`. Result: scrolling into a blog page shows the breadcrumb inset relative to the header directly above it.
+
+**Why:** Breadcrumbs are navigation cues and should align with the global header for visual consistency. Pinning them to the article reading width makes them read as part of the article body, which conflicts with how `/tools` presents the same UI. Glenn flagged this on 2026-05-10 in the post-deploy visual QA.
+
+**Effort:** ~5 min, single file.
+
+**Build:**
+- In `app/blog/layout.tsx`, change the breadcrumb container from `mx-auto flex max-w-3xl items-center gap-2 px-4 py-3 text-sm md:px-6` to `mx-auto flex max-w-7xl items-center gap-2 px-4 py-3 text-sm md:px-6 lg:px-8`.
+- Apply the same width change to the footer disclaimer block (`max-w-3xl` → `max-w-7xl`, add `lg:px-8`).
+- Leave the `<article>` reading column at `max-w-3xl` — narrow column is correct for long-form reading.
+
+**Don't build:** don't widen the article body; that's deliberately narrow for readability.
+
+---
+
 ### Ticker search dropdown (DCF calculator)
 
 **What:** Replace the bare ticker input on `/tools/dcf-calculator` with a search-as-you-type dropdown. User types "Apple" → dropdown suggests "AAPL · Apple Inc · NASDAQ"; clicking fills the ticker and auto-fetches.
