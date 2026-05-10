@@ -23,7 +23,8 @@ export type LookupState =
       missingFields: string[];
       growthApplied: number | null;
     }
-  | { status: "error"; ticker: string; message: string };
+  | { status: "error"; ticker: string; message: string }
+  | { status: "lse_unavailable"; ticker: string };
 
 interface InputsPanelProps {
   inputs: DcfInputs;
@@ -280,6 +281,16 @@ function TickerLookup({
         currency: string | null;
         fetchedAt: string;
       };
+      // EODHD returns HTTP 200 with null fields when the API key's plan
+      // doesn't cover LSE — the route can't tell that apart from a genuinely
+      // empty ticker. Detect it here and surface a clear, scoped message
+      // instead of leaving the user to guess why nothing populated.
+      const isUkTicker = /\.(L|LON)$/i.test(cleaned);
+      const noUsableData = data.price === null && data.dividend === null;
+      if (isUkTicker && noUsableData) {
+        setLookup({ status: "lse_unavailable", ticker: cleaned });
+        return;
+      }
       const missing: string[] = [];
       if (data.price === null) missing.push("price");
       if (data.dividend === null) missing.push("dividend");
@@ -381,6 +392,20 @@ function LookupStatus({ lookup }: { lookup: LookupState }) {
         <span className="font-medium">Couldn&rsquo;t fetch {lookup.ticker}:</span>{" "}
         {lookup.message}
       </p>
+    );
+  }
+  if (lookup.status === "lse_unavailable") {
+    return (
+      <div className="mt-3 rounded-md border border-border bg-muted/40 px-3 py-2 text-xs text-foreground">
+        <p className="font-medium">
+          LSE auto-lookup isn&rsquo;t enabled for{" "}
+          <span className="font-mono">{lookup.ticker}</span>.
+        </p>
+        <p className="mt-1 text-muted-foreground">
+          Manual entry works for any stock. Type the price and dividend below;
+          the rest of the calculator runs as normal.
+        </p>
+      </div>
     );
   }
 
