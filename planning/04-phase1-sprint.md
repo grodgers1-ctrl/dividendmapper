@@ -774,8 +774,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
 |-----|-------|---------------------|
 | **Day 6** | Retirement calculator — US mode, State Pension / Social Security panel, income breakdown chart. Locale toggle switches all labels and calculations correctly. | Finish T212 SIPP guide draft. Begin UK dividend tax guide draft. |
 | **Day 7** ✅ | **DCF calculator — Simple mode shipped.** Ticker lookup API (`/api/market/quote`, EODHD .L / Polygon US, 15-min in-memory cache, GBX→GBP, 3-year dividend CAGR with outlier guard). Gordon Growth + 2-stage DDM in calc layer (advanced UI deferred). Inputs panel with currency-aware fields, info popovers on every jargon term, discount-rate presets. Result card with plain-English verdict line, intrinsic value, MOS badge. Scenarios table. **Sensitivity table moved up from Day 8** with heatmap colouring (green/amber/red by MOS band). 15-year dividend fan chart (Bear/Base/Bull) **moved up from Day 8**. Bull-spread ≥2pp clamp to stop absurd 1pp-spread intrinsic values. | Continue Reddit participation (answer 2–3 threads, no product mention yet). |
-| **Day 8** | DCF calculator — **2-stage DDM mode toggle in UI** (calc layer is done; just needs the InputsPanel sliders for phase1Growth / phase1Years / terminalGrowth). **Break-even yield card** (calc layer exposes `result.breakEvenYield`). **PV decomposition donut** (Phase 1 PV vs Terminal PV — only meaningful in 2-stage mode). Optional: intrinsic-vs-current-price scenario bar chart. | Finalise blog posts. Prepare Reddit launch post drafts. |
-| **Day 9** | Blog infrastructure (MDX pages). Publish T212 SIPP guide + dividend tax guide. All SEO metadata. Sitemap. Structured data. og:images. | Prepare Product Hunt listing. Brief 5–10 friends for Day 10 upvotes. |
+| **Day 8** ✅ | **DCF advanced shipped.** Mode toggle (Simple ↔ Advanced segmented control) reveals phase 1 growth / phase 1 length / terminal growth sliders. Break-even yield card with today / 5y / 10y yield-on-cost tiles + 10-bar mini-trajectory (renders in both modes). PV decomposition donut (Advanced-only, custom 2-segment SVG) showing Phase 1 PV vs Terminal PV with a central terminal-percentage label that drives home the "your answer is mostly a bet on the terminal assumption" lesson. Bonus fix: Bull-spread 2pp clamp now only applies in Simple mode (Advanced was producing nonsensical −10% Bull deltas because the clamp was checking the wrong growth field). | Finalise blog posts. Prepare Reddit launch post drafts. |
+| **Day 9** ✅ | **Blog (MDX) live with 2 posts.** @next/mdx + remark-gfm scaffold (string plugin form for Turbopack), `lib/blog/posts.ts` manifest as single source of truth, `mdx-components.tsx` for typography defaults, blog layout + index + per-post Article JSON-LD via `PostHeader`. Two launch posts published: UK Dividend Tax Guide 2026/27 (the rate rises, highest-slice rule, ISA/SIPP/GIA priority) and Trading 212 SIPP Review (with the Gaudi operator fee surfaced — ~£75-£100/yr that most other reviews skip; T212 isn't an integrated SIPP, it's a partnership). Both posts humaniser-clean (linted for em dashes, banned AI vocab, fillers, copula avoidance). Sitemap enumerates posts from the manifest. | Prepare Product Hunt listing. Brief 5–10 friends for Day 10 upvotes. |
 | **Day 10** | Full QA pass: Core Web Vitals check, both locales, mobile responsive, all calculator edge cases (growth rate ≥ discount rate, zero portfolio, max ages). **Deploy production.** | **Launch day.** See marketing plan launch sequence. |
 
 ---
@@ -802,16 +802,66 @@ export default function sitemap(): MetadataRoute.Sitemap {
 - [x] Retirement calculator: FIRE number, 3-scenario chart, income breakdown — all compute correctly
 - [x] Retirement calculator: State Pension / Social Security income subtracted from target before FIRE calculation
 - [x] DCF calculator: simple mode (Gordon Growth) returns correct intrinsic value
-- [ ] DCF calculator: advanced mode (2-stage DDM) returns correct intrinsic value *(calc layer ✅, UI toggle pending Day 8)*
+- [x] DCF calculator: advanced mode (2-stage DDM) returns correct intrinsic value
 - [x] DCF calculator: sensitivity table renders without errors (growth ≥ discount shows "—" not NaN)
 - [x] DCF calculator: ticker lookup returns current price and dividend data *(plus 3-year dividend CAGR auto-applied)*
 - [x] Margin of safety badge shows correct colour (green / amber / red)
 - [ ] All pages pass Core Web Vitals (LCP < 2.5s, CLS < 0.1, INP < 200ms)
 - [ ] Sitemap submitted to Google Search Console
-- [ ] Both blog posts published with internal links to calculators
+- [x] Both blog posts published with internal links to calculators
 - [ ] og:image cards working (verified in Twitter Card Validator and LinkedIn Post Inspector)
 - [x] Disclaimer present on all calculator pages: "This is not financial or tax advice."
 - [ ] Mobile layout tested on 390px (iPhone) and 768px (iPad) widths
+
+---
+
+## Post-launch polish backlog
+
+Items deferred from the 10-day sprint because they don't block launch, but should ship before Phase 2 work begins. Track here so they don't get forgotten.
+
+### Defer PostHog to lazyOnload (site-wide LCP)
+
+**What:** Switch the PostHog provider's load strategy so the analytics SDK doesn't block the LCP critical path.
+
+**Why:** Day 10 mobile PSI showed a consistent ~2.6–2.9s LCP floor across home, blogs, and retirement — chrome-level cost, not page-specific content. PostHog initialising during initial hydration is the prime suspect (everything else in the layout is small). Deferring it to `lazyOnload` (or initialising on first interaction) should shave 100–300ms off LCP across every page without losing analytics fidelity for actual users (anonymous bounces aren't worth tracking anyway).
+
+**Effort:** ~30 min — small change in `components/posthog-provider.tsx`. Verify with PSI re-run before claiming the win.
+
+**Don't build:** any analytics-feature additions; this is purely a load-strategy change.
+
+---
+
+### Defer retirement `solveForLever` to lever-opened state (TBT)
+
+**What:** Don't run `solveForLever` for the "How to close the gap" levers until the user expands that section. Currently it runs on every input change, including the initial mount.
+
+**Why:** Retirement page TBT was 230ms on mobile PSI — over the 200ms INP proxy budget. Memory says synchronous heavy solvers triggered by sliders need input-side debouncing; `solveForLever` runs `calculateRetirement` up to 30× per call which is the dominant blocking task on hydration. The "Close the gap" panel is below the fold on mobile anyway, so deferring is free UX-wise.
+
+**Effort:** ~20 min — gate the solver behind a `levers-expanded` state, run on expand + on input changes only while expanded.
+
+**Don't build:** any redesign of the levers UI; just gate when it computes.
+
+---
+
+### Ticker search dropdown (DCF calculator)
+
+**What:** Replace the bare ticker input on `/tools/dcf-calculator` with a search-as-you-type dropdown. User types "Apple" → dropdown suggests "AAPL · Apple Inc · NASDAQ"; clicking fills the ticker and auto-fetches.
+
+**Why:** Most users don't remember exact tickers, especially `.L` suffixes ("Unilever" beats "ULVR.L"). Single biggest UX upgrade for new users on the DCF calculator. Existing manual-entry path remains as a fallback.
+
+**Gated on:** EODHD upgrade to Fundamentals + EOD ($19.99/mo). The `/api/search/{query}` endpoint is included on that plan; free tier doesn't have it and would also crater under typing rates anyway.
+
+**Effort:** ~2–3 hours focused work.
+
+**Build:**
+- New `/api/market/search?q=…&limit=10` route proxying EODHD's `/api/search/{query}` endpoint. In-memory cache, 24-hour TTL (company names don't change).
+- Filter results to Common Stock + ETF on LSE / NYSE / NASDAQ only — EODHD raw results include OTC pinksheets and cross-listings that are noise here.
+- Debounced typing (250ms) with race-condition guard so a slow response from "appl" can't overwrite a fresh response from "apple". Use an incrementing request ID and ignore stale responses.
+- Dropdown UI with keyboard navigation (↑/↓/Enter/Escape) and outside-click dismiss. Reuse the `InfoPopover` outside-click pattern.
+- On click, fill the ticker input AND auto-trigger the existing fetch flow — skip the "Fetch" button step entirely.
+- Mobile: dropdown pinned full-width below input, virtual keyboard shouldn't cover results.
+
+**Don't build (scope guard):** sector/yield filters, multi-ticker comparison, watchlists. Those are Phase 2+ portfolio features.
 
 ---
 

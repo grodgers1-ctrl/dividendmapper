@@ -1,15 +1,46 @@
 "use client";
 
 import * as React from "react";
+import dynamic from "next/dynamic";
 import { useLocale } from "@/lib/locale/context";
 import { calculateDcf, type DcfInputs } from "@/lib/calculators/dcf";
 import { InputsPanel, type LookupState } from "./inputs-panel";
 import { ResultCard } from "./result-card";
-import { ScenariosTable } from "./scenarios-table";
-import { SensitivityTable } from "./sensitivity-table";
-import { DividendProjectionChart } from "./dividend-projection-chart";
 import { BreakEvenYieldCard } from "./break-even-yield-card";
-import { PvDecomposition } from "./pv-decomposition";
+
+// Below-the-fold components carry the SVG/chart bundle. Code-splitting them
+// out of the critical path drops the page's largest paint into the inputs
+// panel + result card. Placeholders match expected card height so layout
+// stays stable (CLS=0) while chunks resolve.
+const PvDecomposition = dynamic(
+  () => import("./pv-decomposition").then((m) => ({ default: m.PvDecomposition })),
+  { ssr: false }
+);
+const DividendProjectionChart = dynamic(
+  () =>
+    import("./dividend-projection-chart").then((m) => ({
+      default: m.DividendProjectionChart,
+    })),
+  { ssr: false, loading: () => <ChartPlaceholder height="h-[28rem]" /> }
+);
+const ScenariosTable = dynamic(
+  () => import("./scenarios-table").then((m) => ({ default: m.ScenariosTable })),
+  { ssr: false, loading: () => <ChartPlaceholder height="h-72" /> }
+);
+const SensitivityTable = dynamic(
+  () =>
+    import("./sensitivity-table").then((m) => ({ default: m.SensitivityTable })),
+  { ssr: false, loading: () => <ChartPlaceholder height="h-[26rem]" /> }
+);
+
+function ChartPlaceholder({ height }: { height: string }) {
+  return (
+    <div
+      aria-hidden
+      className={`${height} rounded-xl border border-dashed border-border bg-card/50`}
+    />
+  );
+}
 
 const UK_DEFAULTS: DcfInputs = {
   mode: "simple",
