@@ -13,6 +13,18 @@ export const metadata: Metadata = {
       "Plain-English guides on UK dividend tax, ISAs, SIPPs, and broker reviews.",
     url: "/blog",
     type: "website",
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "DividendMapper Blog — Practical guides for dividend investors",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    images: ["/opengraph-image"],
   },
 };
 

@@ -12,6 +12,18 @@ export const metadata: Metadata = {
       "Value any dividend stock with the Gordon Growth Dividend Discount Model. Three scenarios, margin-of-safety badge, sensitivity table.",
     url: "/tools/dcf-calculator",
     type: "website",
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "Dividend DCF Calculator — DividendMapper",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    images: ["/opengraph-image"],
   },
 };
 

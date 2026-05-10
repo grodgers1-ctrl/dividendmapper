@@ -12,6 +12,18 @@ export const metadata: Metadata = {
       "Project dividend income at retirement across three scenarios. UK ISA / SIPP / GIA + State Pension, or US 401(k) / IRA / Brokerage + Social Security. Free, no signup.",
     url: "/tools/retirement-calculator",
     type: "website",
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "Retirement Income Calculator — DividendMapper",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    images: ["/opengraph-image"],
   },
 };
 
