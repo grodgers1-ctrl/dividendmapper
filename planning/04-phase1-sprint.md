@@ -843,6 +843,113 @@ Items deferred from the 10-day sprint because they don't block launch, but shoul
 
 ---
 
+### Locale completeness sweep (calc pages + content)
+
+**What:** Hardcoded UK or US strings leak across the locale toggle. US mode still shows £15 pricing and mixed-currency phrasing like "their $500-a-month minimum doesn't fit a £15 product". UK DCF page still has US ticker examples (SCHD, AAPL etc.) in the helper text and IRS references in disclaimers/footer. Footer and resources strip leans UK in US mode. The toggle architecture works; not every string is routed through `useLocale()`.
+
+**Why:** Locale toggle is a core feature. A user hitting wrong-currency or wrong-tax-authority copy on a financial tool immediately questions whether the calculations are trustworthy too. Day 10 PSI/QA confirmed the architecture is sound; this is purely about wiring strings through.
+
+**Effort:** ~2–3 hours. Mostly grep-and-fix.
+
+**Build:**
+- Grep static strings for: `£`, `$` (followed by digits), `IRS`, `HMRC`, `401(k)`, `IRA`, `ISA`, `SIPP`, `State Pension`, `Social Security`, and US ticker examples (`SCHD`, `AAPL`, `JNJ`, `KO`).
+- For each finding, decide: (a) route through `useLocale().config` for currency/wrapper labels, (b) rewrite to locale-neutral phrasing, or (c) deliberately gate with a `config.locale === "uk"` block.
+- Pay particular attention to: pricing strings, retirement and DCF input tooltips, footer disclaimers, blog teasers in cross-locale surfaces (header nav, footer links, related-posts), the home hero (separate item below).
+- Smoke test: toggle each route UK→US→UK and read top-to-bottom for stragglers.
+
+**Don't build:** don't translate the blog posts themselves; they're correctly locale-tagged in `lib/blog/posts.ts` and shouldn't be mirrored.
+
+---
+
+### Hero positioning: drop the US-first framing
+
+**What:** The home hero says "Free tools for US dividend investors" while the rest of the site (and the metadata) consistently says UK and US. First impression contradicts the rest of the site.
+
+**Why:** Positioning is deliberately dual-market. Any "US-first" or "UK-first" cross-talk in the hero undermines every "UK and US" claim that follows.
+
+**Effort:** ~10 min.
+
+**Build:**
+- Replace the US-only hero line with explicit UK + US framing, or a locale-aware string keyed off `useLocale()`.
+- Re-read surrounding hero copy to confirm voice cohesion (no "British investors" vs "US investors" cross-talk in the same paragraph).
+
+**Don't build:** don't redesign the hero layout; just the copy.
+
+---
+
+### DCF naming: stop apologising for the "DCF" label
+
+**What:** Tool branded "DCF Calculator" but body copy in multiple places says it's "really a Dividend Discount Model (DDM)" called "DCF for SEO". Honest but awkward — user-facing copy reading "we picked this name for SEO reasons" feels manipulative even when it isn't.
+
+**Why:** Trust. Owning the naming reads more confident than explaining the choice in three places.
+
+**Effort:** ~15 min.
+
+**Build:**
+- Find existing copy: page header, `inputs-panel.tsx` footer note (line ~228), info popover on the model toggle.
+- Pick one direction and apply consistently:
+  - (a) Drop the "for SEO" admission entirely; phrase as "We use the Dividend Discount Model — the species of DCF designed for income stocks."
+  - (b) Keep a single subtle tooltip on the title noting "DDM is the formal term" as a credibility signal; remove from the other two places.
+
+**Don't build:** don't change the URL slug or page title; SEO wins are intact.
+
+---
+
+### Locale toggle discoverability
+
+**What:** The 🇬🇧/🇺🇸 toggle in the header is visible but not self-explanatory. New users may not realise it switches all calculator inputs, tax wrappers, and currency at once.
+
+**Why:** Discoverability. Users who don't notice the toggle stay in the default locale and get numbers that don't reflect their tax setup.
+
+**Effort:** ~30 min.
+
+**Build:**
+- Add a hover tooltip: "Switch to UK ISA/SIPP/State Pension or US 401(k)/IRA/Social Security."
+- Consider a one-time inline hint on first calculator load: "We default to UK. Toggle here for US." Cookie-gated so it doesn't repeat.
+- On desktop, add a visible "Region:" label next to the flags if there's room. On mobile, keep flags-only.
+
+**Don't build:** don't replace flags with a text dropdown; the visual is good as-is.
+
+---
+
+### CTA copy consistency
+
+**What:** CTAs vary across the site: "Join waitlist", "Join the waitlist", "Preview retirement calculator", etc. Reads as oversight against otherwise tight copy.
+
+**Why:** Brand consistency. Same action should have the same words across surfaces.
+
+**Effort:** ~20 min.
+
+**Build:**
+- Audit every CTA: header, hero, calc pages, blog posts, footer, in-content prompts.
+- Settle canonical phrasings:
+  - Waitlist: "Join the waitlist"
+  - Calculator entry: "Try the [name] calculator" (or "Open …")
+  - Blog post: "Read the guide"
+- Apply across all surfaces.
+
+**Don't build:** don't redesign button shapes or colours.
+
+---
+
+### "Break-even yield" label mismatch
+
+**What:** The `BreakEvenYieldCard` on the DCF calculator is labelled "Break-even yield" but actually displays projected yield-on-cost (today / 5y / 10y tiles + mini-trajectory). Different concepts — break-even yield in DCF is the yield required for the stock to break even at the given discount rate; yield-on-cost is what your dividend grows to as a percentage of your original purchase price.
+
+**Why:** Terminology accuracy on a finance tool. Mislabelling these is exactly the kind of thing finance-savvy users notice — and notice they're noticing — which flags the tool as amateur.
+
+**Effort:** ~15–30 min depending on which direction.
+
+**Build:**
+- (a) Cheap fix: rename the card to "Yield on cost" / "Future yield-on-cost". Update component name, card title, popover, and any cross-references in `inputs-panel.tsx`.
+- (b) Real fix: keep the name and actually compute and display the break-even yield (the dividend yield implied by today's price under the user's discount and growth assumptions, vs the today/5y/10y yield-on-cost as a secondary block).
+
+**Don't build:** don't ship both stacked unless we commit to a "yield analytics" feature in Phase 2.
+
+**Recommendation:** (a) for Day 11, (b) as a Phase 2 candidate if user feedback says it's missed.
+
+---
+
 ### Ticker search dropdown (DCF calculator)
 
 **What:** Replace the bare ticker input on `/tools/dcf-calculator` with a search-as-you-type dropdown. User types "Apple" → dropdown suggests "AAPL · Apple Inc · NASDAQ"; clicking fills the ticker and auto-fetches.
