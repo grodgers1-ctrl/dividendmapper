@@ -107,7 +107,7 @@ export default function WaitlistPage() {
               href="/tools/retirement-calculator"
               className="text-sm font-medium text-brand-600 transition-colors hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
             >
-              Try the retirement calculator preview →
+              Try the retirement calculator →
             </Link>
           </div>
         </aside>

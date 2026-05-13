@@ -225,7 +225,7 @@ const FAQS = [
   },
   {
     q: "How is the Dividend DCF different from a regular DCF?",
-    a: "It is a Dividend Discount Model (DDM): you value the stock by discounting its future dividends instead of its free cash flow. We use &ldquo;DCF&rdquo; in the URL because that is what people search for. The math is the Gordon Growth Model and a 2-stage DDM, with an in-tool tooltip explaining the difference.",
+    a: "It is a Dividend Discount Model (DDM) &mdash; the species of DCF designed for income stocks. You value the stock by discounting its future dividends instead of its free cash flow. The math is the Gordon Growth Model and a 2-stage DDM, with an in-tool tooltip explaining the difference.",
   },
   {
     q: "What broker integrations are coming?",
@@ -291,7 +291,7 @@ function FinalCtaSection() {
             href="/tools/retirement-calculator"
             className="inline-flex h-12 items-center justify-center rounded-lg border border-border bg-card px-6 text-base font-medium text-foreground transition-colors hover:border-brand-500 hover:bg-secondary"
           >
-            Preview retirement calculator
+            Try the retirement calculator
           </Link>
         </div>
       </div>

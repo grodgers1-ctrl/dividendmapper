@@ -227,9 +227,9 @@ export function InputsPanel({
 
       <footer className="mt-6 rounded-lg border border-dashed border-border bg-background/60 p-4 text-xs leading-relaxed text-muted-foreground">
         <span className="font-medium text-foreground">A note on naming.</span>{" "}
-        We call this a DCF for SEO — it&rsquo;s technically the Dividend
-        Discount Model (DDM), the species of DCF designed for dividend-paying
-        stocks. Same maths, narrower assumption set. Not financial advice.
+        We use the Dividend Discount Model (DDM) — the species of DCF designed
+        for dividend-paying stocks. Same maths as a regular DCF, narrower
+        assumption set. Not financial advice.
       </footer>
     </section>
   );

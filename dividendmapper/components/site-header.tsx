@@ -44,7 +44,7 @@ export function SiteHeader() {
             href="/waitlist"
             className="hidden rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-700 sm:inline-flex"
           >
-            Join waitlist
+            Join the waitlist
           </Link>
         </div>
       </div>

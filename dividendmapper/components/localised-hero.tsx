@@ -9,7 +9,7 @@ export function LocalisedHero() {
     <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground md:text-xl">
       Free tools for{" "}
       <span className="font-medium text-foreground">
-        {config.locale === "uk" ? "UK" : "US"} dividend investors
+        UK and US dividend investors
       </span>
       . Work out when you can retire, and what your stocks are worth. Built
       around{" "}
