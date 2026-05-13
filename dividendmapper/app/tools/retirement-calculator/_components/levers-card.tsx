@@ -29,15 +29,21 @@ export function LeversCard({ inputs, result }: LeversCardProps) {
   const base = result.scenarios.base;
   const onTrack = base.portfolioAtRetirement >= result.fireNumber;
 
-  // Debounce the heavy solver. Each solveForLever call runs ~30 binary-search
-  // iterations of the full retirement calc; running it on every keystroke or
-  // slider tick froze the main thread. 250ms is below the perception
-  // threshold for "the answer updated when I stopped touching it".
+  // Defer the solver until this section scrolls into view. solveForLever runs
+  // ~30 binary-search iterations of the full retirement calc; with default
+  // inputs the user is off-track, so on every hydration this card was running
+  // the solver on the main thread before the user could see it. Gating on
+  // visibility (with a 200px rootMargin so the result is ready before the
+  // panel is actually visible) moves that work out of the TBT window.
+  const [sectionRef, hasBeenVisible] = useInViewOnce<HTMLElement>("200px");
+
+  // Then debounce input changes, same as before. 250ms is below the
+  // perception threshold for "the answer updated when I stopped touching it".
   const debouncedInputs = useDebouncedValue(inputs, 250);
   const activeSolution = React.useMemo(() => {
-    if (onTrack) return null;
+    if (onTrack || !hasBeenVisible) return null;
     return solveForLever(debouncedInputs, config.locale, lever);
-  }, [debouncedInputs, config.locale, lever, onTrack]);
+  }, [debouncedInputs, config.locale, lever, onTrack, hasBeenVisible]);
 
   if (onTrack) {
     return <OnTrackCard inputs={inputs} result={result} />;
@@ -47,6 +53,7 @@ export function LeversCard({ inputs, result }: LeversCardProps) {
 
   return (
     <section
+      ref={sectionRef}
       aria-label="How to close the gap to your FIRE number"
       className="rounded-xl border border-border bg-card p-4 md:p-6"
     >
@@ -66,13 +73,30 @@ export function LeversCard({ inputs, result }: LeversCardProps) {
       <LeverTabs value={lever} onChange={setLever} />
 
       <div className="mt-5">
-        <LeverDetail
-          lever={lever}
-          inputs={inputs}
-          solution={activeSolution}
-        />
+        {hasBeenVisible ? (
+          <LeverDetail
+            lever={lever}
+            inputs={inputs}
+            solution={activeSolution}
+          />
+        ) : (
+          <LeverDetailPlaceholder />
+        )}
       </div>
     </section>
+  );
+}
+
+function LeverDetailPlaceholder() {
+  return (
+    <div
+      aria-hidden
+      className="rounded-lg border border-border bg-background p-4"
+    >
+      <div className="h-5 w-3/4 animate-pulse rounded bg-muted" />
+      <div className="mt-2 h-4 w-1/2 animate-pulse rounded bg-muted" />
+      <div className="mt-3 h-3 w-full animate-pulse rounded bg-muted" />
+    </div>
   );
 }
 
@@ -298,4 +322,34 @@ function useDebouncedValue<T>(value: T, delayMs: number): T {
     return () => window.clearTimeout(id);
   }, [value, delayMs]);
   return debounced;
+}
+
+function useInViewOnce<T extends HTMLElement>(
+  rootMargin = "0px"
+): [React.RefObject<T | null>, boolean] {
+  const ref = React.useRef<T | null>(null);
+  const [seen, setSeen] = React.useState(false);
+
+  React.useEffect(() => {
+    if (seen) return;
+    const el = ref.current;
+    if (!el) return;
+    if (typeof IntersectionObserver === "undefined") {
+      setSeen(true);
+      return;
+    }
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setSeen(true);
+          obs.disconnect();
+        }
+      },
+      { rootMargin }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [seen, rootMargin]);
+
+  return [ref, seen];
 }
