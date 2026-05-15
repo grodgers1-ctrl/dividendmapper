@@ -1,7 +1,11 @@
 # Phase 1 Sprint Spec — DividendMapper.com
 
-**Last updated:** May 2026  
-**Target:** Ship in 10 working days (2 calendar weeks)  
+**Status:** ✅ Complete — closed 2026-05-15
+**Sprint launched:** 2026-05-10 (Day 10 of 10)
+**Post-launch polish backlog:** 9 of 10 shipped, 1 deferred (item 10, gated on EODHD upgrade — out of scope)
+**Next phase:** see [05-phase2-sprint.md](05-phase2-sprint.md) — 12-day Pro-tier launch
+**Last updated:** May 2026
+**Target:** Ship in 10 working days (2 calendar weeks)
 **Goal:** Live public URL with waitlist, retirement calculator, and DCF calculator. No auth. No database beyond waitlist collection.
 
 ---
@@ -815,11 +819,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
 ---
 
-## Post-launch polish backlog
+## Post-launch polish backlog — ✅ Closed 2026-05-15
 
-Items deferred from the 10-day sprint because they don't block launch, but should ship before Phase 2 work begins. Track here so they don't get forgotten.
+All items deferred from the 10-day sprint shipped before Phase 2 begins, with one exception (item 10, ticker search dropdown, gated on EODHD upgrade and explicitly off the table). Status stamped per item below.
 
-### Defer PostHog to lazyOnload (site-wide LCP)
+### ✅ Defer PostHog to lazyOnload (site-wide LCP) — shipped 2026-05-13 (cb79962)
 
 **What:** Switch the PostHog provider's load strategy so the analytics SDK doesn't block the LCP critical path.
 
@@ -831,7 +835,7 @@ Items deferred from the 10-day sprint because they don't block launch, but shoul
 
 ---
 
-### Defer retirement `solveForLever` to lever-opened state (TBT)
+### ✅ Defer retirement `solveForLever` to lever-opened state (TBT) — shipped 2026-05-13 (e34154a)
 
 **What:** Don't run `solveForLever` for the "How to close the gap" levers until the user expands that section. Currently it runs on every input change, including the initial mount.
 
@@ -843,7 +847,7 @@ Items deferred from the 10-day sprint because they don't block launch, but shoul
 
 ---
 
-### Locale completeness sweep (calc pages + content)
+### ✅ Locale completeness sweep (calc pages + content) — shipped 2026-05-15 (598a597)
 
 **What:** Hardcoded UK or US strings leak across the locale toggle. US mode still shows £15 pricing and mixed-currency phrasing like "their $500-a-month minimum doesn't fit a £15 product". UK DCF page still has US ticker examples (SCHD, AAPL etc.) in the helper text and IRS references in disclaimers/footer. Footer and resources strip leans UK in US mode. The toggle architecture works; not every string is routed through `useLocale()`.
 
@@ -861,7 +865,7 @@ Items deferred from the 10-day sprint because they don't block launch, but shoul
 
 ---
 
-### Hero positioning: drop the US-first framing
+### ✅ Hero positioning: drop the US-first framing — shipped 2026-05-13 (00d96eb)
 
 **What:** The home hero says "Free tools for US dividend investors" while the rest of the site (and the metadata) consistently says UK and US. First impression contradicts the rest of the site.
 
@@ -877,7 +881,7 @@ Items deferred from the 10-day sprint because they don't block launch, but shoul
 
 ---
 
-### DCF naming: stop apologising for the "DCF" label
+### ✅ DCF naming: stop apologising for the "DCF" label — shipped 2026-05-13 (00d96eb)
 
 **What:** Tool branded "DCF Calculator" but body copy in multiple places says it's "really a Dividend Discount Model (DDM)" called "DCF for SEO". Honest but awkward — user-facing copy reading "we picked this name for SEO reasons" feels manipulative even when it isn't.
 
@@ -895,7 +899,7 @@ Items deferred from the 10-day sprint because they don't block launch, but shoul
 
 ---
 
-### Locale toggle discoverability
+### ✅ Locale toggle discoverability — shipped 2026-05-15 (5a17984)
 
 **What:** The 🇬🇧/🇺🇸 toggle in the header is visible but not self-explanatory. New users may not realise it switches all calculator inputs, tax wrappers, and currency at once.
 
@@ -912,7 +916,7 @@ Items deferred from the 10-day sprint because they don't block launch, but shoul
 
 ---
 
-### CTA copy consistency
+### ✅ CTA copy consistency — shipped 2026-05-13 (00d96eb)
 
 **What:** CTAs vary across the site: "Join waitlist", "Join the waitlist", "Preview retirement calculator", etc. Reads as oversight against otherwise tight copy.
 
@@ -932,7 +936,7 @@ Items deferred from the 10-day sprint because they don't block launch, but shoul
 
 ---
 
-### "Break-even yield" label mismatch
+### ✅ "Break-even yield" label mismatch — shipped 2026-05-15 (5a17984, direction (a): renamed to "Future yield on cost")
 
 **What:** The `BreakEvenYieldCard` on the DCF calculator is labelled "Break-even yield" but actually displays projected yield-on-cost (today / 5y / 10y tiles + mini-trajectory). Different concepts — break-even yield in DCF is the yield required for the stock to break even at the given discount rate; yield-on-cost is what your dividend grows to as a percentage of your original purchase price.
 
@@ -950,7 +954,7 @@ Items deferred from the 10-day sprint because they don't block launch, but shoul
 
 ---
 
-### Blog breadcrumb width alignment
+### ✅ Blog breadcrumb width alignment — shipped pre-2026-05-13 (a57d490)
 
 **What:** The breadcrumb nav (and footer disclaimer) inside `/blog` pins to `max-w-3xl`, while the global header and `/tools` breadcrumb both pin to `max-w-7xl lg:px-8`. Result: scrolling into a blog page shows the breadcrumb inset relative to the header directly above it.
 
@@ -967,7 +971,9 @@ Items deferred from the 10-day sprint because they don't block launch, but shoul
 
 ---
 
-### Ticker search dropdown (DCF calculator)
+### ⏸ Ticker search dropdown (DCF calculator) — DEFERRED indefinitely
+
+**Why deferred:** Gated on EODHD plan upgrade (Fundamentals + EOD, $19.99/mo). Per [reference_eodhd_plan_tiers.md](../../.claude/projects/C--Users-grodg-dividend-mapper-plan/memory/reference_eodhd_plan_tiers.md), upgrade is off the table for cost reasons. Revisit if EODHD plan ever changes or if a free `/api/search/{query}` source emerges. Original spec preserved below for reference.
 
 **What:** Replace the bare ticker input on `/tools/dcf-calculator` with a search-as-you-type dropdown. User types "Apple" → dropdown suggests "AAPL · Apple Inc · NASDAQ"; clicking fills the ticker and auto-fetches.
 
