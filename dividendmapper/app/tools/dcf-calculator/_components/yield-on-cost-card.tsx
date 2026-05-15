@@ -9,25 +9,24 @@ import { InfoPopover } from "@/components/ui/info-popover";
 import type { DcfInputs, DcfResult, YocPoint } from "@/lib/calculators/dcf";
 import { cn } from "@/lib/utils";
 
-interface BreakEvenYieldCardProps {
+interface YieldOnCostCardProps {
   inputs: DcfInputs;
   result: DcfResult;
 }
 
 /**
- * Break-even yield (yield-on-cost at today's price) plus the YoC trajectory
- * over the next decade at the Base growth rate.
- *
- * The calc is trivial — D₀ / P, then compounded — but the *story* is the
- * thing dividend investors are buying: "if I lock in this stock today and the
- * dividend grows at my expected rate, my yield-on-cost in N years is X%". A
- * 2.6% starting yield growing at 5% becomes 4.2% by year 10. That's the
- * compounding-coupon argument for dividend growth investing in one card.
+ * Today's yield-on-cost plus the YoC trajectory over the next decade at the
+ * Base growth rate. The story dividend investors are buying: "if I lock in
+ * this stock today and the dividend grows at my expected rate, my yield on
+ * the price I paid in N years is X%". A 2.6% starting yield growing at 5%
+ * becomes 4.2% by year 10. That's the compounding-coupon argument for
+ * dividend growth investing in one card.
  */
-export function BreakEvenYieldCard({ inputs, result }: BreakEvenYieldCardProps) {
+export function YieldOnCostCard({ inputs, result }: YieldOnCostCardProps) {
   const { config } = useLocale();
   const currency = resolveCurrency(inputs.currency, config);
 
+  // Legacy field name on DcfResult — semantically this is year-0 YoC.
   if (
     result.breakEvenYield === null ||
     result.yieldOnCostTrajectory.length === 0
@@ -42,21 +41,22 @@ export function BreakEvenYieldCard({ inputs, result }: BreakEvenYieldCardProps) 
 
   return (
     <section
-      aria-label="Break-even yield and yield-on-cost trajectory"
+      aria-label="Yield on cost trajectory"
       className="rounded-xl border border-border bg-card p-4 md:p-6"
     >
       <header className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
         <div>
           <h3 className="flex items-center gap-1.5 font-display text-lg font-semibold text-foreground">
-            Break-even yield
-            <InfoPopover label="What's the break-even yield?">
+            Future yield on cost
+            <InfoPopover label="What's yield on cost?">
               <p>
-                <strong>Break-even yield (yield-on-cost).</strong> The dividend
-                yield you lock in by buying at today&rsquo;s price.
+                <strong>Yield on cost.</strong> The dividend yield measured
+                against the price you actually paid, not today&rsquo;s price.
+                Year 0 is the yield you lock in by buying now.
               </p>
               <p className="mt-2 text-muted-foreground">
-                If the dividend grows from here, your effective yield on the
-                price you actually paid keeps rising — that&rsquo;s the
+                If the dividend grows from here, your effective yield on that
+                purchase price keeps rising — that&rsquo;s the
                 compounding-coupon argument for dividend growth investing.
                 The trajectory below uses your Base scenario growth rate.
               </p>
@@ -141,9 +141,6 @@ function YocTile({
 }
 
 function YocBars({ trajectory }: { trajectory: YocPoint[] }) {
-  // Tiny 10-bar timeline so the user sees the curve without a full chart
-  // library overhead. Each bar height is proportional to that year's YoC,
-  // capped at the final-year value so the bar grid fills the row.
   const max = trajectory[trajectory.length - 1].yieldOnCost;
   if (max <= 0) return null;
   return (

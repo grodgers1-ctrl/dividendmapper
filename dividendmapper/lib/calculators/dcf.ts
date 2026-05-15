@@ -115,9 +115,9 @@ export interface DcfResult {
   /** Year-by-year DPS for all three scenarios — used by the projection chart. */
   dividendProjection: DcfDividendProjectionPoint[];
   sensitivity: DcfSensitivity;
-  /** Yield-on-cost at the current price = D₀ / P. null if price ≤ 0. */
+  /** Yield-on-cost at the current price = D₀ / P. null if price ≤ 0. Legacy field name; UI surfaces this as "Future yield on cost". */
   breakEvenYield: number | null;
-  /** Yield-on-cost trajectory over 10 years using Base growth. Empty if break-even is null. */
+  /** Yield-on-cost trajectory over 10 years using Base growth. Empty if year-0 YoC is null. */
   yieldOnCostTrajectory: YocPoint[];
   /**
    * 2-stage PV decomposition, Base scenario only. null in Simple mode and
@@ -261,7 +261,6 @@ function projectYieldOnCost(inputs: DcfInputs, baseGrowth: number): YocPoint[] {
   if (!(inputs.currentPrice > 0) || !(inputs.currentDividend > 0)) return [];
   const out: YocPoint[] = [];
   let div = inputs.currentDividend;
-  // Year 0: today's yield (the "break-even" yield).
   out.push({ year: 0, yieldOnCost: div / inputs.currentPrice });
   for (let y = 1; y <= 10; y++) {
     if (inputs.mode === "advanced" && y > Math.round(inputs.phase1Years)) {

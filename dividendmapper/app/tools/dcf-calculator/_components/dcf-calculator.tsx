@@ -6,7 +6,7 @@ import { useLocale } from "@/lib/locale/context";
 import { calculateDcf, type DcfInputs } from "@/lib/calculators/dcf";
 import { InputsPanel, type LookupState } from "./inputs-panel";
 import { ResultCard } from "./result-card";
-import { BreakEvenYieldCard } from "./break-even-yield-card";
+import { YieldOnCostCard } from "./yield-on-cost-card";
 
 // Below-the-fold components carry the SVG/chart bundle. Code-splitting them
 // out of the critical path drops the page's largest paint into the inputs
@@ -113,7 +113,7 @@ export function DcfCalculator() {
         onReset={handleReset}
       />
       <ResultCard inputs={inputs} result={result} tickerName={tickerName} />
-      <BreakEvenYieldCard inputs={inputs} result={result} />
+      <YieldOnCostCard inputs={inputs} result={result} />
       <PvDecomposition inputs={inputs} result={result} />
       <DividendProjectionChart inputs={inputs} result={result} />
       <ScenariosTable inputs={inputs} result={result} />
