@@ -237,6 +237,27 @@ export function InputsPanel({
 
 /* ─────────────────────────────────── ticker lookup */
 
+function TickerHelpText() {
+  const { config } = useLocale();
+  if (config.locale === "uk") {
+    return (
+      <p className="mt-1 text-xs text-muted-foreground">
+        UK tickers end with{" "}
+        <code className="rounded bg-muted px-1 py-0.5 font-mono">.L</code>{" "}
+        (e.g. ULVR.L, SHEL.L). US tickers also work — try SCHD or AAPL.
+      </p>
+    );
+  }
+  return (
+    <p className="mt-1 text-xs text-muted-foreground">
+      US tickers are 1–5 letters (e.g. SCHD, AAPL, JNJ). UK tickers also work —
+      add a{" "}
+      <code className="rounded bg-muted px-1 py-0.5 font-mono">.L</code>{" "}
+      suffix (e.g. ULVR.L).
+    </p>
+  );
+}
+
 function TickerLookup({
   lookup,
   setLookup,
@@ -251,6 +272,8 @@ function TickerLookup({
     growthRate?: number | null;
   }) => void;
 }) {
+  const { config } = useLocale();
+  const placeholder = config.locale === "uk" ? "e.g. ULVR.L or SCHD" : "e.g. SCHD or ULVR.L";
   const [ticker, setTicker] = React.useState("");
 
   async function runLookup() {
@@ -339,11 +362,9 @@ function TickerLookup({
         Ticker lookup{" "}
         <span className="font-normal text-muted-foreground">(optional)</span>
       </label>
+      <TickerHelpText />
       <p className="mt-1 text-xs text-muted-foreground">
-        UK tickers end with{" "}
-        <code className="rounded bg-muted px-1 py-0.5 font-mono">.L</code>{" "}
-        (e.g. ULVR.L, SHEL.L). US: SCHD, AAPL, JNJ. Auto-fills price and
-        dividend; growth stays manual.
+        Auto-fills price and dividend; growth stays manual.
       </p>
       <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-stretch">
         <input
@@ -355,7 +376,7 @@ function TickerLookup({
           value={ticker}
           onChange={(e) => setTicker(e.target.value)}
           onKeyDown={onKeyDown}
-          placeholder="e.g. SCHD or ULVR.L"
+          placeholder={placeholder}
           className="h-10 flex-1 rounded-lg border border-input bg-background px-3 font-mono text-sm uppercase tabular-nums text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 focus:ring-offset-background"
         />
         <button

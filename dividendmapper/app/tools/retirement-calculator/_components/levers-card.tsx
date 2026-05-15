@@ -208,7 +208,7 @@ function LeverDetail({
             ? `+${delta} year${delta === 1 ? "" : "s"} of extra contributions and compounding`
             : "You're already there — no change needed."
         }
-        footnote="Bridge years and the FIRE number both shrink as your retirement age moves towards your state pension age."
+        footnote={`Bridge years and the FIRE number both shrink as your retirement age moves towards your ${config.retirement.stateLabel} age.`}
       />
     );
   }

@@ -136,7 +136,11 @@ export function InputsPanel({ inputs, setInputs, onReset }: InputsPanelProps) {
           max={20}
           step={0.5}
           displayValue={`${(inputs.annualReturn * 100).toFixed(1)}%`}
-          helpText="FTSE All-World ≈ 8% p.a. over 30 years (nominal)."
+          helpText={
+            config.locale === "uk"
+              ? "FTSE All-World ≈ 8% p.a. over 30 years (nominal)."
+              : "S&P 500 ≈ 10% p.a. over 30 years (nominal)."
+          }
         />
         <SliderField
           id="dividend-yield"
@@ -223,7 +227,11 @@ function PropertyPanel({
           max={8}
           step={0.5}
           displayValue={`${((inputs.propertyGrowthRate ?? 0.02) * 100).toFixed(1)}%`}
-          helpText="UK long-run average ≈ 2–3% real."
+          helpText={
+            config.locale === "uk"
+              ? "UK long-run average ≈ 2–3% real."
+              : "US long-run average ≈ 3–4% nominal."
+          }
         />
 
         <NumberField

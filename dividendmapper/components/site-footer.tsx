@@ -1,30 +1,49 @@
 import Link from "next/link";
+import { FooterResources } from "./footer-resources";
 
-const COLUMNS = [
-  {
-    heading: "Tools",
-    links: [
-      { href: "/tools/retirement-calculator", label: "Retirement calculator" },
-      { href: "/tools/dcf-calculator", label: "DCF calculator" },
-    ],
-  },
-  {
-    heading: "Resources",
-    links: [
-      { href: "/blog", label: "Blog" },
-      { href: "/blog/uk-dividend-tax-guide", label: "UK dividend tax guide" },
-      { href: "/blog/trading-212-sipp-review", label: "T212 SIPP review" },
-    ],
-  },
-  {
-    heading: "Company",
-    links: [
-      { href: "/waitlist", label: "Waitlist" },
-      { href: "/privacy", label: "Privacy" },
-      { href: "/terms", label: "Terms" },
-    ],
-  },
-];
+interface ColumnDef {
+  heading: string;
+  links: { href: string; label: string }[];
+}
+
+const TOOLS_COLUMN: ColumnDef = {
+  heading: "Tools",
+  links: [
+    { href: "/tools/retirement-calculator", label: "Retirement calculator" },
+    { href: "/tools/dcf-calculator", label: "DCF calculator" },
+  ],
+};
+
+const COMPANY_COLUMN: ColumnDef = {
+  heading: "Company",
+  links: [
+    { href: "/waitlist", label: "Waitlist" },
+    { href: "/privacy", label: "Privacy" },
+    { href: "/terms", label: "Terms" },
+  ],
+};
+
+function FooterColumn({ column }: { column: ColumnDef }) {
+  return (
+    <div>
+      <h3 className="font-display text-xs font-medium uppercase tracking-wider text-muted-foreground">
+        {column.heading}
+      </h3>
+      <ul className="mt-3 space-y-2 text-sm">
+        {column.links.map((link) => (
+          <li key={link.href}>
+            <Link
+              href={link.href}
+              className="text-foreground transition-colors hover:text-brand-600 dark:hover:text-brand-400"
+            >
+              {link.label}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
 export function SiteFooter() {
   return (
@@ -46,25 +65,9 @@ export function SiteFooter() {
             </p>
           </div>
 
-          {COLUMNS.map((col) => (
-            <div key={col.heading}>
-              <h3 className="font-display text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                {col.heading}
-              </h3>
-              <ul className="mt-3 space-y-2 text-sm">
-                {col.links.map((link) => (
-                  <li key={link.href}>
-                    <Link
-                      href={link.href}
-                      className="text-foreground transition-colors hover:text-brand-600 dark:hover:text-brand-400"
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          <FooterColumn column={TOOLS_COLUMN} />
+          <FooterResources />
+          <FooterColumn column={COMPANY_COLUMN} />
         </div>
 
         <div className="mt-10 border-t border-border pt-6 text-xs text-muted-foreground">

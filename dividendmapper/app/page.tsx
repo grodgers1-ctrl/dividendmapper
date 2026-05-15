@@ -213,7 +213,7 @@ function HowItWorksSection() {
 const FAQS = [
   {
     q: "Is DividendMapper free?",
-    a: "Phase 1 calculators are free forever. No signup, no credit card. Pro launches in Phase 2 at £15 a month with broker auto-sync; the free tier will keep manual portfolio entry.",
+    a: "Phase 1 calculators are free forever. No signup, no credit card. Pro launches in Phase 2 with broker auto-sync; the free tier will keep manual portfolio entry.",
   },
   {
     q: "Do I need an account to use the calculators?",
@@ -229,7 +229,7 @@ const FAQS = [
   },
   {
     q: "What broker integrations are coming?",
-    a: "Trading 212 first, in Phase 3 (around Month 4), covering UK ISA, SIPP and GIA in one connection. Schwab, Fidelity, Robinhood, Vanguard US and Interactive Brokers follow in Phase 4 through SnapTrade. We skipped Plaid; their $500-a-month minimum doesn&rsquo;t fit a £15 product.",
+    a: "Trading 212 first, in Phase 3 (around Month 4), covering UK ISA, SIPP and GIA in one connection. Schwab, Fidelity, Robinhood, Vanguard US and Interactive Brokers follow in Phase 4 through SnapTrade. We skipped Plaid; their $500-a-month minimum doesn&rsquo;t fit a low-priced consumer product.",
   },
   {
     q: "Is this financial advice?",
