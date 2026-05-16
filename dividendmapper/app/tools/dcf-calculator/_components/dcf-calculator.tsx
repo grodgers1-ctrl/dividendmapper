@@ -7,6 +7,7 @@ import { calculateDcf, type DcfInputs } from "@/lib/calculators/dcf";
 import { InputsPanel, type LookupState } from "./inputs-panel";
 import { ResultCard } from "./result-card";
 import { YieldOnCostCard } from "./yield-on-cost-card";
+import { SaveInputsCard } from "@/components/auth/save-inputs-card";
 
 // Below-the-fold components carry the SVG/chart bundle. Code-splitting them
 // out of the critical path drops the page's largest paint into the inputs
@@ -97,6 +98,10 @@ export function DcfCalculator() {
     setLookup({ status: "idle" });
   }, [config.locale]);
 
+  const handleRehydrate = React.useCallback((restored: DcfInputs) => {
+    setInputs(restored);
+  }, []);
+
   // The "you're valuing X" label uses the upstream company name when we have
   // it (Polygon/EODHD usually do), falling back to the bare ticker. null when
   // no ticker has been fetched in this session.
@@ -111,6 +116,12 @@ export function DcfCalculator() {
         lookup={lookup}
         setLookup={setLookup}
         onReset={handleReset}
+      />
+      <SaveInputsCard
+        tool="dcf"
+        inputs={inputs}
+        onRehydrate={handleRehydrate}
+        currentPath="/tools/dcf-calculator"
       />
       <ResultCard inputs={inputs} result={result} tickerName={tickerName} />
       <YieldOnCostCard inputs={inputs} result={result} />

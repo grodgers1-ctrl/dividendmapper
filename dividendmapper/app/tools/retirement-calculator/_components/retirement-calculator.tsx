@@ -16,6 +16,7 @@ import { LeversCard } from "./levers-card";
 import { NetWorthCard } from "./net-worth-card";
 import { ProjectionChart } from "./projection-chart";
 import { ScenariosTable } from "./scenarios-table";
+import { SaveInputsCard } from "@/components/auth/save-inputs-card";
 
 const UK_DEFAULTS: RetirementInputs = {
   currentAge: 30,
@@ -99,10 +100,20 @@ export function RetirementCalculator() {
     setInputs(config.locale === "uk" ? UK_DEFAULTS : US_DEFAULTS);
   }, [config.locale]);
 
+  const handleRehydrate = React.useCallback((restored: RetirementInputs) => {
+    setInputs(restored);
+  }, []);
+
   return (
     <div className="space-y-6">
       <MobileLiveSummary result={result} retirementAge={inputs.retirementAge} />
       <InputsPanel inputs={inputs} setInputs={setInputs} onReset={handleReset} />
+      <SaveInputsCard
+        tool="retirement"
+        inputs={inputs}
+        onRehydrate={handleRehydrate}
+        currentPath="/tools/retirement-calculator"
+      />
       <FireCard
         result={result}
         currentPortfolio={inputs.currentPortfolio}
