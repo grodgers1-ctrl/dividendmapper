@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { requireUser } from "@/lib/auth/server";
+import { getCurrentUser } from "@/lib/auth/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
@@ -30,7 +30,9 @@ async function signOut() {
 }
 
 export default async function AccountPage() {
-  const user = await requireUser("/app/account");
+  // app/app/layout.tsx already gates via requireUser(). getCurrentUser is
+  // cache()-memoised across the same request, so this is free.
+  const user = (await getCurrentUser())!;
   const supabase = await createSupabaseServerClient();
 
   const { data: profile } = await supabase

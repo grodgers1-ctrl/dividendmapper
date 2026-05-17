@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { requireUser } from "@/lib/auth/server";
 
 export const metadata: Metadata = {
@@ -7,16 +8,18 @@ export const metadata: Metadata = {
 };
 
 /**
- * Auth-gating layout for /app/*. requireUser() redirects to /login if there's
- * no valid session. The Day 2 proxy will move this check earlier in the
- * request lifecycle (cheaper than per-page), but the page-side check stays as
- * a defence-in-depth layer.
+ * Auth-gating layout for /app/*. proxy.ts injects x-pathname so the
+ * /login?next=… redirect preserves the deep path the user originally
+ * hit — without this the layout would always redirect to /login?next=/app
+ * and lose the page they actually wanted.
  */
 export default async function AppLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  await requireUser("/app");
+  const hdrs = await headers();
+  const pathname = hdrs.get("x-pathname") ?? "/app";
+  await requireUser(pathname);
   return <>{children}</>;
 }
