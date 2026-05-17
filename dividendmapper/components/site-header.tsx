@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { HeaderAuthSlot } from "./header-auth-slot";
 import { LocaleToggle } from "./locale-toggle";
@@ -17,12 +18,15 @@ export function SiteHeader() {
           href="/"
           className="flex items-center gap-2 font-display text-lg font-bold tracking-tight text-foreground"
         >
-          <span
+          <Image
+            src="/logo-pin.png"
+            alt=""
+            width={32}
+            height={32}
+            priority
             aria-hidden
-            className="grid h-8 w-8 place-items-center rounded-lg bg-brand-600 text-white"
-          >
-            <span className="font-mono text-sm font-semibold">DM</span>
-          </span>
+            className="h-8 w-8 rounded-lg"
+          />
           DividendMapper
         </Link>
 

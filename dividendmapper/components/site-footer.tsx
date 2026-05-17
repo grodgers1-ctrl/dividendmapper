@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { FooterResources } from "./footer-resources";
 
@@ -52,12 +53,14 @@ export function SiteFooter() {
         <div className="grid gap-10 md:grid-cols-4">
           <div className="space-y-3">
             <div className="flex items-center gap-2 font-display text-base font-bold tracking-tight">
-              <span
+              <Image
+                src="/logo-pin.png"
+                alt=""
+                width={28}
+                height={28}
                 aria-hidden
-                className="grid h-7 w-7 place-items-center rounded-md bg-brand-600 text-white"
-              >
-                <span className="font-mono text-xs font-semibold">DM</span>
-              </span>
+                className="h-7 w-7 rounded-md"
+              />
               DividendMapper
             </div>
             <p className="max-w-xs text-sm text-muted-foreground">
