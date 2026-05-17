@@ -25,7 +25,7 @@ export function SiteHeader() {
             height={32}
             priority
             aria-hidden
-            className="h-8 w-8 rounded-lg"
+            className="h-8 w-8"
           />
           DividendMapper
         </Link>

@@ -55,13 +55,7 @@ export default async function Image() {
           {/* Wordmark row */}
           <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={logoBase64}
-              width={52}
-              height={52}
-              alt=""
-              style={{ borderRadius: 10 }}
-            />
+            <img src={logoBase64} width={52} height={52} alt="" />
             <div
               style={{
                 display: "flex",
@@ -176,8 +170,7 @@ export default async function Image() {
             height={280}
             alt=""
             style={{
-              borderRadius: 36,
-              boxShadow: "0 0 80px rgba(14,168,116,0.25)",
+              filter: "drop-shadow(0 0 60px rgba(14,168,116,0.45))",
             }}
           />
         </div>

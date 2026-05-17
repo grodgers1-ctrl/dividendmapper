@@ -59,7 +59,7 @@ export function SiteFooter() {
                 width={28}
                 height={28}
                 aria-hidden
-                className="h-7 w-7 rounded-md"
+                className="h-7 w-7"
               />
               DividendMapper
             </div>
