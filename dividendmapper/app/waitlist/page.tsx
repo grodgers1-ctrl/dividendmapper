@@ -5,22 +5,22 @@ import { WaitlistForm } from "@/components/waitlist-form";
 export const metadata: Metadata = {
   title: "Waitlist",
   description:
-    "Be the first to know when DividendMapper opens up. Free calculators at launch, with broker integrations rolling out through Phase 2 and beyond.",
+    "Free dividend calculators are live. Portfolio tracking and the Pro tier launch in Phase 2 on 22 May; broker sync follows in Phase 3. Sign up for the launch emails.",
   alternates: { canonical: "/waitlist" },
 };
 
 const ROADMAP = [
   {
-    when: "Day 10 (this sprint)",
+    when: "Phase 1 (shipped 15 May)",
     label: "Free calculators live",
     body:
-      "Retirement income calculator (UK ISA/SIPP/GIA + US 401k/IRA/Brokerage) and Dividend DCF calculator with sensitivity tables.",
+      "Retirement income calculator (UK ISA/SIPP/GIA + US 401k/IRA/Brokerage) and Dividend DCF calculator with sensitivity tables. Free forever, no signup.",
   },
   {
-    when: "Phase 2 (Months 2–3)",
-    label: "Auth + manual portfolio",
+    when: "Phase 2 (22 May)",
+    label: "Sign-in, manual portfolio, Pro tier",
     body:
-      "Save your inputs, track holdings by hand, see real projected dividend income from your own portfolio.",
+      "Magic-link sign-in (now live), track holdings by hand, projected income per tax wrapper. Free covers up to 10 holdings; Pro is £15 a month for unlimited.",
   },
   {
     when: "Phase 3 (Month 4)",
@@ -37,7 +37,7 @@ export default function WaitlistPage() {
         <div className="md:col-span-3">
           <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
             <span className="h-1.5 w-1.5 rounded-full bg-brand-500" />
-            Phase 1 sprint — Day 3 of 10
+            Phase 2 sprint · Day 3 of 12
           </span>
 
           <h1 className="mt-6 font-display text-4xl font-bold tracking-tight text-foreground md:text-5xl">
@@ -45,9 +45,10 @@ export default function WaitlistPage() {
           </h1>
 
           <p className="mt-4 max-w-xl text-base leading-relaxed text-muted-foreground md:text-lg">
-            DividendMapper is being built in the open. Drop your email and
-            we&apos;ll let you know the moment Phase 1 calculators go live, and
-            again when broker integrations open up. No drip sequences.
+            DividendMapper is being built in the open. Calculators are live;
+            drop your email and we&apos;ll let you know when Phase 2 opens on
+            22 May (sign-in plus portfolio tracking), and again when broker
+            integrations roll out in Phase 3. No drip sequences.
           </p>
 
           <div className="mt-8 max-w-md">

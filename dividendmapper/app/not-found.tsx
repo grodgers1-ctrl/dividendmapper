@@ -12,8 +12,9 @@ export default function NotFound() {
       </h1>
 
       <p className="mx-auto mt-4 max-w-md text-base leading-relaxed text-muted-foreground md:text-lg">
-        The page you tried to reach doesn&apos;t exist — or hasn&apos;t shipped
-        yet. Phase 1 is live now and we&apos;re adding routes daily.
+        The page you tried to reach doesn&apos;t exist, or it hasn&apos;t
+        shipped yet. Calculators are live and Phase 2 (portfolio tracking)
+        lands 22 May.
       </p>
 
       <div className="mt-10 flex flex-wrap justify-center gap-3">

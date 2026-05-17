@@ -26,7 +26,7 @@ function HeroSection() {
         <div className="mx-auto max-w-3xl text-center">
           <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
             <span className="h-1.5 w-1.5 rounded-full bg-brand-500" />
-            Phase 1 — building in public
+            Phase 2 launches 22 May
           </span>
 
           <h1 className="mt-6 font-display text-4xl font-bold tracking-tight text-foreground md:text-5xl lg:text-6xl">
@@ -102,16 +102,16 @@ const FEATURES = [
       "If a sensitivity cell can&rsquo;t be solved (growth ≥ discount), it shows &ldquo;—&rdquo; instead of NaN. Every output cites the assumption behind it. We don&rsquo;t pretend a 30-year forecast is precise to the pound.",
   },
   {
-    title: "Everything stays in your browser",
+    title: "Calculators stay in your browser",
     href: "/blog",
     description:
-      "Calculator inputs never leave the page. No account, no analytics on your numbers, no &ldquo;send us your portfolio.&rdquo; When Phase 2 adds a saved-portfolio option, it will be opt-in.",
+      "Calculator inputs never leave the page. No account, no analytics on your numbers, no &ldquo;send us your portfolio.&rdquo; Signed-in portfolio tracking is opt-in and lives behind your own login.",
   },
   {
     title: "Roadmap on the table",
     href: "/waitlist",
     description:
-      "The full Phase 1–6 plan lives on the waitlist page. Trading 212 sync lands in Phase 3, US brokers via SnapTrade in Phase 4. You get the dates and the order.",
+      "Calculators landed in Phase 1. Portfolio tracking and the Pro tier land in Phase 2 on 22 May. Trading 212 sync follows in Phase 3, US brokers via SnapTrade in Phase 4. Dates and order, on one page.",
   },
 ];
 
@@ -213,11 +213,11 @@ function HowItWorksSection() {
 const FAQS = [
   {
     q: "Is DividendMapper free?",
-    a: "Phase 1 calculators are free forever. No signup, no credit card. Pro launches in Phase 2 with broker auto-sync; the free tier will keep manual portfolio entry.",
+    a: "Calculators are free forever. No signup, no credit card. Pro launches 22 May at £15 a month for unlimited holdings and projected income; the Free tier keeps up to 10 manual holdings. Broker auto-sync lands in Phase 3.",
   },
   {
     q: "Do I need an account to use the calculators?",
-    a: "No. The calculators run in your browser; nothing is sent anywhere. Accounts arrive in Phase 2 for saving portfolios and dividend-payment notifications, and they will be opt-in.",
+    a: "No. The calculators run in your browser; nothing is sent anywhere. Sign-in is now live for the portfolio side: add holdings by hand, see real projected dividend income, keep your numbers across visits. Calculators stay anonymous.",
   },
   {
     q: "UK or US, which is the focus?",
@@ -277,8 +277,9 @@ function FinalCtaSection() {
           Get the launch email.
         </h2>
         <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-muted-foreground md:text-lg">
-          Two emails, total. One when Phase 1 goes live, one when Trading 212
-          sync opens. No drip sequence, one-click unsubscribe.
+          Two emails, total. One when portfolio tracking opens on 22 May, one
+          when Trading 212 sync follows in Phase 3. No drip sequence, one-click
+          unsubscribe.
         </p>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
           <Link

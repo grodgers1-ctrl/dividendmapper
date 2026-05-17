@@ -91,7 +91,7 @@ export default function BlogIndexPage() {
       </ul>
 
       <p className="mt-12 text-center text-sm text-muted-foreground">
-        More guides land alongside Phase 2.{" "}
+        More guides land alongside the Phase 2 launch.{" "}
         <Link
           href="/waitlist"
           className="text-brand-600 underline decoration-brand-600/40 underline-offset-2 hover:text-brand-700 hover:decoration-brand-600"
