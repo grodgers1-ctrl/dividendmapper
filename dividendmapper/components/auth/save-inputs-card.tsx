@@ -19,15 +19,13 @@ const STASH_TTL_MS = 30 * 60 * 1000; // 30 minutes
 type AuthState = "loading" | "out" | "in";
 
 /**
- * "Save your inputs" surface for the public calculators. Two jobs:
+ * "Save your inputs" surface for the public calculators.
  *
- *  1. Unauthenticated user clicks Save → we stash `inputs` in sessionStorage
- *     and open the sign-in modal. Magic link returns them to the same path;
- *     the calculator rehydrates from sessionStorage on mount.
- *
- *  2. Authenticated user clicks Save → today we render a "saving to your
- *     portfolio lands tomorrow" notice. The real POST /api/portfolio/save-
- *     snapshot ships Day 3+; this surface stays the same.
+ *  - Signed-out: stash `inputs` in sessionStorage, open the sign-in modal,
+ *    rehydrate after the magic-link round-trip.
+ *  - Signed-in: button is disabled. Calculator-snapshot persistence isn't on
+ *    the launch surface; the portfolio table is the primary "save your
+ *    numbers" path. Snapshots may land in the Phase 2 polish backlog.
  *
  * The rehydration check runs once on mount, regardless of auth state — the
  * user may have stashed inputs, signed in, then come back via direct URL
@@ -101,7 +99,8 @@ export function SaveInputsCard<T>({
 
   const handleClick = () => {
     if (auth === "in") {
-      // Day 3+ wires the real save. Today we just acknowledge.
+      // Signed-in users save through the portfolio table, not via this card.
+      // Snapshot persistence may land in the polish backlog.
       setRestored(false);
       return;
     }
@@ -129,18 +128,27 @@ export function SaveInputsCard<T>({
           </p>
           <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
             {auth === "in"
-              ? "Your portfolio space goes live tomorrow — saving snapshots from here lands then."
+              ? "Head to your portfolio to track real holdings. Calculator snapshots aren't saved from here."
               : "Sign in and we'll bring you back to this page with your numbers intact."}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={handleClick}
-          disabled={auth === "loading" || auth === "in"}
-          className="inline-flex h-10 shrink-0 items-center justify-center rounded-lg bg-brand-600 px-4 text-sm font-medium text-white transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {auth === "in" ? "Coming tomorrow" : "Save your inputs"}
-        </button>
+        {auth === "in" ? (
+          <a
+            href="/app/portfolio"
+            className="inline-flex h-10 shrink-0 items-center justify-center rounded-lg border border-border bg-background px-4 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
+          >
+            Open portfolio
+          </a>
+        ) : (
+          <button
+            type="button"
+            onClick={handleClick}
+            disabled={auth === "loading"}
+            className="inline-flex h-10 shrink-0 items-center justify-center rounded-lg bg-brand-600 px-4 text-sm font-medium text-white transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            Save your inputs
+          </button>
+        )}
       </div>
 
       <SignInModal open={open} onOpenChange={setOpen} next={currentPath} />
