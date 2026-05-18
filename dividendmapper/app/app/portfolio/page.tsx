@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { getCurrentUser } from "@/lib/auth/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getPortfolioIncome } from "@/lib/portfolio/income";
 import { HoldingsTable } from "./_components/holdings-table";
 import { AddHoldingLauncher } from "./_components/add-holding-launcher";
+import { PortfolioIncomeChart } from "./_components/portfolio-income-chart";
 import { FREE_TIER_LIMIT } from "./_components/free-tier-copy";
 
 export const metadata: Metadata = {
@@ -31,18 +33,21 @@ export default async function PortfolioPage() {
   const user = (await getCurrentUser())!;
   const supabase = await createSupabaseServerClient();
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("tier")
-    .eq("id", user.id)
-    .maybeSingle<{ tier: "free" | "pro" | "premium" }>();
+  // Profile + income roll-up run in parallel — income reads ALL holdings
+  // (no tier cap, see getPortfolioIncome) so it doesn't need the tier to
+  // start. The holdings-table query waits on the tier so we can apply the
+  // free-tier limit server-side.
+  const [profileResult, income] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("tier")
+      .eq("id", user.id)
+      .maybeSingle<{ tier: "free" | "pro" | "premium" }>(),
+    getPortfolioIncome(user.id),
+  ]);
 
-  const tier = profile?.tier ?? "free";
+  const tier = profileResult.data?.tier ?? "free";
 
-  // Free users see at most FREE_TIER_LIMIT rows. Count comes from the same
-  // query (Supabase runs an unbounded COUNT alongside the limited SELECT)
-  // so we know how many are hidden when a downgraded Pro user is over the
-  // cap.
   let holdingsQuery = supabase
     .from("holdings")
     .select(
@@ -109,7 +114,7 @@ export default async function PortfolioPage() {
             </p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-6">
             {hiddenCount > 0 && (
               <div
                 role="status"
@@ -119,12 +124,14 @@ export default async function PortfolioPage() {
                   {hiddenCount} holding{hiddenCount === 1 ? "" : "s"} hidden
                 </p>
                 <p className="mt-0.5 text-muted-foreground">
-                  Free shows your {FREE_TIER_LIMIT} most recent holdings.
-                  Upgrade to Pro to see them all.
+                  Free shows your {FREE_TIER_LIMIT} most recent holdings in the
+                  table. Your income below counts all {total}. Upgrade to Pro
+                  to see them all.
                 </p>
               </div>
             )}
             <HoldingsTable rows={rows} />
+            <PortfolioIncomeChart income={income} />
           </div>
         )}
       </div>
