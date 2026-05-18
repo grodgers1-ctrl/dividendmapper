@@ -3,6 +3,10 @@
 import { Dialog } from "@base-ui/react/dialog";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import {
+  FREE_TIER_CAP_MESSAGE,
+  FREE_TIER_CAP_TITLE,
+} from "./free-tier-copy";
 
 const WRAPPERS_UK = [
   { value: "isa", label: "ISA" },
@@ -171,12 +175,13 @@ export function AddHoldingModal({
       }
 
       if (res.status === 402) {
-        const json = (await res.json().catch(() => ({}))) as {
-          message?: string;
-        };
+        // Ignore the server message — single source of truth lives in
+        // free-tier-copy so the modal alert, launcher, and hidden-rows
+        // banner all read the same string.
+        await res.json().catch(() => ({}));
         setStatus({
           kind: "limit",
-          message: json.message ?? "Upgrade to Pro for unlimited holdings.",
+          message: FREE_TIER_CAP_MESSAGE,
         });
         return;
       }
@@ -455,7 +460,7 @@ export function AddHoldingModal({
                 className="rounded-lg border border-brand-500/30 bg-brand-50 p-3 text-sm leading-relaxed text-foreground dark:border-brand-400/20 dark:bg-brand-900/20"
               >
                 <p className="font-display text-sm font-semibold">
-                  Free tier limit reached
+                  {FREE_TIER_CAP_TITLE}
                 </p>
                 <p className="mt-0.5 text-muted-foreground">{status.message}</p>
               </div>

@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/auth/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { HoldingsTable } from "./_components/holdings-table";
 import { AddHoldingLauncher } from "./_components/add-holding-launcher";
+import { FREE_TIER_LIMIT } from "./_components/free-tier-copy";
 
 export const metadata: Metadata = {
   title: "Portfolio",
@@ -30,14 +31,6 @@ export default async function PortfolioPage() {
   const user = (await getCurrentUser())!;
   const supabase = await createSupabaseServerClient();
 
-  const { data: holdings } = await supabase
-    .from("holdings")
-    .select(
-      "id, ticker, quantity, avg_cost, cost_currency, wrapper, broker_label, notes, created_at",
-    )
-    .order("created_at", { ascending: false })
-    .returns<HoldingRow[]>();
-
   const { data: profile } = await supabase
     .from("profiles")
     .select("tier")
@@ -45,8 +38,33 @@ export default async function PortfolioPage() {
     .maybeSingle<{ tier: "free" | "pro" | "premium" }>();
 
   const tier = profile?.tier ?? "free";
+
+  // Free users see at most FREE_TIER_LIMIT rows. Count comes from the same
+  // query (Supabase runs an unbounded COUNT alongside the limited SELECT)
+  // so we know how many are hidden when a downgraded Pro user is over the
+  // cap.
+  let holdingsQuery = supabase
+    .from("holdings")
+    .select(
+      "id, ticker, quantity, avg_cost, cost_currency, wrapper, broker_label, notes, created_at",
+      { count: "exact" },
+    )
+    .order("created_at", { ascending: false });
+
+  if (tier === "free") {
+    holdingsQuery = holdingsQuery.limit(FREE_TIER_LIMIT);
+  }
+
+  const {
+    data: holdings,
+    count: totalHoldings,
+    error: holdingsError,
+  } = await holdingsQuery.returns<HoldingRow[]>();
+
   const rows = holdings ?? [];
-  const atFreeLimit = tier === "free" && rows.length >= 10;
+  const total = totalHoldings ?? rows.length;
+  const atFreeLimit = tier === "free" && total >= FREE_TIER_LIMIT;
+  const hiddenCount = tier === "free" ? Math.max(0, total - FREE_TIER_LIMIT) : 0;
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-12 md:px-6 md:py-16">
@@ -56,16 +74,30 @@ export default async function PortfolioPage() {
             Your portfolio
           </h1>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-            {rows.length === 0
+            {total === 0
               ? "Add your holdings one at a time. Broker sync ships in Phase 3."
-              : `${rows.length} holding${rows.length === 1 ? "" : "s"} · ${tier === "free" ? `${rows.length}/10 on Free` : "Pro — unlimited"}`}
+              : `${total} holding${total === 1 ? "" : "s"} · ${
+                  tier === "free"
+                    ? `${Math.min(total, FREE_TIER_LIMIT)}/${FREE_TIER_LIMIT} on Free`
+                    : "Pro — unlimited"
+                }`}
           </p>
         </div>
         <AddHoldingLauncher atFreeLimit={atFreeLimit} />
       </div>
 
       <div className="mt-8">
-        {rows.length === 0 ? (
+        {holdingsError ? (
+          <div className="rounded-xl border border-dashed border-border bg-card p-10 text-center">
+            <p className="font-display text-base font-semibold text-foreground">
+              We couldn&apos;t load your holdings
+            </p>
+            <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
+              Refresh the page to try again. If this keeps happening, sign out
+              and back in.
+            </p>
+          </div>
+        ) : rows.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border bg-card p-10 text-center">
             <p className="font-display text-base font-semibold text-foreground">
               No holdings yet
@@ -77,7 +109,23 @@ export default async function PortfolioPage() {
             </p>
           </div>
         ) : (
-          <HoldingsTable rows={rows} />
+          <div className="space-y-3">
+            {hiddenCount > 0 && (
+              <div
+                role="status"
+                className="rounded-lg border border-brand-500/30 bg-brand-50 px-4 py-3 text-sm leading-relaxed text-foreground dark:border-brand-400/20 dark:bg-brand-900/20"
+              >
+                <p className="font-display text-sm font-semibold">
+                  {hiddenCount} holding{hiddenCount === 1 ? "" : "s"} hidden
+                </p>
+                <p className="mt-0.5 text-muted-foreground">
+                  Free shows your {FREE_TIER_LIMIT} most recent holdings.
+                  Upgrade to Pro to see them all.
+                </p>
+              </div>
+            )}
+            <HoldingsTable rows={rows} />
+          </div>
         )}
       </div>
     </div>

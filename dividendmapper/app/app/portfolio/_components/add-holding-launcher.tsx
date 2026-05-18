@@ -2,6 +2,10 @@
 
 import { useState } from "react";
 import { AddHoldingModal } from "./add-holding-modal";
+import {
+  FREE_TIER_CAP_MESSAGE,
+  FREE_TIER_CAP_TITLE,
+} from "./free-tier-copy";
 
 export function AddHoldingLauncher({
   atFreeLimit,
@@ -14,11 +18,9 @@ export function AddHoldingLauncher({
     return (
       <div className="text-right text-xs leading-relaxed">
         <p className="font-display text-sm font-semibold text-foreground">
-          Free tier full
+          {FREE_TIER_CAP_TITLE}
         </p>
-        <p className="mt-0.5 text-muted-foreground">
-          Upgrade to Pro for unlimited holdings.
-        </p>
+        <p className="mt-0.5 text-muted-foreground">{FREE_TIER_CAP_MESSAGE}</p>
       </div>
     );
   }
