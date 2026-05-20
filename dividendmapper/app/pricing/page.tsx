@@ -193,19 +193,28 @@ export default async function PricingPage() {
             <ProPrice />
           </div>
 
-          <form
-            action="/api/billing/checkout"
-            method="post"
-            className="mt-6"
-          >
-            <input type="hidden" name="lookup_key" value="pro_monthly" />
-            <button
-              type="submit"
-              className="inline-flex h-11 w-full items-center justify-center rounded-lg bg-brand-600 px-5 text-sm font-semibold text-white transition-colors hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:ring-offset-card sm:w-auto"
+          {user ? (
+            <form
+              action="/api/billing/checkout"
+              method="post"
+              className="mt-6"
             >
-              {user ? "Start Pro" : "Sign in to start Pro"}
-            </button>
-          </form>
+              <input type="hidden" name="lookup_key" value="pro_monthly" />
+              <button
+                type="submit"
+                className="inline-flex h-11 w-full items-center justify-center rounded-lg bg-brand-600 px-5 text-sm font-semibold text-white transition-colors hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:ring-offset-card sm:w-auto"
+              >
+                Start Pro
+              </button>
+            </form>
+          ) : (
+            <Link
+              href="/login?next=%2Fpricing"
+              className="mt-6 inline-flex h-11 w-full items-center justify-center rounded-lg bg-brand-600 px-5 text-sm font-semibold text-white transition-colors hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:ring-offset-card sm:w-auto"
+            >
+              Sign in to start Pro
+            </Link>
+          )}
 
           <ul className="mt-8 space-y-3 text-sm">
             {PRO_FEATURES.map((feature) => (

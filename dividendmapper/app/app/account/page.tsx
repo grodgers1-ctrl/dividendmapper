@@ -30,11 +30,17 @@ async function signOut() {
   redirect("/");
 }
 
-export default async function AccountPage() {
+interface AccountPageProps {
+  searchParams: Promise<{ welcome?: string }>;
+}
+
+export default async function AccountPage({ searchParams }: AccountPageProps) {
   // app/app/layout.tsx already gates via requireUser(). getCurrentUser is
   // cache()-memoised across the same request, so this is free.
   const user = (await getCurrentUser())!;
   const supabase = await createSupabaseServerClient();
+  const params = await searchParams;
+  const showWelcome = params.welcome === "1";
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -60,6 +66,22 @@ export default async function AccountPage() {
       <h1 className="font-display text-3xl font-bold tracking-tight text-foreground md:text-4xl">
         Account
       </h1>
+
+      {showWelcome && (
+        <div
+          role="status"
+          className="mt-6 rounded-xl border border-positive/30 bg-positive/10 p-5 md:mt-8 md:p-6"
+        >
+          <p className="font-display text-base font-semibold text-foreground">
+            Welcome to Pro.
+          </p>
+          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+            You now have unlimited holdings and the full portfolio income view
+            across every wrapper. Broker sync and the dividend calendar are
+            next, landing through summer 2026.
+          </p>
+        </div>
+      )}
 
       <dl className="mt-8 space-y-6 rounded-xl border border-border bg-card p-5 md:mt-10 md:p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -111,7 +133,7 @@ export default async function AccountPage() {
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
               {expiresLabel
                 ? "Your three 50% off Pro referral codes land on this page next week."
-                : "Launch lands in the next few days — your expiry date will appear here once it's set."}
+                : "Launch lands in the next few days. Your expiry date will appear here once it's set."}
             </p>
           </div>
         )}
@@ -124,8 +146,8 @@ export default async function AccountPage() {
                 : "You're on Pro."}
             </p>
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-              Manage billing and cancel in the Stripe customer portal — link
-              ships with the billing page.
+              Manage billing and cancel in the Stripe customer portal. The
+              link ships with the billing page.
             </p>
           </div>
         )}
@@ -156,7 +178,7 @@ export default async function AccountPage() {
           </h3>
           <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
             Permanently deletes your account, all your holdings, and any
-            active subscription. We can&apos;t undo this — your data is gone
+            active subscription. We can&apos;t undo this. Your data is gone
             once you confirm.
           </p>
           <div className="mt-5">
