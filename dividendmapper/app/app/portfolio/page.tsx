@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { getCurrentUser } from "@/lib/auth/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { getPortfolioIncome } from "@/lib/portfolio/income";
+import { aggregatePortfolioIncome } from "@/lib/portfolio/income";
+import { fetchPortfolioQuotes } from "@/lib/portfolio/quotes";
 import { HoldingsTable } from "./_components/holdings-table";
 import { AddHoldingLauncher } from "./_components/add-holding-launcher";
 import { PortfolioIncomeChart } from "./_components/portfolio-income-chart";
@@ -33,43 +34,37 @@ export default async function PortfolioPage() {
   const user = (await getCurrentUser())!;
   const supabase = await createSupabaseServerClient();
 
-  // Profile + income roll-up run in parallel — income reads ALL holdings
-  // (no tier cap, see getPortfolioIncome) so it doesn't need the tier to
-  // start. The holdings-table query waits on the tier so we can apply the
-  // free-tier limit server-side.
-  const [profileResult, income] = await Promise.all([
+  // Single holdings query covers both the table render and the income roll-up.
+  // We query the unbounded set and slice in memory for the free-tier cap, so
+  // the income chart can count holdings hidden from the table without a
+  // second round-trip. The income aggregator is a pure function over
+  // (holdings, quotes).
+  const [profileResult, holdingsResult] = await Promise.all([
     supabase
       .from("profiles")
       .select("tier")
       .eq("id", user.id)
       .maybeSingle<{ tier: "free" | "pro" | "premium" }>(),
-    getPortfolioIncome(user.id),
+    supabase
+      .from("holdings")
+      .select(
+        "id, ticker, quantity, avg_cost, cost_currency, wrapper, broker_label, notes, created_at",
+      )
+      .order("created_at", { ascending: false })
+      .returns<HoldingRow[]>(),
   ]);
 
   const tier = profileResult.data?.tier ?? "free";
-
-  let holdingsQuery = supabase
-    .from("holdings")
-    .select(
-      "id, ticker, quantity, avg_cost, cost_currency, wrapper, broker_label, notes, created_at",
-      { count: "exact" },
-    )
-    .order("created_at", { ascending: false });
-
-  if (tier === "free") {
-    holdingsQuery = holdingsQuery.limit(FREE_TIER_LIMIT);
-  }
-
-  const {
-    data: holdings,
-    count: totalHoldings,
-    error: holdingsError,
-  } = await holdingsQuery.returns<HoldingRow[]>();
-
-  const rows = holdings ?? [];
-  const total = totalHoldings ?? rows.length;
+  const allHoldings = holdingsResult.data ?? [];
+  const holdingsError = holdingsResult.error;
+  const total = allHoldings.length;
+  const visibleRows =
+    tier === "free" ? allHoldings.slice(0, FREE_TIER_LIMIT) : allHoldings;
   const atFreeLimit = tier === "free" && total >= FREE_TIER_LIMIT;
   const hiddenCount = tier === "free" ? Math.max(0, total - FREE_TIER_LIMIT) : 0;
+
+  const quotes = await fetchPortfolioQuotes(allHoldings);
+  const income = aggregatePortfolioIncome(allHoldings, quotes);
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-12 md:px-6 md:py-16">
@@ -102,7 +97,7 @@ export default async function PortfolioPage() {
               and back in.
             </p>
           </div>
-        ) : rows.length === 0 ? (
+        ) : visibleRows.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border bg-card p-10 text-center">
             <p className="font-display text-base font-semibold text-foreground">
               No holdings yet
@@ -130,7 +125,7 @@ export default async function PortfolioPage() {
                 </p>
               </div>
             )}
-            <HoldingsTable rows={rows} />
+            <HoldingsTable rows={visibleRows} quotes={quotes} />
             <PortfolioIncomeChart income={income} />
           </div>
         )}

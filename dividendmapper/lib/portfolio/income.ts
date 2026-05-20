@@ -1,17 +1,16 @@
-import "server-only";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { fetchQuote, type QuoteData } from "@/lib/market/quote";
+import type { QuoteResult } from "@/lib/market/quote";
 
-// Per-wrapper-and-currency income roll-up for the portfolio view.
+// Per-(wrapper × dividend-currency) income roll-up for the portfolio view.
+//
+// Pure transformation — no Supabase, no fetch. The page orchestrates the
+// holdings query and quote fetch (via lib/portfolio/quotes) then hands both
+// to this function. Keeping the lib pure means it's trivially unit-testable
+// and the data lifecycle lives in one place (the page).
 //
 // Aggregation is by (wrapper × dividend-currency), not just wrapper: a UK
 // user holding AAPL in their ISA gets a "ISA · USD" row distinct from a
 // "ISA · GBP" row for ULVR. Source-currency display only at launch — no FX
-// conversion. See planning/05-phase2-sprint.md day 5.
-//
-// Quotes come from the shared `lib/market/quote.ts` cache (15-min TTL per
-// ticker). The lib dedupes tickers before fetching so multiple holdings of
-// the same ticker only cost one upstream call.
+// conversion.
 
 export type WrapperKey =
   | "isa"
@@ -46,12 +45,11 @@ export interface PortfolioIncome {
   fetchedAt: string;
 }
 
-interface HoldingRow {
-  id: string;
+/** Minimum holding shape the aggregator needs. */
+export interface IncomeHolding {
   ticker: string;
-  quantity: number;
+  quantity: number | string;
   wrapper: string;
-  cost_currency: string;
 }
 
 const VALID_WRAPPERS: ReadonlySet<WrapperKey> = new Set([
@@ -76,37 +74,16 @@ const EMPTY: PortfolioIncome = {
   fetchedAt: new Date(0).toISOString(),
 };
 
-export async function getPortfolioIncome(
-  userId: string,
-): Promise<PortfolioIncome> {
-  const supabase = await createSupabaseServerClient();
-
-  // No tier cap — income must reflect all holdings, even ones hidden from the
-  // table on a downgraded Pro account. The page-level banner explains.
-  const { data, error } = await supabase
-    .from("holdings")
-    .select("id, ticker, quantity, wrapper, cost_currency")
-    .eq("user_id", userId)
-    .returns<HoldingRow[]>();
-
-  if (error || !data || data.length === 0) {
+export function aggregatePortfolioIncome<T extends IncomeHolding>(
+  holdings: ReadonlyArray<T>,
+  quotes: ReadonlyMap<string, QuoteResult>,
+): PortfolioIncome {
+  if (holdings.length === 0) {
     return { ...EMPTY, fetchedAt: new Date().toISOString() };
   }
 
-  // Dedupe tickers so the same security in two wrappers only costs one
-  // upstream call. The lib cache would coalesce these eventually but only
-  // sequentially — parallel-fetching unique tickers is faster.
-  const uniqueTickers = Array.from(new Set(data.map((h) => h.ticker)));
-  const quoteResults = await Promise.all(
-    uniqueTickers.map(async (ticker) => {
-      const result = await fetchQuote(ticker);
-      return [ticker, result.ok ? result.data : null] as const;
-    }),
-  );
-  const quotes = new Map<string, QuoteData | null>(quoteResults);
-
   // Bucket by (wrapper × dividend-currency). Holdings with no usable dividend
-  // (null quote, null dividend, unknown currency, unknown wrapper) get
+  // (failed quote, null dividend, unknown currency, unknown wrapper) get
   // counted as "missing" so the UI can show "N rows have no dividend data."
   const buckets = new Map<
     string,
@@ -114,14 +91,17 @@ export async function getPortfolioIncome(
   >();
   let missing = 0;
 
-  for (const h of data) {
+  for (const h of holdings) {
     if (!isWrapperKey(h.wrapper)) {
       missing += 1;
       continue;
     }
     const quote = quotes.get(h.ticker);
-    const dps = quote?.dividend ?? null;
-    const currency = quote?.currency ?? null;
+    if (!quote || !quote.ok) {
+      missing += 1;
+      continue;
+    }
+    const { dividend: dps, currency } = quote.data;
     if (!dps || dps <= 0 || !currency) {
       missing += 1;
       continue;
@@ -172,7 +152,7 @@ export async function getPortfolioIncome(
   return {
     rows,
     totalsByCurrency,
-    holdingsCount: data.length,
+    holdingsCount: holdings.length,
     missingDividendCount: missing,
     fetchedAt: new Date().toISOString(),
   };

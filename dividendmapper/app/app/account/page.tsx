@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { DeleteAccount } from "./_components/delete-account";
 
 export const metadata: Metadata = {
   title: "Account",
@@ -55,18 +56,18 @@ export default async function AccountPage() {
     : null;
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-16 md:px-6 md:py-24">
+    <div className="mx-auto max-w-2xl px-4 py-12 md:px-6 md:py-24">
       <h1 className="font-display text-3xl font-bold tracking-tight text-foreground md:text-4xl">
         Account
       </h1>
 
-      <dl className="mt-10 space-y-6 rounded-xl border border-border bg-card p-6">
-        <div className="flex items-start justify-between gap-6">
-          <div>
+      <dl className="mt-8 space-y-6 rounded-xl border border-border bg-card p-5 md:mt-10 md:p-6">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
             <dt className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
               Signed in as
             </dt>
-            <dd className="mt-1 font-mono text-sm text-foreground">
+            <dd className="mt-1 truncate font-mono text-sm text-foreground">
               {user.email}
             </dd>
           </div>
@@ -88,7 +89,19 @@ export default async function AccountPage() {
           </dd>
         </div>
 
-        {isFoundingMember && (
+        {tier === "free" && (
+          <div className="rounded-lg border border-border bg-background p-4">
+            <p className="font-display text-sm font-semibold text-foreground">
+              You&apos;re on Free.
+            </p>
+            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+              Track up to 10 holdings. Pro lifts the cap and unlocks the full
+              portfolio view.
+            </p>
+          </div>
+        )}
+
+        {tier === "pro" && isFoundingMember && (
           <div className="rounded-lg border border-brand-500/30 bg-brand-50 p-4 dark:border-brand-400/20 dark:bg-brand-900/20">
             <p className="font-display text-sm font-semibold text-foreground">
               {expiresLabel
@@ -102,6 +115,20 @@ export default async function AccountPage() {
             </p>
           </div>
         )}
+
+        {tier === "pro" && !isFoundingMember && (
+          <div className="rounded-lg border border-border bg-background p-4">
+            <p className="font-display text-sm font-semibold text-foreground">
+              {expiresLabel
+                ? `You're on Pro until ${expiresLabel}.`
+                : "You're on Pro."}
+            </p>
+            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+              Manage billing and cancel in the Stripe customer portal — link
+              ships with the billing page.
+            </p>
+          </div>
+        )}
       </dl>
 
       <form action={signOut} className="mt-8">
@@ -112,6 +139,31 @@ export default async function AccountPage() {
           Sign out
         </button>
       </form>
+
+      <section
+        aria-labelledby="danger-zone-heading"
+        className="mt-16 rounded-xl border border-negative/30 bg-card p-5 md:p-6"
+      >
+        <h2
+          id="danger-zone-heading"
+          className="font-display text-lg font-semibold text-negative"
+        >
+          Danger zone
+        </h2>
+        <div className="mt-4 border-t border-border pt-4">
+          <h3 className="font-display text-base font-semibold text-foreground">
+            Delete account
+          </h3>
+          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+            Permanently deletes your account, all your holdings, and any
+            active subscription. We can&apos;t undo this — your data is gone
+            once you confirm.
+          </p>
+          <div className="mt-5">
+            <DeleteAccount />
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
