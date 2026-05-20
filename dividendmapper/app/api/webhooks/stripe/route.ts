@@ -149,10 +149,15 @@ async function handleSubscriptionUpsert(
   }
   if (!profile) {
     // Race: subscription event arrived before checkout.session.completed
-    // wrote stripe_customer_id. Stripe will retry the deliver and we'll
-    // catch up on the second pass.
-    console.warn("[webhooks/stripe] no profile for customer (race)", customerId);
-    return;
+    // wrote stripe_customer_id. Throw so the outer catch returns 500 and
+    // Stripe retries with backoff. By the second retry (~10-30s later)
+    // checkout.session.completed will have written stripe_customer_id and
+    // the lookup will succeed.
+    console.warn(
+      "[webhooks/stripe] profile not yet linked, returning 500 to trigger retry",
+      customerId,
+    );
+    throw new Error(`profile not yet linked for customer ${customerId}`);
   }
 
   const item = sub.items.data[0];
