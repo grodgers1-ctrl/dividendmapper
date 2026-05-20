@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { FooterResources } from "./footer-resources";
+import { isPricingPublic } from "@/lib/flags/pricing";
 
 interface ColumnDef {
   heading: string;
@@ -15,14 +16,18 @@ const TOOLS_COLUMN: ColumnDef = {
   ],
 };
 
-const COMPANY_COLUMN: ColumnDef = {
-  heading: "Company",
-  links: [
-    { href: "/waitlist", label: "Waitlist" },
-    { href: "/privacy", label: "Privacy" },
-    { href: "/terms", label: "Terms" },
-  ],
-};
+const COMPANY_BASE_LINKS = [
+  { href: "/waitlist", label: "Waitlist" },
+  { href: "/privacy", label: "Privacy" },
+  { href: "/terms", label: "Terms" },
+];
+
+function companyColumn(): ColumnDef {
+  const links = isPricingPublic()
+    ? [{ href: "/pricing", label: "Pricing" }, ...COMPANY_BASE_LINKS]
+    : COMPANY_BASE_LINKS;
+  return { heading: "Company", links };
+}
 
 function FooterColumn({ column }: { column: ColumnDef }) {
   return (
@@ -70,7 +75,7 @@ export function SiteFooter() {
 
           <FooterColumn column={TOOLS_COLUMN} />
           <FooterResources />
-          <FooterColumn column={COMPANY_COLUMN} />
+          <FooterColumn column={companyColumn()} />
         </div>
 
         <div className="mt-10 border-t border-border pt-6 text-xs text-muted-foreground">

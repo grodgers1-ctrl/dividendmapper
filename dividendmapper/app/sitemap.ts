@@ -1,10 +1,11 @@
 import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/site";
 import { POSTS } from "@/lib/blog/posts";
+import { isPricingPublic } from "@/lib/flags/pricing";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
-  return [
+  const entries: MetadataRoute.Sitemap = [
     {
       url: SITE_URL,
       lastModified: now,
@@ -42,4 +43,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.5,
     },
   ];
+
+  if (isPricingPublic()) {
+    entries.push({
+      url: `${SITE_URL}/pricing`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.85,
+    });
+  }
+
+  return entries;
 }
