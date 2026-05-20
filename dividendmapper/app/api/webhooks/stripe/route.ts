@@ -78,7 +78,13 @@ export async function POST(req: Request) {
         await handleCheckoutCompleted(supabase, session);
         break;
       }
+      case "customer.subscription.created":
       case "customer.subscription.updated": {
+        // Stripe API 2026-04-22+ fires .created (not .updated) on initial
+        // activation of a Checkout-born subscription, because there's no
+        // prior state to "update." Both routes upsert via the same handler;
+        // it's idempotent (onConflict: user_id), so the double-handling is
+        // safe even on the unlikely chance both events fire.
         const sub = event.data.object as Stripe.Subscription;
         await handleSubscriptionUpsert(supabase, sub);
         break;
