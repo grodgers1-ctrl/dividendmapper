@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { isPricingPublic } from "@/lib/flags/pricing";
 import { aggregatePortfolioIncome } from "@/lib/portfolio/income";
 import { fetchPortfolioQuotes } from "@/lib/portfolio/quotes";
 import { HoldingsTable } from "./_components/holdings-table";
@@ -14,7 +16,7 @@ export const metadata: Metadata = {
 };
 
 // app/app/layout.tsx already gates via requireUser(). Force dynamic so the
-// server-side holdings query runs on every request — the page is per-user
+// server-side holdings query runs on every request. The page is per-user
 // and never cacheable.
 export const dynamic = "force-dynamic";
 
@@ -33,6 +35,7 @@ type HoldingRow = {
 export default async function PortfolioPage() {
   const user = (await getCurrentUser())!;
   const supabase = await createSupabaseServerClient();
+  const pricingPublic = isPricingPublic();
 
   // Single holdings query covers both the table render and the income roll-up.
   // We query the unbounded set and slice in memory for the free-tier cap, so
@@ -79,11 +82,14 @@ export default async function PortfolioPage() {
               : `${total} holding${total === 1 ? "" : "s"} · ${
                   tier === "free"
                     ? `${Math.min(total, FREE_TIER_LIMIT)}/${FREE_TIER_LIMIT} on Free`
-                    : "Pro — unlimited"
+                    : "Pro · unlimited"
                 }`}
           </p>
         </div>
-        <AddHoldingLauncher atFreeLimit={atFreeLimit} />
+        <AddHoldingLauncher
+          atFreeLimit={atFreeLimit}
+          pricingPublic={pricingPublic}
+        />
       </div>
 
       <div className="mt-8">
@@ -104,7 +110,7 @@ export default async function PortfolioPage() {
             </p>
             <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
               Add your first holding to see it here. Ticker, quantity, cost
-              basis, and the wrapper it sits in — everything else comes from
+              basis, and the wrapper it sits in. Everything else comes from
               market data.
             </p>
           </div>
@@ -123,6 +129,15 @@ export default async function PortfolioPage() {
                   table. Your income below counts all {total}. Upgrade to Pro
                   to see them all.
                 </p>
+                {pricingPublic && (
+                  <Link
+                    href="/pricing"
+                    className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-brand-700 hover:underline dark:text-brand-300"
+                  >
+                    Upgrade to Pro
+                    <span aria-hidden>→</span>
+                  </Link>
+                )}
               </div>
             )}
             <HoldingsTable rows={visibleRows} quotes={quotes} />

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { AddHoldingModal } from "./add-holding-modal";
 import {
@@ -9,8 +10,10 @@ import {
 
 export function AddHoldingLauncher({
   atFreeLimit,
+  pricingPublic,
 }: {
   atFreeLimit: boolean;
+  pricingPublic: boolean;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -21,6 +24,15 @@ export function AddHoldingLauncher({
           {FREE_TIER_CAP_TITLE}
         </p>
         <p className="mt-0.5 text-muted-foreground">{FREE_TIER_CAP_MESSAGE}</p>
+        {pricingPublic && (
+          <Link
+            href="/pricing"
+            className="mt-1 inline-flex items-center gap-1 text-sm font-medium text-brand-700 hover:underline dark:text-brand-300"
+          >
+            Upgrade to Pro
+            <span aria-hidden>→</span>
+          </Link>
+        )}
       </div>
     );
   }
@@ -34,7 +46,11 @@ export function AddHoldingLauncher({
       >
         Add holding
       </button>
-      <AddHoldingModal open={open} onOpenChange={setOpen} />
+      <AddHoldingModal
+        open={open}
+        onOpenChange={setOpen}
+        pricingPublic={pricingPublic}
+      />
     </>
   );
 }

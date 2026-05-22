@@ -1,6 +1,7 @@
 "use client";
 
 import { Dialog } from "@base-ui/react/dialog";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import {
@@ -37,7 +38,7 @@ type Status =
   | { kind: "server-error"; message: string };
 
 const ERROR_COPY: Record<string, string> = {
-  invalid_ticker: "That ticker doesn't look right — letters, digits, . or - only.",
+  invalid_ticker: "That ticker doesn't look right. Use letters, digits, dots, or dashes only.",
   invalid_quantity: "Quantity must be greater than zero.",
   invalid_avg_cost: "Average cost can't be negative.",
   invalid_currency: "Pick a currency.",
@@ -49,9 +50,11 @@ const ERROR_COPY: Record<string, string> = {
 export function AddHoldingModal({
   open,
   onOpenChange,
+  pricingPublic,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  pricingPublic: boolean;
 }) {
   const router = useRouter();
 
@@ -114,13 +117,13 @@ export function AddHoldingModal({
       } else {
         setTickerCheck({
           kind: "warn",
-          reason: "Couldn't verify this ticker — saving anyway.",
+          reason: "Couldn't verify this ticker. Saving anyway.",
         });
       }
     } catch {
       setTickerCheck({
         kind: "warn",
-        reason: "Couldn't verify this ticker — saving anyway.",
+        reason: "Couldn't verify this ticker. Saving anyway.",
       });
     }
   };
@@ -175,7 +178,7 @@ export function AddHoldingModal({
       }
 
       if (res.status === 402) {
-        // Ignore the server message — single source of truth lives in
+        // Ignore the server message. Single source of truth lives in
         // free-tier-copy so the modal alert, launcher, and hidden-rows
         // banner all read the same string.
         await res.json().catch(() => ({}));
@@ -198,7 +201,7 @@ export function AddHoldingModal({
       if (res.status === 401) {
         setStatus({
           kind: "server-error",
-          message: "Your session expired — refresh the page and sign in again.",
+          message: "Your session expired. Refresh the page and sign in again.",
         });
         return;
       }
@@ -210,7 +213,7 @@ export function AddHoldingModal({
     } catch {
       setStatus({
         kind: "server-error",
-        message: "Network error — check your connection and try again.",
+        message: "Network error. Check your connection and try again.",
       });
     }
   };
@@ -298,7 +301,7 @@ export function AddHoldingModal({
                 className="block w-full rounded-lg border border-input bg-background px-3 py-2.5 font-mono text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 focus:ring-offset-background disabled:opacity-60"
               />
               <p className="text-xs text-muted-foreground">
-                Fractional shares OK — up to 6 decimal places.
+                Fractional shares OK. Up to 6 decimal places.
               </p>
             </div>
 
@@ -463,6 +466,15 @@ export function AddHoldingModal({
                   {FREE_TIER_CAP_TITLE}
                 </p>
                 <p className="mt-0.5 text-muted-foreground">{status.message}</p>
+                {pricingPublic && (
+                  <Link
+                    href="/pricing"
+                    className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-brand-700 hover:underline dark:text-brand-300"
+                  >
+                    Upgrade to Pro
+                    <span aria-hidden>→</span>
+                  </Link>
+                )}
               </div>
             )}
 

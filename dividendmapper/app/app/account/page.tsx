@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/server";
+import { isPricingPublic } from "@/lib/flags/pricing";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { DeleteAccount } from "./_components/delete-account";
 
@@ -41,6 +43,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
   const supabase = await createSupabaseServerClient();
   const params = await searchParams;
   const showWelcome = params.welcome === "1";
+  const pricingPublic = isPricingPublic();
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -120,6 +123,15 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
               Track up to 10 holdings. Pro lifts the cap and unlocks the full
               portfolio view.
             </p>
+            {pricingPublic && (
+              <Link
+                href="/pricing"
+                className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-brand-700 hover:underline dark:text-brand-300"
+              >
+                Upgrade to Pro
+                <span aria-hidden>→</span>
+              </Link>
+            )}
           </div>
         )}
 
@@ -146,8 +158,9 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
                 : "You're on Pro."}
             </p>
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-              Manage billing and cancel in the Stripe customer portal. The
-              link ships with the billing page.
+              Renews automatically. To cancel before the next renewal, email
+              hello@dividendmapper.com. The self-serve dashboard lands in a
+              couple of weeks.
             </p>
           </div>
         )}
