@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/lib/auth/server";
 import { isPricingPublic } from "@/lib/flags/pricing";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { DeleteAccount } from "./_components/delete-account";
+import { FoundingCodeCard } from "./_components/founding-code-card";
 
 export const metadata: Metadata = {
   title: "Account",
@@ -17,6 +18,13 @@ type ProfileRow = {
   tier_source: "free" | "stripe" | "founding_member";
   tier_expires_at: string | null;
   founding_member: boolean;
+};
+
+type FoundingCodeRow = {
+  id: string;
+  code: string;
+  redeemed_at: string | null;
+  redeemed_by_user_id: string | null;
 };
 
 const TIER_LABEL: Record<ProfileRow["tier"], string> = {
@@ -45,12 +53,25 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
   const showWelcome = params.welcome === "1";
   const pricingPublic = isPricingPublic();
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("email, tier, tier_source, tier_expires_at, founding_member")
-    .eq("id", user.id)
-    .maybeSingle<ProfileRow>();
+  // Founding-member codes are RLS-readable by the owner (member_user_id =
+  // auth.uid()), so the standard SSR client picks them up. Parallel with the
+  // profile read since neither depends on the other.
+  const [profileResult, codesResult] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("email, tier, tier_source, tier_expires_at, founding_member")
+      .eq("id", user.id)
+      .maybeSingle<ProfileRow>(),
+    supabase
+      .from("founding_member_codes")
+      .select("id, code, redeemed_at, redeemed_by_user_id")
+      .eq("member_user_id", user.id)
+      .order("created_at", { ascending: true })
+      .returns<FoundingCodeRow[]>(),
+  ]);
 
+  const profile = profileResult.data;
+  const foundingCodes = codesResult.data ?? [];
   const tier = profile?.tier ?? "free";
   const isFoundingMember = profile?.founding_member ?? false;
   const expiresAt = profile?.tier_expires_at
@@ -144,9 +165,37 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
             </p>
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
               {expiresLabel
-                ? "Your three 50% off Pro referral codes land on this page next week."
-                : "Launch lands in the next few days. Your expiry date will appear here once it's set."}
+                ? "Three 50% off codes are below. Each one is single-use and gives a friend six months of Pro."
+                : "Launch is in a few days. Your expiry date and three referral codes appear here once they're provisioned."}
             </p>
+          </div>
+        )}
+
+        {isFoundingMember && (
+          <div className="border-t border-border pt-6">
+            <dt className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Your 50% off codes
+            </dt>
+            <dd className="mt-3 space-y-3">
+              {foundingCodes.length === 0 ? (
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  Your three referral codes drop here once we provision them.
+                  Email hello@dividendmapper.com if they&apos;re missing by
+                  launch.
+                </p>
+              ) : (
+                <>
+                  <p className="text-sm leading-relaxed text-muted-foreground">
+                    Friends paste these at checkout when they upgrade to Pro.
+                  </p>
+                  <div className="space-y-2">
+                    {foundingCodes.map((c) => (
+                      <FoundingCodeCard key={c.id} code={c} />
+                    ))}
+                  </div>
+                </>
+              )}
+            </dd>
           </div>
         )}
 
