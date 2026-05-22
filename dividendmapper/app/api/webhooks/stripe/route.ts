@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { getStripe } from "@/lib/billing/stripe";
+import { sendIdempotent } from "@/lib/email/send";
+import { WelcomePaidEmail } from "@/emails/welcome-paid";
+import { SITE_URL } from "@/lib/site";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -129,6 +132,101 @@ async function handleCheckoutCompleted(
     .eq("id", userId);
   if (error) {
     throw new Error(`profiles update failed: ${error.message}`);
+  }
+
+  // Founding-member code redemption write-back. If the checkout applied a
+  // promotion code, mark the matching founding_member_codes row as redeemed.
+  // session.discounts entries reference the Stripe promotion_code id, which
+  // we mirrored into founding_member_codes.stripe_promotion_code_id at
+  // provision time.
+  await handleRedemption(supabase, session, userId);
+
+  // Welcome email. session.customer_details.email is captured at Checkout
+  // (Stripe collects it even when we don't pre-fill). subscription id is the
+  // idempotency token; every paid signup gets exactly one welcome.
+  const recipientEmail = session.customer_details?.email ?? session.customer_email;
+  const subscriptionId =
+    typeof session.subscription === "string"
+      ? session.subscription
+      : session.subscription?.id ?? null;
+  if (recipientEmail && subscriptionId) {
+    const sendResult = await sendIdempotent({
+      to: recipientEmail,
+      subject: "Welcome to DividendMapper Pro",
+      template: "welcome_paid",
+      sendKey: `welcome_paid_${subscriptionId}`,
+      userId,
+      body: WelcomePaidEmail({
+        portfolioUrl: `${SITE_URL}/app/portfolio`,
+      }),
+      supabase,
+    });
+    if (!sendResult.ok && sendResult.reason !== "already_sent") {
+      console.error("[webhooks/stripe] welcome_paid send failed", sendResult);
+      // Don't throw. The DB writes above already succeeded, and a failed
+      // welcome email isn't worth retrying the whole webhook for.
+    }
+  } else {
+    console.warn(
+      "[webhooks/stripe] welcome_paid skipped: missing email or subscription",
+      { recipientEmail, subscriptionId },
+    );
+  }
+}
+
+async function handleRedemption(
+  supabase: SupabaseClient,
+  session: Stripe.Checkout.Session,
+  userId: string,
+) {
+  const discounts = session.discounts ?? [];
+  if (discounts.length === 0) return;
+
+  const recipientEmail =
+    session.customer_details?.email ?? session.customer_email ?? null;
+
+  for (const discount of discounts) {
+    const promotionCodeId =
+      typeof discount.promotion_code === "string"
+        ? discount.promotion_code
+        : discount.promotion_code?.id ?? null;
+    if (!promotionCodeId) continue;
+
+    const { data: codeRow, error: codeError } = await supabase
+      .from("founding_member_codes")
+      .select("id, redeemed_at")
+      .eq("stripe_promotion_code_id", promotionCodeId)
+      .maybeSingle<{ id: string; redeemed_at: string | null }>();
+    if (codeError) {
+      console.error(
+        "[webhooks/stripe] founding-code lookup failed",
+        codeError,
+      );
+      continue;
+    }
+    if (!codeRow) {
+      // Not a founding-member code (could be a regular Stripe coupon).
+      continue;
+    }
+    if (codeRow.redeemed_at) {
+      // Already marked redeemed; webhook replay or duplicate event.
+      continue;
+    }
+
+    const { error: updateError } = await supabase
+      .from("founding_member_codes")
+      .update({
+        redeemed_at: new Date().toISOString(),
+        redeemed_by_user_id: userId,
+        redeemed_by_email: recipientEmail,
+      })
+      .eq("id", codeRow.id);
+    if (updateError) {
+      console.error(
+        "[webhooks/stripe] founding-code redemption write failed",
+        updateError,
+      );
+    }
   }
 }
 

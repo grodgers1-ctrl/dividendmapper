@@ -45,3 +45,7 @@ next-env.d.ts
 # supabase cli (local caches, not the migrations folder)
 /supabase/.temp/
 /supabase/.branches/
+
+# react-email build artifacts
+emails-rendered/
+.react-email/

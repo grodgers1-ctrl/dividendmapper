@@ -5,6 +5,9 @@ import {
   deriveSlugFromEmail,
   randomCodeSuffix,
 } from "@/lib/billing/founding-codes";
+import { sendIdempotent } from "@/lib/email/send";
+import { WelcomeFoundingMemberEmail } from "@/emails/welcome-founding-member";
+import { SITE_URL } from "@/lib/site";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -28,6 +31,7 @@ type ProfileRow = {
   id: string;
   email: string;
   founding_member: boolean;
+  tier_expires_at: string | null;
 };
 
 type CodeRow = {
@@ -98,7 +102,7 @@ export async function POST(req: Request) {
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("id, email, founding_member")
+    .select("id, email, founding_member, tier_expires_at")
     .eq("id", userId)
     .maybeSingle<ProfileRow>();
   if (profileError) {
@@ -131,13 +135,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "query_failed" }, { status: 500 });
   }
   const existingCount = existing?.length ?? 0;
-  if (existingCount === CODES_PER_MEMBER) {
-    return NextResponse.json({
-      ok: true,
-      already_provisioned: true,
-      codes: existing,
-    });
-  }
   if (existingCount > 0 && existingCount < CODES_PER_MEMBER) {
     return NextResponse.json(
       {
@@ -147,67 +144,115 @@ export async function POST(req: Request) {
       { status: 409 },
     );
   }
+  const alreadyProvisioned = existingCount === CODES_PER_MEMBER;
 
-  const stripe = getStripe();
-  const slug = deriveSlugFromEmail(profile.email);
-  const expiresAt = Math.floor(Date.now() / 1000) + TWELVE_MONTHS_SECONDS;
+  let codes: CodeRow[];
+  if (alreadyProvisioned) {
+    codes = existing!;
+  } else {
+    const stripe = getStripe();
+    const slug = deriveSlugFromEmail(profile.email);
+    const expiresAt = Math.floor(Date.now() / 1000) + TWELVE_MONTHS_SECONDS;
 
-  const created: Array<{ code: string; stripe_promotion_code_id: string }> = [];
-  try {
-    for (let i = 0; i < CODES_PER_MEMBER; i++) {
-      const code = `${slug}-${randomCodeSuffix()}`;
-      const promo = await stripe.promotionCodes.create({
-        promotion: { type: "coupon", coupon: couponId },
-        code,
-        max_redemptions: 1,
-        expires_at: expiresAt,
-        metadata: {
-          founding_member_user_id: userId,
+    const created: Array<{ code: string; stripe_promotion_code_id: string }> = [];
+    try {
+      for (let i = 0; i < CODES_PER_MEMBER; i++) {
+        const code = `${slug}-${randomCodeSuffix()}`;
+        const promo = await stripe.promotionCodes.create({
+          promotion: { type: "coupon", coupon: couponId },
+          code,
+          max_redemptions: 1,
+          expires_at: expiresAt,
+          metadata: {
+            founding_member_user_id: userId,
+          },
+        });
+        created.push({ code: promo.code, stripe_promotion_code_id: promo.id });
+      }
+    } catch (err) {
+      console.error(
+        "[internal/provision-founding-member] stripe create failed",
+        err,
+      );
+      return NextResponse.json(
+        {
+          error: "stripe_create_failed",
+          partial: created,
+          details:
+            "Some codes may have been created in Stripe but not mirrored. Run again to surface the partial-state error.",
         },
-      });
-      created.push({ code: promo.code, stripe_promotion_code_id: promo.id });
+        { status: 500 },
+      );
     }
-  } catch (err) {
-    console.error(
-      "[internal/provision-founding-member] stripe create failed",
-      err,
+
+    const rows = created.map((c) => ({
+      member_user_id: userId,
+      code: c.code,
+      stripe_promotion_code_id: c.stripe_promotion_code_id,
+    }));
+    const { data: inserted, error: insertError } = await supabase
+      .from("founding_member_codes")
+      .insert(rows)
+      .select(
+        "id, code, stripe_promotion_code_id, redeemed_at, redeemed_by_user_id",
+      )
+      .returns<CodeRow[]>();
+    if (insertError || !inserted) {
+      console.error(
+        "[internal/provision-founding-member] db insert failed",
+        insertError,
+      );
+      return NextResponse.json(
+        {
+          error: "db_insert_failed",
+          stripe_codes: created,
+          details:
+            "Codes created in Stripe but not mirrored. Manual cleanup: delete the Stripe promo codes or insert founding_member_codes rows by hand.",
+        },
+        { status: 500 },
+      );
+    }
+    codes = inserted;
+  }
+
+  // Welcome email (idempotent via send_key=welcome_founding_member_<user_id>).
+  // If tier_expires_at is NULL we skip the send and surface a warning. The
+  // launch-day backfill (migration 0002 or the bulk-UPDATE script) must run
+  // before the email goes out so the recipient sees a real expiry date.
+  if (profile.tier_expires_at) {
+    const expiresOnLabel = new Date(profile.tier_expires_at).toLocaleDateString(
+      "en-GB",
+      { day: "numeric", month: "long", year: "numeric" },
     );
-    return NextResponse.json(
-      {
-        error: "stripe_create_failed",
-        partial: created,
-        details:
-          "Some codes may have been created in Stripe but not mirrored. Run again to surface the partial-state error.",
-      },
-      { status: 500 },
+    const sendResult = await sendIdempotent({
+      to: profile.email,
+      subject: "You're in. Three 50% off codes for friends.",
+      template: "welcome_founding_member",
+      sendKey: `welcome_founding_member_${userId}`,
+      userId,
+      body: WelcomeFoundingMemberEmail({
+        codes: codes.map((c) => c.code),
+        accountUrl: `${SITE_URL}/app/account`,
+        expiresOnLabel,
+      }),
+      supabase,
+    });
+    if (!sendResult.ok && sendResult.reason !== "already_sent") {
+      console.error(
+        "[internal/provision-founding-member] welcome email send failed",
+        sendResult,
+      );
+    }
+  } else {
+    console.warn(
+      "[internal/provision-founding-member] tier_expires_at NULL; welcome email skipped",
+      { userId },
     );
   }
 
-  const rows = created.map((c) => ({
-    member_user_id: userId,
-    code: c.code,
-    stripe_promotion_code_id: c.stripe_promotion_code_id,
-  }));
-  const { data: inserted, error: insertError } = await supabase
-    .from("founding_member_codes")
-    .insert(rows)
-    .select("id, code, stripe_promotion_code_id, redeemed_at, redeemed_by_user_id")
-    .returns<CodeRow[]>();
-  if (insertError) {
-    console.error(
-      "[internal/provision-founding-member] db insert failed",
-      insertError,
-    );
-    return NextResponse.json(
-      {
-        error: "db_insert_failed",
-        stripe_codes: created,
-        details:
-          "Codes created in Stripe but not mirrored. Manual cleanup: delete the Stripe promo codes or insert founding_member_codes rows by hand.",
-      },
-      { status: 500 },
-    );
-  }
-
-  return NextResponse.json({ ok: true, codes: inserted });
+  return NextResponse.json({
+    ok: true,
+    already_provisioned: alreadyProvisioned,
+    codes,
+  });
 }

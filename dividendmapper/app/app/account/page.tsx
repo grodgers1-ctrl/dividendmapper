@@ -6,6 +6,7 @@ import { isPricingPublic } from "@/lib/flags/pricing";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { DeleteAccount } from "./_components/delete-account";
 import { FoundingCodeCard } from "./_components/founding-code-card";
+import { WelcomeRefresh } from "./_components/welcome-refresh";
 
 export const metadata: Metadata = {
   title: "Account",
@@ -74,6 +75,11 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
   const foundingCodes = codesResult.data ?? [];
   const tier = profile?.tier ?? "free";
   const isFoundingMember = profile?.founding_member ?? false;
+  // Race window after Stripe Checkout: the redirect to /app/account?welcome=1
+  // can arrive before the webhook has flipped profiles.tier='pro'. Suppress
+  // the tier-state panel + show "Activating" in the badge until the next
+  // refresh picks up the post-webhook state (handled by <WelcomeRefresh />).
+  const stripeActivating = showWelcome && tier === "free" && !isFoundingMember;
   const expiresAt = profile?.tier_expires_at
     ? new Date(profile.tier_expires_at)
     : null;
@@ -92,19 +98,22 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
       </h1>
 
       {showWelcome && (
-        <div
-          role="status"
-          className="mt-6 rounded-xl border border-positive/30 bg-positive/10 p-5 md:mt-8 md:p-6"
-        >
-          <p className="font-display text-base font-semibold text-foreground">
-            Welcome to Pro.
-          </p>
-          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-            You now have unlimited holdings and the full portfolio income view
-            across every wrapper. Broker sync and the dividend calendar are
-            next, landing through summer 2026.
-          </p>
-        </div>
+        <>
+          <div
+            role="status"
+            className="mt-6 rounded-xl border border-positive/30 bg-positive/10 p-5 md:mt-8 md:p-6"
+          >
+            <p className="font-display text-base font-semibold text-foreground">
+              Welcome to Pro.
+            </p>
+            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+              You now have unlimited holdings and the full portfolio income view
+              across every wrapper. Broker sync and the dividend calendar are
+              next, landing through summer 2026.
+            </p>
+          </div>
+          {stripeActivating && <WelcomeRefresh />}
+        </>
       )}
 
       <dl className="mt-8 space-y-6 rounded-xl border border-border bg-card p-5 md:mt-10 md:p-6">
@@ -125,7 +134,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
           </dt>
           <dd className="mt-2 flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center rounded-full bg-brand-600 px-2.5 py-0.5 text-xs font-semibold text-white">
-              {TIER_LABEL[tier]}
+              {stripeActivating ? "Activating…" : TIER_LABEL[tier]}
             </span>
             {isFoundingMember && (
               <span className="inline-flex items-center rounded-full border border-brand-500/30 bg-brand-50 px-2.5 py-0.5 text-xs font-semibold text-brand-700 dark:border-brand-400/20 dark:bg-brand-900/20 dark:text-brand-300">
@@ -135,7 +144,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
           </dd>
         </div>
 
-        {tier === "free" && (
+        {tier === "free" && !stripeActivating && (
           <div className="rounded-lg border border-border bg-background p-4">
             <p className="font-display text-sm font-semibold text-foreground">
               You&apos;re on Free.

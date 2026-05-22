@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
@@ -7,15 +8,20 @@ type Status =
   | { kind: "idle" }
   | { kind: "submitting" }
   | { kind: "sent"; email: string }
+  | { kind: "verifying"; email: string }
   | { kind: "error"; message: string };
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const TOKEN_RE = /^\d{6}$/;
 
 const SUPABASE_ERROR_COPY: Record<string, string> = {
   email_address_invalid: "That doesn't look like a valid email address.",
-  signup_disabled: "Sign-ups aren't open yet — drop us a line if you want in.",
+  signup_disabled: "Sign-ups aren't open yet. Drop us a line if you want in.",
   over_email_send_rate_limit:
-    "Too many requests — try again in a minute or two.",
+    "Too many requests. Try again in a minute or two.",
+  otp_expired:
+    "That code has expired or already been used. Send a new sign-in link.",
+  otp_disabled: "Sign-in codes aren't enabled. Use the link in the email.",
 };
 
 export function LoginForm({
@@ -25,14 +31,17 @@ export function LoginForm({
   next: string;
   initialError?: string;
 }) {
+  const router = useRouter();
   const [email, setEmail] = useState("");
+  const [code, setCode] = useState("");
+  const [codeError, setCodeError] = useState<string | null>(null);
   const [website, setWebsite] = useState(""); // honeypot
   const [status, setStatus] = useState<Status>(
     initialError === "callback"
       ? {
           kind: "error",
           message:
-            "Your sign-in link couldn't be verified — they expire after a short window. Send a new one.",
+            "Your sign-in link couldn't be verified. They're single-use and email scanners sometimes use them up before you click. Try the 6-digit code from the email instead, or send a new one.",
         }
       : { kind: "idle" },
   );
@@ -40,7 +49,7 @@ export function LoginForm({
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
-    // Honeypot — silently succeed for bots.
+    // Honeypot: silently succeed for bots.
     if (website.trim() !== "") {
       setStatus({ kind: "sent", email: email.trim().toLowerCase() });
       return;
@@ -80,12 +89,47 @@ export function LoginForm({
     } catch {
       setStatus({
         kind: "error",
-        message: "Network error — check your connection and try again.",
+        message: "Network error. Check your connection and try again.",
       });
     }
   };
 
-  if (status.kind === "sent") {
+  if (status.kind === "sent" || status.kind === "verifying") {
+    const verifying = status.kind === "verifying";
+
+    const handleVerify = async (e: FormEvent) => {
+      e.preventDefault();
+      const trimmedCode = code.trim();
+      if (!TOKEN_RE.test(trimmedCode)) {
+        setCodeError("Enter the 6-digit code from the email.");
+        return;
+      }
+      setCodeError(null);
+      setStatus({ kind: "verifying", email: status.email });
+
+      try {
+        const supabase = createSupabaseBrowserClient();
+        const { error } = await supabase.auth.verifyOtp({
+          email: status.email,
+          token: trimmedCode,
+          type: "email",
+        });
+        if (error) {
+          setCodeError(
+            SUPABASE_ERROR_COPY[error.code ?? ""] ??
+              "That code didn't work. Try again or send a new one.",
+          );
+          setStatus({ kind: "sent", email: status.email });
+          return;
+        }
+        router.push(next);
+        router.refresh();
+      } catch {
+        setCodeError("Network error. Check your connection and try again.");
+        setStatus({ kind: "sent", email: status.email });
+      }
+    };
+
     return (
       <div
         role="status"
@@ -96,15 +140,70 @@ export function LoginForm({
           Check your inbox
         </p>
         <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-          We sent a sign-in link to{" "}
+          We sent a sign-in link plus a 6-digit code to{" "}
           <span className="font-mono text-foreground">{status.email}</span>.
-          Click it to finish signing in. The link expires after a short window
-          — if it doesn&apos;t arrive in a minute or two, check your spam folder
-          or request a new one.
+          Click the link or paste the code below. Both expire after five
+          minutes.
         </p>
+
+        <form onSubmit={handleVerify} className="mt-4 space-y-3">
+          <label
+            htmlFor="login-code"
+            className="block text-sm font-medium text-foreground"
+          >
+            Or paste your 6-digit code
+          </label>
+          <div className="flex items-center gap-2">
+            <input
+              id="login-code"
+              name="code"
+              type="text"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              pattern="\d{6}"
+              maxLength={6}
+              placeholder="123456"
+              value={code}
+              onChange={(e) => {
+                setCode(e.target.value.replace(/\D/g, "").slice(0, 6));
+                if (codeError) setCodeError(null);
+              }}
+              disabled={verifying}
+              className="block w-32 rounded-lg border border-input bg-background px-3 py-2.5 text-center font-mono text-base tracking-[0.3em] text-foreground placeholder:tracking-normal placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 focus:ring-offset-background disabled:opacity-60"
+            />
+            <button
+              type="submit"
+              disabled={verifying || code.length !== 6}
+              className="inline-flex h-11 items-center justify-center rounded-lg bg-brand-600 px-4 text-sm font-medium text-white transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {verifying ? (
+                <>
+                  <Spinner />
+                  Verifying…
+                </>
+              ) : (
+                "Sign in"
+              )}
+            </button>
+          </div>
+          {codeError && (
+            <p
+              role="alert"
+              aria-live="assertive"
+              className="text-sm font-medium text-destructive"
+            >
+              {codeError}
+            </p>
+          )}
+        </form>
+
         <button
           type="button"
-          onClick={() => setStatus({ kind: "idle" })}
+          onClick={() => {
+            setStatus({ kind: "idle" });
+            setCode("");
+            setCodeError(null);
+          }}
           className="mt-4 text-sm font-medium text-brand-600 transition-colors hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
         >
           Use a different email →
