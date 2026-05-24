@@ -18,4 +18,6 @@ const withMDX = createMDX({
   },
 });
 
-export default withSentryConfig(withMDX(nextConfig), {});
+export default withSentryConfig(withMDX(nextConfig), {
+  silent: true,
+});

@@ -7,3 +7,7 @@ Sentry.init({
   replaysSessionSampleRate: 0,
   replaysOnErrorSampleRate: 0,
 });
+
+// Sentry's webpack plugin asks us to export this so router transitions get
+// instrumented (App Router navigations show up as spans in Sentry).
+export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
