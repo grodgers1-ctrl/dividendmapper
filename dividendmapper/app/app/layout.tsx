@@ -26,7 +26,7 @@ export default async function AppLayout({
   return (
     <>
       <PostHogIdentify userId={user.id} email={user.email} />
-      <AppNav pathname={pathname} />
+      <AppNav />
       {children}
     </>
   );

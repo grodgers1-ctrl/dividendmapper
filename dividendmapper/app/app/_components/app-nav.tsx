@@ -1,16 +1,23 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 // Sub-nav for /app/* authenticated routes. Renders below the SiteHeader,
 // above the page content. Active tab gets a brand-coloured underline.
-// pathname comes from the layout (sourced from the x-pathname header that
-// proxy.ts injects).
+//
+// Client component so usePathname() re-evaluates on each client-side
+// navigation. The parent layout doesn't re-render when the user moves
+// between sibling routes (App Router caches layouts), so reading pathname
+// from a server header in the layout left the highlight stale.
 
 const TABS = [
   { href: "/app/portfolio", label: "Portfolio" },
   { href: "/app/account", label: "Account" },
 ] as const;
 
-export function AppNav({ pathname }: { pathname: string }) {
+export function AppNav() {
+  const pathname = usePathname() ?? "";
   return (
     <nav
       aria-label="Account navigation"
