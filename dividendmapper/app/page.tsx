@@ -26,7 +26,7 @@ function HeroSection() {
         <div className="mx-auto max-w-3xl text-center">
           <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
             <span className="h-1.5 w-1.5 rounded-full bg-brand-500" />
-            Phase 2 launches 22 May
+            Phase 2 is live
           </span>
 
           <h1 className="mt-6 font-display text-4xl font-bold tracking-tight text-foreground md:text-5xl lg:text-6xl">
@@ -99,7 +99,7 @@ const FEATURES = [
     title: "When the math breaks, we say so",
     href: "/blog",
     description:
-      "If a sensitivity cell can&rsquo;t be solved (growth ≥ discount), it shows &ldquo;—&rdquo; instead of NaN. Every output cites the assumption behind it. We don&rsquo;t pretend a 30-year forecast is precise to the pound.",
+      "If a sensitivity cell can&rsquo;t be solved (growth ≥ discount), it shows &ldquo;&mdash;&rdquo; instead of NaN. Every output cites the assumption behind it. We don&rsquo;t pretend a 30-year forecast is precise to the pound.",
   },
   {
     title: "Calculators stay in your browser",
@@ -111,7 +111,7 @@ const FEATURES = [
     title: "Roadmap on the table",
     href: "/waitlist",
     description:
-      "Calculators landed in Phase 1. Portfolio tracking and the Pro tier land in Phase 2 on 22 May. Trading 212 sync follows in Phase 3, US brokers via SnapTrade in Phase 4. Dates and order, on one page.",
+      "Calculators landed in Phase 1. Portfolio tracking and the Pro tier are live in Phase 2. Trading 212 sync follows in Phase 3, US brokers via SnapTrade in Phase 4. Dates and order, on one page.",
   },
 ];
 
@@ -213,7 +213,7 @@ function HowItWorksSection() {
 const FAQS = [
   {
     q: "Is DividendMapper free?",
-    a: "Calculators are free forever. No signup, no credit card. Pro launches 22 May at £15 a month for unlimited holdings and projected income; the Free tier keeps up to 10 manual holdings. Broker auto-sync lands in Phase 3.",
+    a: "Calculators are free forever. No signup, no credit card. Pro is £15 a month for unlimited holdings and projected income; the Free tier keeps up to 10 manual holdings. Broker auto-sync lands in Phase 3.",
   },
   {
     q: "Do I need an account to use the calculators?",
@@ -225,7 +225,7 @@ const FAQS = [
   },
   {
     q: "How is the Dividend DCF different from a regular DCF?",
-    a: "It is a Dividend Discount Model (DDM) &mdash; the species of DCF designed for income stocks. You value the stock by discounting its future dividends instead of its free cash flow. The math is the Gordon Growth Model and a 2-stage DDM, with an in-tool tooltip explaining the difference.",
+    a: "It is a Dividend Discount Model (DDM), the species of DCF designed for income stocks. You value the stock by discounting its future dividends instead of its free cash flow. The math is the Gordon Growth Model and a 2-stage DDM, with an in-tool tooltip explaining the difference.",
   },
   {
     q: "What broker integrations are coming?",
@@ -277,9 +277,8 @@ function FinalCtaSection() {
           Get the launch email.
         </h2>
         <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-muted-foreground md:text-lg">
-          Two emails, total. One when portfolio tracking opens on 22 May, one
-          when Trading 212 sync follows in Phase 3. No drip sequence, one-click
-          unsubscribe.
+          One email when Trading 212 sync follows in Phase 3. No drip sequence,
+          one-click unsubscribe.
         </p>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
           <Link
