@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { requireUser } from "@/lib/auth/server";
 import { PostHogIdentify } from "@/components/posthog-identify";
+import { AppNav } from "./_components/app-nav";
 
 export const metadata: Metadata = {
   // Authenticated routes should never appear in search engines.
@@ -25,6 +26,7 @@ export default async function AppLayout({
   return (
     <>
       <PostHogIdentify userId={user.id} email={user.email} />
+      <AppNav pathname={pathname} />
       {children}
     </>
   );
