@@ -68,6 +68,10 @@ export default async function PortfolioPage() {
 
   const quotes = await fetchPortfolioQuotes(allHoldings);
   const income = aggregatePortfolioIncome(allHoldings, quotes);
+  // Map doesn't reliably survive Next's router cache when crossing the
+  // server/client boundary; the table receives an empty Map on return
+  // navigation. Plain object survives.
+  const quotesByTicker = Object.fromEntries(quotes);
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-12 md:px-6 md:py-16">
@@ -140,7 +144,7 @@ export default async function PortfolioPage() {
                 )}
               </div>
             )}
-            <HoldingsTable rows={visibleRows} quotes={quotes} />
+            <HoldingsTable rows={visibleRows} quotes={quotesByTicker} />
             <PortfolioIncomeChart income={income} />
           </div>
         )}

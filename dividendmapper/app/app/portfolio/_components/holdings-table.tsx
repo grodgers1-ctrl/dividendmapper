@@ -59,9 +59,9 @@ type RowIncomeStatus =
 
 function resolveRowIncome(
   row: HoldingRow,
-  quotes: Map<string, QuoteResult>,
+  quotes: Record<string, QuoteResult>,
 ): RowIncomeStatus {
-  const quote = quotes.get(row.ticker);
+  const quote = quotes[row.ticker];
   if (!quote || !quote.ok) return { kind: "failed" };
   const { dividend, currency } = quote.data;
   if (!dividend || dividend <= 0 || !currency) return { kind: "no_data" };
@@ -107,7 +107,7 @@ function IncomeCell({ status, className }: IncomeCellProps) {
 
 interface HoldingsTableProps {
   rows: HoldingRow[];
-  quotes: Map<string, QuoteResult>;
+  quotes: Record<string, QuoteResult>;
 }
 
 export function HoldingsTable({ rows, quotes }: HoldingsTableProps) {
