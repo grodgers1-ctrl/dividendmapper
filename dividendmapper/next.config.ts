@@ -20,7 +20,4 @@ const withMDX = createMDX({
 
 export default withSentryConfig(withMDX(nextConfig), {
   silent: true,
-  // Source map upload skipped — no SENTRY_AUTH_TOKEN configured. Stack traces
-  // in Sentry UI will reference minified code until a token is added.
-  sourcemaps: { disable: true },
 });
