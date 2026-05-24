@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import createMDX from "@next/mdx";
+import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
   // Let .mdx files act as App Router pages. Each post lives at
@@ -17,4 +18,9 @@ const withMDX = createMDX({
   },
 });
 
-export default withMDX(nextConfig);
+export default withSentryConfig(withMDX(nextConfig), {
+  silent: true,
+  // Source map upload skipped — no SENTRY_AUTH_TOKEN configured. Stack traces
+  // in Sentry UI will reference minified code until a token is added.
+  sourcemaps: { disable: true },
+});
