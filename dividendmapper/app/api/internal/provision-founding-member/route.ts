@@ -8,6 +8,7 @@ import {
 import { sendIdempotent } from "@/lib/email/send";
 import { WelcomeFoundingMemberEmail } from "@/emails/welcome-founding-member";
 import { SITE_URL } from "@/lib/site";
+import { captureServerEvent } from "@/lib/analytics/posthog-server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -248,6 +249,13 @@ export async function POST(req: Request) {
       "[internal/provision-founding-member] tier_expires_at NULL; welcome email skipped",
       { userId },
     );
+  }
+
+  // PostHog: only fire on first-time provisioning, not re-runs.
+  if (!alreadyProvisioned) {
+    await captureServerEvent(userId, "founding_member_provisioned", {
+      code_count: codes.length,
+    });
   }
 
   return NextResponse.json({

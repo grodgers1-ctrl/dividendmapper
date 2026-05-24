@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { requireUser } from "@/lib/auth/server";
+import { PostHogIdentify } from "@/components/posthog-identify";
 
 export const metadata: Metadata = {
   // Authenticated routes should never appear in search engines.
@@ -20,6 +21,11 @@ export default async function AppLayout({
 }) {
   const hdrs = await headers();
   const pathname = hdrs.get("x-pathname") ?? "/app";
-  await requireUser(pathname);
-  return <>{children}</>;
+  const user = await requireUser(pathname);
+  return (
+    <>
+      <PostHogIdentify userId={user.id} email={user.email} />
+      {children}
+    </>
+  );
 }

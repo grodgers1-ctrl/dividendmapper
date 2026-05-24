@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { captureServerEvent } from "@/lib/analytics/posthog-server";
 
 const DEFAULT_NEXT = "/app/portfolio";
+const NEW_USER_THRESHOLD_MS = 60_000;
 
 function safeNext(raw: string | null): string {
   if (!raw) return DEFAULT_NEXT;
@@ -28,10 +30,21 @@ export async function GET(request: Request) {
   }
 
   const supabase = await createSupabaseServerClient();
-  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
   if (error) {
     return NextResponse.redirect(new URL("/login?error=callback", url.origin));
+  }
+
+  // PostHog: signup event for newly-created users only. auth.users.created_at
+  // within the last minute = first-ever sign-in. Returning sign-ins are tracked
+  // via $pageview attribution to the identified user once PostHogIdentify fires.
+  const user = data?.user;
+  if (user?.created_at) {
+    const createdAt = new Date(user.created_at).getTime();
+    if (Date.now() - createdAt < NEW_USER_THRESHOLD_MS) {
+      await captureServerEvent(user.id, "signup", { email: user.email });
+    }
   }
 
   return NextResponse.redirect(new URL(next, url.origin));
