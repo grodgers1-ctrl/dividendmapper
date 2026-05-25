@@ -79,6 +79,10 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
   const foundingCodes = codesResult.data ?? [];
   const tier = profile?.tier ?? "free";
   const isFoundingMember = profile?.founding_member ?? false;
+  // Gate the billing-portal button: a portal session needs a Stripe customer.
+  // Every Stripe-sourced Pro has one (written by the webhook), but a manually
+  // provisioned Pro might not, in which case the button would redirect-loop.
+  const hasStripeCustomer = Boolean(profile?.stripe_customer_id);
   // Race window after Stripe Checkout: the redirect to /app/account?welcome=1
   // can arrive before the webhook has flipped profiles.tier='pro'. Suppress
   // the tier-state panel + show "Activating" in the badge until the next
@@ -219,24 +223,37 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
                 ? `You're on Pro until ${expiresLabel}.`
                 : "You're on Pro."}
             </p>
-            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-              Renews automatically. Manage your plan, payment method, and
-              invoices in the billing portal.
-            </p>
-            {billingError && (
-              <p role="alert" className="mt-3 text-sm text-negative">
-                Couldn&apos;t open the billing portal. Email
-                hello@dividendmapper.com and we&apos;ll sort it.
+            {hasStripeCustomer ? (
+              <>
+                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                  Renews automatically. Manage your plan, payment method, and
+                  invoices in the billing portal.
+                </p>
+                {billingError && (
+                  <p role="alert" className="mt-3 text-sm text-negative">
+                    Couldn&apos;t open the billing portal. Email
+                    hello@dividendmapper.com and we&apos;ll sort it.
+                  </p>
+                )}
+                <form
+                  action="/api/billing/portal"
+                  method="POST"
+                  className="mt-3"
+                >
+                  <button
+                    type="submit"
+                    className="inline-flex h-10 items-center justify-center rounded-lg border border-border bg-background px-4 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
+                  >
+                    Manage billing
+                  </button>
+                </form>
+              </>
+            ) : (
+              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                Renews automatically. To make billing changes, email
+                hello@dividendmapper.com.
               </p>
             )}
-            <form action="/api/billing/portal" method="POST" className="mt-3">
-              <button
-                type="submit"
-                className="inline-flex h-10 items-center justify-center rounded-lg border border-border bg-background px-4 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
-              >
-                Manage billing
-              </button>
-            </form>
           </div>
         )}
       </dl>
