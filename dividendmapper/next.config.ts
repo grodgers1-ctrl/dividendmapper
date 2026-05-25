@@ -20,4 +20,10 @@ const withMDX = createMDX({
 
 export default withSentryConfig(withMDX(nextConfig), {
   silent: true,
+  // Source-map upload target. Slugs are not secret; the SENTRY_AUTH_TOKEN
+  // (project:releases scope) supplies the upload credential and is read from
+  // the env at build time. Without org+project the plugin can't upload, so
+  // stack traces would stay minified.
+  org: "glenn-rodgers",
+  project: "javascript-nextjs",
 });
