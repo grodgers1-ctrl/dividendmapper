@@ -19,6 +19,7 @@ type ProfileRow = {
   tier_source: "free" | "stripe" | "founding_member";
   tier_expires_at: string | null;
   founding_member: boolean;
+  stripe_customer_id: string | null;
 };
 
 type FoundingCodeRow = {
@@ -42,7 +43,7 @@ async function signOut() {
 }
 
 interface AccountPageProps {
-  searchParams: Promise<{ welcome?: string }>;
+  searchParams: Promise<{ welcome?: string; billing_error?: string }>;
 }
 
 export default async function AccountPage({ searchParams }: AccountPageProps) {
@@ -52,6 +53,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
   const supabase = await createSupabaseServerClient();
   const params = await searchParams;
   const showWelcome = params.welcome === "1";
+  const billingError = typeof params.billing_error === "string";
   const pricingPublic = isPricingPublic();
 
   // Founding-member codes are RLS-readable by the owner (member_user_id =
@@ -60,7 +62,9 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
   const [profileResult, codesResult] = await Promise.all([
     supabase
       .from("profiles")
-      .select("email, tier, tier_source, tier_expires_at, founding_member")
+      .select(
+        "email, tier, tier_source, tier_expires_at, founding_member, stripe_customer_id",
+      )
       .eq("id", user.id)
       .maybeSingle<ProfileRow>(),
     supabase
@@ -216,10 +220,23 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
                 : "You're on Pro."}
             </p>
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-              Renews automatically. To cancel before the next renewal, email
-              hello@dividendmapper.com. The self-serve dashboard lands in a
-              couple of weeks.
+              Renews automatically. Manage your plan, payment method, and
+              invoices in the billing portal.
             </p>
+            {billingError && (
+              <p role="alert" className="mt-3 text-sm text-negative">
+                Couldn&apos;t open the billing portal. Email
+                hello@dividendmapper.com and we&apos;ll sort it.
+              </p>
+            )}
+            <form action="/api/billing/portal" method="POST" className="mt-3">
+              <button
+                type="submit"
+                className="inline-flex h-10 items-center justify-center rounded-lg border border-border bg-background px-4 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
+              >
+                Manage billing
+              </button>
+            </form>
           </div>
         )}
       </dl>
