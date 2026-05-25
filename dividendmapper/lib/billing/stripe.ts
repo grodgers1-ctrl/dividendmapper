@@ -10,12 +10,31 @@ import Stripe from "stripe";
 
 let cachedStripe: Stripe | null = null;
 
-export function getStripe(): Stripe {
-  if (cachedStripe) return cachedStripe;
+// Pick the secret key by environment. Production always uses STRIPE_SECRET_KEY
+// (the live key on Vercel prod). Outside production we prefer an explicit
+// STRIPE_TEST_SECRET_KEY when present, so a local `npm run dev` can't charge
+// real cards even while STRIPE_SECRET_KEY holds an sk_live_ value. Falls back
+// to STRIPE_SECRET_KEY if no test key is set (with a loud warning if it's live).
+function resolveSecretKey(): string {
+  const isProd = process.env.NODE_ENV === "production";
+  if (!isProd && process.env.STRIPE_TEST_SECRET_KEY) {
+    return process.env.STRIPE_TEST_SECRET_KEY;
+  }
   const secretKey = process.env.STRIPE_SECRET_KEY;
   if (!secretKey) {
     throw new Error("STRIPE_SECRET_KEY is not set");
   }
-  cachedStripe = new Stripe(secretKey, { typescript: true });
+  if (!isProd && secretKey.startsWith("sk_live_")) {
+    console.warn(
+      "[billing/stripe] Using a LIVE Stripe key outside production. Set " +
+        "STRIPE_TEST_SECRET_KEY in .env.local to avoid charging real cards.",
+    );
+  }
+  return secretKey;
+}
+
+export function getStripe(): Stripe {
+  if (cachedStripe) return cachedStripe;
+  cachedStripe = new Stripe(resolveSecretKey(), { typescript: true });
   return cachedStripe;
 }
