@@ -2,10 +2,11 @@ import type { MDXComponents } from "mdx/types";
 import Link from "next/link";
 
 /**
- * Global MDX component styling for the blog. Defines the type scale,
- * link colour, list styles, and table look for any .mdx page rendered
- * under /blog. Heading sizes match the rest of the site (Plus Jakarta
- * Sans display, brand emerald accents on inline code).
+ * Global MDX component styling for all .mdx pages site-wide (blog posts
+ * and the /privacy + /terms legal pages). Defines the type scale, link
+ * colour, list styles, and table look. Heading sizes match the rest of
+ * the site (Plus Jakarta Sans display, brand emerald accents on inline
+ * code).
  */
 export function useMDXComponents(components: MDXComponents): MDXComponents {
   return {
