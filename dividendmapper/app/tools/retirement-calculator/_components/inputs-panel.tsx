@@ -122,7 +122,7 @@ export function InputsPanel({ inputs, setInputs, onReset }: InputsPanelProps) {
           prefix={symbol}
           helpText={
             config.locale === "us"
-              ? "Taxable brokerage savings only — 401(k) and IRA are separate fields below."
+              ? "Taxable brokerage savings only. 401(k) and IRA are separate fields below."
               : undefined
           }
         />
@@ -161,7 +161,7 @@ export function InputsPanel({ inputs, setInputs, onReset }: InputsPanelProps) {
           onChange={(v) => patch({ targetMonthlyIncome: v })}
           min={0}
           prefix={symbol}
-          helpText={`Enter in today's ${config.currencyCode}. The calculator works in real terms — your expected return assumption should already be net of inflation (so 7% nominal − 3% inflation ≈ 4% real if you'd rather think in nominal terms).`}
+          helpText={`Enter in today's ${config.currencyCode}. The calculator works in real terms, so your expected return assumption should already be net of inflation (so 7% nominal − 3% inflation ≈ 4% real if you'd rather think in nominal terms).`}
         />
         <ToggleField
           id="reinvest"
@@ -250,7 +250,7 @@ function PropertyPanel({
           onChange={(v) => patch({ buyToLetMonthlyRent: v })}
           min={0}
           prefix={symbol}
-          helpText="After agency fees, maintenance, void allowance — what actually lands in your account."
+          helpText="After agency fees, maintenance, void allowance: what actually lands in your account."
         />
 
         <NumberField
@@ -368,7 +368,7 @@ function UkLumpSum({
             min={0}
             max={100}
             displayValue={`${Math.round(cashPct)}%`}
-            helpText="One-off withdrawal — holiday, gift, peace of mind."
+            helpText="One-off withdrawal: holiday, gift, peace of mind."
           />
         </div>
       )}

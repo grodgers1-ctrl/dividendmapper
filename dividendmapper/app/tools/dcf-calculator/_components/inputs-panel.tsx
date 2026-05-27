@@ -110,7 +110,7 @@ export function InputsPanel({
             <LabelWithInfo title="Annual dividend per share" infoLabel="What's a dividend?">
               <p>
                 <strong>Annual dividend per share.</strong> The total cash a
-                share paid out over a year — sum of the four quarterly
+                share paid out over a year, the sum of the four quarterly
                 dividends, or the single annual one for UK stocks.
               </p>
               <p className="mt-2 text-muted-foreground">
@@ -194,8 +194,8 @@ export function InputsPanel({
                     the dividend to grow each year, forever.
                   </p>
                   <p className="mt-2 text-muted-foreground">
-                    Ticker lookup pre-fills a 3-year CAGR from past payments
-                    — a useful starting point but not a forecast. Real-world
+                    Ticker lookup pre-fills a 3-year CAGR from past payments,
+                    a useful starting point but not a forecast. Real-world
                     dividend growth varies with payout ratios, business cycles,
                     and management decisions. 3–5% is a sober long-run figure
                     for mature payers.
@@ -227,7 +227,7 @@ export function InputsPanel({
 
       <footer className="mt-6 rounded-lg border border-dashed border-border bg-background/60 p-4 text-xs leading-relaxed text-muted-foreground">
         <span className="font-medium text-foreground">A note on naming.</span>{" "}
-        We use the Dividend Discount Model (DDM) — the species of DCF designed
+        We use the Dividend Discount Model (DDM), the species of DCF designed
         for dividend-paying stocks. Same maths as a regular DCF, narrower
         assumption set. Not financial advice.
       </footer>
@@ -244,14 +244,14 @@ function TickerHelpText() {
       <p className="mt-1 text-xs text-muted-foreground">
         UK tickers end with{" "}
         <code className="rounded bg-muted px-1 py-0.5 font-mono">.L</code>{" "}
-        (e.g. ULVR.L, SHEL.L). US tickers also work — try SCHD or AAPL.
+        (e.g. ULVR.L, SHEL.L). US tickers also work. Try SCHD or AAPL.
       </p>
     );
   }
   return (
     <p className="mt-1 text-xs text-muted-foreground">
-      US tickers are 1–5 letters (e.g. SCHD, AAPL, JNJ). UK tickers also work —
-      add a{" "}
+      US tickers are 1–5 letters (e.g. SCHD, AAPL, JNJ). UK tickers also work.
+      Add a{" "}
       <code className="rounded bg-muted px-1 py-0.5 font-mono">.L</code>{" "}
       suffix (e.g. ULVR.L).
     </p>
@@ -487,7 +487,7 @@ function LookupStatus({ lookup }: { lookup: LookupState }) {
         )}
       </ul>
       <p className="mt-2 text-muted-foreground">
-        Discount rate stays manual — that&rsquo;s your call, not the
+        Discount rate stays manual. That&rsquo;s your call, not the
         market&rsquo;s.
       </p>
     </div>
@@ -506,7 +506,7 @@ function CurrencyBanner({
       <span className="font-mono font-medium text-foreground">
         {currency.code}
       </span>{" "}
-      — the listed currency for this ticker. Tax wrappers and risk-free rate
+      (the listed currency for this ticker). Tax wrappers and risk-free rate
       still follow your locale toggle.
     </p>
   );
@@ -527,12 +527,12 @@ function ModeToggle({
     {
       key: "simple",
       label: "Simple",
-      sub: "Gordon Growth — one permanent rate",
+      sub: "Gordon Growth: one permanent rate",
     },
     {
       key: "advanced",
       label: "Advanced",
-      sub: "2-stage DDM — high-growth then terminal",
+      sub: "2-stage DDM: high-growth then terminal",
     },
   ];
   return (
@@ -542,12 +542,12 @@ function ModeToggle({
         <InfoPopover label="Which model should I use?">
           <p>
             <strong>Simple (Gordon Growth).</strong> Best for mature dividend
-            payers whose growth is steady and approximately permanent — most
+            payers whose growth is steady and approximately permanent, most
             FTSE 100 income stocks, Dividend Aristocrats.
           </p>
           <p className="mt-2 text-muted-foreground">
             <strong className="text-foreground">Advanced (2-stage DDM).</strong>{" "}
-            Better for growers — companies you expect to compound dividends
+            Better for growers, companies you expect to compound dividends
             faster for a few years before settling to a slower long-run rate.
             You set how long the high-growth phase lasts and what the terminal
             rate looks like.
@@ -605,7 +605,7 @@ function AdvancedSliders({
           >
             <p>
               <strong>Phase 1 growth rate.</strong> The rate at which dividends
-              grow during the high-growth phase — typically 3–10 years out.
+              grow during the high-growth phase, typically 3–10 years out.
             </p>
             <p className="mt-2 text-muted-foreground">
               Higher than the terminal rate; this is the period when the
@@ -621,7 +621,7 @@ function AdvancedSliders({
         max={20}
         step={0.5}
         displayValue={`${phase1Pct}%`}
-        helpText="Faster than terminal — that's the whole point of Phase 1."
+        helpText="Faster than terminal. That's the whole point of Phase 1."
       />
       <SliderField
         id="dcf-phase1-years"
@@ -662,7 +662,7 @@ function AdvancedSliders({
             </p>
             <p className="mt-2 text-muted-foreground">
               No company can outgrow the broader economy indefinitely, so a
-              sober terminal rate sits around long-run nominal GDP — 2–3% is
+              sober terminal rate sits around long-run nominal GDP, so 2–3% is
               typical. Must stay below your discount rate or the model returns
               infinity.
             </p>
@@ -682,7 +682,7 @@ function AdvancedSliders({
           <span className="font-mono font-medium text-foreground">
             {((inputs.discountRate - inputs.terminalGrowth) * 100).toFixed(1)}pp
           </span>{" "}
-          between discount and terminal — the engine of the long-run answer.
+          between discount and terminal, the engine of the long-run answer.
         </p>
       ) : (
         <p className="self-end text-xs text-negative">
@@ -788,7 +788,7 @@ function GrowthHint({
         <span className="font-mono font-medium text-foreground">
           {((discount - growth) * 100).toFixed(1)}pp
         </span>{" "}
-        between discount and growth — the engine of the answer.
+        between discount and growth, the engine of the answer.
       </p>
     );
   }

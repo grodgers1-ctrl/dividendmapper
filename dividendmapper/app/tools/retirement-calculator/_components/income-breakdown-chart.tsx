@@ -102,7 +102,7 @@ export function IncomeBreakdownChart({
       swatch: "var(--color-chart-4)",
       note:
         giaOverAllowance > 0
-          ? `${formatCurrency(giaOverAllowance, config)}/yr above the ${formatCurrency(dividendAllowance, config)} dividend allowance — taxable.`
+          ? `${formatCurrency(giaOverAllowance, config)}/yr above the ${formatCurrency(dividendAllowance, config)} dividend allowance, taxable.`
           : labels.giaNote,
       tone: giaOverAllowance > 0 ? "warn" : undefined,
     },
@@ -171,7 +171,7 @@ export function IncomeBreakdownChart({
           <StackedBar rows={rows} total={total} />
         ) : (
           <p className="mt-4 text-sm text-muted-foreground">
-            No projected income yet — increase contributions, reduce target age,
+            No projected income yet. Increase contributions, reduce target age,
             or raise the dividend yield to see the breakdown.
           </p>
         )}
@@ -340,10 +340,10 @@ const locales: Record<"uk" | "us", LocaleLabels> = {
     isaLabel: "ISA dividends",
     sippLabel: "SIPP dividends",
     giaLabel: "GIA dividends",
-    isaNote: "Tax-free — no income tax on dividends or growth.",
+    isaNote: "Tax-free: no income tax on dividends or growth.",
     sippNote: "Drawdown counts as income. 25% tax-free lump sum already applied.",
     giaNote: "First £500/yr covered by the dividend allowance.",
-    benefitNote: "2026/27 full new State Pension is £241.30/wk — taxable income.",
+    benefitNote: "2026/27 full new State Pension is £241.30/wk, taxable income.",
   },
   us: {
     isaLabel: "IRA / Roth IRA dividends",
@@ -351,7 +351,7 @@ const locales: Record<"uk" | "us", LocaleLabels> = {
     giaLabel: "Brokerage dividends",
     isaNote: "Roth = tax-free withdrawals. Trad IRA = taxable on withdrawal.",
     sippNote: "Withdrawals taxed as ordinary income. RMDs from 73 (75 if born 1960+).",
-    giaNote: "Qualified dividends taxed at 0% / 15% / 20% — see your bracket.",
+    giaNote: "Qualified dividends taxed at 0% / 15% / 20%. See your bracket.",
     benefitNote: "FRA 67 → 124% of PIA at 70 (Delayed Retirement Credits).",
   },
 };

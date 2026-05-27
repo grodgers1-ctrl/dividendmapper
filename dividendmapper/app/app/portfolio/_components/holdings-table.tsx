@@ -88,7 +88,7 @@ function IncomeCell({ status, className }: IncomeCellProps) {
   if (status.kind === "no_data") {
     return (
       <span
-        title="No dividend data — LSE auto-lookup ships post-launch."
+        title="No dividend data. LSE auto-lookup ships post-launch."
         className={`cursor-help text-muted-foreground/70 ${className ?? ""}`}
       >
         —
@@ -143,21 +143,21 @@ export function HoldingsTable({ rows, quotes }: HoldingsTableProps) {
         markPending(row.id, false);
         if (res.status === 404) {
           window.alert(
-            "That holding was already gone — refreshing the table.",
+            "That holding was already gone, refreshing the table.",
           );
           router.refresh();
           return;
         }
         if (res.status === 401) {
           window.alert(
-            "Your session expired — refresh the page and sign in again.",
+            "Your session expired. Refresh the page and sign in again.",
           );
           return;
         }
         window.alert("Couldn't delete that holding. Try again.");
       } catch {
         markPending(row.id, false);
-        window.alert("Network error — check your connection and try again.");
+        window.alert("Network error. Check your connection and try again.");
       }
     });
   };

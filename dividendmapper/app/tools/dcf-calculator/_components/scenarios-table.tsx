@@ -64,15 +64,15 @@ export function ScenariosTable({ inputs, result }: ScenariosTableProps) {
             </p>
             <ul className="mt-2 space-y-1 text-muted-foreground">
               <li>
-                <strong className="text-foreground">Bear</strong> — your growth
+                <strong className="text-foreground">Bear</strong>: your growth
                 rate minus 2pp, discount rate plus 1.5pp.
               </li>
               <li>
-                <strong className="text-foreground">Base</strong> — exactly
+                <strong className="text-foreground">Base</strong>: exactly
                 what you typed in.
               </li>
               <li>
-                <strong className="text-foreground">Bull</strong> — growth plus
+                <strong className="text-foreground">Bull</strong>: growth plus
                 2pp, discount minus 1.5pp.
               </li>
             </ul>

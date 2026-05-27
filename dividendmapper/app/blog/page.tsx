@@ -18,7 +18,7 @@ export const metadata: Metadata = {
         url: "/opengraph-image",
         width: 1200,
         height: 630,
-        alt: "DividendMapper Blog — Practical guides for dividend investors",
+        alt: "DividendMapper Blog: Practical guides for dividend investors",
       },
     ],
   },

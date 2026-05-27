@@ -49,7 +49,7 @@ export function FireCard({
         <span className="font-medium text-foreground">
           {(dividendYield * 100).toFixed(1)}%
         </span>{" "}
-        yield — your full target until {config.retirement.stateLabel} starts.
+        yield, your full target until {config.retirement.stateLabel} starts.
       </p>
 
       <div className="mt-6">
@@ -122,7 +122,7 @@ function TwoPhasePanel({
         </p>
         <p className="mt-2 text-sm text-foreground">
           {stateLabel}
-          {rentalMonthly > 0 ? " and rental income" : ""} {rentalMonthly > 0 ? "are" : "is"} already paying — your portfolio only
+          {rentalMonthly > 0 ? " and rental income" : ""} {rentalMonthly > 0 ? "are" : "is"} already paying, your portfolio only
           needs to cover{" "}
           <span className="font-mono font-medium">
             {formatCurrency(portfolioTargetAfterBenefit, config)}/mo

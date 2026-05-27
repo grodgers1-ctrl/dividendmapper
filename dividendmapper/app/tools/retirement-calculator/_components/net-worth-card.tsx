@@ -28,7 +28,7 @@ export function NetWorthCard({ result, retirementAge }: NetWorthCardProps) {
     property.mainResidenceAtRetirement > 0 && {
       label: "Main residence equity",
       amount: property.mainResidenceAtRetirement,
-      note: "Not in FIRE income — you have to live somewhere.",
+      note: "Not in FIRE income. You have to live somewhere.",
     },
     property.buyToLetAtRetirement > 0 && {
       label: "Buy-to-let equity",

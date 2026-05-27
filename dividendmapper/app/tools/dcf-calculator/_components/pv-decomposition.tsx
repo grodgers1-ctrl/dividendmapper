@@ -58,7 +58,7 @@ export function PvDecomposition({ inputs, result }: PvDecompositionProps) {
               the Gordon-Growth terminal tail (everything beyond).
             </p>
             <p className="mt-2 text-muted-foreground">
-              The terminal piece usually dominates — that&rsquo;s a critical
+              The terminal piece usually dominates. That&rsquo;s a critical
               lesson. It means most of your &ldquo;intrinsic value&rdquo; is a
               bet on the long-run terminal assumption, not the high-growth
               phase. If you can&rsquo;t defend the terminal rate, the answer
@@ -78,14 +78,14 @@ export function PvDecomposition({ inputs, result }: PvDecompositionProps) {
         <dl className="space-y-3">
           <Row
             color="brand"
-            label={`Phase 1 — next ${phase1Years} years`}
+            label={`Phase 1: next ${phase1Years} years`}
             value={formatShareCurrency(phase1PV, currency)}
             pct={phase1Pct}
             help="Sum of present values of each year's dividend across the high-growth window."
           />
           <Row
             color="income"
-            label="Terminal tail — beyond Phase 1"
+            label="Terminal tail: beyond Phase 1"
             value={formatShareCurrency(terminalPV, currency)}
             pct={terminalPct}
             help="Gordon-Growth terminal value at end of Phase 1, discounted back to today."

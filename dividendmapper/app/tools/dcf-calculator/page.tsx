@@ -2,12 +2,12 @@ import type { Metadata } from "next";
 import { DcfCalculator } from "./_components/dcf-calculator";
 
 export const metadata: Metadata = {
-  title: "Dividend DCF Calculator — Intrinsic value of dividend stocks",
+  title: "Dividend DCF Calculator: Intrinsic value of dividend stocks",
   description:
     "Free Dividend Discount Model (DDM) calculator: Gordon Growth intrinsic value, three-scenario probability-weighted fair value, margin-of-safety badge, and a sensitivity table. UK and US stocks.",
   alternates: { canonical: "/tools/dcf-calculator" },
   openGraph: {
-    title: "Dividend DCF Calculator — DividendMapper",
+    title: "Dividend DCF Calculator | DividendMapper",
     description:
       "Value any dividend stock with the Gordon Growth Dividend Discount Model. Three scenarios, margin-of-safety badge, sensitivity table.",
     url: "/tools/dcf-calculator",
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
         url: "/opengraph-image",
         width: 1200,
         height: 630,
-        alt: "Dividend DCF Calculator — DividendMapper",
+        alt: "Dividend DCF Calculator | DividendMapper",
       },
     ],
   },

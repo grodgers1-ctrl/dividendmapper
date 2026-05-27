@@ -378,7 +378,7 @@ const BAND_PALETTES: Record<MosBand, BandPalette> = {
     headline_text: "Attractive",
     body: "text-muted-foreground",
     body_text:
-      "Intrinsic value sits more than 20% above the current price — the kind of cushion classic value investors look for.",
+      "Intrinsic value sits more than 20% above the current price, the kind of cushion classic value investors look for.",
     pill: "border-positive/30 bg-positive/5 text-foreground",
     dot: "bg-positive",
   },
@@ -391,7 +391,7 @@ const BAND_PALETTES: Record<MosBand, BandPalette> = {
     headline_text: "Fair value",
     body: "text-muted-foreground",
     body_text:
-      "Intrinsic value is in line with the current price — no obvious bargain, no obvious mispricing. Worth checking your assumptions before acting.",
+      "Intrinsic value is in line with the current price. No obvious bargain, no obvious mispricing. Worth checking your assumptions before acting.",
     pill: "border-income-500/40 bg-income-50 text-foreground dark:border-income-500/30 dark:bg-income-900/15",
     dot: "bg-income-500",
   },

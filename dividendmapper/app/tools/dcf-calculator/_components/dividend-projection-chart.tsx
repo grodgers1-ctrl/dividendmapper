@@ -49,7 +49,7 @@ export function DividendProjectionChart({
       <header className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
         <div>
           <h3 className="flex items-center gap-1.5 font-display text-lg font-semibold text-foreground">
-            Dividend per share — 15-year fan
+            Dividend per share: 15-year fan
             <InfoPopover label="What does this chart show?">
               <p>
                 <strong>Dividend projection.</strong> Each line shows the

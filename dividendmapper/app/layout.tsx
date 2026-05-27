@@ -31,7 +31,7 @@ const mono = JetBrains_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL("https://dividendmapper.com"),
   title: {
-    default: "DividendMapper — UK & US dividend portfolio tracker",
+    default: "DividendMapper: UK & US dividend portfolio tracker",
     template: "%s | DividendMapper",
   },
   description:

@@ -13,8 +13,8 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const SERVER_ERROR_COPY: Record<string, string> = {
   invalid_email: "That doesn't look like a valid email address.",
-  invalid_locale: "Locale not recognised — try refreshing the page.",
-  invalid_input: "We couldn't read that request — please try again.",
+  invalid_locale: "Locale not recognised. Try refreshing the page.",
+  invalid_input: "We couldn't read that request. Please try again.",
   server_error:
     "Something went wrong on our end. Please try again in a moment.",
 };
@@ -69,7 +69,7 @@ export function WaitlistForm() {
     } catch {
       setStatus({
         kind: "error",
-        message: "Network error — check your connection and try again.",
+        message: "Network error. Check your connection and try again.",
       });
     }
   };
@@ -94,7 +94,7 @@ export function WaitlistForm() {
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
               We&apos;ll email{" "}
               <span className="font-mono text-foreground">{status.email}</span>{" "}
-              the moment Phase 1 calculators go live. No drip sequence — one
+              the moment Phase 1 calculators go live. No drip sequence. One
               launch email, then occasional product updates.
             </p>
           </div>

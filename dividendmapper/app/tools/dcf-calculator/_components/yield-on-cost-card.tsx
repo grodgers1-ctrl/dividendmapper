@@ -56,7 +56,7 @@ export function YieldOnCostCard({ inputs, result }: YieldOnCostCardProps) {
               </p>
               <p className="mt-2 text-muted-foreground">
                 If the dividend grows from here, your effective yield on that
-                purchase price keeps rising — that&rsquo;s the
+                purchase price keeps rising. That&rsquo;s the
                 compounding-coupon argument for dividend growth investing.
                 The trajectory below uses your Base scenario growth rate.
               </p>

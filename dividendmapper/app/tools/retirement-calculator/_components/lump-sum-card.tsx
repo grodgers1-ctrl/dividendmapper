@@ -77,7 +77,7 @@ export function LumpSumCard({
         <p className="mt-2 rounded-md border border-border bg-background px-3 py-2 text-xs text-muted-foreground">
           You retire at age {retirementAge} but the SIPP can&rsquo;t be accessed
           until {accessAge}. The lump sum becomes available {lockedYears}{" "}
-          year{lockedYears === 1 ? "" : "s"} into retirement — bridge that gap
+          year{lockedYears === 1 ? "" : "s"} into retirement, so bridge that gap
           from ISA / GIA.
         </p>
       )}
@@ -110,7 +110,7 @@ export function LumpSumCard({
             {formatCurrency(incomeHitMonthly, config)}
           </span>
           . If clearing your mortgage drops outgoings by more than that, it&rsquo;s
-          still a net win — adjust your target income manually.
+          still a net win, so adjust your target income manually.
         </div>
       )}
     </section>

@@ -14,9 +14,9 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const SUPABASE_ERROR_COPY: Record<string, string> = {
   email_address_invalid: "That doesn't look like a valid email address.",
-  signup_disabled: "Sign-ups aren't open yet — drop us a line if you want in.",
+  signup_disabled: "Sign-ups aren't open yet. Drop us a line if you want in.",
   over_email_send_rate_limit:
-    "Too many requests — try again in a minute or two.",
+    "Too many requests. Try again in a minute or two.",
 };
 
 export function SignInModal({
@@ -61,7 +61,7 @@ export function SignInModal({
     } catch {
       setStatus({
         kind: "error",
-        message: "Network error — check your connection and try again.",
+        message: "Network error. Check your connection and try again.",
       });
     }
   };

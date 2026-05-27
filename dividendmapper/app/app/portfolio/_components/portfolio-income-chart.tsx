@@ -40,12 +40,12 @@ const WRAPPER_SWATCH: Record<WrapperKey, string> = {
 // allowance (£500 in 2026/27).
 const UK_DIVIDEND_ALLOWANCE = 500;
 const TAX_NOTE: Record<WrapperKey, string> = {
-  isa: "Tax-free — no income tax on dividends or growth.",
+  isa: "Tax-free: no income tax on dividends or growth.",
   sipp: "Drawdown counts as income. 25% tax-free lump sum available.",
   gia: `First £${UK_DIVIDEND_ALLOWANCE}/yr covered by the dividend allowance.`,
   "401k": "Tax-deferred. Withdrawals taxed as ordinary income.",
-  ira: "Traditional IRA — taxable on withdrawal.",
-  roth_ira: "Roth — tax-free withdrawals after age 59½.",
+  ira: "Traditional IRA: taxable on withdrawal.",
+  roth_ira: "Roth: tax-free withdrawals after age 59½.",
   brokerage: "Qualified dividends taxed at 0% / 15% / 20%.",
 };
 
@@ -84,7 +84,7 @@ function RowLine({ row, isOverAllowance }: RowProps) {
   const swatch = WRAPPER_SWATCH[row.wrapper];
   const note =
     isOverAllowance && row.wrapper === "gia"
-      ? `${formatAmount(row.annualIncome - UK_DIVIDEND_ALLOWANCE, row.currency)}/yr above the ${formatAmount(UK_DIVIDEND_ALLOWANCE, row.currency)} dividend allowance — taxable.`
+      ? `${formatAmount(row.annualIncome - UK_DIVIDEND_ALLOWANCE, row.currency)}/yr above the ${formatAmount(UK_DIVIDEND_ALLOWANCE, row.currency)} dividend allowance, taxable.`
       : TAX_NOTE[row.wrapper];
   const isWarn = isOverAllowance && row.wrapper === "gia";
   const isPositive = POSITIVE_TONE.has(row.wrapper) && !isWarn;
@@ -255,7 +255,7 @@ export function PortfolioIncomeChart({ income }: { income: PortfolioIncome }) {
         <div className="rounded-lg border border-border bg-background p-4">
           <p className="text-sm text-muted-foreground">
             No dividend data available yet for any of your holdings. LSE
-            auto-lookup ships post-launch — for now, US holdings populate
+            auto-lookup ships post-launch. For now, US holdings populate
             automatically.
           </p>
         </div>
@@ -264,14 +264,14 @@ export function PortfolioIncomeChart({ income }: { income: PortfolioIncome }) {
       {income.missingDividendCount > 0 && (
         <p className="mt-4 text-xs text-muted-foreground">
           {income.missingDividendCount} holding
-          {income.missingDividendCount === 1 ? "" : "s"} not counted — dividend
+          {income.missingDividendCount === 1 ? "" : "s"} not counted. Dividend
           data unavailable. LSE auto-lookup ships post-launch.
         </p>
       )}
 
       {multiCurrency && (
         <p className="mt-2 text-xs text-muted-foreground">
-          FX conversion ships post-launch — totals stay in each holding&apos;s
+          FX conversion ships post-launch. Totals stay in each holding&apos;s
           source currency for now.
         </p>
       )}

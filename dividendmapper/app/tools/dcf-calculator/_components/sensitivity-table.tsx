@@ -23,7 +23,7 @@ export function SensitivityTable({ inputs, result }: SensitivityTableProps) {
 
   return (
     <section
-      aria-label="Sensitivity table — growth × discount rate"
+      aria-label="Sensitivity table: growth × discount rate"
       className="overflow-hidden rounded-xl border border-border bg-card"
     >
       <header className="border-b border-border px-4 py-4 md:px-6">
@@ -37,11 +37,11 @@ export function SensitivityTable({ inputs, result }: SensitivityTableProps) {
               (columns).
             </p>
             <p className="mt-2 text-muted-foreground">
-              Cells are tinted by margin of safety vs the current price —
+              Cells are tinted by margin of safety vs the current price:
               green &gt; 20%, amber 0–20%, red &lt; 0%. Cells where growth ≥
               discount can&rsquo;t be solved (the model implies infinite
-              value), so they show as &ldquo;—&rdquo;. The base case — exactly
-              your inputs — has the green ring around it.
+              value), so they show as &ldquo;—&rdquo;. The base case (exactly
+              your inputs) has the green ring around it.
             </p>
           </InfoPopover>
         </h3>

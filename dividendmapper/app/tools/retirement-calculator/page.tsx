@@ -2,12 +2,12 @@ import type { Metadata } from "next";
 import { RetirementCalculator } from "./_components/retirement-calculator";
 
 export const metadata: Metadata = {
-  title: "Retirement Income Calculator — UK ISA & SIPP, US 401(k) & IRA",
+  title: "Retirement Income Calculator: UK ISA & SIPP, US 401(k) & IRA",
   description:
-    "Free retirement income calculator for dividend investors. Project Bear / Base / Bull scenarios with UK ISA, SIPP, GIA and State Pension, or US 401(k), IRA, Brokerage and Social Security — toggle anytime.",
+    "Free retirement income calculator for dividend investors. Project Bear / Base / Bull scenarios with UK ISA, SIPP, GIA and State Pension, or US 401(k), IRA, Brokerage and Social Security. Toggle anytime.",
   alternates: { canonical: "/tools/retirement-calculator" },
   openGraph: {
-    title: "Retirement Income Calculator — DividendMapper",
+    title: "Retirement Income Calculator | DividendMapper",
     description:
       "Project dividend income at retirement across three scenarios. UK ISA / SIPP / GIA + State Pension, or US 401(k) / IRA / Brokerage + Social Security. Free, no signup.",
     url: "/tools/retirement-calculator",
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
         url: "/opengraph-image",
         width: 1200,
         height: 630,
-        alt: "Retirement Income Calculator — DividendMapper",
+        alt: "Retirement Income Calculator | DividendMapper",
       },
     ],
   },
@@ -57,7 +57,7 @@ export default function RetirementCalculatorPage() {
           When can you retire on dividends?
         </h1>
         <p className="mt-4 text-base leading-relaxed text-muted-foreground md:text-lg">
-          Three projections — Bear, Base, Bull — alongside a probability-weighted
+          Three projections (Bear, Base, Bull) alongside a probability-weighted
           average. UK mode covers ISA, SIPP, GIA and State Pension; US mode
           covers 401(k), IRA, Brokerage and Social Security. Numbers stay in
           your browser.

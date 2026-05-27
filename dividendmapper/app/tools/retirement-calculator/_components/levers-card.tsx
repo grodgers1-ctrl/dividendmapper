@@ -155,7 +155,7 @@ function LeverDetail({
     return (
       <p className="rounded-lg border border-border bg-background p-4 text-sm text-muted-foreground">
         Even maxing this lever to its practical upper bound won&rsquo;t close
-        the gap on its own — try combining levers, or revisiting your target
+        the gap on its own. Try combining levers, or revisiting your target
         income.
       </p>
     );
@@ -178,7 +178,7 @@ function LeverDetail({
         delta={
           delta > 0
             ? `+${symbol}${formatPlain(delta)} from your current ${symbol}${formatPlain(current)}/mo`
-            : "You're already there — no change needed."
+            : "You're already there, no change needed."
         }
         footnote={
           config.locale === "uk"
@@ -206,7 +206,7 @@ function LeverDetail({
         delta={
           delta > 0
             ? `+${delta} year${delta === 1 ? "" : "s"} of extra contributions and compounding`
-            : "You're already there — no change needed."
+            : "You're already there, no change needed."
         }
         footnote={`Bridge years and the FIRE number both shrink as your retirement age moves towards your ${config.retirement.stateLabel} age.`}
       />
@@ -230,7 +230,7 @@ function LeverDetail({
       delta={
         deltaPct > 0
           ? `+${deltaPct.toFixed(1)} percentage points above your ${currentPct.toFixed(1)}% assumption`
-          : "You're already there — no change needed."
+          : "You're already there, no change needed."
       }
       footnote="Returns are the hardest lever to pull deliberately; usually it's safer to plan around contributions and time."
     />
@@ -297,7 +297,7 @@ function OnTrackCard({
           <span className="font-mono font-medium text-foreground">
             {ageAtFire}
           </span>
-          —{" "}
+          ,{" "}
           <span className="font-mono font-medium text-foreground">
             {yearsEarly} year{yearsEarly === 1 ? "" : "s"}
           </span>{" "}

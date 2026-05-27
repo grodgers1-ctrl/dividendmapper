@@ -29,14 +29,14 @@ export default async function LoginPage(props: {
         Sign in
       </h1>
       <p className="mt-3 text-base leading-relaxed text-muted-foreground">
-        We&apos;ll email you a magic link. Click it and you&apos;re in — no
+        We&apos;ll email you a magic link. Click it and you&apos;re in, no
         password to remember.
       </p>
       <div className="mt-8">
         <LoginForm next={next} initialError={error} />
       </div>
       <p className="mt-8 text-xs text-muted-foreground">
-        First time here? The same link works for sign-up — we&apos;ll create
+        First time here? The same link works for sign-up. We&apos;ll create
         your account when you click it.
       </p>
     </div>

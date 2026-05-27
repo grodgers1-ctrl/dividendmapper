@@ -10,7 +10,7 @@ export function ToolsDisclaimer() {
         This is not financial or tax advice.
       </span>{" "}
       Calculations are for illustration only and rely on inputs and assumptions
-      you control. Tax rules and contribution limits change — verify against
+      you control. Tax rules and contribution limits change, so verify against
       current{" "}
       {config.locale === "uk" ? (
         <a

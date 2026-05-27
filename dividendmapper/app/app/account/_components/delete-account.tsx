@@ -31,7 +31,7 @@ export function DeleteAccount() {
         }
         setError("We couldn't delete your account. Try again in a moment.");
       } catch {
-        setError("Network error — check your connection and try again.");
+        setError("Network error. Check your connection and try again.");
       }
     });
   };
