@@ -135,4 +135,15 @@ describe("fmp-client search", () => {
     ]);
     expect(ranked[ranked.length - 1].symbol).toBe("LGGNF");
   });
+
+  it("rankSearchResults: exact full symbol match beats exact prefix match (AAPL > AAPL.L)", async () => {
+    const { rankSearchResults } = await import("../fmp-client");
+    const ranked = rankSearchResults("AAPL", [
+      { symbol: "AAPL.L", name: "LS 1x Apple Tracker ETC", exchange: "LSE", currency: "GBp", exchangeFullName: "London Stock Exchange" },
+      { symbol: "AAPL", name: "Apple Inc.", exchange: "NASDAQ", currency: "USD", exchangeFullName: "NASDAQ" },
+      { symbol: "AAPL.DE", name: "Apple Inc.", exchange: "FRA", currency: "EUR", exchangeFullName: "Frankfurt" },
+    ]);
+    expect(ranked[0].symbol).toBe("AAPL");
+    expect(ranked[1].symbol).toBe("AAPL.L");
+  });
 });

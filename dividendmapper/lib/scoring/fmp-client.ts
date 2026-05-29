@@ -205,11 +205,16 @@ const EXCHANGE_RANK: Record<string, number> = {
 
 export function rankSearchResults(query: string, results: FmpSearchResult[]): FmpSearchResult[] {
   const upperQ = query.toUpperCase();
+  function exactnessTier(symbol: string): number {
+    const upS = symbol.toUpperCase();
+    if (upS === upperQ) return 0;                              // exact full match (e.g. "AAPL" -> "AAPL")
+    if (upS.split(".")[0] === upperQ) return 1;                // exact prefix match (e.g. "AAPL" -> "AAPL.L")
+    return 2;                                                  // partial / name match
+  }
   return [...results].sort((a, b) => {
-    const aExact = a.symbol.toUpperCase() === upperQ || a.symbol.toUpperCase().split(".")[0] === upperQ;
-    const bExact = b.symbol.toUpperCase() === upperQ || b.symbol.toUpperCase().split(".")[0] === upperQ;
-    if (aExact && !bExact) return -1;
-    if (bExact && !aExact) return 1;
+    const aTier = exactnessTier(a.symbol);
+    const bTier = exactnessTier(b.symbol);
+    if (aTier !== bTier) return aTier - bTier;
 
     const aRank = EXCHANGE_RANK[a.exchange?.toUpperCase()] ?? 7;
     const bRank = EXCHANGE_RANK[b.exchange?.toUpperCase()] ?? 7;
