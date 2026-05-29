@@ -147,3 +147,145 @@ describe("fmp-client search", () => {
     expect(ranked[1].symbol).toBe("AAPL.L");
   });
 });
+
+describe("fmp-client Day-5 scoring endpoints", () => {
+  const lastUrl = () => fetchMock.mock.calls[0][0] as string;
+
+  it("getRatiosTtm hits /stable/ratios-ttm", async () => {
+    fetchMock.mockResolvedValueOnce(new Response("[]", { status: 200 }));
+    const mod = await import("../fmp-client");
+    await mod.getRatiosTtm("AAPL");
+    expect(lastUrl()).toContain("/stable/ratios-ttm?");
+    expect(lastUrl()).toContain("symbol=AAPL");
+  });
+
+  it("getRatiosQuarterly hits /stable/ratios with period=quarter", async () => {
+    fetchMock.mockResolvedValueOnce(new Response("[]", { status: 200 }));
+    const mod = await import("../fmp-client");
+    await mod.getRatiosQuarterly("AAPL", 20);
+    expect(lastUrl()).toContain("/stable/ratios?");
+    expect(lastUrl()).toContain("period=quarter");
+    expect(lastUrl()).toContain("limit=20");
+  });
+
+  it("getDividends hits /stable/dividends", async () => {
+    fetchMock.mockResolvedValueOnce(new Response("[]", { status: 200 }));
+    const mod = await import("../fmp-client");
+    await mod.getDividends("AAPL", 8);
+    expect(lastUrl()).toContain("/stable/dividends?");
+    expect(lastUrl()).toContain("limit=8");
+  });
+
+  it("getIncomeStatementQuarterly hits /stable/income-statement quarter", async () => {
+    fetchMock.mockResolvedValueOnce(new Response("[]", { status: 200 }));
+    const mod = await import("../fmp-client");
+    await mod.getIncomeStatementQuarterly("AAPL", 8);
+    expect(lastUrl()).toContain("/stable/income-statement?");
+    expect(lastUrl()).toContain("period=quarter");
+  });
+
+  it("getCashFlowStatementQuarterly hits /stable/cash-flow-statement quarter", async () => {
+    fetchMock.mockResolvedValueOnce(new Response("[]", { status: 200 }));
+    const mod = await import("../fmp-client");
+    await mod.getCashFlowStatementQuarterly("AAPL", 8);
+    expect(lastUrl()).toContain("/stable/cash-flow-statement?");
+    expect(lastUrl()).toContain("period=quarter");
+  });
+
+  it("getBalanceSheetStatementQuarterly hits /stable/balance-sheet-statement quarter", async () => {
+    fetchMock.mockResolvedValueOnce(new Response("[]", { status: 200 }));
+    const mod = await import("../fmp-client");
+    await mod.getBalanceSheetStatementQuarterly("AAPL", 8);
+    expect(lastUrl()).toContain("/stable/balance-sheet-statement?");
+    expect(lastUrl()).toContain("period=quarter");
+  });
+
+  it("getKeyMetricsTtm hits /stable/key-metrics-ttm", async () => {
+    fetchMock.mockResolvedValueOnce(new Response("[]", { status: 200 }));
+    const mod = await import("../fmp-client");
+    await mod.getKeyMetricsTtm("AAPL");
+    expect(lastUrl()).toContain("/stable/key-metrics-ttm?");
+  });
+
+  it("getKeyMetricsQuarterly hits /stable/key-metrics quarter", async () => {
+    fetchMock.mockResolvedValueOnce(new Response("[]", { status: 200 }));
+    const mod = await import("../fmp-client");
+    await mod.getKeyMetricsQuarterly("AAPL", 8);
+    expect(lastUrl()).toContain("/stable/key-metrics?");
+    expect(lastUrl()).toContain("period=quarter");
+  });
+
+  it("getAnalystEstimates hits /stable/analyst-estimates", async () => {
+    fetchMock.mockResolvedValueOnce(new Response("[]", { status: 200 }));
+    const mod = await import("../fmp-client");
+    await mod.getAnalystEstimates("AAPL", "annual", 4);
+    expect(lastUrl()).toContain("/stable/analyst-estimates?");
+    expect(lastUrl()).toContain("period=annual");
+  });
+
+  it("getDcf hits /stable/discounted-cash-flow", async () => {
+    fetchMock.mockResolvedValueOnce(new Response("[]", { status: 200 }));
+    const mod = await import("../fmp-client");
+    await mod.getDcf("AAPL");
+    expect(lastUrl()).toContain("/stable/discounted-cash-flow?");
+  });
+
+  it("getSma hits /stable/technical-indicators/sma with periodLength + timeframe", async () => {
+    fetchMock.mockResolvedValueOnce(new Response("[]", { status: 200 }));
+    const mod = await import("../fmp-client");
+    await mod.getSma("AAPL", 200, "1day");
+    expect(lastUrl()).toContain("/stable/technical-indicators/sma?");
+    expect(lastUrl()).toContain("periodLength=200");
+    expect(lastUrl()).toContain("timeframe=1day");
+  });
+
+  it("getRsi hits /stable/technical-indicators/rsi with periodLength=14", async () => {
+    fetchMock.mockResolvedValueOnce(new Response("[]", { status: 200 }));
+    const mod = await import("../fmp-client");
+    await mod.getRsi("AAPL", 14, "1day");
+    expect(lastUrl()).toContain("/stable/technical-indicators/rsi?");
+    expect(lastUrl()).toContain("periodLength=14");
+  });
+
+  it("getHistoricalEod hits /stable/historical-price-eod/full with from + to", async () => {
+    fetchMock.mockResolvedValueOnce(new Response("[]", { status: 200 }));
+    const mod = await import("../fmp-client");
+    await mod.getHistoricalEod("AAPL", "2021-05-29", "2026-05-29");
+    expect(lastUrl()).toContain("/stable/historical-price-eod/full?");
+    expect(lastUrl()).toContain("from=2021-05-29");
+    expect(lastUrl()).toContain("to=2026-05-29");
+  });
+
+  it("getPriceTargetConsensus hits /stable/price-target-consensus", async () => {
+    fetchMock.mockResolvedValueOnce(new Response("[]", { status: 200 }));
+    const mod = await import("../fmp-client");
+    await mod.getPriceTargetConsensus("AAPL");
+    expect(lastUrl()).toContain("/stable/price-target-consensus?");
+  });
+
+  it("getGradesHistorical hits /stable/grades-historical", async () => {
+    fetchMock.mockResolvedValueOnce(new Response("[]", { status: 200 }));
+    const mod = await import("../fmp-client");
+    await mod.getGradesHistorical("AAPL", 12);
+    expect(lastUrl()).toContain("/stable/grades-historical?");
+    expect(lastUrl()).toContain("limit=12");
+  });
+
+  it("getInsiderTrades hits /stable/insider-trading/search with page + limit", async () => {
+    fetchMock.mockResolvedValueOnce(new Response("[]", { status: 200 }));
+    const mod = await import("../fmp-client");
+    await mod.getInsiderTrades("AAPL", 100);
+    expect(lastUrl()).toContain("/stable/insider-trading/search?");
+    expect(lastUrl()).toContain("page=0");
+    expect(lastUrl()).toContain("limit=100");
+  });
+
+  it("getDividendsCalendar hits /stable/dividends-calendar with from + to", async () => {
+    fetchMock.mockResolvedValueOnce(new Response("[]", { status: 200 }));
+    const mod = await import("../fmp-client");
+    await mod.getDividendsCalendar("2026-05-29", "2026-08-29");
+    expect(lastUrl()).toContain("/stable/dividends-calendar?");
+    expect(lastUrl()).toContain("from=2026-05-29");
+    expect(lastUrl()).toContain("to=2026-08-29");
+  });
+});
