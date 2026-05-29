@@ -132,6 +132,11 @@ async function runMatrix() {
   process.stdout.write(header + tickerHeader + sep + endpointLines + summary);
 }
 
-if (import.meta.url === `file://${process.argv[1]?.replaceAll("\\", "/")}`) {
+import { fileURLToPath } from "node:url";
+import { resolve } from "node:path";
+
+const invokedDirectly =
+  process.argv[1] && resolve(fileURLToPath(import.meta.url)) === resolve(process.argv[1]);
+if (invokedDirectly) {
   runMatrix().catch((e) => { console.error(e); process.exit(1); });
 }
