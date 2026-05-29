@@ -166,3 +166,55 @@ export interface FmpProfile {
 export async function getProfile(symbol: string): Promise<FmpProfile[]> {
   return (await fetchEndpoint("profile", { symbol })) as FmpProfile[];
 }
+
+export interface FmpSearchResult {
+  symbol: string;
+  name: string;
+  exchange: string;
+  exchangeFullName: string;
+  currency: string;
+}
+
+export async function searchSymbol(query: string, limit = 8): Promise<FmpSearchResult[]> {
+  return (await fetchEndpoint("search-symbol", {
+    query,
+    limit: String(limit),
+  })) as FmpSearchResult[];
+}
+
+export async function searchByName(query: string, limit = 8): Promise<FmpSearchResult[]> {
+  return (await fetchEndpoint("search-name", {
+    query,
+    limit: String(limit),
+  })) as FmpSearchResult[];
+}
+
+// Exchange rank: lower number = higher rank. Surfaces major listings before
+// OTC fragments so users with "legal" land on LGEN.L not LGGNF.
+const EXCHANGE_RANK: Record<string, number> = {
+  LSE: 1,
+  NASDAQ: 2,
+  NYSE: 2,
+  NYSEARCA: 2,
+  AMEX: 3,
+  TSX: 4,
+  TSXV: 5,
+  OTC: 9,
+  PNK: 9,
+};
+
+export function rankSearchResults(query: string, results: FmpSearchResult[]): FmpSearchResult[] {
+  const upperQ = query.toUpperCase();
+  return [...results].sort((a, b) => {
+    const aExact = a.symbol.toUpperCase() === upperQ || a.symbol.toUpperCase().split(".")[0] === upperQ;
+    const bExact = b.symbol.toUpperCase() === upperQ || b.symbol.toUpperCase().split(".")[0] === upperQ;
+    if (aExact && !bExact) return -1;
+    if (bExact && !aExact) return 1;
+
+    const aRank = EXCHANGE_RANK[a.exchange?.toUpperCase()] ?? 7;
+    const bRank = EXCHANGE_RANK[b.exchange?.toUpperCase()] ?? 7;
+    if (aRank !== bRank) return aRank - bRank;
+
+    return a.symbol.localeCompare(b.symbol);
+  });
+}

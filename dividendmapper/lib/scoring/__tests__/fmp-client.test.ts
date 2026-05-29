@@ -94,3 +94,45 @@ describe("fmp-client", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 });
+
+describe("fmp-client search", () => {
+  it("searchSymbol hits /stable/search-symbol with query + limit + apikey", async () => {
+    fetchMock.mockResolvedValueOnce(new Response("[]", { status: 200 }));
+    const mod = await import("../fmp-client");
+    await mod.searchSymbol("LGEN", 5);
+    const url = fetchMock.mock.calls[0][0] as string;
+    expect(url).toContain("/stable/search-symbol?");
+    expect(url).toContain("query=LGEN");
+    expect(url).toContain("limit=5");
+    expect(url).toContain("apikey=test-key-abc");
+  });
+
+  it("searchByName hits /stable/search-name with query + limit", async () => {
+    fetchMock.mockResolvedValueOnce(new Response("[]", { status: 200 }));
+    const mod = await import("../fmp-client");
+    await mod.searchByName("legal", 10);
+    const url = fetchMock.mock.calls[0][0] as string;
+    expect(url).toContain("/stable/search-name?");
+    expect(url).toContain("query=legal");
+    expect(url).toContain("limit=10");
+  });
+
+  it("rankSearchResults puts exact symbol match before partial name match", async () => {
+    const { rankSearchResults } = await import("../fmp-client");
+    const ranked = rankSearchResults("LGEN", [
+      { symbol: "LGGNF", name: "Legal & General OTC", exchange: "OTC", currency: "USD", exchangeFullName: "OTC" },
+      { symbol: "LGEN.L", name: "Legal & General Group", exchange: "LSE", currency: "GBp", exchangeFullName: "LSE" },
+    ]);
+    expect(ranked[0].symbol).toBe("LGEN.L");
+  });
+
+  it("rankSearchResults deprioritises OTC and Pink Sheets", async () => {
+    const { rankSearchResults } = await import("../fmp-client");
+    const ranked = rankSearchResults("legal", [
+      { symbol: "LGGNF", name: "Legal & General OTC", exchange: "OTC", currency: "USD", exchangeFullName: "Other OTC" },
+      { symbol: "LGEN.L", name: "Legal & General Group", exchange: "LSE", currency: "GBp", exchangeFullName: "London Stock Exchange" },
+      { symbol: "LZ", name: "LegalZoom", exchange: "NASDAQ", currency: "USD", exchangeFullName: "NASDAQ" },
+    ]);
+    expect(ranked[ranked.length - 1].symbol).toBe("LGGNF");
+  });
+});
