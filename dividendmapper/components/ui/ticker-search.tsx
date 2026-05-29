@@ -116,7 +116,7 @@ export function TickerSearch({ onSelect, disabled, placeholder, id }: Props) {
         <ul
           role="listbox"
           id={id ? `${id}-listbox` : undefined}
-          className="absolute z-30 mt-1 max-h-72 w-full overflow-y-auto rounded-lg border border-border bg-background shadow-lg"
+          className="absolute z-50 mt-1 max-h-72 w-full overflow-y-auto rounded-lg border border-border bg-background shadow-xl ring-1 ring-foreground/5"
         >
           {results.map((r) => (
             <li
