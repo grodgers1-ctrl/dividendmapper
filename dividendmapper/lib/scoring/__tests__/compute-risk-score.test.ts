@@ -54,9 +54,16 @@ describe("computeRiskScore", () => {
     const r = computeRiskScore(
       baseInputs({
         r1: {
+          // current-year TTM 0.80 vs prior-year 1.20 -> a fresh >10% cut
           dividends: [
-            { date: monthsAgo(0), adjDividend: 0.5, dividend: 0.5 },
-            { date: monthsAgo(3), adjDividend: 1, dividend: 1 },
+            { date: daysAgo(10), adjDividend: 0.2, dividend: 0.2 },
+            { date: daysAgo(100), adjDividend: 0.2, dividend: 0.2 },
+            { date: daysAgo(190), adjDividend: 0.2, dividend: 0.2 },
+            { date: daysAgo(280), adjDividend: 0.2, dividend: 0.2 },
+            { date: daysAgo(380), adjDividend: 0.3, dividend: 0.3 },
+            { date: daysAgo(470), adjDividend: 0.3, dividend: 0.3 },
+            { date: daysAgo(560), adjDividend: 0.3, dividend: 0.3 },
+            { date: daysAgo(650), adjDividend: 0.3, dividend: 0.3 },
           ],
           pastRiskHistory: [],
           asOf,

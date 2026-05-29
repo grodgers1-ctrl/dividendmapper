@@ -8,6 +8,7 @@ const monthsAgo = (n: number) => {
   d.setMonth(d.getMonth() - n);
   return d.toISOString();
 };
+const daysAgo = (n: number) => new Date(asOf.getTime() - n * 86400000).toISOString();
 
 const steadyDivs = [
   { date: monthsAgo(0), adjDividend: 1.0, dividend: 1.0 },
@@ -21,11 +22,19 @@ describe("computeR1DividendCut", () => {
     expect(r.fired).toBe(false);
   });
 
-  it("fires 60 on a fresh cut in the dividend stream", () => {
+  it("fires 60 on a fresh cut in the dividend stream (TTM down >10% YoY)", () => {
     const r = computeR1DividendCut({
       dividends: [
-        { date: monthsAgo(0), adjDividend: 0.5, dividend: 0.5 },
-        { date: monthsAgo(3), adjDividend: 1.0, dividend: 1.0 },
+        // current year TTM 0.80 ...
+        { date: daysAgo(10), adjDividend: 0.2, dividend: 0.2 },
+        { date: daysAgo(100), adjDividend: 0.2, dividend: 0.2 },
+        { date: daysAgo(190), adjDividend: 0.2, dividend: 0.2 },
+        { date: daysAgo(280), adjDividend: 0.2, dividend: 0.2 },
+        // ... vs prior year TTM 1.20
+        { date: daysAgo(380), adjDividend: 0.3, dividend: 0.3 },
+        { date: daysAgo(470), adjDividend: 0.3, dividend: 0.3 },
+        { date: daysAgo(560), adjDividend: 0.3, dividend: 0.3 },
+        { date: daysAgo(650), adjDividend: 0.3, dividend: 0.3 },
       ],
       pastRiskHistory: [],
       asOf,

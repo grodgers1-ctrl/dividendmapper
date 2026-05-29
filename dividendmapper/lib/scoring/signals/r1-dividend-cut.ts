@@ -1,8 +1,12 @@
 // R1 — dividend cut detection + 12-month full + decay schedule.
-// "Cut" = declared dividend < previous regular (excluding specials, 5% buffer).
-// On first detection the cron writes risk_score with R1=60 into
-// equity_score_history; R1's cooldown looks back at that score series to keep
-// the penalty alive (60 for 12mo, then decaying 50/40/30/20, gone by month 25).
+// Fresh-cut detection uses the shared robust detector (trailing-12-month YoY on
+// split-adjusted dividends) with a 1-year lookback, so it fires only on a
+// genuinely recent cut; older cuts are kept alive by the cooldown/decay below
+// reading the persisted risk_score series. On first detection the cron writes
+// risk_score with R1=60 into equity_score_history (60 for 12mo, then decaying
+// 50/40/30/20, gone by month 25).
+
+import { detectDividendCut } from "../dividend-cut";
 
 export interface DividendEvent {
   date: string; // ISO
@@ -34,23 +38,12 @@ function monthsBetween(a: Date, b: Date): number {
   return (a.getFullYear() - b.getFullYear()) * 12 + (a.getMonth() - b.getMonth());
 }
 
-function detectCut(dividends: DividendEvent[]): { isCut: boolean; cutDate: string | null } {
-  // Compare latest declared regular payment to the previous one.
-  if (dividends.length < 2) return { isCut: false, cutDate: null };
-  const latest = dividends[0];
-  const prev = dividends[1];
-  if (latest.dividend < prev.dividend * 0.95) {
-    // 5% buffer for special-dividend noise
-    return { isCut: true, cutDate: latest.date };
-  }
-  return { isCut: false, cutDate: null };
-}
-
 export function computeR1DividendCut(inputs: R1Inputs): R1Result {
   const now = inputs.asOf ?? new Date();
 
-  // 1. Did we detect a cut in the current dividend stream?
-  const detected = detectCut(inputs.dividends);
+  // 1. Did we detect a recent cut in the current dividend stream? (1-year
+  //    lookback — older cuts are handled by the cooldown step below.)
+  const detected = detectDividendCut(inputs.dividends, { asOf: now, lookbackYears: 1 });
   if (detected.isCut) {
     return { points: 60, fired: true, reason: `Dividend cut detected ${detected.cutDate}` };
   }

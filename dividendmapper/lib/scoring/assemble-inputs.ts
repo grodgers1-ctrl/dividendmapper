@@ -19,6 +19,7 @@
 //     net-debt/EBITDA quarterly — read with fallbacks; confirm at first trigger.
 
 import { classifySector, type Sector } from "./sector";
+import { detectDividendCut } from "./dividend-cut";
 import type { ComputeBuyScoreInputs } from "./compute-buy-score";
 import type { ComputeTrimScoreInputs } from "./compute-trim-score";
 import type { ComputeRiskScoreInputs } from "./compute-risk-score";
@@ -180,19 +181,6 @@ function nextExDiv(symbol: string, calendar: FmpCalendarDividend[], asOf: Date):
   return upcoming[0]?.date ?? null;
 }
 
-function dividendCutInLast5y(dividends: FmpDividend[]): boolean {
-  // Walk oldest→newest; flag a >5% drop from the running max regular dividend.
-  const chron = [...dividends]
-    .filter((d) => Number.isFinite(d.dividend) && d.dividend > 0)
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  let runningMax = 0;
-  for (const d of chron) {
-    if (runningMax > 0 && d.dividend < runningMax * 0.95) return true;
-    runningMax = Math.max(runningMax, d.dividend);
-  }
-  return false;
-}
-
 // --- main -------------------------------------------------------------------
 
 export function assembleScoreInputs(
@@ -259,7 +247,7 @@ export function assembleScoreInputs(
     isUs,
     fcfTtm,
     dividendsPaidTtm,
-    dividendCutInLast5Years: dividendCutInLast5y(bundle.dividends),
+    dividendCutInLast5Years: detectDividendCut(bundle.dividends, { asOf }).isCut,
     ebitTtm,
     interestExpenseTtm,
     netIncomeTtm,
