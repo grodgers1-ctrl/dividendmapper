@@ -5,6 +5,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import {
+  TickerSearch,
+  type TickerSearchResult,
+} from "@/components/ui/ticker-search";
+import {
   FREE_TIER_CAP_MESSAGE,
   FREE_TIER_CAP_TITLE,
 } from "./free-tier-copy";
@@ -22,14 +26,6 @@ const WRAPPERS_US = [
   { value: "brokerage", label: "Brokerage" },
 ] as const;
 
-const TICKER_RE = /^[A-Z0-9.\-]{1,12}$/;
-
-type TickerCheck =
-  | { kind: "idle" }
-  | { kind: "checking" }
-  | { kind: "ok"; ticker: string; name: string | null }
-  | { kind: "warn"; reason: string };
-
 type Status =
   | { kind: "idle" }
   | { kind: "submitting" }
@@ -38,7 +34,7 @@ type Status =
   | { kind: "server-error"; message: string };
 
 const ERROR_COPY: Record<string, string> = {
-  invalid_ticker: "That ticker doesn't look right. Use letters, digits, dots, or dashes only.",
+  invalid_ticker: "Select a ticker from the dropdown before saving.",
   invalid_quantity: "Quantity must be greater than zero.",
   invalid_avg_cost: "Average cost can't be negative.",
   invalid_currency: "Pick a currency.",
@@ -58,7 +54,7 @@ export function AddHoldingModal({
 }) {
   const router = useRouter();
 
-  const [ticker, setTicker] = useState("");
+  const [selectedTicker, setSelectedTicker] = useState<TickerSearchResult | null>(null);
   const [quantity, setQuantity] = useState("");
   const [avgCost, setAvgCost] = useState("");
   const [costCurrency, setCostCurrency] = useState<"GBP" | "USD">("GBP");
@@ -66,18 +62,16 @@ export function AddHoldingModal({
   const [brokerLabel, setBrokerLabel] = useState("");
   const [notes, setNotes] = useState("");
 
-  const [tickerCheck, setTickerCheck] = useState<TickerCheck>({ kind: "idle" });
   const [status, setStatus] = useState<Status>({ kind: "idle" });
 
   const resetForm = () => {
-    setTicker("");
+    setSelectedTicker(null);
     setQuantity("");
     setAvgCost("");
     setCostCurrency("GBP");
     setWrapper("");
     setBrokerLabel("");
     setNotes("");
-    setTickerCheck({ kind: "idle" });
     setStatus({ kind: "idle" });
   };
 
@@ -86,53 +80,10 @@ export function AddHoldingModal({
     onOpenChange(next);
   };
 
-  const handleTickerBlur = async () => {
-    const normalised = ticker.trim().toUpperCase();
-    if (!normalised) {
-      setTickerCheck({ kind: "idle" });
-      return;
-    }
-    if (!TICKER_RE.test(normalised)) {
-      setTickerCheck({
-        kind: "warn",
-        reason: "Letters, digits, . or - only.",
-      });
-      return;
-    }
-    setTickerCheck({ kind: "checking" });
-    try {
-      const res = await fetch(
-        `/api/market/quote?ticker=${encodeURIComponent(normalised)}`,
-        { cache: "no-store" },
-      );
-      const json = (await res.json()) as
-        | { ok: true; data: { name: string | null } }
-        | { ok: false; error: string };
-      if (res.ok && json.ok) {
-        setTickerCheck({
-          kind: "ok",
-          ticker: normalised,
-          name: json.data.name,
-        });
-      } else {
-        setTickerCheck({
-          kind: "warn",
-          reason: "Couldn't verify this ticker. Saving anyway.",
-        });
-      }
-    } catch {
-      setTickerCheck({
-        kind: "warn",
-        reason: "Couldn't verify this ticker. Saving anyway.",
-      });
-    }
-  };
-
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
-    const trimmedTicker = ticker.trim().toUpperCase();
-    if (!trimmedTicker || !TICKER_RE.test(trimmedTicker)) {
+    if (!selectedTicker) {
       setStatus({ kind: "field-error", message: ERROR_COPY.invalid_ticker });
       return;
     }
@@ -158,7 +109,7 @@ export function AddHoldingModal({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ticker: trimmedTicker,
+          ticker: selectedTicker.symbol,
           quantity: qty,
           avg_cost: cost,
           cost_currency: costCurrency,
@@ -235,7 +186,7 @@ export function AddHoldingModal({
           </Dialog.Description>
 
           <form onSubmit={handleSubmit} noValidate className="mt-6 space-y-4">
-            {/* Ticker */}
+            {/* Ticker — strict-with-paste-fallback via TickerSearch */}
             <div className="space-y-2">
               <label
                 htmlFor="add-holding-ticker"
@@ -243,38 +194,20 @@ export function AddHoldingModal({
               >
                 Ticker
               </label>
-              <input
+              <TickerSearch
                 id="add-holding-ticker"
-                type="text"
-                required
-                autoComplete="off"
-                autoCapitalize="characters"
-                spellCheck={false}
-                placeholder="e.g. ULVR.L or SCHD"
-                value={ticker}
-                onChange={(e) => {
-                  setTicker(e.target.value);
-                  setTickerCheck({ kind: "idle" });
-                }}
-                onBlur={handleTickerBlur}
+                placeholder="Search by symbol or company name"
                 disabled={submitting}
-                className="block w-full rounded-lg border border-input bg-background px-3 py-2.5 font-mono text-base uppercase text-foreground placeholder:font-body placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 focus:ring-offset-background disabled:opacity-60"
+                onSelect={(r) => setSelectedTicker(r)}
               />
-              {tickerCheck.kind === "checking" && (
-                <p className="text-xs text-muted-foreground">Checking…</p>
-              )}
-              {tickerCheck.kind === "ok" && (
+              {selectedTicker && (
                 <p className="text-xs text-muted-foreground">
-                  Looks like{" "}
+                  Selected:{" "}
                   <span className="font-mono text-foreground">
-                    {tickerCheck.ticker}
+                    {selectedTicker.symbol}
                   </span>
-                  {tickerCheck.name ? ` · ${tickerCheck.name}` : ""}
-                </p>
-              )}
-              {tickerCheck.kind === "warn" && (
-                <p className="text-xs text-amber-600 dark:text-amber-500">
-                  {tickerCheck.reason}
+                  {" · "}
+                  {selectedTicker.name}
                 </p>
               )}
             </div>
@@ -484,7 +417,7 @@ export function AddHoldingModal({
               </Dialog.Close>
               <button
                 type="submit"
-                disabled={submitting || status.kind === "limit"}
+                disabled={submitting || status.kind === "limit" || !selectedTicker}
                 className="inline-flex h-10 items-center justify-center rounded-lg bg-brand-600 px-4 text-sm font-medium text-white transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {submitting ? "Saving…" : "Add holding"}
