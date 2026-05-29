@@ -16,7 +16,9 @@ import { getProfile } from "@/lib/scoring/fmp-client";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 900;
+// Vercel Hobby caps maxDuration at 300s. Plenty for current cohort; revisit
+// when ticker count crosses ~1000 (each ticker is ~200-500ms of FMP + DB work).
+export const maxDuration = 300;
 
 async function handle(req: Request): Promise<Response> {
   const cronSecret = process.env.CRON_SECRET;
