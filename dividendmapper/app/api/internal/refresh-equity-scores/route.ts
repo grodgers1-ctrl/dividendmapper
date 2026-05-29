@@ -37,10 +37,23 @@ import { computeBuyScore } from "@/lib/scoring/compute-buy-score";
 import { computeTrimScore } from "@/lib/scoring/compute-trim-score";
 import { computeRiskScore } from "@/lib/scoring/compute-risk-score";
 import type { SignalRecord } from "@/lib/scoring/compute-buy-score";
+import { runWithConcurrency } from "@/lib/concurrency";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
+
+// FMP's per-minute quota is generous (~750/min on Premium) but it enforces a
+// burst/concurrency guard. We never fan out more than FMP_CONCURRENCY requests
+// at once per ticker, and pad FMP_TICKER_PAD_MS between tickers, to stay well
+// clear of it. Both env-tunable without code changes; pad is 0 under test.
+const FMP_CONCURRENCY = Number(process.env.FMP_CONCURRENCY) || 5;
+const TICKER_PAD_MS =
+  process.env.NODE_ENV === "test" ? 0 : Number(process.env.FMP_TICKER_PAD_MS) || 1000;
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((r) => setTimeout(r, ms));
+}
 
 function isoDateOffset(days: number): string {
   return new Date(Date.now() + days * 86400000).toISOString().slice(0, 10);
@@ -52,6 +65,8 @@ async function fetchTickerBundle(
 ): Promise<RawFmpBundle> {
   const from5y = isoDateOffset(-5 * 365);
   const today = isoDateOffset(0);
+  // Bounded-concurrency fan-out (order preserved) instead of a 17-wide
+  // Promise.all burst, to avoid tripping FMP's concurrency guard.
   const [
     profile,
     ratiosTtm,
@@ -70,25 +85,46 @@ async function fetchTickerBundle(
     priceTarget,
     gradesHistorical,
     insiderTrades,
-  ] = await Promise.all([
-    getProfile(symbol),
-    getRatiosTtm(symbol),
-    getRatiosQuarterly(symbol, 20),
-    getDividends(symbol, 24),
-    getIncomeStatementQuarterly(symbol, 8),
-    getCashFlowStatementQuarterly(symbol, 8),
-    getBalanceSheetStatementQuarterly(symbol, 8),
-    getKeyMetricsTtm(symbol),
-    getKeyMetricsQuarterly(symbol, 8),
-    getAnalystEstimates(symbol, "annual", 6),
-    getDcf(symbol),
-    getSma(symbol, 200, "1day"),
-    getRsi(symbol, 14, "1day"),
-    getHistoricalEod(symbol, from5y, today),
-    getPriceTargetConsensus(symbol),
-    getGradesHistorical(symbol, 6),
-    getInsiderTrades(symbol, 100),
-  ]);
+  ] = (await runWithConcurrency<unknown>(
+    [
+      () => getProfile(symbol),
+      () => getRatiosTtm(symbol),
+      () => getRatiosQuarterly(symbol, 20),
+      () => getDividends(symbol, 24),
+      () => getIncomeStatementQuarterly(symbol, 8),
+      () => getCashFlowStatementQuarterly(symbol, 8),
+      () => getBalanceSheetStatementQuarterly(symbol, 8),
+      () => getKeyMetricsTtm(symbol),
+      () => getKeyMetricsQuarterly(symbol, 8),
+      () => getAnalystEstimates(symbol, "annual", 6),
+      () => getDcf(symbol),
+      () => getSma(symbol, 200, "1day"),
+      () => getRsi(symbol, 14, "1day"),
+      () => getHistoricalEod(symbol, from5y, today),
+      () => getPriceTargetConsensus(symbol),
+      () => getGradesHistorical(symbol, 6),
+      () => getInsiderTrades(symbol, 100),
+    ],
+    FMP_CONCURRENCY,
+  )) as [
+    Awaited<ReturnType<typeof getProfile>>,
+    Awaited<ReturnType<typeof getRatiosTtm>>,
+    Awaited<ReturnType<typeof getRatiosQuarterly>>,
+    Awaited<ReturnType<typeof getDividends>>,
+    Awaited<ReturnType<typeof getIncomeStatementQuarterly>>,
+    Awaited<ReturnType<typeof getCashFlowStatementQuarterly>>,
+    Awaited<ReturnType<typeof getBalanceSheetStatementQuarterly>>,
+    Awaited<ReturnType<typeof getKeyMetricsTtm>>,
+    Awaited<ReturnType<typeof getKeyMetricsQuarterly>>,
+    Awaited<ReturnType<typeof getAnalystEstimates>>,
+    Awaited<ReturnType<typeof getDcf>>,
+    Awaited<ReturnType<typeof getSma>>,
+    Awaited<ReturnType<typeof getRsi>>,
+    Awaited<ReturnType<typeof getHistoricalEod>>,
+    Awaited<ReturnType<typeof getPriceTargetConsensus>>,
+    Awaited<ReturnType<typeof getGradesHistorical>>,
+    Awaited<ReturnType<typeof getInsiderTrades>>,
+  ];
   return {
     profile: profile as RawFmpBundle["profile"],
     ratiosTtm: ratiosTtm as RawFmpBundle["ratiosTtm"],
@@ -217,7 +253,9 @@ async function handle(req: Request): Promise<Response> {
   let successfulTickerCount = 0;
   let failedTickerCount = 0;
 
-  for (const ticker of uniqueTickers) {
+  for (let t = 0; t < uniqueTickers.length; t++) {
+    const ticker = uniqueTickers[t];
+    if (t > 0 && TICKER_PAD_MS > 0) await sleep(TICKER_PAD_MS);
     try {
       const bundle = await fetchTickerBundle(ticker, calendar);
       const history = await loadPriorHistory(supabase, ticker);
