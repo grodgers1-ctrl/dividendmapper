@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/internal/refresh-equity-scores",
+      "schedule": "30 22 * * *"
+    }
+  ]
+}
