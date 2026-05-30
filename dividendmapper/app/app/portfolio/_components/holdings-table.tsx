@@ -93,7 +93,7 @@ function IncomeCell({ status, className }: IncomeCellProps) {
   if (status.kind === "no_data") {
     return (
       <span
-        title="No dividend data. LSE auto-lookup ships post-launch."
+        title="No dividend data yet. New holdings get figures after the next nightly update."
         className={`cursor-help text-muted-foreground/70 ${className ?? ""}`}
       >
         —

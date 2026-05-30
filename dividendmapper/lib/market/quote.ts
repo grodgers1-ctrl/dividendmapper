@@ -13,7 +13,7 @@
 
 export interface QuoteData {
   ticker: string;
-  source: "EODHD" | "Polygon";
+  source: "EODHD" | "Polygon" | "FMP";
   /** Last close, in the security's listed currency. */
   price: number | null;
   /** Annual dividend per share (forward where available, else TTM). */
