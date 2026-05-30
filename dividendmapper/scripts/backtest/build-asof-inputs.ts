@@ -12,7 +12,7 @@
 // live assembler's output shape.
 
 import { readCache, cacheExists } from "./cache";
-import { tickerCachePath } from "./paths";
+import { tickerCachePath, sectorPeerCachePath } from "./paths";
 import { classifySector } from "../../lib/scoring/sector";
 import { detectDividendCut } from "../../lib/scoring/dividend-cut";
 import type { ComputeBuyScoreInputs } from "../../lib/scoring/compute-buy-score";
@@ -34,6 +34,9 @@ export interface BuildAsOfInputsArgs {
   asOfDate: string; // ISO YYYY-MM-DD
   cacheRoot: string;
   sectorPeerCache: SectorPeerCache | null;
+  /** Minimum number of peers that must have valid yield data before returning a median.
+   *  Defaults to 5 in production; tests may lower it. */
+  minPeerCount?: number;
 }
 
 export interface EodBar {
@@ -64,6 +67,8 @@ export interface RatiosTtm {
 export interface AsOfBuyInputs extends ComputeBuyScoreInputs {
   priceHistory: EodBar[];
   ratiosTtm: RatiosTtm;
+  /** Top-level accessor for D1's sectorMedianYield (mirrors d1.sectorMedianYield). */
+  sectorMedianYield: number | null;
 }
 
 export interface AsOfInputs {
@@ -249,11 +254,63 @@ function deriveTtm(
 }
 
 // ---------------------------------------------------------------------------
+// Sector-median yield helper
+// ---------------------------------------------------------------------------
+
+/**
+ * Derives the median TTM dividend yield across sector peers, reading from
+ * the sector peer cache subdirectory.
+ *
+ * Returns null when fewer than `minPeers` peers have valid yield data.
+ */
+function computeSectorMedianYield(opts: {
+  sectorPeerCache: SectorPeerCache;
+  cacheRoot: string;
+  asOfDate: string;
+  minPeers: number;
+}): number | null {
+  const { sectorPeerCache, cacheRoot, asOfDate, minPeers } = opts;
+  const { sector, peers } = sectorPeerCache;
+
+  const yields: number[] = [];
+
+  for (const { ticker: peerTicker } of peers) {
+    // Price: most recent close ≤ asOfDate
+    const eodPath = sectorPeerCachePath(cacheRoot, sector, peerTicker, "historical-price-eod");
+    const eodBody = safeRead<RawEodBody>(eodPath, { historical: [] });
+    const priceBar = (eodBody.historical ?? [])
+      .filter((b) => notAfter(b.date, asOfDate))
+      .sort((a, b) => b.date.localeCompare(a.date))[0];
+    const close = priceBar?.close ?? priceBar?.adjClose ?? 0;
+    if (!close || close <= 0) continue;
+
+    // TTM dividends: sum adjDividend in [asOfDate-365d, asOfDate]
+    const divPath = sectorPeerCachePath(cacheRoot, sector, peerTicker, "dividends");
+    const divBody = safeRead<RawDividendBody>(divPath, { historical: [] });
+    const ttmDivs = (divBody.historical ?? [])
+      .filter((d) => notAfter(d.date, asOfDate) && withinWindow(d.date, asOfDate, 365))
+      .reduce((acc, d) => acc + (Number.isFinite(d.adjDividend) ? d.adjDividend : 0), 0);
+    if (ttmDivs <= 0) continue;
+
+    yields.push(ttmDivs / close);
+  }
+
+  if (yields.length < minPeers) return null;
+
+  // Median: sort ascending, take middle value (or mean of two middles for even count)
+  yields.sort((a, b) => a - b);
+  const mid = Math.floor(yields.length / 2);
+  return yields.length % 2 === 1
+    ? yields[mid]
+    : (yields[mid - 1] + yields[mid]) / 2;
+}
+
+// ---------------------------------------------------------------------------
 // Main assembler
 // ---------------------------------------------------------------------------
 
 export function buildAsOfInputs(args: BuildAsOfInputsArgs): AsOfInputs {
-  const { ticker, asOfDate, cacheRoot } = args;
+  const { ticker, asOfDate, cacheRoot, minPeerCount = 5 } = args;
 
   const path = (endpoint: string) => tickerCachePath(cacheRoot, ticker, endpoint);
 
@@ -415,8 +472,17 @@ export function buildAsOfInputs(args: BuildAsOfInputsArgs): AsOfInputs {
   // D2 returns N/A when nextExDivDate is null.
   const nextExDivDate: string | null = null;
 
-  // --- D1 sector-median yield — deferred to Task 8 ------------------------
-  const sectorMedianYield: number | null = null;
+  // --- D1 sector-median yield — derived from peer cache if available -------
+  const sectorMedianYield: number | null =
+    args.sectorPeerCache != null
+      ? computeSectorMedianYield({
+          sectorPeerCache: args.sectorPeerCache,
+          cacheRoot,
+          asOfDate,
+          minPeers: minPeerCount,
+        })
+      : null;
+  if (sectorMedianYield === null) naSignals.push("D1");
 
   // --- Assemble buy inputs ------------------------------------------------
   const asOf = new Date(asOfDate);
@@ -425,6 +491,7 @@ export function buildAsOfInputs(args: BuildAsOfInputsArgs): AsOfInputs {
     // Backtest-only extensions
     priceHistory,
     ratiosTtm,
+    sectorMedianYield,
 
     // Identity
     symbol: ticker,
