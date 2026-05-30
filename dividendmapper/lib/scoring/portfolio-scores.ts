@@ -90,8 +90,9 @@ export function buildHoldingScore(input: {
 // any user_preferences rows exist, scores pass through unchanged.
 export function applyUserWeights(
   score: HoldingScore,
-  _prefs: null,
+  prefs: null,
 ): HoldingScore {
+  void prefs; // reserved for Day 8 wizard weights
   return score;
 }
 

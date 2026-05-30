@@ -96,7 +96,8 @@ export default async function PortfolioPage() {
   let flagged: { ticker: string; hint: string }[] = [];
   if (tier !== "free" && visibleRows.length > 0) {
     const tickers = [...new Set(visibleRows.map((h) => h.ticker))];
-    const cutoff = new Date(Date.now() - DELTA_LOOKBACK_DAYS * 86_400_000)
+    const now = new Date();
+    const cutoff = new Date(now.getTime() - DELTA_LOOKBACK_DAYS * 86_400_000)
       .toISOString()
       .slice(0, 10);
     const [scoresRes, overridesRes, historyRes] = await Promise.all([
@@ -139,7 +140,6 @@ export default async function PortfolioPage() {
       }
     }
 
-    const now = new Date();
     for (const score of scoresRes.data ?? []) {
       scoresByTicker[score.ticker] = applyUserWeights(
         buildHoldingScore({

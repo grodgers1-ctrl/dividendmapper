@@ -52,31 +52,35 @@ export function ScoreDrawer({
   onOpenChange,
   isBeta,
 }: ScoreDrawerProps) {
-  const [data, setData] = useState<ScoringResponse | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [hidden, setHidden] = useState(false);
+  // Result is keyed by ticker so loading/hidden derive from props instead of
+  // synchronous setState in the effect (which the React lint rules forbid).
+  const [result, setResult] = useState<{
+    ticker: string;
+    payload: ScoringResponse | null;
+  } | null>(null);
+  const [hiddenTicker, setHiddenTicker] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
-    setLoading(true);
-    setHidden(false);
     fetch(`/api/scoring/${ticker}`)
       .then((res) => (res.ok ? res.json() : null))
       .then((json) => {
-        if (!cancelled) setData(json);
+        if (!cancelled) setResult({ ticker, payload: json });
       })
       .catch(() => {
-        if (!cancelled) setData(null);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) setResult({ ticker, payload: null });
       });
     return () => {
       cancelled = true;
     };
   }, [open, ticker]);
+
+  const isCurrent = result?.ticker === ticker;
+  const data = isCurrent ? result!.payload : null;
+  const loading = open && !isCurrent;
+  const hidden = hiddenTicker === ticker;
 
   const score = data
     ? scoreType === "buy"
@@ -102,7 +106,7 @@ export function ScoreDrawer({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ticker, scoreType }),
         });
-        setHidden(true);
+        setHiddenTicker(ticker);
       } catch {
         // Non-fatal — the chip just stays visible; user can retry.
       }
