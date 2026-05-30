@@ -8,7 +8,11 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:backtest": "vitest run --config vitest.backtest.config.ts",
+    "backtest:fetch": "tsx scripts/backtest/run.ts fetch",
+    "backtest:run": "tsx scripts/backtest/run.ts run",
+    "backtest:all": "tsx scripts/backtest/run.ts all"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",
@@ -53,6 +57,7 @@
     "nodemailer": "^8.0.7",
     "supabase": "^2.98.2",
     "tailwindcss": "^4",
+    "tsx": "^4.22.3",
     "typescript": "^5",
     "vitest": "^2.1.9"
   }

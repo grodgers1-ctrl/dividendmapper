@@ -49,3 +49,8 @@ next-env.d.ts
 # react-email build artifacts
 emails-rendered/
 .react-email/
+
+# Buy Score backtest paths live at monorepo root but defend against accidents
+.backtest-cache/
+backtest-out/
+scripts/backtest/__tests__/fixtures/*.bak

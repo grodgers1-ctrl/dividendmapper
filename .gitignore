@@ -60,3 +60,7 @@ next-env.d.ts
 # Claude Code local settings (per-user — contains absolute paths)
 .claude/settings.local.json
 .claude/launch.json
+
+# Buy Score backtest — large cache & output, never committed
+.backtest-cache/
+backtest-out/

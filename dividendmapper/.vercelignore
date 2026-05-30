@@ -1,0 +1,3 @@
+scripts/backtest/
+.backtest-cache/
+backtest-out/
