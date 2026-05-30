@@ -25,7 +25,7 @@ describe("buildHoldingScore", () => {
     expect(s.trim).toBe(22);
     expect(s.risk).toBe(45);
     expect(s.buyGateReason).toBeNull();
-    expect(s.actionHint).toBe("Add more"); // buy>=75, risk<50, trim<50
+    expect(s.actionHint).toBe("Hold"); // high Quality is a descriptor, not an action; risk<50, trim<50
   });
 
   it("sets buy null + gate reason for a gate-failer", () => {
@@ -82,8 +82,15 @@ describe("flaggedHoldings", () => {
       score: { ticker: "AAA", buy_score: 10, trim_score: 10, risk_score: 10, buy_failed_gates: [], data_quality: "full" },
       priorHistory: null, overrides: [], now: NOW,
     });
-    const addMore = buildHoldingScore({ score: passer, priorHistory: null, overrides: [], now: NOW });
-    const flagged = flaggedHoldings([hold, addMore]);
-    expect(flagged).toEqual([{ ticker: "PEP", hint: "Add more" }]);
+    // passer (PEP: buy=76, risk=45, trim=22) returns "Hold" now — high Quality
+    // is a descriptor shown by the chip, not an actionable flag.
+    const highQuality = buildHoldingScore({ score: passer, priorHistory: null, overrides: [], now: NOW });
+    // A holding with elevated risk is genuinely actionable.
+    const risky = buildHoldingScore({
+      score: { ticker: "SCHD", buy_score: 40, trim_score: 20, risk_score: 80, buy_failed_gates: [], data_quality: "full" },
+      priorHistory: null, overrides: [], now: NOW,
+    });
+    const flagged = flaggedHoldings([hold, highQuality, risky]);
+    expect(flagged).toEqual([{ ticker: "SCHD", hint: "Review urgently" }]);
   });
 });

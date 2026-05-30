@@ -103,7 +103,7 @@ describe("<ScoreDrawer>", () => {
     await screen.findByText("Ex-dividend in 6 days");
     expect(screen.getByText(/not financial advice/i)).toBeInTheDocument();
     const link = screen.getByRole("link", { name: /methodology/i });
-    expect(link).toHaveAttribute("href", "/legal/scoring-methodology");
+    expect(link).toHaveAttribute("href", "/scoring-methodology");
   });
 
   it("shows the beta disclaimer when isBeta", async () => {

@@ -7,7 +7,7 @@ describe("<ScoreChip>", () => {
   it("renders the score number and type label", () => {
     render(<ScoreChip type="buy" score={76} />);
     expect(screen.getByText("76")).toBeInTheDocument();
-    expect(screen.getByText(/buy/i)).toBeInTheDocument();
+    expect(screen.getByText(/quality/i)).toBeInTheDocument();
   });
 
   it("uses the deep-green colour for a high buy score", () => {

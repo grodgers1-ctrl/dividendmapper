@@ -5,7 +5,7 @@ import { chipColor, type Delta, type ScoreType } from "@/lib/scoring/chip-displa
 const GATE_FAIL_COLOR = "#27272a"; // charcoal, per spec — never red (red = Risk)
 
 const TYPE_LABEL: Record<ScoreType, string> = {
-  buy: "Buy",
+  buy: "Quality",
   trim: "Trim",
   risk: "Risk",
 };

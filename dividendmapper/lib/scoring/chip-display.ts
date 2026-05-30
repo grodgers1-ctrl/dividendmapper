@@ -18,22 +18,21 @@ export function chipColor(type: ScoreType, score: number): { hex: string } {
   return { hex: low };
 }
 
-// Priority order per spec. A null buy (failed quality gate) is treated as 0 so
-// risk/trim still drive the hint.
+// Action hint surfaces only genuinely actionable cases — elevated Risk (cut
+// danger) or Trim (overextended valuation). A high Quality score is a
+// descriptor shown via the chip itself, NOT a "buy more" directive, so it
+// returns "Hold" (no flag) and does not appear in the attention banner.
 export function actionHint(s: {
   buy: number | null;
   trim: number | null;
   risk: number | null;
 }): string {
-  const buy = s.buy ?? 0;
   const trim = s.trim ?? 0;
   const risk = s.risk ?? 0;
   if (risk >= 75) return "Review urgently";
   if (risk >= 50) return "Reassess thesis";
   if (trim >= 75) return "Consider trimming";
   if (trim >= 50) return "Watch: extended";
-  if (buy >= 75) return "Add more";
-  if (buy >= 50) return "Accumulate on dips";
   return "Hold";
 }
 

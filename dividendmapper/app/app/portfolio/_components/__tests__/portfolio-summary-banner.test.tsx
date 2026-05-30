@@ -8,15 +8,15 @@ describe("<PortfolioSummaryBanner>", () => {
     render(
       <PortfolioSummaryBanner
         flagged={[
-          { ticker: "PEP", hint: "Add more" },
-          { ticker: "PYPL", hint: "Add more" },
+          { ticker: "PEP", hint: "Consider trimming" },
+          { ticker: "PYPL", hint: "Consider trimming" },
           { ticker: "SCHD", hint: "Review urgently" },
         ]}
       />,
     );
     expect(screen.getByText(/PEP/)).toBeInTheDocument();
     expect(screen.getByText(/PYPL/)).toBeInTheDocument();
-    expect(screen.getByText(/Add more/)).toBeInTheDocument();
+    expect(screen.getByText(/Consider trimming/)).toBeInTheDocument();
     expect(screen.getByText(/Review urgently/)).toBeInTheDocument();
   });
 
@@ -27,14 +27,14 @@ describe("<PortfolioSummaryBanner>", () => {
 
   it("can be dismissed", async () => {
     const user = userEvent.setup();
-    render(<PortfolioSummaryBanner flagged={[{ ticker: "PEP", hint: "Add more" }]} />);
+    render(<PortfolioSummaryBanner flagged={[{ ticker: "PEP", hint: "Review urgently" }]} />);
     expect(screen.getByText(/PEP/)).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /dismiss/i }));
     expect(screen.queryByText(/PEP/)).not.toBeInTheDocument();
   });
 
   it("links to the full scores page", () => {
-    render(<PortfolioSummaryBanner flagged={[{ ticker: "PEP", hint: "Add more" }]} />);
+    render(<PortfolioSummaryBanner flagged={[{ ticker: "PEP", hint: "Review urgently" }]} />);
     expect(screen.getByRole("link", { name: /view all scores/i })).toHaveAttribute(
       "href",
       "/app/portfolio/scoring",

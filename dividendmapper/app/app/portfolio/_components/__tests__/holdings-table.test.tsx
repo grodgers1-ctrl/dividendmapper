@@ -32,7 +32,7 @@ const pepScore: HoldingScore = {
   dataQuality: "sparse",
   deltas: { buy: null, trim: null, risk: null },
   hidden: { buy: false, trim: false, risk: false },
-  actionHint: "Add more",
+  actionHint: "Hold",
 };
 
 const schdScore: HoldingScore = {
@@ -74,7 +74,7 @@ describe("<HoldingsTable> score column (Pro)", () => {
     expect(within(table).getByText("76")).toBeInTheDocument();
     expect(within(table).getByText("22")).toBeInTheDocument();
     expect(within(table).getByText("45")).toBeInTheDocument();
-    expect(within(table).getAllByText(/Add more/).length).toBeGreaterThan(0);
+    expect(within(table).getAllByText(/Hold/).length).toBeGreaterThan(0);
   });
 
   it("shows a DNQ chip (reason on hover) for a gate-failer plus its trim/risk chips", () => {

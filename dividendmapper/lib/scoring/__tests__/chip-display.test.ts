@@ -28,12 +28,15 @@ describe("actionHint", () => {
     expect(actionHint({ buy: 10, trim: 80, risk: 10 })).toBe("Consider trimming");
     expect(actionHint({ buy: 10, trim: 55, risk: 10 })).toBe("Watch: extended");
   });
-  it("then buy, else hold", () => {
-    expect(actionHint({ buy: 80, trim: 10, risk: 10 })).toBe("Add more");
-    expect(actionHint({ buy: 55, trim: 10, risk: 10 })).toBe("Accumulate on dips");
+  it("high Quality score alone returns Hold — quality is a descriptor, not an action", () => {
+    expect(actionHint({ buy: 80, trim: 10, risk: 10 })).toBe("Hold");
+    expect(actionHint({ buy: 55, trim: 10, risk: 10 })).toBe("Hold");
     expect(actionHint({ buy: 10, trim: 10, risk: 10 })).toBe("Hold");
   });
-  it("treats null buy (gate fail) as 0 for the hint", () => {
+  it("null buy (gate fail) with low risk/trim also returns Hold", () => {
+    expect(actionHint({ buy: null, trim: 10, risk: 10 })).toBe("Hold");
+  });
+  it("null buy (gate fail) with elevated risk/trim still surfaces the actionable hint", () => {
     expect(actionHint({ buy: null, trim: 88, risk: 60 })).toBe("Reassess thesis");
   });
 });

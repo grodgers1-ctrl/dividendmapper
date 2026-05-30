@@ -27,7 +27,7 @@ type ScoringResponse = {
   signals: Record<ScoreType, SignalRow[]>;
 };
 
-const TYPE_LABEL: Record<ScoreType, string> = { buy: "Buy", trim: "Trim", risk: "Risk" };
+const TYPE_LABEL: Record<ScoreType, string> = { buy: "Quality", trim: "Trim", risk: "Risk" };
 
 // Score history started 2026-05-29; the sparkline needs ~30 days. Until then
 // the drawer shows a dimmed placeholder that counts down.
@@ -219,7 +219,7 @@ export function ScoreDrawer({
                 <p className="text-[0.7rem] leading-relaxed text-muted-foreground/70">
                   Scores are informational, not financial advice.{" "}
                   <Link
-                    href="/legal/scoring-methodology"
+                    href="/scoring-methodology"
                     className="underline underline-offset-2 hover:text-foreground"
                   >
                     How scores are calculated (methodology)
