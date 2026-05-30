@@ -100,6 +100,23 @@ describe("<HoldingsTable> score column (Pro)", () => {
     render(<HoldingsTable {...props} />);
     expect(screen.getAllByTestId("mobile-score-pill").length).toBeGreaterThan(0);
   });
+
+  it("shows a Collecting pill for a Pro holding not yet scored", () => {
+    render(
+      <HoldingsTable
+        rows={[row("9", "NEWCO")]}
+        quotes={{}}
+        tier="pro"
+        pricingPublic={true}
+        isBeta={true}
+        scoresByTicker={{}}
+      />,
+    );
+    expect(screen.getAllByText(/collecting/i).length).toBeGreaterThan(0);
+    // a plain dash must NOT be used for the not-yet-scored state
+    const table = screen.getByRole("table");
+    expect(within(table).getByTestId("pending-score-pill")).toBeInTheDocument();
+  });
 });
 
 describe("<HoldingsTable> score column (Free)", () => {

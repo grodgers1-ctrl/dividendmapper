@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { Trash2 } from "lucide-react";
+import { Trash2, Clock } from "lucide-react";
 import type { QuoteResult } from "@/lib/market/quote";
 import type { HoldingScore } from "@/lib/scoring/portfolio-scores";
 import type { ScoreType } from "@/lib/scoring/chip-display";
@@ -111,6 +111,21 @@ function IncomeCell({ status, className }: IncomeCellProps) {
 }
 
 type OpenScore = (ticker: string, type: ScoreType) => void;
+
+// Shown for a holding the nightly cron hasn't scored yet (e.g. just added).
+// The scoring job refreshes every ticker overnight, so this resolves on its own.
+function PendingScorePill() {
+  return (
+    <span
+      data-testid="pending-score-pill"
+      title="New holding. Scores refresh overnight and appear after the next nightly update."
+      className="inline-flex items-center gap-1 rounded-full border border-border bg-secondary px-2 py-0.5 text-xs font-medium text-muted-foreground"
+    >
+      <Clock className="h-3 w-3" aria-hidden="true" />
+      Collecting…
+    </span>
+  );
+}
 
 // The three-chip stack + action hint shown in the desktop score column.
 function ScoreChipStack({
@@ -335,7 +350,7 @@ export function HoldingsTable({
                           onOpen={handleOpenScore}
                         />
                       ) : (
-                        <span className="text-muted-foreground/60">—</span>
+                        <PendingScorePill />
                       )}
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">
@@ -393,7 +408,9 @@ export function HoldingsTable({
                       isBeta={isBeta}
                       onOpen={handleOpenScore}
                     />
-                  ) : null}
+                  ) : (
+                    <PendingScorePill />
+                  )}
                   <button
                     type="button"
                     onClick={() => handleDelete(row)}
