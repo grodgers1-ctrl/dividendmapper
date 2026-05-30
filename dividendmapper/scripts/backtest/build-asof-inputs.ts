@@ -45,12 +45,25 @@ export interface EodBar {
   volume?: number;
 }
 
+// TTM-derived ratios exposed on the buy object for backtest consumers (e.g.
+// Task 10 parity tests). These are NOT part of ComputeBuyScoreInputs; they
+// sit alongside as backtest-only metadata.
+export interface RatiosTtm {
+  fcfCoverage: number | null;
+  interestCoverage: number | null;
+  netIncomeTtm: number;
+  ebitTtm: number;
+  fcfTtm: number;
+  dividendsPaidTtmAbs: number;
+}
+
 // AsOfInputs.buy extends ComputeBuyScoreInputs with priceHistory so the
 // backtest runner can access the raw price series without reopening files.
 // Task 10 will assert that the non-priceHistory fields compile cleanly against
 // ComputeBuyScoreInputs; for now a cast is applied where needed.
 export interface AsOfBuyInputs extends ComputeBuyScoreInputs {
   priceHistory: EodBar[];
+  ratiosTtm: RatiosTtm;
 }
 
 export interface AsOfInputs {
@@ -169,6 +182,73 @@ function sumFirstN(rows: RawQuarterRow[], n: number, ...names: string[]): number
 }
 
 // ---------------------------------------------------------------------------
+// TTM ratio derivation
+// ---------------------------------------------------------------------------
+
+/**
+ * Derives TTM ratios from the trailing 4 quarters of pre-filtered,
+ * descending-sorted income and cash-flow arrays.
+ *
+ * If either array has fewer than 4 entries both coverage ratios are null
+ * (insufficient TTM data). All other sum fields are returned regardless.
+ */
+function deriveTtm(
+  incomeQuarterly: RawQuarterRow[],
+  cashflowQuarterly: RawQuarterRow[],
+): RatiosTtm {
+  const incomeQ4 = incomeQuarterly.slice(0, 4);
+  const cashQ4 = cashflowQuarterly.slice(0, 4);
+
+  const insufficient = incomeQ4.length < 4 || cashQ4.length < 4;
+
+  // Sums — always computed (even when insufficient, for transparency)
+  const fcfTtmVal = sumFirstN(cashflowQuarterly, 4, "freeCashFlow");
+  const dividendsPaidTtmAbs = Math.abs(
+    sumFirstN(
+      cashflowQuarterly,
+      4,
+      "commonDividendsPaid",
+      "netDividendsPaid",
+      "dividendsPaid",
+      "dividendPaid",
+      "commonStockDividendsPaid",
+    ),
+  );
+  // Use ebit first (fixture uses this field); fall back to operatingIncome for
+  // live FMP data which may store it differently.
+  const ebitTtmVal = sumFirstN(incomeQuarterly, 4, "ebit", "operatingIncome", "incomeBeforeTax");
+  const interestExpenseTtmVal = Math.abs(
+    sumFirstN(incomeQuarterly, 4, "interestExpense", "netInterestExpense"),
+  );
+  const netIncomeTtmVal = sumFirstN(incomeQuarterly, 4, "netIncome", "bottomLineNetIncome");
+
+  if (insufficient) {
+    return {
+      fcfCoverage: null,
+      interestCoverage: null,
+      netIncomeTtm: netIncomeTtmVal,
+      ebitTtm: ebitTtmVal,
+      fcfTtm: fcfTtmVal,
+      dividendsPaidTtmAbs,
+    };
+  }
+
+  const fcfCoverage =
+    dividendsPaidTtmAbs > 0 ? fcfTtmVal / dividendsPaidTtmAbs : null;
+  const interestCoverage =
+    interestExpenseTtmVal > 0 ? ebitTtmVal / interestExpenseTtmVal : null;
+
+  return {
+    fcfCoverage,
+    interestCoverage,
+    netIncomeTtm: netIncomeTtmVal,
+    ebitTtm: ebitTtmVal,
+    fcfTtm: fcfTtmVal,
+    dividendsPaidTtmAbs,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Main assembler
 // ---------------------------------------------------------------------------
 
@@ -281,6 +361,9 @@ export function buildAsOfInputs(args: BuildAsOfInputsArgs): AsOfInputs {
       date: t.transactionDate,
     }));
 
+  // --- TTM ratios (derived from filtered quarterly arrays) -----------------
+  const ratiosTtm = deriveTtm(incomeQuarterly, cashflowQuarterly);
+
   // --- Quality-gate fundamentals (TTM = 4 most-recent filtered quarters) --
   const fcfTtm = sumFirstN(cashflowQuarterly, 4, "freeCashFlow");
   const dividendsPaidTtm = Math.abs(
@@ -339,8 +422,9 @@ export function buildAsOfInputs(args: BuildAsOfInputsArgs): AsOfInputs {
   const asOf = new Date(asOfDate);
 
   const buy: AsOfBuyInputs = {
-    // Backtest-only extension
+    // Backtest-only extensions
     priceHistory,
+    ratiosTtm,
 
     // Identity
     symbol: ticker,
