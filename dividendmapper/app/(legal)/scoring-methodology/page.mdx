@@ -1,0 +1,59 @@
+export const metadata = {
+  title: "How DividendMapper scores are calculated",
+  description:
+    "What the Quality, Risk, and Trim scores measure, how they are calculated, and where they fall short. Plain-language explanation of the scoring methodology.",
+  alternates: { canonical: "/scoring-methodology" },
+};
+
+# How DividendMapper scores are calculated
+
+_Last updated 30 May 2026_
+
+DividendMapper gives each holding in your portfolio three scores: a Quality Score, a Risk Score, and a Trim Score. Each runs from 0 to 100 and refreshes daily. This page explains what they measure, how they work, and where they fall short.
+
+**These scores are informational tools to help you review your own holdings. They are not financial advice, not predictions of future returns, and not instructions to buy or sell. Always do your own research.**
+
+## Quality Score
+
+The Quality Score is gated. A holding must clear a set of hard checks before it receives a score at all. If it fails any of those checks, the score field shows "Did Not Qualify" rather than a number.
+
+The hard checks cover situations where a dividend looks fragile or where the company type makes the score inappropriate:
+
+- The dividend is not covered by operating cash flow. Banks and insurers are exempt from this check: that measure does not fit the way their accounts work.
+- The company has cut its dividend in recent history.
+- Interest coverage is thin: the business does not earn much more than its debt costs.
+- The security is a fund or ETF rather than a single company.
+- The company is below the minimum size threshold.
+- The dividend exceeds earnings per share.
+
+A holding that clears every gate is then scored across five areas: valuation, price trend, analyst sentiment, dividend timing, and dividend growth. A high Quality Score means the holding screens well on those dimensions today. Think of it as a resilience check, not a buy recommendation.
+
+## Risk Score
+
+The Risk Score adds up signals that suggest a dividend may be under pressure. The signals include a recent cut, weakening cash-flow coverage, a stretched payout ratio, rising debt, falling interest cover, and insider selling. A recent cut carries the most weight and dominates the score.
+
+A high Risk Score is the most actionable signal the tool provides. It flags a holding worth reviewing for cut danger. It does not tell you what to do.
+
+## Trim Score
+
+The Trim Score mirrors the valuation signals in the Quality Score, but applied in reverse. It flags holdings that look extended or richly valued relative to those signals. If a position has run well ahead of its fundamentals, a high Trim Score is the prompt to take a closer look.
+
+## Honest limitations
+
+The scores have real limits. You should know them.
+
+**They are not financial advice.** A score is a data summary, not a verdict on what you should do. Always do your own research.
+
+**The backtest is mixed.** We tested the Quality Score over 2006 to 2026, including the financial crisis. The result depended heavily on the market and the period. It helped a diversified, global portfolio through a full cycle. It did not reliably help a concentrated single-market portfolio. Treat it as one input.
+
+**A backward-looking score cannot foresee a sudden cut.** By the time a cut appears in the data, the decision has often already mattered. The Risk Score is there to flag deterioration earlier, but no score removes the need for your own judgement.
+
+**Coverage has gaps.** Some forward-looking inputs are not available for certain markets and smaller companies. History is thin for recently listed shares. Where data is missing, that signal is dropped and the remaining signals carry more weight.
+
+**The methodology is in beta.** Weights are reviewed periodically.
+
+## Data and cadence
+
+Market and fundamental data come from a third-party provider (FMP). Scores refresh once a day.
+
+For the full disclaimer on how DividendMapper tools should be used, see the [Terms of Service](/terms).
