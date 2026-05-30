@@ -1,17 +1,14 @@
 import type { QuoteResult } from "@/lib/market/quote";
 
-// Per-holding market value (quantity × current price, converted to GBP using the
-// same path as the income aggregator) → portfolio weights → concentration flag.
-// A holding above the threshold (default 20%) is surfaced as a soft hygiene
-// warning. Holdings whose quote price is unavailable are excluded from the total
-// AND cannot be flagged (we can't size what we can't price).
+// Per-holding market value (quantity × current price × GBP rate) → portfolio
+// weights → concentration flag. A holding above the threshold (default 20%) is
+// surfaced as a soft hygiene warning. Holdings whose quote price is unavailable
+// OR whose currency has no rate in the supplied ratesToGbp map are excluded from
+// the total AND cannot be flagged (we can't size what we can't price/convert).
 //
-// FX note: prices for UK (.L) securities are already in GBP (quote.ts converts
-// GBX → GBP before returning). US securities report in USD. This function uses
-// the raw quoted price for all holdings and labels the result "GBP-equivalent"
-// on the assumption that the portfolio is predominantly UK-listed. For a mixed
-// GBP/USD portfolio the weights are approximate but directionally correct for a
-// hygiene check. A full FX layer can be layered in later.
+// FX: callers resolve a currency→GBP multiplier map via ratesToGbpFor() from
+// lib/scoring/currency.ts (uses the Frankfurter cache) and inject it here.
+// Keeping this function pure + sync makes it cheap to test.
 //
 // Same-ticker aggregation: a user may hold the same ticker across multiple
 // wrappers (ISA + GIA). Quantities are summed per ticker before computing
@@ -47,13 +44,18 @@ export interface ConcentrationResult {
 /**
  * Compute portfolio concentration.
  *
- * @param holdings - All user holdings (full set, not the free-tier-clipped slice).
- * @param quotes   - Quote map returned by fetchPortfolioQuotes + mergeUkDividends.
- * @param threshold - Fraction above which a position is considered concentrated (default 0.20).
+ * @param holdings    - All user holdings (full set, not the free-tier-clipped slice).
+ * @param quotes      - Quote map returned by fetchPortfolioQuotes + mergeUkDividends.
+ * @param ratesToGbp  - Currency→GBP multiplier map (e.g. { GBP: 1, USD: 0.79 }).
+ *                      Resolved by ratesToGbpFor() from lib/scoring/currency.ts.
+ *                      A holding whose quote currency is absent from this map is
+ *                      treated as unpriced and excluded from the total.
+ * @param threshold   - Fraction above which a position is considered concentrated (default 0.20).
  */
 export function computeConcentration(
   holdings: ReadonlyArray<ConcentrationHolding>,
   quotes: ReadonlyMap<string, QuoteResult>,
+  ratesToGbp: Record<string, number>,
   threshold = 0.2,
 ): ConcentrationResult {
   if (holdings.length === 0) {
@@ -77,14 +79,18 @@ export function computeConcentration(
     );
   }
 
-  // 2. For each ticker, look up price and compute market value.
-  //    Holdings with no usable price are counted as unpriced and excluded.
+  // 2. For each ticker, look up price + currency, apply FX rate, compute market value.
+  //    Holdings with no usable price OR whose currency has no rate entry are
+  //    counted as unpriced and excluded from the total.
   const pricedValues: { ticker: string; valueGbp: number }[] = [];
   let unpricedCount = 0;
 
   for (const [ticker, totalQty] of quantityByTicker) {
     const result = quotes.get(ticker);
     const price = result?.ok ? result.data.price : null;
+    const currency = result?.ok ? result.data.currency : null;
+
+    // Exclude if price is unusable.
     if (price === null || price === undefined || !Number.isFinite(price) || price <= 0) {
       // Track how many input holdings were unpriced (not unique tickers, since
       // the user sees "holding rows"; count raw holdings rows for this ticker).
@@ -92,7 +98,16 @@ export function computeConcentration(
       unpricedCount += rowsForTicker;
       continue;
     }
-    const valueGbp = totalQty * price;
+
+    // Exclude if currency is unknown or has no FX rate available.
+    const rate = currency != null ? ratesToGbp[currency] : undefined;
+    if (rate === undefined || !Number.isFinite(rate) || rate <= 0) {
+      const rowsForTicker = holdings.filter((h) => h.ticker === ticker).length;
+      unpricedCount += rowsForTicker;
+      continue;
+    }
+
+    const valueGbp = totalQty * price * rate;
     if (!Number.isFinite(valueGbp) || valueGbp <= 0) {
       const rowsForTicker = holdings.filter((h) => h.ticker === ticker).length;
       unpricedCount += rowsForTicker;

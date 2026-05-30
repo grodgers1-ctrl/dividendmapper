@@ -30,6 +30,10 @@ function buildQuotes(entries: [string, QuoteResult][]): Map<string, QuoteResult>
   return new Map(entries);
 }
 
+// Default rates map used by tests that don't care about FX.
+const GBP_ONLY = { GBP: 1 };
+const GBP_USD = { GBP: 1, USD: 0.79 };
+
 // ────────────────────────────────────────────────────────────────────────────
 describe("computeConcentration — basic weighting", () => {
   it("flags the overweight holding when one dominates (70/10/10/10 split)", () => {
@@ -47,7 +51,7 @@ describe("computeConcentration — basic weighting", () => {
       ["VYM", okQuote(1)],
     ]);
 
-    const result = computeConcentration(holdings, quotes, 0.2);
+    const result = computeConcentration(holdings, quotes, GBP_ONLY, 0.2);
 
     expect(result.totalGbp).toBeCloseTo(100, 6);
     expect(result.unpricedCount).toBe(0);
@@ -71,7 +75,7 @@ describe("computeConcentration — basic weighting", () => {
       ["D", okQuote(1)],
     ]);
 
-    const result = computeConcentration(holdings, quotes, 0.2);
+    const result = computeConcentration(holdings, quotes, GBP_ONLY, 0.2);
     // All four are 25%, which is > 20%
     expect(result.overweight).toHaveLength(4);
   });
@@ -93,7 +97,7 @@ describe("computeConcentration — basic weighting", () => {
       ["E", okQuote(1)],
     ]);
 
-    const result = computeConcentration(holdings, quotes, 0.2);
+    const result = computeConcentration(holdings, quotes, GBP_ONLY, 0.2);
     // Exactly at threshold is NOT overweight (strictly >)
     expect(result.overweight).toHaveLength(0);
   });
@@ -108,7 +112,7 @@ describe("computeConcentration — basic weighting", () => {
       ["BIG", okQuote(1)],
     ]);
 
-    const result = computeConcentration(holdings, quotes, 0.2);
+    const result = computeConcentration(holdings, quotes, GBP_ONLY, 0.2);
     expect(result.positions[0].ticker).toBe("BIG");
     expect(result.positions[1].ticker).toBe("SMALL");
   });
@@ -126,7 +130,7 @@ describe("computeConcentration — missing / null prices", () => {
       ["UNPRICED", okQuote(null)],
     ]);
 
-    const result = computeConcentration(holdings, quotes, 0.2);
+    const result = computeConcentration(holdings, quotes, GBP_ONLY, 0.2);
 
     expect(result.unpricedCount).toBe(1);
     expect(result.totalGbp).toBeCloseTo(100, 6);
@@ -148,7 +152,7 @@ describe("computeConcentration — missing / null prices", () => {
       ["FAIL", failQuote()],
     ]);
 
-    const result = computeConcentration(holdings, quotes, 0.2);
+    const result = computeConcentration(holdings, quotes, GBP_ONLY, 0.2);
 
     expect(result.unpricedCount).toBe(1);
     expect(result.positions).toHaveLength(1);
@@ -160,7 +164,7 @@ describe("computeConcentration — missing / null prices", () => {
     const holdings = [{ ticker: "MISSING", quantity: 10 }];
     const quotes = buildQuotes([]);
 
-    const result = computeConcentration(holdings, quotes, 0.2);
+    const result = computeConcentration(holdings, quotes, GBP_ONLY, 0.2);
 
     expect(result.totalGbp).toBe(0);
     expect(result.positions).toHaveLength(0);
@@ -183,7 +187,7 @@ describe("computeConcentration — same ticker across multiple wrappers", () => 
       ["SCHD", okQuote(1)],
     ]);
 
-    const result = computeConcentration(holdings, quotes, 0.2);
+    const result = computeConcentration(holdings, quotes, GBP_ONLY, 0.2);
 
     // ULVR.L: 200/600 ≈ 33.3%, SCHD: 400/600 ≈ 66.7%
     expect(result.totalGbp).toBeCloseTo(600, 6);
@@ -210,7 +214,7 @@ describe("computeConcentration — same ticker across multiple wrappers", () => 
 // ────────────────────────────────────────────────────────────────────────────
 describe("computeConcentration — edge cases", () => {
   it("returns safe empty result for an empty holdings array", () => {
-    const result = computeConcentration([], new Map(), 0.2);
+    const result = computeConcentration([], new Map(), GBP_ONLY, 0.2);
 
     expect(result.totalGbp).toBe(0);
     expect(result.positions).toHaveLength(0);
@@ -230,10 +234,10 @@ describe("computeConcentration — edge cases", () => {
       ["B", okQuote(1)],
     ]);
 
-    const result50 = computeConcentration(holdings, quotes, 0.5);
+    const result50 = computeConcentration(holdings, quotes, GBP_ONLY, 0.5);
     expect(result50.overweight).toHaveLength(0); // exactly at 50%, not strictly above
 
-    const result49 = computeConcentration(holdings, quotes, 0.49);
+    const result49 = computeConcentration(holdings, quotes, GBP_ONLY, 0.49);
     expect(result49.overweight).toHaveLength(2); // both 50% > 49%
   });
 
@@ -247,9 +251,82 @@ describe("computeConcentration — edge cases", () => {
       ["B", okQuote(1)],
     ]);
 
-    const result = computeConcentration(holdings, quotes, 0.2);
+    const result = computeConcentration(holdings, quotes, GBP_ONLY, 0.2);
     expect(result.totalGbp).toBeCloseTo(100, 6);
     expect(result.overweight[0].ticker).toBe("A");
     expect(result.overweight[0].weight).toBeCloseTo(0.7, 6);
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────────────
+describe("computeConcentration — FX conversion", () => {
+  it("applies GBP rate = 1 so GBP holdings are unchanged", () => {
+    const holdings = [{ ticker: "LGEN.L", quantity: 100 }];
+    const quotes = buildQuotes([["LGEN.L", okQuote(2.5, "GBP")]]);
+
+    const result = computeConcentration(holdings, quotes, { GBP: 1 }, 0.2);
+
+    expect(result.totalGbp).toBeCloseTo(250, 6);
+    expect(result.positions[0].valueGbp).toBeCloseTo(250, 6);
+  });
+
+  it("converts USD prices to GBP using the injected rate so mixed-currency weights are correct", () => {
+    // Scenario: without FX conversion the USD holding would appear incorrectly sized.
+    //
+    // GBP holding: 100 shares × £2.00 = £200
+    // USD holding: 100 shares × $1.00 = $100 → at rate 0.79 = £79
+    //
+    // With correct FX:  total = £279;  GBP weight ≈ 71.7%,  USD weight ≈ 28.3%
+    // Without FX (both treated as GBP):  total = £300;  GBP weight ≈ 66.7%, USD weight ≈ 33.3%
+    //
+    // The test asserts that the FX-converted weights are what the function produces.
+    const holdings = [
+      { ticker: "LGEN.L", quantity: 100 },
+      { ticker: "AAPL", quantity: 100 },
+    ];
+    const quotes = buildQuotes([
+      ["LGEN.L", okQuote(2.0, "GBP")],
+      ["AAPL", okQuote(1.0, "USD")],
+    ]);
+
+    const result = computeConcentration(holdings, quotes, GBP_USD, 0.2);
+
+    const gbpValue = 100 * 2.0 * 1;    // £200
+    const usdValue = 100 * 1.0 * 0.79; // £79
+    const total = gbpValue + usdValue;  // £279
+
+    expect(result.totalGbp).toBeCloseTo(total, 4);
+
+    const lgenPos = result.positions.find((p) => p.ticker === "LGEN.L");
+    const aaplPos = result.positions.find((p) => p.ticker === "AAPL");
+    expect(lgenPos).toBeDefined();
+    expect(aaplPos).toBeDefined();
+    expect(lgenPos!.weight).toBeCloseTo(gbpValue / total, 4);
+    expect(aaplPos!.weight).toBeCloseTo(usdValue / total, 4);
+
+    // Confirm the weights differ from what naive (no-FX) arithmetic would give:
+    // naive AAPL weight = 100/300 = 0.333; FX-converted = 79/279 ≈ 0.283
+    const naiveAaplWeight = 100 / 300;
+    expect(aaplPos!.weight).not.toBeCloseTo(naiveAaplWeight, 2);
+  });
+
+  it("treats a holding whose currency has no rate in the map as unpriced", () => {
+    // EUR is not in the rates map → EUR holding should be excluded.
+    const holdings = [
+      { ticker: "GBP_STOCK", quantity: 50 },
+      { ticker: "EUR_STOCK", quantity: 50 },
+    ];
+    const quotes = buildQuotes([
+      ["GBP_STOCK", okQuote(1, "GBP")],
+      ["EUR_STOCK", okQuote(1, "EUR")], // EUR has a price but no rate → unpriced
+    ]);
+
+    // Only GBP in the rates map.
+    const result = computeConcentration(holdings, quotes, { GBP: 1 }, 0.2);
+
+    expect(result.unpricedCount).toBe(1);
+    expect(result.positions).toHaveLength(1);
+    expect(result.positions[0].ticker).toBe("GBP_STOCK");
+    expect(result.positions[0].weight).toBeCloseTo(1.0, 6);
   });
 });

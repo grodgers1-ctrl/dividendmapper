@@ -22,6 +22,7 @@ import { PortfolioIncomeChart } from "./_components/portfolio-income-chart";
 import { PortfolioSummaryBanner } from "./_components/portfolio-summary-banner";
 import { ConcentrationWarning } from "./_components/concentration-warning";
 import { computeConcentration } from "@/lib/portfolio/concentration";
+import { ratesToGbpFor } from "@/lib/scoring/currency";
 import { FREE_TIER_LIMIT } from "./_components/free-tier-copy";
 
 // 30 trading days ≈ 42 calendar days; the history row at/just before that point
@@ -113,7 +114,18 @@ export default async function PortfolioPage() {
   const quotes = mergeUkDividends(rawQuotes, ukTickers, ukDividendByTicker);
 
   const income = aggregatePortfolioIncome(allHoldings, quotes);
-  const concentration = computeConcentration(allHoldings, quotes);
+
+  // Collect the distinct currencies of priced quotes so we can resolve GBP
+  // multipliers before computing concentration weights.
+  const pricedCurrencies = [
+    ...new Set(
+      [...quotes.values()]
+        .map((q) => (q.ok ? q.data.currency : null))
+        .filter((c): c is string => c !== null),
+    ),
+  ];
+  const ratesToGbp = await ratesToGbpFor(pricedCurrencies);
+  const concentration = computeConcentration(allHoldings, quotes, ratesToGbp);
   // Map doesn't reliably survive Next's router cache when crossing the
   // server/client boundary; the table receives an empty Map on return
   // navigation. Plain object survives.

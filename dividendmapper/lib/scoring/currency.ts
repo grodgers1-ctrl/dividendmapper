@@ -55,3 +55,40 @@ export async function normalizePriceToGbp(
 export function isPence(currency: string): boolean {
   return currency === "GBp" || currency === "GBX";
 }
+
+/**
+ * Resolve a currency→GBP multiplier map for the given currencies.
+ *
+ * - GBP  → 1
+ * - GBp / GBX → 0.01 (pence to pounds)
+ * - USD / EUR / CAD → fetched via cached Frankfurter rate
+ * - Unsupported or fetch-failing currencies are omitted from the result;
+ *   callers treat a missing rate as "can't price / convert".
+ *
+ * Deduplicates the input so each unique currency is fetched at most once.
+ */
+export async function ratesToGbpFor(
+  currencies: string[],
+): Promise<Record<string, number>> {
+  const unique = [...new Set(currencies)];
+  const result: Record<string, number> = {};
+
+  await Promise.all(
+    unique.map(async (currency) => {
+      try {
+        if (currency === "GBP") {
+          result[currency] = 1;
+        } else if (currency === "GBp" || currency === "GBX") {
+          result[currency] = 0.01;
+        } else if (SUPPORTED.has(currency)) {
+          result[currency] = await getRateToGbp(currency);
+        }
+        // Unsupported currencies: omit silently (no entry in result).
+      } catch {
+        // Fetch failed — omit this currency so callers treat it as unpriced.
+      }
+    }),
+  );
+
+  return result;
+}
