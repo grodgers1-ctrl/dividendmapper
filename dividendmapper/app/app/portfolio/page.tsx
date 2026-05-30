@@ -20,6 +20,8 @@ import { HoldingsTable } from "./_components/holdings-table";
 import { AddHoldingLauncher } from "./_components/add-holding-launcher";
 import { PortfolioIncomeChart } from "./_components/portfolio-income-chart";
 import { PortfolioSummaryBanner } from "./_components/portfolio-summary-banner";
+import { ConcentrationWarning } from "./_components/concentration-warning";
+import { computeConcentration } from "@/lib/portfolio/concentration";
 import { FREE_TIER_LIMIT } from "./_components/free-tier-copy";
 
 // 30 trading days ≈ 42 calendar days; the history row at/just before that point
@@ -111,6 +113,7 @@ export default async function PortfolioPage() {
   const quotes = mergeUkDividends(rawQuotes, ukTickers, ukDividendByTicker);
 
   const income = aggregatePortfolioIncome(allHoldings, quotes);
+  const concentration = computeConcentration(allHoldings, quotes);
   // Map doesn't reliably survive Next's router cache when crossing the
   // server/client boundary; the table receives an empty Map on return
   // navigation. Plain object survives.
@@ -256,6 +259,10 @@ export default async function PortfolioPage() {
               </div>
             )}
             <PortfolioSummaryBanner flagged={flagged} />
+            <ConcentrationWarning
+              overweight={concentration.overweight}
+              threshold={concentration.threshold}
+            />
             <HoldingsTable
               rows={visibleRows}
               quotes={quotesByTicker}
