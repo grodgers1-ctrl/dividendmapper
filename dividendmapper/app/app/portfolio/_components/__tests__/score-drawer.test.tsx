@@ -69,7 +69,7 @@ describe("<ScoreDrawer>", () => {
       signals: { buy: [], trim: [], risk: [] },
     });
     render(<ScoreDrawer ticker="SCHD" scoreType="buy" open onOpenChange={() => {}} />);
-    expect(await screen.findByText("ETF or fund — not company-scored")).toBeInTheDocument();
+    expect(await screen.findByText("ETF or fund, not company-scored")).toBeInTheDocument();
   });
 
   it("POSTs an override when Hide this score is clicked", async () => {

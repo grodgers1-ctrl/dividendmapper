@@ -26,7 +26,7 @@ describe("actionHint", () => {
   });
   it("then trim", () => {
     expect(actionHint({ buy: 10, trim: 80, risk: 10 })).toBe("Consider trimming");
-    expect(actionHint({ buy: 10, trim: 55, risk: 10 })).toBe("Watch — extended");
+    expect(actionHint({ buy: 10, trim: 55, risk: 10 })).toBe("Watch: extended");
   });
   it("then buy, else hold", () => {
     expect(actionHint({ buy: 80, trim: 10, risk: 10 })).toBe("Add more");

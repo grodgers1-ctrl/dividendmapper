@@ -41,7 +41,7 @@ const schdScore: HoldingScore = {
   trim: 88,
   risk: 60,
   buyFailedGates: ["GATE_4"],
-  buyGateReason: "ETF or fund — not company-scored",
+  buyGateReason: "ETF or fund, not company-scored",
   dataQuality: "sparse",
   deltas: { buy: null, trim: null, risk: null },
   hidden: { buy: false, trim: false, risk: false },
@@ -77,10 +77,11 @@ describe("<HoldingsTable> score column (Pro)", () => {
     expect(within(table).getAllByText(/Add more/).length).toBeGreaterThan(0);
   });
 
-  it("shows the dynamic gate reason for a gate-failer plus its trim/risk chips", () => {
+  it("shows a DNQ chip (reason on hover) for a gate-failer plus its trim/risk chips", () => {
     render(<HoldingsTable {...props} />);
     const table = screen.getByRole("table");
-    expect(within(table).getByText(/ETF or fund/)).toBeInTheDocument();
+    const dnq = within(table).getByText("DNQ");
+    expect(dnq.closest("button")).toHaveAttribute("title", "ETF or fund, not company-scored");
     expect(within(table).getByText("88")).toBeInTheDocument();
     expect(within(table).getByText("60")).toBeInTheDocument();
   });

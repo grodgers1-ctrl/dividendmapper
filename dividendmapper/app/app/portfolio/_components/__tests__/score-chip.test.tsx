@@ -15,14 +15,16 @@ describe("<ScoreChip>", () => {
     expect(screen.getByTestId("score-chip")).toHaveAttribute("data-color", "#0a8a4f");
   });
 
-  it("renders a charcoal gate-reason chip with no number when score is null", () => {
+  it("renders a charcoal DNQ chip with the reason on hover when score is null", () => {
     render(
-      <ScoreChip type="buy" score={null} gateReason="ETF or fund — not company-scored" />,
+      <ScoreChip type="buy" score={null} gateReason="ETF or fund, not company-scored" />,
     );
     const chip = screen.getByTestId("score-chip");
     expect(chip).toHaveAttribute("data-color", "#27272a");
-    expect(screen.getByText(/ETF or fund/)).toBeInTheDocument();
+    expect(screen.getByText("DNQ")).toBeInTheDocument();
+    expect(chip).toHaveAttribute("title", "ETF or fund, not company-scored");
     expect(screen.queryByText(/^\d+$/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/ETF or fund/)).not.toBeInTheDocument();
   });
 
   it("shows a β mark when isBeta", () => {

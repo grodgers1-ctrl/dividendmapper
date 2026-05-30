@@ -13,7 +13,7 @@ const REASONS: Record<GateCode, string> = {
   GATE_1: "Dividend not covered by cash flow",
   GATE_2: "Dividend history irregular",
   GATE_3: "Thin interest coverage",
-  GATE_4: "ETF or fund — not company-scored",
+  GATE_4: "ETF or fund, not company-scored",
   GATE_5: "Below scoring size threshold",
 };
 

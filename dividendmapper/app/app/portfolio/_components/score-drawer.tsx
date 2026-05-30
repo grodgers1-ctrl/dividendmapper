@@ -213,7 +213,7 @@ export function ScoreDrawer({
               <div className="mt-auto pt-8">
                 {isBeta && (
                   <p className="mb-2 text-xs text-muted-foreground">
-                    Scores are in beta — methodology evolving, weights tuned monthly.
+                    Scores are in beta: methodology evolving, weights tuned monthly.
                   </p>
                 )}
                 <p className="text-[0.7rem] leading-relaxed text-muted-foreground/70">

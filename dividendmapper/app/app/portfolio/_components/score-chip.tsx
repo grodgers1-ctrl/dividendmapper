@@ -47,6 +47,7 @@ export function ScoreChip({
       onClick={onOpen}
       data-testid="score-chip"
       data-color={bg}
+      title={gateFailed ? (gateReason ?? "Quality concern") : undefined}
       aria-label={
         gateFailed
           ? `${label} score unavailable: ${gateReason ?? "quality concern"}`
@@ -58,7 +59,9 @@ export function ScoreChip({
       {hidden ? (
         <span className="font-medium">Hidden</span>
       ) : gateFailed ? (
-        <span>{gateReason ?? "Quality concern"}</span>
+        // Short fixed-width "Did Not Qualify" tag keeps the chip row aligned;
+        // the full reason surfaces on hover (title) + in the drawer.
+        <span className="font-semibold">DNQ</span>
       ) : (
         <>
           <span className="font-mono font-semibold tabular-nums">{score}</span>

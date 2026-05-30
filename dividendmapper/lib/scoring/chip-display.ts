@@ -31,7 +31,7 @@ export function actionHint(s: {
   if (risk >= 75) return "Review urgently";
   if (risk >= 50) return "Reassess thesis";
   if (trim >= 75) return "Consider trimming";
-  if (trim >= 50) return "Watch — extended";
+  if (trim >= 50) return "Watch: extended";
   if (buy >= 75) return "Add more";
   if (buy >= 50) return "Accumulate on dips";
   return "Hold";
