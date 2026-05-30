@@ -4,6 +4,11 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Trash2 } from "lucide-react";
 import type { QuoteResult } from "@/lib/market/quote";
+import type { HoldingScore } from "@/lib/scoring/portfolio-scores";
+import type { ScoreType } from "@/lib/scoring/chip-display";
+import { ScoreChip } from "./score-chip";
+import { ScoreDrawer } from "./score-drawer";
+import { UpgradePill } from "./upgrade-pill";
 
 type HoldingRow = {
   id: string;
@@ -105,15 +110,110 @@ function IncomeCell({ status, className }: IncomeCellProps) {
   );
 }
 
+type OpenScore = (ticker: string, type: ScoreType) => void;
+
+// The three-chip stack + action hint shown in the desktop score column.
+function ScoreChipStack({
+  score,
+  isBeta,
+  onOpen,
+}: {
+  score: HoldingScore;
+  isBeta: boolean;
+  onOpen: OpenScore;
+}) {
+  return (
+    <div className="flex flex-col items-end gap-1">
+      <div className="flex flex-wrap items-center justify-end gap-1">
+        <ScoreChip
+          type="buy"
+          score={score.buy}
+          gateReason={score.buyGateReason}
+          delta={score.deltas.buy}
+          hidden={score.hidden.buy}
+          isBeta={isBeta}
+          onOpen={() => onOpen(score.ticker, "buy")}
+        />
+        <ScoreChip
+          type="trim"
+          score={score.trim}
+          delta={score.deltas.trim}
+          hidden={score.hidden.trim}
+          isBeta={isBeta}
+          onOpen={() => onOpen(score.ticker, "trim")}
+        />
+        <ScoreChip
+          type="risk"
+          score={score.risk}
+          delta={score.deltas.risk}
+          hidden={score.hidden.risk}
+          isBeta={isBeta}
+          onOpen={() => onOpen(score.ticker, "risk")}
+        />
+      </div>
+      <span className="text-xs text-muted-foreground">{score.actionHint}</span>
+    </div>
+  );
+}
+
+// Mobile collapses the three chips into one pill that taps to expand.
+function MobileScorePill({
+  score,
+  isBeta,
+  onOpen,
+}: {
+  score: HoldingScore;
+  isBeta: boolean;
+  onOpen: OpenScore;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  if (expanded) {
+    return <ScoreChipStack score={score} isBeta={isBeta} onOpen={onOpen} />;
+  }
+  return (
+    <button
+      type="button"
+      data-testid="mobile-score-pill"
+      onClick={() => setExpanded(true)}
+      aria-label="Show Buy, Trim and Risk scores"
+      className="inline-flex items-center gap-1 rounded-full border border-border bg-secondary px-2.5 py-0.5 font-mono text-xs font-medium tabular-nums text-foreground"
+    >
+      <span>{score.buy ?? "—"}</span>
+      <span className="text-muted-foreground">/</span>
+      <span>{score.trim ?? "—"}</span>
+      <span className="text-muted-foreground">/</span>
+      <span>{score.risk ?? "—"}</span>
+    </button>
+  );
+}
+
 interface HoldingsTableProps {
   rows: HoldingRow[];
   quotes: Record<string, QuoteResult>;
+  tier: "free" | "pro" | "premium";
+  pricingPublic: boolean;
+  isBeta: boolean;
+  scoresByTicker: Record<string, HoldingScore>;
 }
 
-export function HoldingsTable({ rows, quotes }: HoldingsTableProps) {
+export function HoldingsTable({
+  rows,
+  quotes,
+  tier,
+  pricingPublic,
+  isBeta,
+  scoresByTicker,
+}: HoldingsTableProps) {
   const router = useRouter();
   const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
   const [, startTransition] = useTransition();
+  const [openScore, setOpenScore] = useState<{ ticker: string; type: ScoreType } | null>(
+    null,
+  );
+
+  const isFree = tier === "free";
+  const handleOpenScore: OpenScore = (ticker, type) =>
+    setOpenScore({ ticker, type });
 
   const markPending = (id: string, on: boolean) => {
     setPendingIds((prev) => {
@@ -185,6 +285,9 @@ export function HoldingsTable({ rows, quotes }: HoldingsTableProps) {
                 <th scope="col" className="px-4 py-3 text-right">
                   Income
                 </th>
+                <th scope="col" className="px-4 py-3 text-right">
+                  Scores
+                </th>
                 <th scope="col" className="px-4 py-3">
                   Broker
                 </th>
@@ -197,6 +300,7 @@ export function HoldingsTable({ rows, quotes }: HoldingsTableProps) {
               {rows.map((row) => {
                 const pending = pendingIds.has(row.id);
                 const incomeStatus = resolveRowIncome(row, quotes);
+                const score = scoresByTicker[row.ticker];
                 return (
                   <tr
                     key={row.id}
@@ -220,6 +324,19 @@ export function HoldingsTable({ rows, quotes }: HoldingsTableProps) {
                     </td>
                     <td className="px-4 py-3 text-right text-sm">
                       <IncomeCell status={incomeStatus} />
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      {isFree ? (
+                        <UpgradePill pricingPublic={pricingPublic} />
+                      ) : score ? (
+                        <ScoreChipStack
+                          score={score}
+                          isBeta={isBeta}
+                          onOpen={handleOpenScore}
+                        />
+                      ) : (
+                        <span className="text-muted-foreground/60">—</span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">
                       {row.broker_label ?? (
@@ -250,6 +367,7 @@ export function HoldingsTable({ rows, quotes }: HoldingsTableProps) {
         {rows.map((row) => {
           const pending = pendingIds.has(row.id);
           const incomeStatus = resolveRowIncome(row, quotes);
+          const score = scoresByTicker[row.ticker];
           return (
             <li
               key={row.id}
@@ -266,15 +384,26 @@ export function HoldingsTable({ rows, quotes }: HoldingsTableProps) {
                     {WRAPPER_LABEL[row.wrapper] ?? row.wrapper}
                   </span>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => handleDelete(row)}
-                  disabled={pending}
-                  aria-label={`Delete ${row.ticker}`}
-                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 focus:ring-offset-card disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <Trash2 className="h-4 w-4" aria-hidden="true" />
-                </button>
+                <div className="flex shrink-0 items-center gap-2">
+                  {isFree ? (
+                    <UpgradePill pricingPublic={pricingPublic} />
+                  ) : score ? (
+                    <MobileScorePill
+                      score={score}
+                      isBeta={isBeta}
+                      onOpen={handleOpenScore}
+                    />
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(row)}
+                    disabled={pending}
+                    aria-label={`Delete ${row.ticker}`}
+                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 focus:ring-offset-card disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <Trash2 className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                </div>
               </div>
 
               <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
@@ -317,6 +446,18 @@ export function HoldingsTable({ rows, quotes }: HoldingsTableProps) {
           );
         })}
       </ul>
+
+      {openScore && (
+        <ScoreDrawer
+          ticker={openScore.ticker}
+          scoreType={openScore.type}
+          open={true}
+          onOpenChange={(o) => {
+            if (!o) setOpenScore(null);
+          }}
+          isBeta={isBeta}
+        />
+      )}
     </>
   );
 }

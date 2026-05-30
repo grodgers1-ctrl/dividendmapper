@@ -5,10 +5,26 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { isPricingPublic } from "@/lib/flags/pricing";
 import { aggregatePortfolioIncome } from "@/lib/portfolio/income";
 import { fetchPortfolioQuotes } from "@/lib/portfolio/quotes";
+import {
+  buildHoldingScore,
+  applyUserWeights,
+  flaggedHoldings,
+  type HoldingScore,
+  type ScoreRow,
+  type PriorHistory,
+  type OverrideRow,
+} from "@/lib/scoring/portfolio-scores";
+import { isBeta } from "@/lib/scoring/config";
 import { HoldingsTable } from "./_components/holdings-table";
 import { AddHoldingLauncher } from "./_components/add-holding-launcher";
 import { PortfolioIncomeChart } from "./_components/portfolio-income-chart";
+import { PortfolioSummaryBanner } from "./_components/portfolio-summary-banner";
 import { FREE_TIER_LIMIT } from "./_components/free-tier-copy";
+
+// 30 trading days ≈ 42 calendar days; the history row at/just before that point
+// is the delta baseline. Until ~6 weeks of history accrues this finds nothing
+// and deltas stay null (chips simply omit the delta pill).
+const DELTA_LOOKBACK_DAYS = 42;
 
 export const metadata: Metadata = {
   title: "Portfolio",
@@ -72,6 +88,74 @@ export default async function PortfolioPage() {
   // server/client boundary; the table receives an empty Map on return
   // navigation. Plain object survives.
   const quotesByTicker = Object.fromEntries(quotes);
+
+  // Scores are a Pro+ feature; Free sees the upgrade pill instead, so skip the
+  // queries entirely for Free. Per-ticker scoring joins cleanly on ticker
+  // (the cron derives its universe from holdings, so tickers already match).
+  const scoresByTicker: Record<string, HoldingScore> = {};
+  let flagged: { ticker: string; hint: string }[] = [];
+  if (tier !== "free" && visibleRows.length > 0) {
+    const tickers = [...new Set(visibleRows.map((h) => h.ticker))];
+    const cutoff = new Date(Date.now() - DELTA_LOOKBACK_DAYS * 86_400_000)
+      .toISOString()
+      .slice(0, 10);
+    const [scoresRes, overridesRes, historyRes] = await Promise.all([
+      supabase
+        .from("equity_scores")
+        .select(
+          "ticker, buy_score, trim_score, risk_score, buy_failed_gates, data_quality",
+        )
+        .in("ticker", tickers)
+        .returns<ScoreRow[]>(),
+      supabase
+        .from("score_overrides")
+        .select("ticker, score_type, expires_at")
+        .eq("user_id", user.id)
+        .returns<(OverrideRow & { ticker: string })[]>(),
+      supabase
+        .from("equity_score_history")
+        .select("ticker, buy_score, trim_score, risk_score, observed_at")
+        .in("ticker", tickers)
+        .lte("observed_at", cutoff)
+        .order("observed_at", { ascending: false })
+        .returns<(PriorHistory & { ticker: string; observed_at: string })[]>(),
+    ]);
+
+    const overridesByTicker = new Map<string, OverrideRow[]>();
+    for (const o of overridesRes.data ?? []) {
+      const list = overridesByTicker.get(o.ticker) ?? [];
+      list.push({ score_type: o.score_type, expires_at: o.expires_at });
+      overridesByTicker.set(o.ticker, list);
+    }
+    // history is sorted newest-first; first row per ticker is the baseline.
+    const priorByTicker = new Map<string, PriorHistory>();
+    for (const h of historyRes.data ?? []) {
+      if (!priorByTicker.has(h.ticker)) {
+        priorByTicker.set(h.ticker, {
+          buy_score: h.buy_score,
+          trim_score: h.trim_score,
+          risk_score: h.risk_score,
+        });
+      }
+    }
+
+    const now = new Date();
+    for (const score of scoresRes.data ?? []) {
+      scoresByTicker[score.ticker] = applyUserWeights(
+        buildHoldingScore({
+          score,
+          priorHistory: priorByTicker.get(score.ticker) ?? null,
+          overrides: overridesByTicker.get(score.ticker) ?? [],
+          now,
+        }),
+        null,
+      );
+    }
+    // Flag from the distinct holdings actually shown.
+    flagged = flaggedHoldings(
+      tickers.map((t) => scoresByTicker[t]).filter(Boolean),
+    );
+  }
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-12 md:px-6 md:py-16">
@@ -144,7 +228,15 @@ export default async function PortfolioPage() {
                 )}
               </div>
             )}
-            <HoldingsTable rows={visibleRows} quotes={quotesByTicker} />
+            <PortfolioSummaryBanner flagged={flagged} />
+            <HoldingsTable
+              rows={visibleRows}
+              quotes={quotesByTicker}
+              tier={tier}
+              pricingPublic={pricingPublic}
+              isBeta={isBeta()}
+              scoresByTicker={scoresByTicker}
+            />
             <PortfolioIncomeChart income={income} />
           </div>
         )}
