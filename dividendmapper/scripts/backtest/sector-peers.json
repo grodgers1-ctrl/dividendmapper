@@ -1,0 +1,30 @@
+{
+  "Energy": {
+    "uk": ["BP.L", "SHEL.L", "HBR.L"],
+    "us": ["XOM", "CVX", "COP"]
+  },
+  "Consumer Staples": {
+    "uk": ["ULVR.L", "BATS.L", "IMB.L", "DGE.L"],
+    "us": ["PG", "KO", "PEP", "MO", "PM"]
+  },
+  "Communication Services": {
+    "uk": ["VOD.L", "BT-A.L"],
+    "us": ["T", "VZ", "CMCSA"]
+  },
+  "Healthcare": {
+    "uk": ["GSK.L", "AZN.L"],
+    "us": ["JNJ", "PFE", "ABBV", "MRK"]
+  },
+  "Financial Services": {
+    "uk": ["LGEN.L", "AV.L", "NWG.L", "HSBA.L"],
+    "us": ["JPM", "BAC", "WFC"]
+  },
+  "Utilities": {
+    "uk": ["NG.L", "SSE.L"],
+    "us": ["DUK", "SO", "NEE"]
+  },
+  "Real Estate": {
+    "uk": ["LAND.L", "BLND.L"],
+    "us": ["O", "PLD", "AMT"]
+  }
+}

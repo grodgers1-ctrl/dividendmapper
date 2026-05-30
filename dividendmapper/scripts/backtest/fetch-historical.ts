@@ -37,3 +37,34 @@ export async function seedTickerCache(args: SeedArgs): Promise<void> {
     writeCacheAtomic(resolve(cacheRoot, ticker, `${name}.json`), value);
   }
 }
+
+export const PEER_ENDPOINTS: EndpointSpec[] = [
+  { name: "profile", url: "/stable/profile?symbol={SYMBOL}" },
+  { name: "historical-price-eod", url: "/stable/historical-price-eod/full?symbol={SYMBOL}" },
+  { name: "dividends", url: "/stable/dividends?symbol={SYMBOL}" },
+];
+
+export interface SeedPeerArgs {
+  sector: string;
+  ticker: string;
+  cacheRoot: string;
+  httpGet: (url: string) => Promise<unknown>;
+  padMs: number;
+  force?: boolean;
+}
+
+export async function seedPeerCache(args: SeedPeerArgs): Promise<void> {
+  const { sector, ticker, cacheRoot, httpGet, padMs, force = false } = args;
+  const peerDir = `sectors/${sector}/${ticker}`;
+
+  const todo: EndpointSpec[] = PEER_ENDPOINTS
+    .map((ep) => ({ ...ep, url: ep.url.replace("{SYMBOL}", encodeURIComponent(ticker)) }))
+    .filter((ep) => force || !cacheExists(resolve(cacheRoot, peerDir, `${ep.name}.json`)));
+
+  if (todo.length === 0) return;
+
+  const results = await fetchTickerEndpoints({ ticker, endpoints: todo, httpGet, padMs });
+  for (const [name, value] of Object.entries(results)) {
+    writeCacheAtomic(resolve(cacheRoot, peerDir, `${name}.json`), value);
+  }
+}
