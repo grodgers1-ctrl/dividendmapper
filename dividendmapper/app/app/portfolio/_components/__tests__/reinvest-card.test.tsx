@@ -63,6 +63,15 @@ describe("<ReinvestCard>", () => {
     expect(JSON.parse(fetchMock.mock.calls[0][1].body).userAction).toBe("shown_only");
   });
 
+  it("collapses again when Hide ideas is clicked", () => {
+    render(<ReinvestCard trigger={trigger} candidates={[cand({ ticker: "PEP" })]} />);
+    expand();
+    expect(screen.getByTestId("reinvest-candidate-PEP")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /hide ideas/i }));
+    expect(screen.queryByTestId("reinvest-candidate-PEP")).toBeNull();
+    expect(screen.getByRole("button", { name: /see reinvest ideas/i })).toBeTruthy();
+  });
+
   it("Save idea logs an accepted suggestion and shows an inline confirmation", async () => {
     render(<ReinvestCard trigger={trigger} candidates={[cand({ ticker: "PEP" }), cand({ ticker: "PYPL", holdingId: "p2" })]} />);
     expand();

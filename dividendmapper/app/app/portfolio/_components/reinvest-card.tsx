@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, X } from "lucide-react";
+import { ChevronDown, ChevronUp, X } from "lucide-react";
 import type { ReinvestCard as ReinvestCardData } from "@/lib/reinvest/build-card";
 
 // Reinvest Recommender card. Appears when a holding goes ex-dividend within a
@@ -116,16 +116,20 @@ export function ReinvestCard({ trigger, candidates }: ReinvestCardData) {
         </button>
       </div>
 
-      {!expanded ? (
-        <button
-          type="button"
-          onClick={onExpand}
-          className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-brand-700 hover:underline dark:text-brand-300"
-        >
-          See reinvest ideas
+      <button
+        type="button"
+        onClick={expanded ? () => setExpanded(false) : onExpand}
+        className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-brand-700 hover:underline dark:text-brand-300"
+      >
+        {expanded ? "Hide ideas" : "See reinvest ideas"}
+        {expanded ? (
+          <ChevronUp className="h-3.5 w-3.5" aria-hidden />
+        ) : (
           <ChevronDown className="h-3.5 w-3.5" aria-hidden />
-        </button>
-      ) : (
+        )}
+      </button>
+
+      {expanded && (
         <div className="mt-2">
           <p className="text-muted-foreground">
             {est && weight ? (
