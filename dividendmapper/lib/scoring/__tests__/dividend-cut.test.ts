@@ -55,4 +55,21 @@ describe("detectDividendCut", () => {
     expect(detectDividendCut(divs, { asOf, lookbackYears: 5 }).isCut).toBe(true);
     expect(detectDividendCut(divs, { asOf, lookbackYears: 1 }).isCut).toBe(false);
   });
+
+  it("does NOT flag a strictly-increasing quarterly payer when a rolling window clips a payment (PEP regression)", () => {
+    // Real PEP ex-dates/amounts (2020-2026). The dividend rose every single year
+    // (1.0225 -> 1.075 -> 1.15 -> 1.265 -> 1.355 -> 1.4225 -> 1.48), so a "cut" is
+    // impossible. The old trailing-TTM-sum detector false-tripped because the
+    // 365-day window ending ~2024-05-31 clipped 2023-06-01 onto its strict
+    // boundary, leaving 3 payments in that window vs 5 in the prior one.
+    const pep = [
+      ["2026-06-05", 1.48], ["2026-03-06", 1.4225], ["2025-12-05", 1.4225], ["2025-09-05", 1.4225],
+      ["2025-06-06", 1.4225], ["2025-03-07", 1.355], ["2024-12-06", 1.355], ["2024-09-06", 1.355],
+      ["2024-06-07", 1.355], ["2024-02-29", 1.265], ["2023-11-30", 1.265], ["2023-08-31", 1.265],
+      ["2023-06-01", 1.265], ["2023-03-02", 1.15], ["2022-12-01", 1.15], ["2022-09-01", 1.15],
+      ["2022-06-02", 1.15], ["2022-03-03", 1.075], ["2021-12-02", 1.075], ["2021-09-02", 1.075],
+      ["2021-06-03", 1.075], ["2021-03-04", 1.0225], ["2020-12-03", 1.0225], ["2020-09-03", 1.0225],
+    ].map(([date, adj]) => ({ date: date as string, adjDividend: adj as number, dividend: adj as number }));
+    expect(detectDividendCut(pep, { asOf: new Date("2026-05-31T00:00:00Z") }).isCut).toBe(false);
+  });
 });
