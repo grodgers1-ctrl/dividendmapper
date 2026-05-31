@@ -76,17 +76,19 @@ describe("buildSuggestions", () => {
     expect(out.length).toBe(5);
   });
 
-  it("demotes a candidate already over the concentration cap below an under-weight peer", () => {
+  it("excludes a candidate already at or over the concentration cap", () => {
     const out = buildSuggestions({
       ...base,
       holdings: [
         holding({ id: "fat", ticker: "FAT", buyScore: 90 }),
         holding({ id: "lean", ticker: "LEAN", buyScore: 70 }),
+        holding({ id: "atcap", ticker: "ATCAP", buyScore: 80 }),
       ],
-      currentWeightByHolding: { fat: 0.35, lean: 0.03 },
+      currentWeightByHolding: { fat: 0.35, lean: 0.03, atcap: 0.2 },
     });
-    // FAT has the higher quality but is over-cap (×0.5); LEAN's bonus lifts it above.
-    expect(out[0].holdingId).toBe("lean");
+    // Reinvesting into a holding already at/over the 20% cap worsens concentration,
+    // so it is never a suggested destination, however high its Quality.
+    expect(out.map((s) => s.holdingId)).toEqual(["lean"]);
   });
 
   it("returns currentWeight and a diversification note for the copy", () => {

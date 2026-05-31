@@ -86,19 +86,26 @@ function buildReason(candidate: Holding, sectorDiversificationDelta: number): st
 }
 
 export function buildSuggestions(inputs: SuggestionInputs): Suggestion[] {
+  const threshold = inputs.concentrationThreshold ?? 0.2;
+  const limit = inputs.limit ?? 10;
+  const weights = inputs.currentWeightByHolding ?? {};
+
   const avoidSet = new Set((inputs.sectorsToAvoid ?? []).map((s) => s.toLowerCase()));
-  const eligible = inputs.holdings.filter(
-    (h) =>
+  const eligible = inputs.holdings.filter((h) => {
+    // A holding already at/over the concentration cap is never a sensible place
+    // to reinvest: adding to it worsens concentration, the opposite of the card's
+    // hygiene purpose. Exclude it outright rather than merely demoting it.
+    const w = weights[h.id];
+    const overCap = typeof w === "number" && Number.isFinite(w) && w >= threshold;
+    return (
       h.id !== inputs.triggerHoldingId &&
       h.buyScore != null &&
       h.qualityGatePassed &&
       !h.hasActiveOverride &&
-      !(h.sector && avoidSet.has(h.sector.toLowerCase())),
-  );
-
-  const threshold = inputs.concentrationThreshold ?? 0.2;
-  const limit = inputs.limit ?? 10;
-  const weights = inputs.currentWeightByHolding ?? {};
+      !overCap &&
+      !(h.sector && avoidSet.has(h.sector.toLowerCase()))
+    );
+  });
 
   const ranked = eligible.map((h) => {
     // Day-5 projection: scale the trigger payment by the candidate's annual
