@@ -10,7 +10,7 @@ import { ProPrice } from "./_components/pro-price";
 export const metadata: Metadata = {
   title: "Pricing",
   description:
-    "Free dividend portfolio tools, plus a Pro tier that lifts the 10-holding cap and ships broker sync, alerts, and the dividend calendar in 2026.",
+    "Free dividend portfolio tools, plus a Pro tier that lifts the 10-holding cap, scores every holding for quality and risk, and ships broker sync and alerts in 2026.",
 };
 
 // Per-user (auth + founding-member status) and per-request, never cached.
@@ -33,6 +33,7 @@ const PRO_FEATURES = [
   "Everything in Free",
   "No holdings cap, track as many as you own",
   "Full portfolio income across every holding, every wrapper",
+  "Daily Quality, Risk and Trim scores that flag cut risk and stretched valuations",
   "Tax notes on each wrapper, GIA dividend-allowance warnings",
 ];
 
@@ -78,8 +79,9 @@ export default async function PricingPage() {
           Pricing
         </h1>
         <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-muted-foreground md:text-lg">
-          Free covers the basics. Pro tracks your whole portfolio and brings
-          broker sync, alerts, and the dividend calendar through 2026.
+          Free covers the basics. Pro tracks your whole portfolio and scores
+          every holding for quality and risk. Broker sync, alerts, and the
+          dividend calendar arrive through 2026.
         </p>
       </header>
 
@@ -227,6 +229,13 @@ export default async function PricingPage() {
               </li>
             ))}
           </ul>
+
+          <Link
+            href="/scoring-methodology"
+            className="mt-4 inline-block text-sm font-medium text-brand-700 underline-offset-2 hover:underline dark:text-brand-300"
+          >
+            How the scores work
+          </Link>
 
           <div className="mt-8 border-t border-border pt-6">
             <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
