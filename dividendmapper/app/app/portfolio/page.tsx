@@ -19,8 +19,7 @@ import { isBeta } from "@/lib/scoring/config";
 import { HoldingsTable } from "./_components/holdings-table";
 import { AddHoldingLauncher } from "./_components/add-holding-launcher";
 import { PortfolioIncomeChart } from "./_components/portfolio-income-chart";
-import { PortfolioSummaryBanner } from "./_components/portfolio-summary-banner";
-import { ConcentrationWarning } from "./_components/concentration-warning";
+import { PortfolioInsights } from "./_components/portfolio-insights";
 import { ReinvestCard } from "./_components/reinvest-card";
 import { computeConcentration } from "@/lib/portfolio/concentration";
 import { ratesToGbpFor } from "@/lib/scoring/currency";
@@ -339,8 +338,8 @@ export default async function PortfolioPage() {
                 candidates={reinvestCard.candidates}
               />
             )}
-            <PortfolioSummaryBanner flagged={flagged} />
-            <ConcentrationWarning
+            <PortfolioInsights
+              flagged={flagged}
               overweight={concentration.overweight}
               threshold={concentration.threshold}
             />
