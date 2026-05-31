@@ -415,9 +415,10 @@ export async function getInsiderTrades(symbol: string, limit = 100): Promise<Fmp
 // tickers in a cron run.
 export interface FmpCalendarDividend {
   symbol: string;
-  date: string;
+  date: string;          // ex-dividend date (YYYY-MM-DD)
   adjDividend: number;
-  dividend: number;
+  dividend: number;      // per share, native units
+  paymentDate?: string;  // YYYY-MM-DD; "" or absent when FMP has not set it
   [k: string]: unknown;
 }
 export async function getDividendsCalendar(from: string, to: string): Promise<FmpCalendarDividend[]> {
