@@ -21,8 +21,14 @@ import { AddHoldingLauncher } from "./_components/add-holding-launcher";
 import { PortfolioIncomeChart } from "./_components/portfolio-income-chart";
 import { PortfolioSummaryBanner } from "./_components/portfolio-summary-banner";
 import { ConcentrationWarning } from "./_components/concentration-warning";
+import { ReinvestCard } from "./_components/reinvest-card";
 import { computeConcentration } from "@/lib/portfolio/concentration";
 import { ratesToGbpFor } from "@/lib/scoring/currency";
+import {
+  buildReinvestCard,
+  type ReinvestCard as ReinvestCardData,
+  type ExDiv,
+} from "@/lib/reinvest/build-card";
 import { FREE_TIER_LIMIT } from "./_components/free-tier-copy";
 
 // 30 trading days ≈ 42 calendar days; the history row at/just before that point
@@ -136,6 +142,7 @@ export default async function PortfolioPage() {
   // (the cron derives its universe from holdings, so tickers already match).
   const scoresByTicker: Record<string, HoldingScore> = {};
   let flagged: { ticker: string; hint: string }[] = [];
+  let reinvestCard: ReinvestCardData | null = null;
   if (tier !== "free" && visibleRows.length > 0) {
     const tickers = [...new Set(visibleRows.map((h) => h.ticker))];
     const now = new Date();
@@ -146,10 +153,16 @@ export default async function PortfolioPage() {
       supabase
         .from("equity_scores")
         .select(
-          "ticker, buy_score, trim_score, risk_score, buy_failed_gates, data_quality",
+          "ticker, buy_score, trim_score, risk_score, buy_failed_gates, data_quality, next_ex_div_date, next_ex_div_amount, next_ex_div_pay_date",
         )
         .in("ticker", tickers)
-        .returns<ScoreRow[]>(),
+        .returns<
+          (ScoreRow & {
+            next_ex_div_date: string | null;
+            next_ex_div_amount: number | null;
+            next_ex_div_pay_date: string | null;
+          })[]
+        >(),
       supabase
         .from("score_overrides")
         .select("ticker, score_type, expires_at")
@@ -197,6 +210,56 @@ export default async function PortfolioPage() {
     flagged = flaggedHoldings(
       tickers.map((t) => scoresByTicker[t]).filter(Boolean),
     );
+
+    // Reinvest Recommender (Pro+). Ex-div dates come from the score rows the
+    // nightly cron persists; the rest reuses the already-computed quotes,
+    // concentration weights, scores, and FX rates. Pure assembly in build-card.
+    const exDivByTicker: Record<string, ExDiv> = {};
+    for (const row of scoresRes.data ?? []) {
+      if (row.next_ex_div_date) {
+        exDivByTicker[row.ticker] = {
+          date: row.next_ex_div_date,
+          amount: row.next_ex_div_amount,
+          payDate: row.next_ex_div_pay_date,
+        };
+      }
+    }
+    const weightByTicker: Record<string, number> = {};
+    for (const p of concentration.positions) weightByTicker[p.ticker] = p.weight;
+
+    // Total portfolio income in GBP (same per-share-dividend basis as the income
+    // view; .L dividends are already in £, others convert via the FX map).
+    const totalPortfolioIncomeGbp = allHoldings.reduce((sum, h) => {
+      const qr = quotes.get(h.ticker);
+      if (!qr?.ok) return sum;
+      const div = qr.data.dividend;
+      if (div === null || div === undefined || div <= 0) return sum;
+      const rate = isUkTicker(h.ticker)
+        ? 1
+        : qr.data.currency
+          ? ratesToGbp[qr.data.currency]
+          : undefined;
+      if (rate === undefined || !Number.isFinite(rate) || rate <= 0) return sum;
+      return sum + Number(h.quantity) * div * rate;
+    }, 0);
+
+    reinvestCard = buildReinvestCard({
+      holdings: allHoldings.map((h) => ({
+        id: h.id,
+        ticker: h.ticker,
+        quantity: Number(h.quantity),
+        sector: null,
+      })),
+      exDivByTicker,
+      quotesByTicker,
+      ratesToGbp,
+      scoresByTicker,
+      weightByTicker,
+      totalPortfolioIncomeGbp,
+      sectorsToAvoid: [],
+      today: now.toISOString().slice(0, 10),
+      windowDays: 5,
+    });
   }
 
   return (
@@ -269,6 +332,12 @@ export default async function PortfolioPage() {
                   </Link>
                 )}
               </div>
+            )}
+            {reinvestCard && (
+              <ReinvestCard
+                trigger={reinvestCard.trigger}
+                candidates={reinvestCard.candidates}
+              />
             )}
             <PortfolioSummaryBanner flagged={flagged} />
             <ConcentrationWarning
