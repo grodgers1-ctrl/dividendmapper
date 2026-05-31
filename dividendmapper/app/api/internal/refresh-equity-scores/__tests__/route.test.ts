@@ -132,4 +132,32 @@ describe("GET /api/internal/refresh-equity-scores", () => {
     expect(body.successfulTickerCount).toBe(1);
     expect(scoresUpsert).toHaveBeenCalledTimes(1);
   });
+
+  it("persists the next upcoming ex-div for a ticker present in the calendar", async () => {
+    const fmp = await import("@/lib/scoring/fmp-client");
+    // Far-future dates so they are always >= today regardless of run date.
+    vi.mocked(fmp.getDividendsCalendar).mockResolvedValueOnce([
+      { symbol: "AAPL.US", date: "2099-06-05", adjDividend: 1.48, dividend: 1.48, paymentDate: "2099-06-30" },
+      { symbol: "AAPL.US", date: "2099-09-05", adjDividend: 1.5, dividend: 1.5, paymentDate: "2099-09-30" },
+    ]);
+    const { GET } = await import("../route");
+    await (await GET(authedReq())).json();
+    const byTicker = Object.fromEntries(scoresUpsert.mock.calls.map((c) => [c[0].ticker, c[0]]));
+    expect(byTicker["AAPL.US"].next_ex_div_date).toBe("2099-06-05"); // soonest of the two
+    expect(byTicker["AAPL.US"].next_ex_div_amount).toBe(1.48);
+    expect(byTicker["AAPL.US"].next_ex_div_pay_date).toBe("2099-06-30");
+  });
+
+  it("writes null ex-div fields for a ticker absent from the calendar", async () => {
+    const fmp = await import("@/lib/scoring/fmp-client");
+    vi.mocked(fmp.getDividendsCalendar).mockResolvedValueOnce([
+      { symbol: "AAPL.US", date: "2099-06-05", adjDividend: 1.48, dividend: 1.48, paymentDate: "2099-06-30" },
+    ]);
+    const { GET } = await import("../route");
+    await (await GET(authedReq())).json();
+    const byTicker = Object.fromEntries(scoresUpsert.mock.calls.map((c) => [c[0].ticker, c[0]]));
+    expect(byTicker["ULVR.L"].next_ex_div_date).toBeNull();
+    expect(byTicker["ULVR.L"].next_ex_div_amount).toBeNull();
+    expect(byTicker["ULVR.L"].next_ex_div_pay_date).toBeNull();
+  });
 });

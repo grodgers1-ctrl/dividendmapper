@@ -38,6 +38,7 @@ import { computeTrimScore } from "@/lib/scoring/compute-trim-score";
 import { computeRiskScore } from "@/lib/scoring/compute-risk-score";
 import type { SignalRecord } from "@/lib/scoring/compute-buy-score";
 import { runWithConcurrency } from "@/lib/concurrency";
+import { nextUpcomingDividend } from "@/lib/scoring/next-dividend";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -271,6 +272,11 @@ async function handle(req: Request): Promise<Response> {
           ? "sparse"
           : "full";
 
+      // Day 6B: persist this ticker's soonest upcoming ex-dividend from the
+      // already-fetched market-wide calendar. Additive metadata only — none of
+      // the score fields above depend on or change because of this.
+      const nextDiv = nextUpcomingDividend(calendar, ticker, today);
+
       const { error: scoresErr } = await supabase.from("equity_scores").upsert(
         {
           ticker,
@@ -281,6 +287,12 @@ async function handle(req: Request): Promise<Response> {
           risk_score: risk.score,
           ticker_market: assembled.meta.isUs ? "US" : "LSE",
           data_quality: dataQuality,
+          next_ex_div_date: nextDiv?.date ?? null,
+          next_ex_div_amount: nextDiv?.dividend ?? null,
+          next_ex_div_pay_date:
+            typeof nextDiv?.paymentDate === "string" && nextDiv.paymentDate !== ""
+              ? nextDiv.paymentDate
+              : null,
           computed_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         },
