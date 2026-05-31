@@ -70,9 +70,40 @@ describe("buildSuggestions", () => {
     expect(out[0].reinvestScore).toBeGreaterThanOrEqual(out[1].reinvestScore);
   });
 
-  it("caps suggestions at 5", () => {
+  it("caps suggestions at the explicit limit", () => {
     const holdings = Array.from({ length: 8 }, (_, i) => holding({ id: `h${i}`, buyScore: 50 + i }));
-    const out = buildSuggestions({ ...base, holdings });
+    const out = buildSuggestions({ ...base, holdings, limit: 5 });
     expect(out.length).toBe(5);
+  });
+
+  it("demotes a candidate already over the concentration cap below an under-weight peer", () => {
+    const out = buildSuggestions({
+      ...base,
+      holdings: [
+        holding({ id: "fat", ticker: "FAT", buyScore: 90 }),
+        holding({ id: "lean", ticker: "LEAN", buyScore: 70 }),
+      ],
+      currentWeightByHolding: { fat: 0.35, lean: 0.03 },
+    });
+    // FAT has the higher quality but is over-cap (×0.5); LEAN's bonus lifts it above.
+    expect(out[0].holdingId).toBe("lean");
+  });
+
+  it("returns currentWeight and a diversification note for the copy", () => {
+    const out = buildSuggestions({
+      ...base,
+      holdings: [holding({ id: "a", ticker: "AAA", sector: "utilities" })],
+      currentWeightByHolding: { a: 0.04 },
+      triggerSector: "consumer_defensive",
+    });
+    expect(out[0].currentWeight).toBeCloseTo(0.04, 5);
+    expect(out[0].diversificationNote).toMatch(/sector|position|spread|smaller|large/i);
+  });
+
+  it("respects the default limit of 10", () => {
+    const holdings = Array.from({ length: 12 }, (_, i) =>
+      holding({ id: `h${i}`, ticker: `H${i}`, buyScore: 50 + i }),
+    );
+    expect(buildSuggestions({ ...base, holdings }).length).toBe(10);
   });
 });
