@@ -76,6 +76,7 @@ describe("buildReinvestCard", () => {
     expect(out!.trigger.holdingId).toBe("pep");
     expect(out!.trigger.exDivDate).toBe("2026-06-05");
     expect(out!.trigger.payDate).toBe("2026-06-30");
+    expect(out!.trigger.currentWeight).toBeCloseTo(0.3, 5);
     expect(out!.trigger.estPaymentGbp).toBeCloseTo(58.46, 2); // 50 * 1.48 * 0.79
     expect(out!.candidates.map((c) => c.ticker)).not.toContain("PEP");
   });

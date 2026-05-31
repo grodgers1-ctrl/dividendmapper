@@ -41,6 +41,7 @@ export interface ReinvestCard {
     exDivDate: string;
     payDate: string | null;
     estPaymentGbp: number | null;
+    currentWeight: number | null; // trigger's own portfolio weight, for the copy
   };
   candidates: Suggestion[]; // up to 10; card shows 5 + "Show more"
 }
@@ -197,6 +198,10 @@ export function buildReinvestCard(input: ReinvestCardInput): ReinvestCard | null
       exDivDate: trigger.exDivDate,
       payDate: trigger.payDate,
       estPaymentGbp: trigger.estPaymentGbp,
+      currentWeight: (() => {
+        const w = input.weightByTicker[trigger.ticker];
+        return typeof w === "number" && Number.isFinite(w) ? w : null;
+      })(),
     },
     candidates,
   };
