@@ -11,9 +11,13 @@ import { usePathname } from "next/navigation";
 // between sibling routes (App Router caches layouts), so reading pathname
 // from a server header in the layout left the highlight stale.
 
+// `exact` tabs only light up on an exact path match. The Ledger tab
+// (/app/portfolio) must be exact so it doesn't also highlight on its
+// /app/portfolio/scoring child (the Portfolio Manager tab).
 const TABS = [
-  { href: "/app/portfolio", label: "Portfolio" },
-  { href: "/app/account", label: "Account" },
+  { href: "/app/portfolio", label: "Ledger", exact: true },
+  { href: "/app/portfolio/scoring", label: "Portfolio Manager", exact: false },
+  { href: "/app/account", label: "Account", exact: false },
 ] as const;
 
 export function AppNav() {
@@ -25,7 +29,9 @@ export function AppNav() {
     >
       <div className="mx-auto flex max-w-5xl items-center gap-1 px-4 md:px-6 lg:px-8">
         {TABS.map((tab) => {
-          const active = pathname.startsWith(tab.href);
+          const active = tab.exact
+            ? pathname === tab.href
+            : pathname === tab.href || pathname.startsWith(`${tab.href}/`);
           return (
             <Link
               key={tab.href}

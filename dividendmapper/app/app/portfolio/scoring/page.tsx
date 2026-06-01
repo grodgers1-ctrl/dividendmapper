@@ -7,7 +7,6 @@ import { loadPricedHoldings } from "@/lib/portfolio/load-priced-holdings";
 import { loadPortfolioAnalytics } from "@/lib/scoring/load-portfolio-analytics";
 import { buildQuadrant } from "@/lib/scoring/quadrant";
 import { HoldingsTable } from "../_components/holdings-table";
-import { PortfolioSubNav } from "../_components/portfolio-subnav";
 import { PortfolioInsights } from "../_components/portfolio-insights";
 import { ReinvestCard } from "../_components/reinvest-card";
 import { QuadrantMap } from "../_components/quadrant-map";
@@ -61,8 +60,7 @@ export default async function PortfolioManagerPage() {
         </p>
       </div>
 
-      <div className="mt-2 space-y-6">
-        <PortfolioSubNav />
+      <div className="mt-8 space-y-6">
         {visibleRows.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border bg-card p-10 text-center">
             <p className="font-display text-base font-semibold text-foreground">
@@ -88,11 +86,6 @@ export default async function PortfolioManagerPage() {
                 threshold={analytics.concentration.threshold}
               />
             )}
-            <QuadrantMap
-              points={quadrant.points}
-              excluded={quadrant.excluded}
-              isBeta={isBeta()}
-            />
             <HoldingsTable
               rows={visibleRows}
               quotes={quotesByTicker}
@@ -101,6 +94,11 @@ export default async function PortfolioManagerPage() {
               isBeta={isBeta()}
               scoresByTicker={analytics?.scoresByTicker ?? {}}
               showScores={true}
+            />
+            <QuadrantMap
+              points={quadrant.points}
+              excluded={quadrant.excluded}
+              isBeta={isBeta()}
             />
           </>
         )}

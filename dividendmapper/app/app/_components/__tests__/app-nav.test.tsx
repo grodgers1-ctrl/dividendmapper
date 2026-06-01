@@ -1,14 +1,14 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { PortfolioSubNav } from "../portfolio-subnav";
+import { AppNav } from "../app-nav";
 
 const mockPath = vi.fn();
 vi.mock("next/navigation", () => ({ usePathname: () => mockPath() }));
 
-describe("<PortfolioSubNav>", () => {
-  it("renders Ledger and Manager links", () => {
+describe("<AppNav>", () => {
+  it("renders Ledger, Portfolio Manager and Account tabs", () => {
     mockPath.mockReturnValue("/app/portfolio");
-    render(<PortfolioSubNav />);
+    render(<AppNav />);
     expect(screen.getByRole("link", { name: "Ledger" })).toHaveAttribute(
       "href",
       "/app/portfolio",
@@ -17,11 +17,15 @@ describe("<PortfolioSubNav>", () => {
       "href",
       "/app/portfolio/scoring",
     );
+    expect(screen.getByRole("link", { name: "Account" })).toHaveAttribute(
+      "href",
+      "/app/account",
+    );
   });
 
-  it("marks Ledger active on the ledger path", () => {
+  it("marks only Ledger active on the ledger path (not Portfolio Manager)", () => {
     mockPath.mockReturnValue("/app/portfolio");
-    render(<PortfolioSubNav />);
+    render(<AppNav />);
     expect(screen.getByRole("link", { name: "Ledger" })).toHaveAttribute(
       "aria-current",
       "page",
@@ -31,14 +35,23 @@ describe("<PortfolioSubNav>", () => {
     ).not.toHaveAttribute("aria-current");
   });
 
-  it("marks Manager active on the scoring path", () => {
+  it("marks only Portfolio Manager active on the scoring path (not Ledger)", () => {
     mockPath.mockReturnValue("/app/portfolio/scoring");
-    render(<PortfolioSubNav />);
+    render(<AppNav />);
     expect(
       screen.getByRole("link", { name: "Portfolio Manager" }),
     ).toHaveAttribute("aria-current", "page");
     expect(screen.getByRole("link", { name: "Ledger" })).not.toHaveAttribute(
       "aria-current",
+    );
+  });
+
+  it("marks Account active on account sub-paths", () => {
+    mockPath.mockReturnValue("/app/account/notifications");
+    render(<AppNav />);
+    expect(screen.getByRole("link", { name: "Account" })).toHaveAttribute(
+      "aria-current",
+      "page",
     );
   });
 });

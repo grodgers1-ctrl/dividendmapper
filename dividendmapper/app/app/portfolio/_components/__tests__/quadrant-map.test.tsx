@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, within } from "@testing-library/react";
 import { QuadrantMap } from "../quadrant-map";
 import type { QuadrantPoint } from "@/lib/scoring/quadrant";
 
@@ -32,6 +32,19 @@ describe("<QuadrantMap>", () => {
     // appears more than once; assert presence rather than uniqueness.
     expect(screen.getAllByRole("button", { name: /PEP/ }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("button", { name: /PYPL/ }).length).toBeGreaterThan(0);
+  });
+
+  it("shows a visible ticker label on each scatter dot", () => {
+    render(
+      <QuadrantMap
+        points={[point({ ticker: "PEP" }), point({ ticker: "PYPL", x: 20, y: 79 })]}
+        excluded={[]}
+        isBeta={false}
+      />,
+    );
+    const scatter = screen.getByTestId("quadrant-scatter");
+    expect(within(scatter).getByText("PEP")).toBeInTheDocument();
+    expect(within(scatter).getByText("PYPL")).toBeInTheDocument();
   });
 
   it("lists excluded holdings with Risk, Trim and reason, collecting last", () => {

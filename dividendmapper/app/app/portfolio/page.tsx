@@ -7,7 +7,6 @@ import { loadPricedHoldings } from "@/lib/portfolio/load-priced-holdings";
 import { HoldingsTable } from "./_components/holdings-table";
 import { AddHoldingLauncher } from "./_components/add-holding-launcher";
 import { PortfolioIncomeChart } from "./_components/portfolio-income-chart";
-import { PortfolioSubNav } from "./_components/portfolio-subnav";
 import { FREE_TIER_LIMIT } from "./_components/free-tier-copy";
 
 export const metadata: Metadata = {
@@ -82,7 +81,6 @@ export default async function PortfolioPage() {
           </div>
         ) : (
           <div className="space-y-6">
-            {tier !== "free" && <PortfolioSubNav />}
             {hiddenCount > 0 && (
               <div
                 role="status"

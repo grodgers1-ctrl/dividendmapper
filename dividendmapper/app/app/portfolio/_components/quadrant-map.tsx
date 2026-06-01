@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import {
   QUADRANT_LABEL,
   QUADRANT_NOTE,
@@ -66,7 +66,10 @@ export function QuadrantMap({
               >
                 Quality →
               </div>
-              <div className="relative aspect-square w-full max-w-xl rounded-lg border border-border bg-background">
+              <div
+                data-testid="quadrant-scatter"
+                className="relative aspect-square w-full max-w-xl rounded-lg border border-border bg-background"
+              >
                 {/* quadrant divider lines */}
                 <div className="absolute inset-x-0 top-1/2 h-px bg-border" aria-hidden />
                 <div className="absolute inset-y-0 left-1/2 w-px bg-border" aria-hidden />
@@ -84,20 +87,32 @@ export function QuadrantMap({
                   {QUADRANT_LABEL.review}
                 </span>
                 {points.map((p) => (
-                  <button
-                    key={p.ticker}
-                    type="button"
-                    onClick={() => setOpenTicker(p.ticker)}
-                    aria-label={`${p.ticker}: Quality ${p.y}, Risk ${p.x}. Open score detail.`}
-                    title={`${p.ticker} · Quality ${p.y} · Risk ${p.x}${p.trim !== null ? ` · Trim ${p.trim}` : ""}`}
-                    className={`absolute -translate-x-1/2 translate-y-1/2 rounded-full ring-1 ring-inset transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-ring ${dotClass(p.trimElevated)}`}
-                    style={{
-                      left: `${p.x}%`,
-                      bottom: `${p.y}%`,
-                      width: `${p.radius * 2}px`,
-                      height: `${p.radius * 2}px`,
-                    }}
-                  />
+                  <Fragment key={p.ticker}>
+                    <button
+                      type="button"
+                      onClick={() => setOpenTicker(p.ticker)}
+                      aria-label={`${p.ticker}: Quality ${p.y}, Risk ${p.x}. Open score detail.`}
+                      title={`${p.ticker} · Quality ${p.y} · Risk ${p.x}${p.trim !== null ? ` · Trim ${p.trim}` : ""}`}
+                      className={`absolute -translate-x-1/2 translate-y-1/2 rounded-full ring-1 ring-inset transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-ring ${dotClass(p.trimElevated)}`}
+                      style={{
+                        left: `${p.x}%`,
+                        bottom: `${p.y}%`,
+                        width: `${p.radius * 2}px`,
+                        height: `${p.radius * 2}px`,
+                      }}
+                    />
+                    <span
+                      aria-hidden
+                      className="pointer-events-none absolute translate-y-1/2 whitespace-nowrap rounded bg-background/70 px-0.5 font-mono text-[11px] font-medium text-foreground"
+                      style={{
+                        left: `${p.x}%`,
+                        bottom: `${p.y}%`,
+                        marginLeft: `${p.radius + 5}px`,
+                      }}
+                    >
+                      {p.ticker}
+                    </span>
+                  </Fragment>
                 ))}
               </div>
             </div>
