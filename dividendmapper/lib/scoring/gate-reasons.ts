@@ -6,6 +6,13 @@
 // which can be a genuine cut OR a special/one-off dividend rolling off the TTM
 // window (the live DLO case). The engine can't yet distinguish them (parked
 // Phase 3), so the label stays cause-neutral: "Dividend history irregular".
+//
+// GATE_4 wording note: the gate fires when TTM net income is not positive
+// (quality-gates.ts: `netIncomeTtm <= 0`). That covers loss-making companies
+// (e.g. VOD.L), funds with no corporate earnings (e.g. the SCHD ETF), AND UK
+// names where FMP returned no income data (defaults to 0). It is NOT an
+// ETF-only signal, so the label stays cause-neutral: "No positive earnings to
+// score" (the old "ETF or fund" copy wrongly called loss-makers funds).
 
 import type { GateCode } from "./quality-gates";
 
@@ -13,7 +20,7 @@ const REASONS: Record<GateCode, string> = {
   GATE_1: "Dividend not covered by cash flow",
   GATE_2: "Dividend history irregular",
   GATE_3: "Thin interest coverage",
-  GATE_4: "ETF or fund, not company-scored",
+  GATE_4: "No positive earnings to score",
   GATE_5: "Below scoring size threshold",
 };
 

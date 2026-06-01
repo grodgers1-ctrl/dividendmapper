@@ -36,7 +36,7 @@ describe("buildHoldingScore", () => {
       now: NOW,
     });
     expect(s.buy).toBeNull();
-    expect(s.buyGateReason).toBe("ETF or fund, not company-scored");
+    expect(s.buyGateReason).toBe("No positive earnings to score");
     expect(s.actionHint).toBe("Reassess thesis"); // risk 60
   });
 
