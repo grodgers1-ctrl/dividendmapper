@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DividendMapper Analyst</title>
+<link rel="stylesheet" href="/styles.css">
+<script defer src="https://unpkg.com/alpinejs@3.14.1/dist/cdn.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<div x-data="dashboard()" x-init="init()">
+
+  <header class="topbar">
+    <h1>DividendMapper Analyst</h1>
+    <nav>
+      <button :class="view === 'scoring' && 'active'" @click="view = 'scoring'">Scoring</button>
+      <button :class="view === 'reinvest' && 'active'" @click="view = 'reinvest'">Reinvest</button>
+    </nav>
+    <div class="meta">
+      <span x-text="tickerCount + ' tickers'"></span>
+      <span class="dim">cache <span x-text="cacheMtime"></span></span>
+    </div>
+  </header>
+
+  <!-- ============================================ SCORING ============================================ -->
+  <main x-show="view === 'scoring'" class="layout">
+
+    <aside class="sidebar">
+      <h2>Weights</h2>
+      <button class="reset" @click="resetWeights()">Reset to defaults</button>
+
+      <details open>
+        <summary>Buy — Categories</summary>
+        <template x-for="key in ['A','B','C','D']" :key="'bc-'+key">
+          <label class="slider">
+            <span x-text="key + ' — ' + categoryLabels.buy[key]"></span>
+            <input type="range" min="0" max="1" step="0.01"
+              :value="weights.buy.categories[key]"
+              @input="onWeight('buy.categories.'+key, $event.target.value)">
+            <em x-text="weights.buy.categories[key].toFixed(2)"></em>
+          </label>
+        </template>
+      </details>
+
+      <details open>
+        <summary>Buy — Signals</summary>
+        <template x-for="code in buySignalCodes" :key="'bs-'+code">
+          <label class="slider">
+            <span x-text="code"></span>
+            <input type="range" min="0" max="1" step="0.01"
+              :value="weights.buy.signals[code]"
+              @input="onWeight('buy.signals.'+code, $event.target.value)">
+            <em x-text="weights.buy.signals[code].toFixed(2)"></em>
+          </label>
+        </template>
+      </details>
+
+      <details>
+        <summary>Trim — Categories</summary>
+        <template x-for="key in ['A','B','C']" :key="'tc-'+key">
+          <label class="slider">
+            <span x-text="key + ' — ' + categoryLabels.trim[key]"></span>
+            <input type="range" min="0" max="1" step="0.01"
+              :value="weights.trim.categories[key]"
+              @input="onWeight('trim.categories.'+key, $event.target.value)">
+            <em x-text="weights.trim.categories[key].toFixed(2)"></em>
+          </label>
+        </template>
+      </details>
+
+      <details>
+        <summary>Trim — Signals</summary>
+        <template x-for="code in trimSignalCodes" :key="'ts-'+code">
+          <label class="slider">
+            <span x-text="code"></span>
+            <input type="range" min="0" max="1" step="0.01"
+              :value="weights.trim.signals[code]"
+              @input="onWeight('trim.signals.'+code, $event.target.value)">
+            <em x-text="weights.trim.signals[code].toFixed(2)"></em>
+          </label>
+        </template>
+      </details>
+
+      <details>
+        <summary>Risk — Max points (read-only)</summary>
+        <p class="note">Risk is additive (points, not weights). Tunable thresholds land in v2.</p>
+        <template x-for="code in riskSignalCodes" :key="'r-'+code">
+          <div class="readonly">
+            <span x-text="code"></span>
+            <em x-text="weights.risk.maxPoints[code]"></em>
+          </div>
+        </template>
+      </details>
+    </aside>
+
+    <section class="content">
+      <div class="status" x-show="loading">Scoring…</div>
+      <table class="scores">
+        <thead>
+          <tr>
+            <th @click="sortBy('ticker')">Ticker</th>
+            <th @click="sortBy('companyName')">Company</th>
+            <th @click="sortBy('buy')" class="num">Buy</th>
+            <th @click="sortBy('trim')" class="num">Trim</th>
+            <th @click="sortBy('risk')" class="num">Risk</th>
+            <th @click="sortBy('signal')">Signal</th>
+          </tr>
+        </thead>
+        <tbody>
+          <template x-for="row in sortedRows" :key="row.ticker">
+            <tr :class="'row-' + row.signal.toLowerCase()">
+              <td x-text="row.ticker"></td>
+              <td x-text="row.companyName" class="company"></td>
+              <td class="num" x-text="row.buy ?? '—'"
+                :title="row.failedGates.length ? 'Gates failed: ' + row.failedGates.join(', ') : ''"></td>
+              <td class="num" x-text="row.trim ?? '—'"></td>
+              <td class="num" x-text="row.risk"></td>
+              <td><span class="signal-chip" :class="'chip-' + row.signal.toLowerCase()" x-text="row.signal"></span></td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <!-- ============================================ REINVEST ============================================ -->
+  <main x-show="view === 'reinvest'" class="reinvest-layout">
+    <div class="reinvest-controls">
+      <label>
+        Cash to reinvest (£)
+        <input type="number" min="0" step="100" x-model.number="reinvestCash" @input.debounce.300="loadReinvest()">
+      </label>
+      <p class="note">Allocates by max(0, Buy − 50). Tickers below 50 or failing quality gates get nothing.</p>
+    </div>
+    <div class="reinvest-grid">
+      <div class="donut-wrap">
+        <canvas id="reinvest-donut"></canvas>
+      </div>
+      <table class="alloc">
+        <thead>
+          <tr>
+            <th>Ticker</th>
+            <th class="num">Buy</th>
+            <th class="num">Share</th>
+            <th class="num">£</th>
+          </tr>
+        </thead>
+        <tbody>
+          <template x-for="r in reinvestRows" :key="r.ticker">
+            <tr>
+              <td x-text="r.ticker"></td>
+              <td class="num" x-text="r.buy ?? '—'"></td>
+              <td class="num" x-text="(r.share * 100).toFixed(1) + '%'"></td>
+              <td class="num" x-text="r.allocation.toFixed(2)"></td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+</div>
+
+<script src="/app.js"></script>
+</body>
+</html>
