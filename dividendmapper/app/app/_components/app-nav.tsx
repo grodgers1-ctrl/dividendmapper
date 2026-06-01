@@ -13,22 +13,25 @@ import { usePathname } from "next/navigation";
 
 // `exact` tabs only light up on an exact path match. The Ledger tab
 // (/app/portfolio) must be exact so it doesn't also highlight on its
-// /app/portfolio/scoring child (the Portfolio Manager tab).
+// /app/portfolio/scoring child (the Portfolio Manager tab). `proOnly` tabs
+// are hidden from Free (the Portfolio Manager page is Pro+ and redirects Free
+// back to the ledger anyway).
 const TABS = [
-  { href: "/app/portfolio", label: "Ledger", exact: true },
-  { href: "/app/portfolio/scoring", label: "Portfolio Manager", exact: false },
-  { href: "/app/account", label: "Account", exact: false },
+  { href: "/app/portfolio", label: "Ledger", exact: true, proOnly: false },
+  { href: "/app/portfolio/scoring", label: "Portfolio Manager", exact: false, proOnly: true },
+  { href: "/app/account", label: "Account", exact: false, proOnly: false },
 ] as const;
 
-export function AppNav() {
+export function AppNav({ isPro }: { isPro: boolean }) {
   const pathname = usePathname() ?? "";
+  const tabs = TABS.filter((tab) => !tab.proOnly || isPro);
   return (
     <nav
       aria-label="Account navigation"
       className="border-b border-border bg-card"
     >
       <div className="mx-auto flex max-w-5xl items-center gap-1 px-4 md:px-6 lg:px-8">
-        {TABS.map((tab) => {
+        {tabs.map((tab) => {
           const active = tab.exact
             ? pathname === tab.href
             : pathname === tab.href || pathname.startsWith(`${tab.href}/`);

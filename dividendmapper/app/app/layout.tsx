@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { requireUser } from "@/lib/auth/server";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { PostHogIdentify } from "@/components/posthog-identify";
 import { AppNav } from "./_components/app-nav";
 
@@ -23,10 +24,20 @@ export default async function AppLayout({
   const hdrs = await headers();
   const pathname = hdrs.get("x-pathname") ?? "/app";
   const user = await requireUser(pathname);
+
+  // The Portfolio Manager tab is Pro+ only, so the nav needs the tier.
+  const supabase = await createSupabaseServerClient();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("tier")
+    .eq("id", user.id)
+    .maybeSingle<{ tier: "free" | "pro" | "premium" }>();
+  const isPro = (profile?.tier ?? "free") !== "free";
+
   return (
     <>
       <PostHogIdentify userId={user.id} email={user.email} />
-      <AppNav />
+      <AppNav isPro={isPro} />
       {children}
     </>
   );
