@@ -26,6 +26,16 @@ export interface BlogPost {
 
 export const POSTS: BlogPost[] = [
   {
+    slug: "isa-vs-sipp-dividend-investors",
+    title: "ISA vs SIPP for Dividend Investors: What Actually Changes in Practice",
+    description:
+      "A practical UK guide to when an ISA beats a SIPP, when a SIPP beats an ISA, and how dividend investors should think about tax relief, access and wrapper mix.",
+    publishedAt: "2026-05-31",
+    readingTime: "8 min",
+    tags: ["UK", "ISA", "SIPP"],
+    locale: "uk",
+  },
+  {
     slug: "uk-dividend-tax-guide",
     title: "UK Dividend Tax Guide 2026/27",
     description:
