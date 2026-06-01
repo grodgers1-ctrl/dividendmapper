@@ -28,9 +28,9 @@ const MAX_RADIUS = 22;
 
 export interface QuadrantPoint {
   ticker: string;
-  /** Risk score, 0..100 — horizontal axis. */
+  /** Risk score, 0..100, horizontal axis. */
   x: number;
-  /** Quality (buy) score, 0..100 — vertical axis. */
+  /** Quality (buy) score, 0..100, vertical axis. */
   y: number;
   trim: number | null;
   /** Position weight as a fraction 0..1 (0 when unpriced). */
