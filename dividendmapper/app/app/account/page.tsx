@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth/server";
+import { requireUser } from "@/lib/auth/server";
 import { isPricingPublic } from "@/lib/flags/pricing";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { DeleteAccount } from "./_components/delete-account";
@@ -47,9 +47,12 @@ interface AccountPageProps {
 }
 
 export default async function AccountPage({ searchParams }: AccountPageProps) {
-  // app/app/layout.tsx already gates via requireUser(). getCurrentUser is
-  // cache()-memoised across the same request, so this is free.
-  const user = (await getCurrentUser())!;
+  // Guard here too, not just in app/app/layout.tsx: on a soft client-side
+  // navigation Next re-renders only the page segment, so the layout's
+  // requireUser() doesn't re-run. requireUser redirects to /login on a null
+  // session instead of throwing; getCurrentUser is cache()-memoised so this
+  // stays free on a full load where the layout already called it.
+  const user = await requireUser("/app/account");
   const supabase = await createSupabaseServerClient();
   const params = await searchParams;
   const showWelcome = params.welcome === "1";

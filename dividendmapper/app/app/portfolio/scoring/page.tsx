@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth/server";
+import { requireUser } from "@/lib/auth/server";
 import { isPricingPublic } from "@/lib/flags/pricing";
 import { isBeta } from "@/lib/scoring/config";
 import { loadPricedHoldings } from "@/lib/portfolio/load-priced-holdings";
@@ -19,7 +19,10 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function PortfolioManagerPage() {
-  const user = (await getCurrentUser())!;
+  // Guard here too: a soft nav re-renders only this segment, so the layout's
+  // requireUser() may not re-run. requireUser redirects on a null session
+  // (cache()-memoised, so free on a full load).
+  const user = await requireUser("/app/portfolio/scoring");
   const priced = await loadPricedHoldings(user.id);
 
   // Pro+ only. Free users are redirected back to the ledger.
