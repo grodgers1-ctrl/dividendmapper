@@ -1,39 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/server";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { isPricingPublic } from "@/lib/flags/pricing";
-import { aggregatePortfolioIncome } from "@/lib/portfolio/income";
-import { fetchPortfolioQuotes } from "@/lib/portfolio/quotes";
-import { isUkTicker, mergeUkDividends } from "@/lib/portfolio/uk-income";
-import {
-  buildHoldingScore,
-  applyUserWeights,
-  flaggedHoldings,
-  type HoldingScore,
-  type ScoreRow,
-  type PriorHistory,
-  type OverrideRow,
-} from "@/lib/scoring/portfolio-scores";
 import { isBeta } from "@/lib/scoring/config";
+import { loadPricedHoldings } from "@/lib/portfolio/load-priced-holdings";
 import { HoldingsTable } from "./_components/holdings-table";
 import { AddHoldingLauncher } from "./_components/add-holding-launcher";
 import { PortfolioIncomeChart } from "./_components/portfolio-income-chart";
-import { PortfolioInsights } from "./_components/portfolio-insights";
-import { ReinvestCard } from "./_components/reinvest-card";
-import { computeConcentration } from "@/lib/portfolio/concentration";
-import { ratesToGbpFor } from "@/lib/scoring/currency";
-import {
-  buildReinvestCard,
-  type ReinvestCard as ReinvestCardData,
-  type ExDiv,
-} from "@/lib/reinvest/build-card";
+import { PortfolioSubNav } from "./_components/portfolio-subnav";
 import { FREE_TIER_LIMIT } from "./_components/free-tier-copy";
-
-// 30 trading days ≈ 42 calendar days; the history row at/just before that point
-// is the delta baseline. Until ~6 weeks of history accrues this finds nothing
-// and deltas stay null (chips simply omit the delta pill).
-const DELTA_LOOKBACK_DAYS = 42;
 
 export const metadata: Metadata = {
   title: "Portfolio",
@@ -45,221 +20,20 @@ export const metadata: Metadata = {
 // and never cacheable.
 export const dynamic = "force-dynamic";
 
-type HoldingRow = {
-  id: string;
-  ticker: string;
-  quantity: number;
-  avg_cost: number;
-  cost_currency: string;
-  wrapper: string;
-  broker_label: string | null;
-  notes: string | null;
-  created_at: string;
-};
-
 export default async function PortfolioPage() {
   const user = (await getCurrentUser())!;
-  const supabase = await createSupabaseServerClient();
   const pricingPublic = isPricingPublic();
 
-  // Single holdings query covers both the table render and the income roll-up.
-  // We query the unbounded set and slice in memory for the free-tier cap, so
-  // the income chart can count holdings hidden from the table without a
-  // second round-trip. The income aggregator is a pure function over
-  // (holdings, quotes).
-  const [profileResult, holdingsResult] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select("tier")
-      .eq("id", user.id)
-      .maybeSingle<{ tier: "free" | "pro" | "premium" }>(),
-    supabase
-      .from("holdings")
-      .select(
-        "id, ticker, quantity, avg_cost, cost_currency, wrapper, broker_label, notes, created_at",
-      )
-      .order("created_at", { ascending: false })
-      .returns<HoldingRow[]>(),
-  ]);
-
-  const tier = profileResult.data?.tier ?? "free";
-  const allHoldings = holdingsResult.data ?? [];
-  const holdingsError = holdingsResult.error;
-  const total = allHoldings.length;
-  const visibleRows =
-    tier === "free" ? allHoldings.slice(0, FREE_TIER_LIMIT) : allHoldings;
-  const atFreeLimit = tier === "free" && total >= FREE_TIER_LIMIT;
-  const hiddenCount = tier === "free" ? Math.max(0, total - FREE_TIER_LIMIT) : 0;
-
-  const rawQuotes = await fetchPortfolioQuotes(allHoldings);
-
-  // UK (.L) holdings lost their income when EODHD was cancelled (FMP took over
-  // scoring 2026-05-29). FMP already pulls LSE dividends nightly into
-  // equity_score_history, so patch those tickers from there (pence -> £).
-  const ukTickers = [...new Set(allHoldings.map((h) => h.ticker))].filter(
-    isUkTicker,
-  );
-  const ukDividendByTicker = new Map<string, number>();
-  if (ukTickers.length > 0) {
-    const { data: ukDivRows } = await supabase
-      .from("equity_score_history")
-      .select("ticker, dividend_per_share, observed_at")
-      .in("ticker", ukTickers)
-      .order("observed_at", { ascending: false })
-      .returns<
-        { ticker: string; dividend_per_share: number | null; observed_at: string }[]
-      >();
-    for (const r of ukDivRows ?? []) {
-      // rows are newest-first; keep the first (latest) per ticker.
-      if (!ukDividendByTicker.has(r.ticker) && r.dividend_per_share != null) {
-        ukDividendByTicker.set(r.ticker, Number(r.dividend_per_share));
-      }
-    }
-  }
-  const quotes = mergeUkDividends(rawQuotes, ukTickers, ukDividendByTicker);
-
-  const income = aggregatePortfolioIncome(allHoldings, quotes);
-
-  // Collect the distinct currencies of priced quotes so we can resolve GBP
-  // multipliers before computing concentration weights.
-  const pricedCurrencies = [
-    ...new Set(
-      [...quotes.values()]
-        .map((q) => (q.ok ? q.data.currency : null))
-        .filter((c): c is string => c !== null),
-    ),
-  ];
-  const ratesToGbp = await ratesToGbpFor(pricedCurrencies);
-  const concentration = computeConcentration(allHoldings, quotes, ratesToGbp);
-  // Map doesn't reliably survive Next's router cache when crossing the
-  // server/client boundary; the table receives an empty Map on return
-  // navigation. Plain object survives.
-  const quotesByTicker = Object.fromEntries(quotes);
-
-  // Scores are a Pro+ feature; Free sees the upgrade pill instead, so skip the
-  // queries entirely for Free. Per-ticker scoring joins cleanly on ticker
-  // (the cron derives its universe from holdings, so tickers already match).
-  const scoresByTicker: Record<string, HoldingScore> = {};
-  let flagged: { ticker: string; hint: string }[] = [];
-  let reinvestCard: ReinvestCardData | null = null;
-  if (tier !== "free" && visibleRows.length > 0) {
-    const tickers = [...new Set(visibleRows.map((h) => h.ticker))];
-    const now = new Date();
-    const cutoff = new Date(now.getTime() - DELTA_LOOKBACK_DAYS * 86_400_000)
-      .toISOString()
-      .slice(0, 10);
-    const [scoresRes, overridesRes, historyRes] = await Promise.all([
-      supabase
-        .from("equity_scores")
-        .select(
-          "ticker, buy_score, trim_score, risk_score, buy_failed_gates, data_quality, next_ex_div_date, next_ex_div_amount, next_ex_div_pay_date",
-        )
-        .in("ticker", tickers)
-        .returns<
-          (ScoreRow & {
-            next_ex_div_date: string | null;
-            next_ex_div_amount: number | null;
-            next_ex_div_pay_date: string | null;
-          })[]
-        >(),
-      supabase
-        .from("score_overrides")
-        .select("ticker, score_type, expires_at")
-        .eq("user_id", user.id)
-        .returns<(OverrideRow & { ticker: string })[]>(),
-      supabase
-        .from("equity_score_history")
-        .select("ticker, buy_score, trim_score, risk_score, observed_at")
-        .in("ticker", tickers)
-        .lte("observed_at", cutoff)
-        .order("observed_at", { ascending: false })
-        .returns<(PriorHistory & { ticker: string; observed_at: string })[]>(),
-    ]);
-
-    const overridesByTicker = new Map<string, OverrideRow[]>();
-    for (const o of overridesRes.data ?? []) {
-      const list = overridesByTicker.get(o.ticker) ?? [];
-      list.push({ score_type: o.score_type, expires_at: o.expires_at });
-      overridesByTicker.set(o.ticker, list);
-    }
-    // history is sorted newest-first; first row per ticker is the baseline.
-    const priorByTicker = new Map<string, PriorHistory>();
-    for (const h of historyRes.data ?? []) {
-      if (!priorByTicker.has(h.ticker)) {
-        priorByTicker.set(h.ticker, {
-          buy_score: h.buy_score,
-          trim_score: h.trim_score,
-          risk_score: h.risk_score,
-        });
-      }
-    }
-
-    for (const score of scoresRes.data ?? []) {
-      scoresByTicker[score.ticker] = applyUserWeights(
-        buildHoldingScore({
-          score,
-          priorHistory: priorByTicker.get(score.ticker) ?? null,
-          overrides: overridesByTicker.get(score.ticker) ?? [],
-          now,
-        }),
-        null,
-      );
-    }
-    // Flag from the distinct holdings actually shown.
-    flagged = flaggedHoldings(
-      tickers.map((t) => scoresByTicker[t]).filter(Boolean),
-    );
-
-    // Reinvest Recommender (Pro+). Ex-div dates come from the score rows the
-    // nightly cron persists; the rest reuses the already-computed quotes,
-    // concentration weights, scores, and FX rates. Pure assembly in build-card.
-    const exDivByTicker: Record<string, ExDiv> = {};
-    for (const row of scoresRes.data ?? []) {
-      if (row.next_ex_div_date) {
-        exDivByTicker[row.ticker] = {
-          date: row.next_ex_div_date,
-          amount: row.next_ex_div_amount,
-          payDate: row.next_ex_div_pay_date,
-        };
-      }
-    }
-    const weightByTicker: Record<string, number> = {};
-    for (const p of concentration.positions) weightByTicker[p.ticker] = p.weight;
-
-    // Total portfolio income in GBP (same per-share-dividend basis as the income
-    // view; .L dividends are already in £, others convert via the FX map).
-    const totalPortfolioIncomeGbp = allHoldings.reduce((sum, h) => {
-      const qr = quotes.get(h.ticker);
-      if (!qr?.ok) return sum;
-      const div = qr.data.dividend;
-      if (div === null || div === undefined || div <= 0) return sum;
-      const rate = isUkTicker(h.ticker)
-        ? 1
-        : qr.data.currency
-          ? ratesToGbp[qr.data.currency]
-          : undefined;
-      if (rate === undefined || !Number.isFinite(rate) || rate <= 0) return sum;
-      return sum + Number(h.quantity) * div * rate;
-    }, 0);
-
-    reinvestCard = buildReinvestCard({
-      holdings: allHoldings.map((h) => ({
-        id: h.id,
-        ticker: h.ticker,
-        quantity: Number(h.quantity),
-        sector: null,
-      })),
-      exDivByTicker,
-      quotesByTicker,
-      ratesToGbp,
-      scoresByTicker,
-      weightByTicker,
-      totalPortfolioIncomeGbp,
-      sectorsToAvoid: [],
-      today: now.toISOString().slice(0, 10),
-      windowDays: 5,
-    });
-  }
+  const {
+    tier,
+    total,
+    visibleRows,
+    hiddenCount,
+    atFreeLimit,
+    holdingsError,
+    quotesByTicker,
+    income,
+  } = await loadPricedHoldings(user.id);
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-12 md:px-6 md:py-16">
@@ -308,6 +82,7 @@ export default async function PortfolioPage() {
           </div>
         ) : (
           <div className="space-y-6">
+            {tier !== "free" && <PortfolioSubNav />}
             {hiddenCount > 0 && (
               <div
                 role="status"
@@ -332,24 +107,14 @@ export default async function PortfolioPage() {
                 )}
               </div>
             )}
-            {reinvestCard && (
-              <ReinvestCard
-                trigger={reinvestCard.trigger}
-                candidates={reinvestCard.candidates}
-              />
-            )}
-            <PortfolioInsights
-              flagged={flagged}
-              overweight={concentration.overweight}
-              threshold={concentration.threshold}
-            />
             <HoldingsTable
               rows={visibleRows}
               quotes={quotesByTicker}
               tier={tier}
               pricingPublic={pricingPublic}
               isBeta={isBeta()}
-              scoresByTicker={scoresByTicker}
+              scoresByTicker={{}}
+              showScores={tier === "free"}
             />
             <PortfolioIncomeChart income={income} />
           </div>
