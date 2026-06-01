@@ -113,6 +113,27 @@ describe("assembleScoreInputs", () => {
     expect(a.risk.r4.pastEpsHistory).toEqual([]); // cold-start until persisted
   });
 
+  it("sums the trailing-12-month dividend per share (US quarterly)", () => {
+    // default bundle: 4 payments of 0.25 at 0/90/180/270 days ago = all in window
+    const a = assembleScoreInputs("AAPL", bundle("AAPL"), emptyHistory, asOf);
+    expect(a.dividendPerShareTtm).toBeCloseTo(1.0, 6);
+  });
+
+  it("counts only payments within the trailing 12 months (UK semi-annual)", () => {
+    // Sainsbury's-style: interim + final this year (in window), plus last
+    // year's two (older than 365d). Only the recent pair should count.
+    const sbry = bundle("SBRY.L", {
+      dividends: [
+        { date: daysAgo(60), adjDividend: 9.6, dividend: 9.6 }, // final, recent
+        { date: daysAgo(240), adjDividend: 3.9, dividend: 3.9 }, // interim, recent
+        { date: daysAgo(420), adjDividend: 9.2, dividend: 9.2 }, // last year, >365d
+        { date: daysAgo(600), adjDividend: 3.6, dividend: 3.6 }, // last year, >365d
+      ],
+    });
+    const a = assembleScoreInputs("SBRY.L", sbry, emptyHistory, asOf);
+    expect(a.dividendPerShareTtm).toBeCloseTo(13.5, 6); // 9.6 + 3.9 only
+  });
+
   it("produces a buy score result when fed through computeBuyScore", async () => {
     const { computeBuyScore } = await import("../compute-buy-score");
     const a = assembleScoreInputs("AAPL", bundle("AAPL"), emptyHistory, asOf);

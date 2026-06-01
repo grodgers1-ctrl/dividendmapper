@@ -309,7 +309,7 @@ async function handle(req: Request): Promise<Response> {
           risk_score: risk.score,
           current_price: assembled.buy.b1.currentPrice || null,
           current_yield: assembled.buy.a1.todayYield || null,
-          dividend_per_share: assembled.risk.r1.dividends[0]?.dividend ?? null,
+          dividend_per_share: assembled.dividendPerShareTtm || null,
           eps_avg: assembled.risk.r4.currentEpsAvg || null,
           net_debt_to_ebitda: assembled.risk.r5.currentNetDebtToEbitda || null,
           interest_coverage: assembled.risk.r6.currentInterestCoverage || null,
