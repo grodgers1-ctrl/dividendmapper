@@ -65,7 +65,21 @@ describe("<HoldingsTable> score column (Pro)", () => {
     pricingPublic: true,
     isBeta: true,
     scoresByTicker: { PEP: pepScore, SCHD: schdScore },
+    showScores: true,
   };
+
+  it("hides the Scores column header when showScores is false", () => {
+    render(<HoldingsTable {...props} showScores={false} />);
+    expect(screen.queryByRole("columnheader", { name: "Scores" })).toBeNull();
+    expect(screen.queryByText("76")).not.toBeInTheDocument();
+  });
+
+  it("shows the Scores column header when showScores is true", () => {
+    render(<HoldingsTable {...props} />);
+    expect(
+      screen.getByRole("columnheader", { name: "Scores" }),
+    ).toBeInTheDocument();
+  });
 
   it("renders three chips + action hint for a gate-passer", () => {
     render(<HoldingsTable {...props} />);
@@ -110,6 +124,7 @@ describe("<HoldingsTable> score column (Pro)", () => {
         pricingPublic={true}
         isBeta={true}
         scoresByTicker={{}}
+        showScores={true}
       />,
     );
     expect(screen.getAllByText(/collecting/i).length).toBeGreaterThan(0);
@@ -129,6 +144,7 @@ describe("<HoldingsTable> score column (Free)", () => {
         pricingPublic={true}
         isBeta={true}
         scoresByTicker={{}}
+        showScores={true}
       />,
     );
     expect(screen.getAllByRole("link", { name: /upgrade to pro/i }).length).toBeGreaterThan(0);

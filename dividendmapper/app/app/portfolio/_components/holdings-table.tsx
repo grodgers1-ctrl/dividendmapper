@@ -209,6 +209,8 @@ interface HoldingsTableProps {
   pricingPublic: boolean;
   isBeta: boolean;
   scoresByTicker: Record<string, HoldingScore>;
+  /** Render the Scores column + drawer. False = clean ledger. */
+  showScores: boolean;
 }
 
 export function HoldingsTable({
@@ -218,6 +220,7 @@ export function HoldingsTable({
   pricingPublic,
   isBeta,
   scoresByTicker,
+  showScores,
 }: HoldingsTableProps) {
   const router = useRouter();
   const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
@@ -300,9 +303,11 @@ export function HoldingsTable({
                 <th scope="col" className="px-4 py-3 text-right">
                   Income
                 </th>
-                <th scope="col" className="px-4 py-3 text-right">
-                  Scores
-                </th>
+                {showScores && (
+                  <th scope="col" className="px-4 py-3 text-right">
+                    Scores
+                  </th>
+                )}
                 <th scope="col" className="px-4 py-3">
                   Broker
                 </th>
@@ -340,19 +345,21 @@ export function HoldingsTable({
                     <td className="px-4 py-3 text-right text-sm">
                       <IncomeCell status={incomeStatus} />
                     </td>
-                    <td className="px-4 py-3 text-right">
-                      {isFree ? (
-                        <UpgradePill pricingPublic={pricingPublic} />
-                      ) : score ? (
-                        <ScoreChipStack
-                          score={score}
-                          isBeta={isBeta}
-                          onOpen={handleOpenScore}
-                        />
-                      ) : (
-                        <PendingScorePill />
-                      )}
-                    </td>
+                    {showScores && (
+                      <td className="px-4 py-3 text-right">
+                        {isFree ? (
+                          <UpgradePill pricingPublic={pricingPublic} />
+                        ) : score ? (
+                          <ScoreChipStack
+                            score={score}
+                            isBeta={isBeta}
+                            onOpen={handleOpenScore}
+                          />
+                        ) : (
+                          <PendingScorePill />
+                        )}
+                      </td>
+                    )}
                     <td className="px-4 py-3 text-muted-foreground">
                       {row.broker_label ?? (
                         <span className="text-muted-foreground/60">—</span>
@@ -400,17 +407,18 @@ export function HoldingsTable({
                   </span>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
-                  {isFree ? (
-                    <UpgradePill pricingPublic={pricingPublic} />
-                  ) : score ? (
-                    <MobileScorePill
-                      score={score}
-                      isBeta={isBeta}
-                      onOpen={handleOpenScore}
-                    />
-                  ) : (
-                    <PendingScorePill />
-                  )}
+                  {showScores &&
+                    (isFree ? (
+                      <UpgradePill pricingPublic={pricingPublic} />
+                    ) : score ? (
+                      <MobileScorePill
+                        score={score}
+                        isBeta={isBeta}
+                        onOpen={handleOpenScore}
+                      />
+                    ) : (
+                      <PendingScorePill />
+                    ))}
                   <button
                     type="button"
                     onClick={() => handleDelete(row)}
@@ -464,7 +472,7 @@ export function HoldingsTable({
         })}
       </ul>
 
-      {openScore && (
+      {showScores && openScore && (
         <ScoreDrawer
           ticker={openScore.ticker}
           scoreType={openScore.type}
