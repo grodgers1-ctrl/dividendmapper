@@ -6,6 +6,7 @@ export default function HomePage() {
     <div className="bg-background">
       <HeroSection />
       <FeaturesSection />
+      <ProofSection />
       <HowItWorksSection />
       <FaqSection />
       <FinalCtaSection />
@@ -146,6 +147,85 @@ function FeaturesSection() {
               />
             </Link>
           ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────── Proof */
+
+const PROOF_CARDS = [
+  {
+    title: "Buy score",
+    headline: "2.5x",
+    body: 'Top-quartile Buy names returned <span class="font-medium text-foreground">+4.87%</span> over the next 3 months. Bottom quartile returned <span class="font-medium text-foreground">+1.97%</span>. 1,105 observations across US and UK dividend payers.',
+  },
+  {
+    title: "Trim score",
+    headline: "2.8x",
+    body: 'Least-stretched Trim bucket returned <span class="font-medium text-foreground">+7.04%</span> over the next 3 months vs <span class="font-medium text-foreground">+2.49%</span> baseline. Most-stretched UK bucket went negative (<span class="font-medium text-foreground">-0.9%</span>, 140 UK obs). Used as a contribution brake, not a sell signal.',
+  },
+  {
+    title: "Reinvest Recommender",
+    headline: "£73k",
+    body: 'Pro Buy-weighted contributions finished at <span class="font-medium text-foreground">£560,000</span> over 15 years vs <span class="font-medium text-foreground">£487,000</span> equal-weight. £80,000 start, £400/mo, 13-stock US basket. Microsoft did most of the heavy lifting; different basket, different headline.',
+  },
+];
+
+function ProofSection() {
+  return (
+    <section className="border-t border-border">
+      <div className="mx-auto max-w-7xl px-4 py-16 md:px-6 md:py-20 lg:px-8">
+        <div className="max-w-2xl">
+          <h2 className="font-display text-3xl font-bold tracking-tight text-foreground md:text-4xl">
+            Proof, not promises.
+          </h2>
+          <p className="mt-4 text-base leading-relaxed text-muted-foreground md:text-lg">
+            We backtested the Buy, Trim and Reinvest scoring across 4,680
+            monthly observations of US and UK dividend payers (2010 to 2024).
+            Every number below is reproducible from the repo.
+          </p>
+        </div>
+
+        <div className="mt-12 grid gap-5 md:grid-cols-3">
+          {PROOF_CARDS.map((card) => (
+            <div
+              key={card.title}
+              className="rounded-xl border border-border bg-card p-6"
+            >
+              <h3 className="font-display text-lg font-semibold text-foreground">
+                {card.title}
+              </h3>
+              <p className="mt-3 font-display text-3xl font-bold text-brand-600 dark:text-brand-400">
+                {card.headline}
+              </p>
+              <p
+                className="mt-3 text-sm leading-relaxed text-muted-foreground"
+                dangerouslySetInnerHTML={{ __html: card.body }}
+              />
+            </div>
+          ))}
+        </div>
+
+        <p className="mx-auto mt-10 max-w-3xl text-xs leading-relaxed text-muted-foreground">
+          28-ticker basket. 2010 to 2024 is a US large-cap growth supercycle:
+          different basket, different period, different headline. Survivorship
+          bias real. Methodology and CSVs published; reproduce with{" "}
+          <code className="rounded bg-secondary px-1 py-0.5 font-mono text-[11px]">
+            npm run analyst:event-study
+          </code>
+          .
+        </p>
+
+        <div className="mt-8 flex justify-center">
+          <Link
+            href="/scoring"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
+          >
+            See the public scores
+            <span aria-hidden>→</span>
+          </Link>
         </div>
       </div>
     </section>
