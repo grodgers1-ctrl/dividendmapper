@@ -4,9 +4,11 @@ import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth/server";
 import { isPricingPublic } from "@/lib/flags/pricing";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { loadUserPreferences } from "@/lib/scoring/preferences";
 import { DeleteAccount } from "./_components/delete-account";
 import { FoundingCodeCard } from "./_components/founding-code-card";
 import { WelcomeRefresh } from "./_components/welcome-refresh";
+import { AccountWizardEntry } from "./_components/account-wizard-entry";
 
 export const metadata: Metadata = {
   title: "Account",
@@ -62,7 +64,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
   // Founding-member codes are RLS-readable by the owner (member_user_id =
   // auth.uid()), so the standard SSR client picks them up. Parallel with the
   // profile read since neither depends on the other.
-  const [profileResult, codesResult] = await Promise.all([
+  const [profileResult, codesResult, prefs] = await Promise.all([
     supabase
       .from("profiles")
       .select(
@@ -76,6 +78,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
       .eq("member_user_id", user.id)
       .order("created_at", { ascending: true })
       .returns<FoundingCodeRow[]>(),
+    loadUserPreferences(user.id),
   ]);
 
   const profile = profileResult.data;
@@ -260,6 +263,19 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
           </div>
         )}
       </dl>
+
+      <section className="mt-8 rounded-xl border border-border bg-card p-5 md:p-6">
+        <h2 className="font-display text-lg font-semibold text-foreground">
+          Your preferences
+        </h2>
+        <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+          A few quick questions tune your Reinvest suggestions and when we flag a
+          holding. Not financial advice.
+        </p>
+        <div className="mt-4">
+          <AccountWizardEntry initial={prefs} />
+        </div>
+      </section>
 
       <form action={signOut} className="mt-8">
         <button
