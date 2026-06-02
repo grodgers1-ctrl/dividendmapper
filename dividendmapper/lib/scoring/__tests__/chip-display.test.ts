@@ -1,5 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { chipColor, actionHint, trendArrow, formatDelta } from "../chip-display";
+import {
+  chipColor,
+  actionHint,
+  actionHintSensitivity,
+  trendArrow,
+  formatDelta,
+} from "../chip-display";
 
 describe("chipColor", () => {
   it("buy tiers", () => {
@@ -38,6 +44,45 @@ describe("actionHint", () => {
   });
   it("null buy (gate fail) with elevated risk/trim still surfaces the actionable hint", () => {
     expect(actionHint({ buy: null, trim: 88, risk: 60 })).toBe("Reassess thesis");
+  });
+});
+
+describe("actionHintSensitivity", () => {
+  it("is 0 for undecided/empty", () => {
+    expect(actionHintSensitivity(null)).toBe(0);
+    expect(
+      actionHintSensitivity({ risk_appetite: "undecided", investing_horizon: "undecided" }),
+    ).toBe(0);
+  });
+  it("sums cautious + already_retired and clamps to -10", () => {
+    expect(
+      actionHintSensitivity({ risk_appetite: "cautious", investing_horizon: "already_retired" }),
+    ).toBe(-10);
+  });
+  it("nets cautious + 10y_plus to 0", () => {
+    expect(
+      actionHintSensitivity({ risk_appetite: "cautious", investing_horizon: "10y_plus" }),
+    ).toBe(0);
+  });
+  it("sums aggressive + 10y_plus and clamps to +10", () => {
+    expect(
+      actionHintSensitivity({ risk_appetite: "aggressive", investing_horizon: "10y_plus" }),
+    ).toBe(10);
+  });
+});
+
+describe("actionHint with sensitivity", () => {
+  it("default thresholds unchanged when sensitivity omitted", () => {
+    expect(actionHint({ buy: null, trim: 50, risk: 0 })).toBe("Watch: extended");
+    expect(actionHint({ buy: null, trim: 49, risk: 0 })).toBe("Hold");
+  });
+  it("negative sensitivity warns earlier (trim 65 fires 'Consider trimming' at -10)", () => {
+    expect(actionHint({ buy: null, trim: 65, risk: 0 }, -10)).toBe("Consider trimming");
+    expect(actionHint({ buy: null, trim: 65, risk: 0 }, 0)).toBe("Watch: extended");
+  });
+  it("positive sensitivity warns later (risk 80 stays 'Reassess thesis' at +10)", () => {
+    expect(actionHint({ buy: null, trim: 0, risk: 80 }, 10)).toBe("Reassess thesis");
+    expect(actionHint({ buy: null, trim: 0, risk: 80 }, 0)).toBe("Review urgently");
   });
 });
 

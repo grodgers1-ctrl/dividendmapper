@@ -22,18 +22,46 @@ export function chipColor(type: ScoreType, score: number): { hex: string } {
 // danger) or Trim (overextended valuation). A high Quality score is a
 // descriptor shown via the chip itself, NOT a "buy more" directive, so it
 // returns "Hold" (no flag) and does not appear in the attention banner.
-export function actionHint(s: {
-  buy: number | null;
-  trim: number | null;
-  risk: number | null;
-}): string {
+//
+// `sensitivity` (from the personalisation wizard) shifts both thresholds:
+// negative warns earlier (cautious / near-retirement), positive warns later
+// (aggressive / long horizon). Default 0 keeps existing callers unchanged.
+export function actionHint(
+  s: {
+    buy: number | null;
+    trim: number | null;
+    risk: number | null;
+  },
+  sensitivity = 0,
+): string {
   const trim = s.trim ?? 0;
   const risk = s.risk ?? 0;
-  if (risk >= 75) return "Review urgently";
-  if (risk >= 50) return "Reassess thesis";
-  if (trim >= 75) return "Consider trimming";
-  if (trim >= 50) return "Watch: extended";
+  if (risk >= 75 + sensitivity) return "Review urgently";
+  if (risk >= 50 + sensitivity) return "Reassess thesis";
+  if (trim >= 75 + sensitivity) return "Consider trimming";
+  if (trim >= 50 + sensitivity) return "Watch: extended";
   return "Hold";
+}
+
+export interface ActionHintPrefs {
+  risk_appetite?: string | null;
+  investing_horizon?: string | null;
+}
+
+// Derive the action-hint threshold shift from wizard posture answers. Sums a
+// risk-appetite contribution and a horizon contribution, clamped to [-10, +10].
+// Posture-only: it never touches the persisted scores.
+export function actionHintSensitivity(prefs: ActionHintPrefs | null): number {
+  if (!prefs) return 0;
+  const risk =
+    prefs.risk_appetite === "cautious" ? -5 : prefs.risk_appetite === "aggressive" ? 5 : 0;
+  const horizon =
+    prefs.investing_horizon === "already_retired" || prefs.investing_horizon === "lt_5y"
+      ? -5
+      : prefs.investing_horizon === "10y_plus"
+        ? 5
+        : 0;
+  return Math.max(-10, Math.min(10, risk + horizon));
 }
 
 export type TrendArrow = "↗" | "→" | "↘";
