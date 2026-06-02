@@ -55,8 +55,9 @@ export function buildHoldingScore(input: {
   priorHistory: PriorHistory | null;
   overrides: OverrideRow[];
   now: Date;
+  sensitivity?: number;
 }): HoldingScore {
-  const { score, priorHistory, overrides, now } = input;
+  const { score, priorHistory, overrides, now, sensitivity = 0 } = input;
   const failedGates = (score.buy_failed_gates ?? []) as GateCode[];
 
   return {
@@ -77,11 +78,14 @@ export function buildHoldingScore(input: {
       trim: isHidden(overrides, "trim", now),
       risk: isHidden(overrides, "risk", now),
     },
-    actionHint: actionHint({
-      buy: score.buy_score,
-      trim: score.trim_score,
-      risk: score.risk_score,
-    }),
+    actionHint: actionHint(
+      {
+        buy: score.buy_score,
+        trim: score.trim_score,
+        risk: score.risk_score,
+      },
+      sensitivity,
+    ),
   };
 }
 

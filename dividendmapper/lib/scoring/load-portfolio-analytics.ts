@@ -8,13 +8,16 @@ import { ratesToGbpFor } from "@/lib/scoring/currency";
 import { isUkTicker } from "@/lib/portfolio/uk-income";
 import {
   buildHoldingScore,
-  applyUserWeights,
   flaggedHoldings,
   type HoldingScore,
   type ScoreRow,
   type PriorHistory,
   type OverrideRow,
 } from "@/lib/scoring/portfolio-scores";
+import { loadUserPreferences } from "@/lib/scoring/preferences";
+import { actionHintSensitivity } from "@/lib/scoring/chip-display";
+import { categoryWeightsFor, reaggregateBuyScore } from "@/lib/scoring/reaggregate";
+import { loadBuySignals } from "@/lib/scoring/load-buy-signals";
 import {
   buildReinvestCard,
   type ReinvestCard,
@@ -46,9 +49,15 @@ export async function loadPortfolioAnalytics(args: {
   visibleRows: HoldingRow[];
   quotes: Map<string, QuoteResult>;
   quotesByTicker: Record<string, QuoteResult>;
+  lens?: boolean;
 }): Promise<PortfolioAnalytics> {
-  const { userId, allHoldings, visibleRows, quotes, quotesByTicker } = args;
+  const { userId, allHoldings, visibleRows, quotes, quotesByTicker, lens = false } = args;
   const supabase = await createSupabaseServerClient();
+
+  // Personalisation: posture answers tune the Reinvest filter + action-hint
+  // sensitivity by default; the score lens (opt-in) re-aggregates buy scores.
+  const prefs = await loadUserPreferences(userId);
+  const sensitivity = actionHintSensitivity(prefs);
 
   // Collect the distinct currencies of priced quotes so we can resolve GBP
   // multipliers before computing concentration weights.
@@ -120,15 +129,24 @@ export async function loadPortfolioAnalytics(args: {
   }
 
   for (const score of scoresRes.data ?? []) {
-    scoresByTicker[score.ticker] = applyUserWeights(
-      buildHoldingScore({
-        score,
-        priorHistory: priorByTicker.get(score.ticker) ?? null,
-        overrides: overridesByTicker.get(score.ticker) ?? [],
-        now,
-      }),
-      null,
-    );
+    scoresByTicker[score.ticker] = buildHoldingScore({
+      score,
+      priorHistory: priorByTicker.get(score.ticker) ?? null,
+      overrides: overridesByTicker.get(score.ticker) ?? [],
+      now,
+      sensitivity,
+    });
+  }
+
+  // Opt-in score lens: re-aggregate the Buy/Quality score from persisted
+  // signals using the user's category weights. Trim/Risk are left untouched.
+  if (lens && prefs) {
+    const weights = categoryWeightsFor(prefs);
+    const signalsByTicker = await loadBuySignals(tickers);
+    for (const t of Object.keys(scoresByTicker)) {
+      const sig = signalsByTicker[t];
+      if (sig) scoresByTicker[t] = { ...scoresByTicker[t], buy: reaggregateBuyScore(sig, weights) };
+    }
   }
   // Flag from the distinct holdings actually shown.
   flagged = flaggedHoldings(
@@ -178,7 +196,7 @@ export async function loadPortfolioAnalytics(args: {
     scoresByTicker,
     weightByTicker,
     totalPortfolioIncomeGbp,
-    sectorsToAvoid: [],
+    sectorsToAvoid: prefs?.sectors_to_avoid ?? [],
     today: now.toISOString().slice(0, 10),
     windowDays: 5,
   });
