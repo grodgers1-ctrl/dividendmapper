@@ -30,34 +30,34 @@ function HeroSection() {
           </span>
 
           <h1 className="mt-6 font-display text-4xl font-bold tracking-tight text-foreground md:text-5xl lg:text-6xl">
-            Map every{" "}
+            Know when you can retire on your{" "}
             <span className="text-brand-600 dark:text-brand-400">
-              dividend
-            </span>{" "}
-            in your portfolio.
+              dividends
+            </span>
+            .
           </h1>
 
           <LocalisedHero />
 
           <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
-              href="/tools/retirement-calculator"
+              href="/login"
               className="inline-flex h-12 items-center justify-center rounded-lg bg-brand-600 px-6 text-base font-medium text-white transition-all duration-200 hover:bg-brand-700 md:hover:shadow-md md:hover:shadow-brand-500/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
-              Retirement calculator
+              Start for free
             </Link>
             <Link
-              href="/waitlist"
+              href="/tools/retirement-calculator"
               className="inline-flex h-12 items-center justify-center rounded-lg border border-border bg-card px-6 text-base font-medium text-foreground transition-colors duration-200 hover:border-brand-500 hover:bg-secondary"
             >
-              Join the waitlist
+              Try the retirement calculator
             </Link>
           </div>
 
           <ul className="mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs font-medium text-muted-foreground">
             <li className="inline-flex items-center gap-1.5">
               <CheckDot />
-              Free, no signup
+              Free tier, no card required
             </li>
             <li className="inline-flex items-center gap-1.5">
               <CheckDot />
@@ -65,7 +65,7 @@ function HeroSection() {
             </li>
             <li className="inline-flex items-center gap-1.5">
               <CheckDot />
-              Numbers stay in your browser
+              Backtested across 4,680 US + UK dividend observations
             </li>
           </ul>
         </div>
@@ -274,18 +274,18 @@ function FinalCtaSection() {
       />
       <div className="mx-auto max-w-3xl px-4 py-20 text-center md:px-6 md:py-24 lg:px-8">
         <h2 className="font-display text-3xl font-bold tracking-tight text-foreground md:text-4xl">
-          Get the launch email.
+          Start tracking your dividends.
         </h2>
         <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-muted-foreground md:text-lg">
-          One email when Trading 212 sync follows in Phase 3. No drip sequence,
-          one-click unsubscribe.
+          Free, no card. Up to 10 holdings on the Free tier, or upgrade to Pro
+          for weekly Buy, Trim and Risk scores on every position.
         </p>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
           <Link
-            href="/waitlist"
+            href="/login"
             className="inline-flex h-12 items-center justify-center rounded-lg bg-brand-600 px-6 text-base font-medium text-white transition-colors hover:bg-brand-700"
           >
-            Join the waitlist
+            Start for free
           </Link>
           <Link
             href="/tools/retirement-calculator"
