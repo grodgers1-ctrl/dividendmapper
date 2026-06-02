@@ -277,6 +277,19 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
         </div>
       </section>
 
+      <section className="mt-6 rounded-xl border border-border bg-card p-5 md:p-6">
+        <h2 className="font-display text-lg font-semibold text-foreground">Alert emails</h2>
+        <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+          Choose when we email you about a holding&apos;s Quality or Risk score. Pro feature.
+        </p>
+        <Link
+          href="/app/account/notifications"
+          className="mt-3 inline-block text-sm font-medium text-brand-700 underline-offset-2 hover:underline dark:text-brand-300"
+        >
+          Manage alert emails
+        </Link>
+      </section>
+
       <form action={signOut} className="mt-8">
         <button
           type="submit"
