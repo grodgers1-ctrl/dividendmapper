@@ -157,9 +157,9 @@ function FeaturesSection() {
 
 const PROOF_CARDS = [
   {
-    title: "Buy score",
+    title: "Quality score",
     headline: "2.5x",
-    body: 'Top-quartile Buy names returned <span class="font-medium text-foreground">+4.87%</span> over the next 3 months. Bottom quartile returned <span class="font-medium text-foreground">+1.97%</span>. 1,105 observations across US and UK dividend payers.',
+    body: 'Top-quartile Quality names returned <span class="font-medium text-foreground">+4.87%</span> over the next 3 months vs <span class="font-medium text-foreground">+1.97%</span> for the bottom quartile (1,105 observations). Used as a resilience screen on what you already own, not a market-timing buy signal.',
   },
   {
     title: "Trim score",
@@ -169,7 +169,7 @@ const PROOF_CARDS = [
   {
     title: "Reinvest Recommender",
     headline: "£73k",
-    body: 'Pro Buy-weighted contributions finished at <span class="font-medium text-foreground">£560,000</span> over 15 years vs <span class="font-medium text-foreground">£487,000</span> equal-weight. £80,000 start, £400/mo, 13-stock US basket. Microsoft did most of the heavy lifting; different basket, different headline.',
+    body: 'Pro Quality-weighted contributions finished at <span class="font-medium text-foreground">£560,000</span> over 15 years vs <span class="font-medium text-foreground">£487,000</span> equal-weight. £80,000 start, £400/mo, 13-stock US basket. Microsoft did most of the heavy lifting; different basket, different headline.',
   },
 ];
 
@@ -182,7 +182,7 @@ function ProofSection() {
             Proof, not promises.
           </h2>
           <p className="mt-4 text-base leading-relaxed text-muted-foreground md:text-lg">
-            We backtested the Buy, Trim and Reinvest scoring across 4,680
+            We backtested the Quality, Trim and Reinvest scoring across 4,680
             monthly observations of US and UK dividend payers (2010 to 2024).
             Every number below is reproducible from the repo.
           </p>
