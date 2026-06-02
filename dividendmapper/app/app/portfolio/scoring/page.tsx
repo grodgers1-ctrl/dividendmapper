@@ -5,11 +5,14 @@ import { isPricingPublic } from "@/lib/flags/pricing";
 import { isBeta } from "@/lib/scoring/config";
 import { loadPricedHoldings } from "@/lib/portfolio/load-priced-holdings";
 import { loadPortfolioAnalytics } from "@/lib/scoring/load-portfolio-analytics";
+import { loadUserPreferences } from "@/lib/scoring/preferences";
 import { buildQuadrant } from "@/lib/scoring/quadrant";
 import { HoldingsTable } from "../_components/holdings-table";
 import { PortfolioInsights } from "../_components/portfolio-insights";
 import { ReinvestCard } from "../_components/reinvest-card";
 import { QuadrantMap } from "../_components/quadrant-map";
+import { ScoreLensToggle } from "../_components/score-lens-toggle";
+import { FirstVisitWizard } from "../_components/first-visit-wizard";
 
 export const metadata: Metadata = {
   title: "Portfolio Manager",
@@ -18,7 +21,9 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-export default async function PortfolioManagerPage() {
+export default async function PortfolioManagerPage(props: {
+  searchParams: Promise<{ lens?: string }>;
+}) {
   // Guard here too: a soft nav re-renders only this segment, so the layout's
   // requireUser() may not re-run. requireUser redirects on a null session
   // (cache()-memoised, so free on a full load).
@@ -27,6 +32,11 @@ export default async function PortfolioManagerPage() {
 
   // Pro+ only. Free users are redirected back to the ledger.
   if (priced.tier === "free") redirect("/app/portfolio");
+
+  const sp = await props.searchParams;
+  const lens = sp.lens === "1";
+  const prefs = await loadUserPreferences(user.id);
+  const hasAnsweredWizard = !!(prefs?.wizard_completed_at || prefs?.wizard_skipped_at);
 
   const pricingPublic = isPricingPublic();
   const { visibleRows, quotesByTicker, allHoldings, quotes } = priced;
@@ -39,6 +49,7 @@ export default async function PortfolioManagerPage() {
           visibleRows,
           quotes,
           quotesByTicker,
+          lens,
         })
       : null;
 
@@ -53,6 +64,7 @@ export default async function PortfolioManagerPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-12 md:px-6 md:py-16">
+      <FirstVisitWizard initial={prefs} autoOpen={!hasAnsweredWizard} />
       <div>
         <h1 className="font-display text-3xl font-bold tracking-tight text-foreground md:text-4xl">
           Portfolio Manager
@@ -88,6 +100,11 @@ export default async function PortfolioManagerPage() {
                 overweight={analytics.concentration.overweight}
                 threshold={analytics.concentration.threshold}
               />
+            )}
+            {prefs && (
+              <div className="flex justify-end">
+                <ScoreLensToggle on={lens} />
+              </div>
             )}
             <HoldingsTable
               rows={visibleRows}
