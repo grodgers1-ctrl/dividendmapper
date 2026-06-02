@@ -10,7 +10,7 @@ import { ProPrice } from "./_components/pro-price";
 export const metadata: Metadata = {
   title: "Pricing",
   description:
-    "Free dividend portfolio tools, plus a Pro tier that lifts the 10-holding cap, scores every holding for quality and risk, and ships broker sync and alerts in 2026.",
+    "Free dividend portfolio tools, plus a Pro tier that lifts the 10-holding cap, scores every holding for quality and risk, sends threshold alert emails, and ships broker sync in 2026.",
 };
 
 // Per-user (auth + founding-member status) and per-request, never cached.
@@ -34,13 +34,14 @@ const PRO_FEATURES = [
   "No holdings cap, track as many as you own",
   "Full portfolio income across every holding, every wrapper",
   "Daily Quality, Risk and Trim scores that flag cut risk and stretched valuations",
+  "Email alerts when a holding's Quality or Risk score crosses your threshold",
   "Tax notes on each wrapper, GIA dividend-allowance warnings",
 ];
 
 const PRO_COMING_SOON = [
   "Trading 212 auto-sync (Phase 3, summer 2026)",
   "Dividend calendar with ex-div and payment dates",
-  "Smart alerts on dividend cuts, raises, and ex-div",
+  "Reinvest alerts when a holding goes ex-dividend",
 ];
 
 export default async function PricingPage() {
@@ -80,8 +81,8 @@ export default async function PricingPage() {
         </h1>
         <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-muted-foreground md:text-lg">
           Free covers the basics. Pro tracks your whole portfolio and scores
-          every holding for quality and risk. Broker sync, alerts, and the
-          dividend calendar arrive through 2026.
+          every holding for quality and risk. Broker sync and the dividend
+          calendar arrive through 2026.
         </p>
       </header>
 
