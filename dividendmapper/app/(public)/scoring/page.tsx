@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SITE_URL } from "@/lib/site";
-import { createSupabasePublicClient } from "@/lib/supabase/public";
+import { listScoredTickers } from "@/lib/scoring/scored-tickers";
 import { ScoringSearch } from "./_components/scoring-search";
 
 // Scores refresh nightly; an hour-old static render is plenty fresh.
@@ -21,12 +21,7 @@ export const metadata: Metadata = {
 };
 
 export default async function ScoringIndexPage() {
-  const supabase = createSupabasePublicClient();
-  const { data } = await supabase
-    .from("equity_scores")
-    .select("ticker")
-    .order("ticker", { ascending: true });
-  const tickers = (data ?? []).map((r) => (r as { ticker: string }).ticker);
+  const tickers = await listScoredTickers();
 
   return (
     <div className="bg-background">
