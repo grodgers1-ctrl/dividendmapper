@@ -50,7 +50,7 @@ type SignalRowDb = {
   observed_at: string;
 };
 
-// Same shape the holdings POST validates against — letters, digits, dot, dash.
+// Same shape the holdings POST validates against: letters, digits, dot, dash.
 const TICKER_RE = /^[A-Z0-9.\-]{1,12}$/;
 
 /**

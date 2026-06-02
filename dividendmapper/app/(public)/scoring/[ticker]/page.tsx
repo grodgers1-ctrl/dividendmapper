@@ -40,9 +40,13 @@ export async function generateMetadata({
     return { title: "Ticker not scored", robots: { index: false, follow: true } };
   }
   const { headline } = publicSummary(score);
+  // Keep the description within the ~160-char sweet spot. The headline already
+  // carries the resilience framing; append the disclaimer only when it fits.
+  const withDisclaimer = `${headline} A resilience check for ${ticker}, not financial advice.`;
+  const description = withDisclaimer.length <= 158 ? withDisclaimer : headline;
   return {
     title: `${ticker} dividend resilience scores`,
-    description: `${headline} Quality, Risk and Trim resilience scores for ${ticker}. Informational, not financial advice.`,
+    description,
     alternates: { canonical: `/scoring/${ticker}` },
     openGraph: {
       title: `${ticker} dividend resilience scores`,
@@ -74,16 +78,29 @@ export default async function ScoringTickerPage({
   const scoreValue = (type: ScoreType): number | null =>
     type === "buy" ? score.buyScore : type === "risk" ? score.riskScore : score.trimScore;
 
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "WebPage",
-    name: `${ticker} dividend resilience scores`,
-    description: headline,
-    url: `${SITE_URL}/scoring/${ticker}`,
-    isPartOf: { "@type": "WebSite", name: "DividendMapper", url: SITE_URL },
-    about: `Informational dividend-resilience scores (Quality, Risk, Trim) for ${ticker}. Not financial advice.`,
-    license: `${SITE_URL}/terms`,
-  };
+  // Neutral, content-describing schema. No Rating/Review/AggregateRating, which
+  // would imply a buy/sell verdict that the reframe forbids. The breadcrumb
+  // mirrors the visible nav.
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      name: `${ticker} dividend resilience scores`,
+      description: headline,
+      url: `${SITE_URL}/scoring/${ticker}`,
+      isPartOf: { "@type": "WebSite", name: "DividendMapper", url: SITE_URL },
+      about: `Informational dividend-resilience scores (Quality, Risk, Trim) for ${ticker}. Not financial advice.`,
+      license: `${SITE_URL}/terms`,
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Dividend scores", item: `${SITE_URL}/scoring` },
+        { "@type": "ListItem", position: 2, name: ticker, item: `${SITE_URL}/scoring/${ticker}` },
+      ],
+    },
+  ];
 
   return (
     <div className="bg-background">

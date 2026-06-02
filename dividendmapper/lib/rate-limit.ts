@@ -4,7 +4,7 @@
 // CAVEAT (documented for the caller): state lives in the module's process
 // memory. On Vercel's serverless/Fluid runtime each instance and region keeps
 // its own counter and a cold start resets it, so this is BEST-EFFORT abuse
-// dampening, not a hard global quota. It is deliberately dependency-free — no
+// dampening, not a hard global quota. It is deliberately dependency-free: no
 // Upstash/Redis (that is a Phase-3 dependency). Swap in a shared store later if
 // a hard global limit is needed.
 
