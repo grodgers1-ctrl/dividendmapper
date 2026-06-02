@@ -40,8 +40,13 @@ function makeChain(table: string) {
 
 const fromMock = vi.fn((table: string) => makeChain(table));
 
+// Anonymous by default (no claims) — exercises the rate-limited path with a
+// generous limit that these few calls never hit.
 vi.mock("@/lib/supabase/server", () => ({
-  createSupabaseServerClient: vi.fn(async () => ({ from: fromMock })),
+  createSupabaseServerClient: vi.fn(async () => ({
+    from: fromMock,
+    auth: { getClaims: vi.fn(async () => ({ data: { claims: null }, error: null })) },
+  })),
 }));
 
 beforeEach(() => {
