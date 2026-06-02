@@ -7,9 +7,10 @@
 ## Goal
 
 Let Pro users opt in to email alerts when one of their holdings' resilience scores
-deteriorates past a threshold, or when a holding goes ex-dividend (cash to redeploy).
-One consolidated daily digest per user, sent by a new cron, with a managed-preferences
+deteriorates past a threshold (Quality falls below a floor, or Risk rises into an elevated
+band). One consolidated daily digest per user, sent by a new cron, with a managed-preferences
 page. This is the parked "Day 9" deliverable from `planning/07-phase2.75-and-3-synopsis.md`.
+(A third alert type — Reinvest, on a holding going ex-dividend — is deferred to a follow-up.)
 
 ## Hard constraints (carried from the kickoff)
 
@@ -34,7 +35,7 @@ page. This is the parked "Day 9" deliverable from `planning/07-phase2.75-and-3-s
 | E | Per-user cap | One email/user/day, inherent in A; enforced by `sendKey`. |
 | F | Unsubscribe | **HMAC signed-token one-click** disable (no login) + "manage preferences" link. |
 | G | Free tier | Prefs page **visible** to Free with disabled toggles + upgrade CTA (mirrors Day-8 wizard). |
-| H | Reinvest trigger | Reuse `buildReinvestCard` — a holding goes **ex-dividend within the window**. |
+| H | Reinvest trigger | **DEFERRED to a follow-up.** v1 ships Quality + Risk only. `reinvest_opportunity` stays parked with the other unused enum values. |
 
 ## Architecture
 
@@ -63,11 +64,13 @@ interface DigestTrigger { ticker: string; from: number; to: number; }
 interface Digest {
   riskCrossings: DigestTrigger[];
   qualityCrossings: DigestTrigger[];
-  reinvest: ReinvestCard | null; // from buildReinvestCard, passed in
 }
 
-buildDigest(prefs, holdings, reinvestCard): Digest | null  // null if nothing fired
+buildDigest(prefs, holdings): Digest | null  // null if nothing fired
 ```
+
+(`AlertPrefs.reinvestEnabled` and the reinvest digest section are DEFERRED — v1 has
+only Quality + Risk. Reinvest is added in a follow-up that reuses `buildReinvestCard`.)
 
 **Crossing rules** (only when `*Enabled`):
 - **Risk** fires when `prevRisk < T && currRisk >= T` (rose into the elevated band).
@@ -79,8 +82,7 @@ buildDigest(prefs, holdings, reinvestCard): Digest | null  // null if nothing fi
 **Guards:**
 - **No prior observation** (`prev*` null because there is no second history row) → no
   crossing detectable → no alert. Kills the first-run spam wave.
-- **degraded_uk** → suppress *all* score crossings for that holding (reinvest still allowed,
-  it's ex-div-driven, not score-driven).
+- **degraded_uk** → suppress *all* score crossings for that holding.
 
 Note: `data_quality` is read from the current `equity_scores` row (history rows don't carry
 it). `prev/curr` scores come from the two most-recent `equity_score_history` rows.
@@ -95,8 +97,8 @@ Modeled on the existing `/api/preferences` route. Returns/accepts the per-event-
 
 `requireUser("/app/account/notifications")` self-guard (the layout guard doesn't re-run on
 soft navs). Pro tier (read `profiles.tier` like `app/app/layout.tsx`) sees enabled toggles +
-threshold inputs for Quality / Risk / Reinvest. Free sees them disabled + an upgrade CTA.
-Account entry link added (AccountWizardEntry pattern). base-ui components.
+threshold inputs for **Quality and Risk** (Reinvest deferred). Free sees them disabled + an
+upgrade CTA. Account entry link added (AccountWizardEntry pattern). base-ui components.
 
 ### 4. Email template — `emails/score-alert.tsx`
 
@@ -104,21 +106,21 @@ One React Email digest template (`_layout.tsx` + `@react-email/components`), ton
 `welcome-paid.tsx` / `founder-step-one.tsx`. Sections render only for fired + enabled types:
 - **Quality fell below your floor** — ticker, from→to, resilience framing.
 - **Risk rose into the elevated band** — ticker, from→to.
-- **Dividend landing soon** — reinvest card (hygiene framing, diversification, never alpha).
 Footer: "Not financial advice", manage-preferences link, one-click unsubscribe link.
+(A reinvest section is added in the deferred follow-up.)
 
 ### 5. Send cron — `/api/internal/send-score-alerts` (`0 7 * * *`)
 
 Auth `Authorization: Bearer ${CRON_SECRET}` (copy the scoring route's guard). Per run:
 1. Load `notification_preferences` where `enabled=true`, joined to `profiles` where
    `tier` ∈ (Pro/founding), excluding rows where `paused_until > now`.
-2. For each such user: load their holdings → fresh `equity_scores` + the two most-recent
-   `equity_score_history` rows per ticker → build `HoldingObservation[]`.
-3. If `reinvest_opportunity` enabled, assemble a `ReinvestCard` via `buildReinvestCard`
-   (reuses the portfolio analytics loader). **This is the heaviest task** — built last and
-   independently shippable; Quality + Risk ship even if reinvest assembly slips.
-4. `buildDigest(...)` → if non-null, `sendIdempotent({ sendKey: ${userId}:digest:${yyyy-mm-dd}, ... })`.
-5. On `ok: true`, update `last_sent_at` on the contributing pref rows.
+2. For each such user: load their holdings → fresh `equity_scores` (for `data_quality`) +
+   the two most-recent `equity_score_history` rows per ticker → build `HoldingObservation[]`.
+3. `buildDigest(...)` → if non-null, `sendIdempotent({ sendKey: ${userId}:digest:${yyyy-mm-dd}, ... })`.
+4. On `ok: true`, update `last_sent_at` on the contributing pref rows.
+
+(Reinvest assembly via `buildReinvestCard` — the heaviest piece, needs full portfolio
+context — is the deferred follow-up; v1 does not load quotes/FX/concentration here.)
 
 Add to `vercel.json`: `{ path: /api/internal/send-score-alerts, schedule: "0 7 * * *" }`.
 (Confirm the Vercel plan allows a second cron before deploy.)
@@ -138,7 +140,6 @@ login required. Token minted in the email footer + `List-Unsubscribe` header.
 - `lib/email/send.ts` `sendIdempotent({to, subject, template, sendKey, userId, body, supabase})`.
 - `lib/email/resend.ts` (`EMAIL_FROM`, `EMAIL_REPLY_TO`, `getResend`), `emails/_layout.tsx`.
 - `sent_emails` idempotency ledger (migration 0003).
-- `lib/reinvest/build-card.ts` `buildReinvestCard` + `build-suggestions.ts`.
 - `equity_score_history` (already written daily by the 22:30 cron — verified).
 - `/api/preferences` (GET+PUT RLS pattern), `requireUser`, `profiles.tier` Pro detection.
 
@@ -151,9 +152,10 @@ before adding any migration.
 
 ## Out of scope (parked)
 
-Engine changes; `trim_threshold_crossed` / `weekly_digest` / `watchlist_alert` (enum exists,
-parked); `notification_overrides` honouring (deferred); quiet-hours/snooze UI; Upstash;
-anything on `phase-2.75-backtest` / `scripts/analyst-dashboard` / `scripts/backtest`.
+Engine changes; **Reinvest alerts (`reinvest_opportunity`) — deferred follow-up**;
+`trim_threshold_crossed` / `weekly_digest` / `watchlist_alert` (enum exists, parked);
+`notification_overrides` honouring (deferred); quiet-hours/snooze UI; Upstash; anything on
+`phase-2.75-backtest` / `scripts/analyst-dashboard` / `scripts/backtest`.
 
 ## Verification (before deploy)
 
