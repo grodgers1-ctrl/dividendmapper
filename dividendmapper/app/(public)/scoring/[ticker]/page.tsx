@@ -23,9 +23,16 @@ const getScore = cache((ticker: string) =>
 );
 
 export async function generateStaticParams(): Promise<{ ticker: string }[]> {
-  const supabase = createSupabasePublicClient();
-  const { data } = await supabase.from("equity_scores").select("ticker");
-  return (data ?? []).map((r) => ({ ticker: (r as { ticker: string }).ticker }));
+  // Prebuild the scored tickers. dynamicParams=true means anything not listed
+  // (or everything, if the DB is briefly unreachable at build) still renders on
+  // demand, so a lookup failure must not fail the build.
+  try {
+    const supabase = createSupabasePublicClient();
+    const { data } = await supabase.from("equity_scores").select("ticker");
+    return (data ?? []).map((r) => ({ ticker: (r as { ticker: string }).ticker }));
+  } catch {
+    return [];
+  }
 }
 
 export async function generateMetadata({
