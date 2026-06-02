@@ -29,30 +29,34 @@ export function scoreBand(score: number | null): Band {
   return "low";
 }
 
-const QUALITY_PHRASE: Record<Exclude<Band, "none">, string> = {
+const QUALITY_PHRASE: Record<Band, string> = {
   high: "screens as a durable dividend profile",
   moderate: "screens as a moderately resilient dividend profile",
   low: "screens weakly for dividend resilience",
+  none: "has not cleared the dividend-quality screen",
 };
 
-const RISK_CLAUSE: Record<Exclude<Band, "none">, string> = {
+const RISK_CLAUSE: Record<Band, string> = {
   high: "elevated cut-risk signals",
   moderate: "some cut-risk signals worth watching",
   low: "low cut-risk signals",
+  none: "limited cut-risk data",
 };
 
-// Trim flags an extended valuation only at the top of its range; a low Trim is
-// not part of the story, so its clause is omitted.
-const TRIM_CLAUSE: Record<Exclude<Band, "none">, string> = {
+// Trim flags an extended valuation only at the top of its range; a low (or
+// missing) Trim is not part of the story, so its clause is omitted.
+const TRIM_CLAUSE: Record<Band, string> = {
   high: " and looks richly valued against its own history",
   moderate: " and looks somewhat extended against its own history",
   low: "",
+  none: "",
 };
 
-const RISK_ADJECTIVE: Record<Exclude<Band, "none">, string> = {
+const RISK_ADJECTIVE: Record<Band, string> = {
   high: "elevated",
   moderate: "worth watching",
   low: "low",
+  none: "not available in the data",
 };
 
 function capitalise(s: string): string {
