@@ -3,6 +3,10 @@
     {
       "path": "/api/internal/refresh-equity-scores",
       "schedule": "30 22 * * *"
+    },
+    {
+      "path": "/api/internal/send-score-alerts",
+      "schedule": "0 7 * * *"
     }
   ]
 }
