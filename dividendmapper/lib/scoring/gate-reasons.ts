@@ -7,12 +7,14 @@
 // window (the live DLO case). The engine can't yet distinguish them (parked
 // Phase 3), so the label stays cause-neutral: "Dividend history irregular".
 //
-// GATE_4 wording note: the gate fires when TTM net income is not positive
-// (quality-gates.ts: `netIncomeTtm <= 0`). That covers loss-making companies
-// (e.g. VOD.L), funds with no corporate earnings (e.g. the SCHD ETF), AND UK
-// names where FMP returned no income data (defaults to 0). It is NOT an
-// ETF-only signal, so the label stays cause-neutral: "No positive earnings to
-// score" (the old "ETF or fund" copy wrongly called loss-makers funds).
+// GATE_4 wording note: the gate fires when TTM net income is a genuine
+// non-null value <= 0 (quality-gates.ts). That covers loss-making companies
+// (e.g. VOD.L) and funds with no corporate earnings (e.g. the SCHD ETF), but
+// NOT names where FMP returned no income data — those now read as null and the
+// gate is SKIPPED, not failed, so a UK fundamentals gap no longer masquerades
+// as a loss. It is not an ETF-only signal, so the label stays cause-neutral:
+// "No positive earnings to score" (the old "ETF or fund" copy wrongly called
+// loss-makers funds).
 
 import type { GateCode } from "./quality-gates";
 

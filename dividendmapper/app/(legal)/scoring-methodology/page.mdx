@@ -7,7 +7,7 @@ export const metadata = {
 
 # How DividendMapper scores are calculated
 
-_Last updated 30 May 2026_
+_Last updated 3 June 2026_
 
 DividendMapper gives each holding in your portfolio three scores: a Quality Score, a Risk Score, and a Trim Score. Each runs from 0 to 100 and refreshes daily. This page explains what they measure, how they work, and where they fall short.
 
@@ -19,11 +19,13 @@ The Quality Score is gated. A holding must clear a set of hard checks before it 
 
 The hard checks cover situations where a dividend looks fragile or where the company type makes the score inappropriate:
 
-- The dividend is not covered by operating cash flow.
+- The dividend is not covered by operating cash flow. We skip this check for banks and insurers: their cash flows are structured differently, and the measure does not fit them.
 - The company has cut its dividend in recent history.
 - Interest coverage is thin: the business does not earn much more than its debt costs.
-- The security is a fund or ETF rather than a single company.
+- The company has no positive earnings to score on. That covers a loss-making business, or a fund or ETF with no company earnings of its own.
 - The company is below the minimum size threshold.
+
+Where a company's fundamentals are missing from our data provider, we skip the check that needs them rather than count it as a failure, so a data gap does not by itself stop a holding from being scored.
 
 A holding that clears every gate is then scored across four areas: valuation, price trend, analyst sentiment, and dividend timing. A high Quality Score means the holding screens well on those dimensions today. Think of it as a resilience check, not a buy recommendation.
 
