@@ -174,6 +174,50 @@ function forwardEps(bundle: RawFmpBundle, asOf: Date): number {
   return num(pick, "epsAvg", "estimatedEpsAvg", "eps") ?? 0;
 }
 
+// Trailing-12-month EPS (reporting currency), frequency-agnostic 365-day window.
+// UK/EU companies report semi-annually, so a fixed 4-row sum would span ~2 years.
+// Used only to scale the non-US forward P/E below.
+function trailingEpsTtm(income: Row[], asOf: Date): number | null {
+  const cutoff = asOf.getTime() - 365 * 86_400_000;
+  const now = asOf.getTime();
+  let total = 0;
+  let found = false;
+  for (const r of income) {
+    const t = new Date((r.date as string) ?? "").getTime();
+    const e = num(r, "eps", "epsDiluted");
+    if (Number.isFinite(t) && t > cutoff && t <= now && e != null) {
+      total += e;
+      found = true;
+    }
+  }
+  return found ? total : null;
+}
+
+// Forward P/E for the A2 signal. US: price and analyst EPS share a currency, so
+// the direct price/forwardEps is correct. Non-US (.L): price is quoted in pence
+// (GBX) while analyst EPS is in the company's reporting currency (e.g. EUR for
+// Unilever), so price/forwardEps mixes units and is ~100x wrong. Instead scale
+// FMP's stable TTM P/E by the unit-free trailing/forward EPS ratio (both EPS
+// from the reporting-currency series):
+//   peTTM x (trailingEps / fwdEps) = (price/trailingEps) x (trailingEps/fwdEps)
+// which equals price/fwdEps in consistent units, without ever mixing GBX and the
+// reporting currency. Falls back to -1 (A2 → N/A, weight redistributes) when the
+// TTM P/E or trailing EPS is unavailable.
+function forwardPeFor(
+  bundle: RawFmpBundle,
+  isUs: boolean,
+  price: number,
+  fwdEps: number,
+  asOf: Date,
+): number {
+  if (fwdEps <= 0) return -1;
+  if (isUs) return price > 0 ? price / fwdEps : -1;
+  const peTtm = num(bundle.ratiosTtm[0] as unknown as Row, "priceToEarningsRatioTTM", "peRatioTTM");
+  const trailingEps = trailingEpsTtm(bundle.incomeQuarterly, asOf);
+  if (peTtm == null || peTtm <= 0 || trailingEps == null || trailingEps <= 0) return -1;
+  return peTtm * (trailingEps / fwdEps);
+}
+
 // Convert monthly analyst-rating-count snapshots into directional grade-change
 // events for C2/Trim-C2. We diff consecutive snapshots within the 90d window:
 // each net "notch" of sentiment improvement emits an Upgrade event, each notch
@@ -262,7 +306,7 @@ export function assembleScoreInputs(
   const marketCapUsd = num(profile as unknown as Row, "mktCap", "marketCap") ?? 0;
 
   const fwdEps = forwardEps(bundle, asOf);
-  const forwardPe = fwdEps > 0 && price > 0 ? price / fwdEps : -1;
+  const forwardPe = forwardPeFor(bundle, isUs, price, fwdEps, asOf);
 
   const dcf = bundle.dcf[0];
   const sma200 = num(bundle.sma[0] as unknown as Row, "sma") ?? 0;

@@ -174,6 +174,31 @@ describe("assembleScoreInputs", () => {
     expect(a.buy.a1.todayYield).toBeCloseTo(13.5 / price, 6);
   });
 
+  it("derives non-US forward P/E from FMP TTM P/E and a unit-free EPS ratio", () => {
+    // .L price is in pence but analyst EPS is in the reporting currency, so
+    // price/fwdEps mixes units (~100x off). Scale FMP's stable TTM P/E by
+    // trailingEps/fwdEps (same currency → ratio cancels). The trailing EPS uses
+    // a 365-day window so semi-annual UK/EU reporters aren't double-counted.
+    // peTTM=24, trailingEps(within 365d)=1.2+0.8=2.0, fwdEps=4 → 24*(2/4)=12.
+    const uk = bundle("ULVR.L", {
+      ratiosTtm: [{ symbol: "ULVR.L", priceToEarningsRatioTTM: 24 }],
+      incomeQuarterly: [
+        { date: daysAgo(30), eps: 1.2, operatingIncome: 250, interestExpense: 50, netIncome: 200 },
+        { date: daysAgo(210), eps: 0.8, operatingIncome: 250, interestExpense: 50, netIncome: 200 },
+        { date: daysAgo(390), eps: 1.0, operatingIncome: 250, interestExpense: 50, netIncome: 200 }, // >365d
+      ],
+      analystEstimates: [{ date: daysAhead(200), epsAvg: 4 }],
+    });
+    const a = assembleScoreInputs("ULVR.L", uk, emptyHistory, asOf);
+    expect(a.buy.a2.forwardPe).toBeCloseTo(12, 6);
+  });
+
+  it("keeps the direct price/EPS forward P/E for US names (unchanged)", () => {
+    // AAPL bundle: latestClose 130, forward epsAvg 10 → 130/10 = 13.
+    const a = assembleScoreInputs("AAPL", bundle("AAPL"), emptyHistory, asOf);
+    expect(a.buy.a2.forwardPe).toBeCloseTo(13, 6);
+  });
+
   it("produces a buy score result when fed through computeBuyScore", async () => {
     const { computeBuyScore } = await import("../compute-buy-score");
     const a = assembleScoreInputs("AAPL", bundle("AAPL"), emptyHistory, asOf);
