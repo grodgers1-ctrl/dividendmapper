@@ -84,6 +84,27 @@ describe("assembleScoreInputs", () => {
     expect(a.buy.marketCapUsd).toBe(5_000_000_000);
   });
 
+  it("marks gate fundamentals null (not 0) when FMP returns no rows", () => {
+    // A UK name with an FMP fundamentals gap: no income / cashflow rows. These
+    // must surface as null so the gates skip, not as 0 which reads as a loss.
+    const gap = bundle("VOD.L", { incomeQuarterly: [], cashflowQuarterly: [] });
+    const a = assembleScoreInputs("VOD.L", gap, emptyHistory, asOf);
+    expect(a.buy.netIncomeTtm).toBeNull();
+    expect(a.buy.fcfTtm).toBeNull();
+    expect(a.buy.ebitTtm).toBeNull();
+    expect(a.buy.interestExpenseTtm).toBeNull();
+  });
+
+  it("does not spuriously fail GATE_1/3/4 when fundamentals are unavailable", async () => {
+    const { computeBuyScore } = await import("../compute-buy-score");
+    const gap = bundle("VOD.L", { incomeQuarterly: [], cashflowQuarterly: [] });
+    const a = assembleScoreInputs("VOD.L", gap, emptyHistory, asOf);
+    const result = computeBuyScore(a.buy);
+    expect(result.failedGates).not.toContain("GATE_1");
+    expect(result.failedGates).not.toContain("GATE_3");
+    expect(result.failedGates).not.toContain("GATE_4");
+  });
+
   it("builds a daily yield series long enough for A1", () => {
     const a = assembleScoreInputs("AAPL", bundle("AAPL"), emptyHistory, asOf);
     expect(a.buy.a1.dailyYields.length).toBeGreaterThanOrEqual(250);

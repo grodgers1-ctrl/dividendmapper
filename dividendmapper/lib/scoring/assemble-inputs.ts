@@ -97,6 +97,24 @@ function sumFirstN(rows: Row[], n: number, ...names: string[]): number {
   return total;
 }
 
+// Like sumFirstN but returns null when NONE of the first n rows carried any of
+// the named fields. This distinguishes "data unavailable" (FMP returned no
+// rows / fields — common on UK names with fundamentals gaps) from a genuine
+// summed zero, so the quality gates can SKIP rather than spuriously fail
+// (a missing-income UK name was reading as a GATE_4 loss-maker).
+function sumFirstNOrNull(rows: Row[], n: number, ...names: string[]): number | null {
+  let total = 0;
+  let found = false;
+  for (const row of rows.slice(0, n)) {
+    const v = num(row, ...names);
+    if (v != null) {
+      total += v;
+      found = true;
+    }
+  }
+  return found ? total : null;
+}
+
 // --- sub-derivations --------------------------------------------------------
 
 function latestClose(bundle: RawFmpBundle): number {
@@ -222,8 +240,11 @@ export function assembleScoreInputs(
   const todayYield =
     bundle.ratiosTtm[0]?.dividendYieldTTM ?? (price > 0 ? annualDiv / price : 0);
 
-  // Quality-gate / fundamentals (TTM = last 4 quarters).
-  const fcfTtm = sumFirstN(bundle.cashflowQuarterly, 4, "freeCashFlow");
+  // Quality-gate / fundamentals (TTM = last 4 quarters). Use the null-aware
+  // sum for the gate inputs so a fundamentals gap skips the gate instead of
+  // spuriously failing it (see sumFirstNOrNull). dividendsPaidTtm stays a plain
+  // sum: it is only a divisor (0 → coverage = +Infinity → GATE_1 passes).
+  const fcfTtm = sumFirstNOrNull(bundle.cashflowQuarterly, 4, "freeCashFlow");
   const dividendsPaidTtm = Math.abs(
     sumFirstN(
       bundle.cashflowQuarterly,
@@ -234,11 +255,15 @@ export function assembleScoreInputs(
       "commonStockDividendsPaid",
     ),
   );
-  const ebitTtm = sumFirstN(bundle.incomeQuarterly, 4, "operatingIncome", "ebit", "incomeBeforeTax");
-  const interestExpenseTtm = Math.abs(
-    sumFirstN(bundle.incomeQuarterly, 4, "interestExpense", "netInterestExpense"),
+  const ebitTtm = sumFirstNOrNull(bundle.incomeQuarterly, 4, "operatingIncome", "ebit", "incomeBeforeTax");
+  const interestExpenseRaw = sumFirstNOrNull(
+    bundle.incomeQuarterly,
+    4,
+    "interestExpense",
+    "netInterestExpense",
   );
-  const netIncomeTtm = sumFirstN(bundle.incomeQuarterly, 4, "netIncome", "bottomLineNetIncome");
+  const interestExpenseTtm = interestExpenseRaw === null ? null : Math.abs(interestExpenseRaw);
+  const netIncomeTtm = sumFirstNOrNull(bundle.incomeQuarterly, 4, "netIncome", "bottomLineNetIncome");
   const marketCapUsd = num(profile as unknown as Row, "mktCap", "marketCap") ?? 0;
 
   const fwdEps = forwardEps(bundle, asOf);

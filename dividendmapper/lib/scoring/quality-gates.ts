@@ -11,12 +11,15 @@ export type GateCode = "GATE_1" | "GATE_2" | "GATE_3" | "GATE_4" | "GATE_5";
 
 export interface QualityGateInputs {
   sector: Sector;
-  fcfTtm: number;
+  // null = FMP returned no rows for this fundamental (data unavailable). The
+  // gate that depends on it SKIPS rather than failing, so a fundamentals gap is
+  // not mistaken for a genuine zero/negative.
+  fcfTtm: number | null;
   dividendsPaidTtm: number;
   dividendCutInLast5Years: boolean;
-  ebitTtm: number;
-  interestExpenseTtm: number;
-  netIncomeTtm: number;
+  ebitTtm: number | null;
+  interestExpenseTtm: number | null;
+  netIncomeTtm: number | null;
   marketCapUsd: number;
 }
 
@@ -34,25 +37,30 @@ function fcfCoverageThreshold(sector: Sector): number {
 export function runQualityGates(inputs: QualityGateInputs): QualityGateResult {
   const failed: GateCode[] = [];
 
-  const coverage = inputs.dividendsPaidTtm > 0
-    ? inputs.fcfTtm / inputs.dividendsPaidTtm
-    : Number.POSITIVE_INFINITY;
-  // Financials (banks, insurers) have no conventional operating-FCF line, so
-  // FCF-coverage-of-dividends is not a meaningful solvency check for them and
-  // was failing healthy names like LGEN.L. REITs/Utilities keep their softened
-  // thresholds; financials skip GATE_1 entirely.
-  if (!isFinancial(inputs.sector) && coverage < fcfCoverageThreshold(inputs.sector)) {
-    failed.push("GATE_1");
+  // GATE_1 — FCF coverage of dividends. Skipped for financials (no conventional
+  // operating-FCF line; was failing healthy names like LGEN.L) and skipped when
+  // FCF data is unavailable (null) rather than treating a gap as poor coverage.
+  if (!isFinancial(inputs.sector) && inputs.fcfTtm !== null) {
+    const coverage = inputs.dividendsPaidTtm > 0
+      ? inputs.fcfTtm / inputs.dividendsPaidTtm
+      : Number.POSITIVE_INFINITY;
+    if (coverage < fcfCoverageThreshold(inputs.sector)) failed.push("GATE_1");
   }
 
   if (inputs.dividendCutInLast5Years) failed.push("GATE_2");
 
-  const interestCoverage = inputs.interestExpenseTtm > 0
-    ? inputs.ebitTtm / inputs.interestExpenseTtm
-    : Number.POSITIVE_INFINITY;
-  if (interestCoverage < 2.0) failed.push("GATE_3");
+  // GATE_3 — interest coverage. Skipped when EBIT or interest expense is
+  // unavailable (null).
+  if (inputs.ebitTtm !== null && inputs.interestExpenseTtm !== null) {
+    const interestCoverage = inputs.interestExpenseTtm > 0
+      ? inputs.ebitTtm / inputs.interestExpenseTtm
+      : Number.POSITIVE_INFINITY;
+    if (interestCoverage < 2.0) failed.push("GATE_3");
+  }
 
-  if (inputs.netIncomeTtm <= 0) failed.push("GATE_4");
+  // GATE_4 — positive earnings. Skipped when net income is unavailable (null);
+  // only a genuine non-null <= 0 is a loss.
+  if (inputs.netIncomeTtm !== null && inputs.netIncomeTtm <= 0) failed.push("GATE_4");
 
   if (inputs.marketCapUsd < 500_000_000) failed.push("GATE_5");
 

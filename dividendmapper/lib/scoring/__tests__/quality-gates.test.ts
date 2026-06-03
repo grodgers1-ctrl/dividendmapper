@@ -84,4 +84,29 @@ describe("runQualityGates", () => {
     );
     expect(result.failedGates).toContain("GATE_1");
   });
+
+  // Data-unavailable distinction: a null input means FMP returned no rows, which
+  // is NOT the same as a real zero/negative. The gate must skip, not fail —
+  // otherwise UK names with an FMP fundamentals gap look like loss-makers.
+  it("skips GATE_4 when net income data is unavailable (null)", () => {
+    const result = runQualityGates(baseInputs({ netIncomeTtm: null }));
+    expect(result.failedGates).not.toContain("GATE_4");
+  });
+
+  it("still fires GATE_4 for a genuine loss (netIncomeTtm <= 0, not null)", () => {
+    const result = runQualityGates(baseInputs({ netIncomeTtm: -50 }));
+    expect(result.failedGates).toContain("GATE_4");
+  });
+
+  it("skips GATE_1 when FCF data is unavailable (null)", () => {
+    const result = runQualityGates(baseInputs({ fcfTtm: null, dividendsPaidTtm: 100 }));
+    expect(result.failedGates).not.toContain("GATE_1");
+  });
+
+  it("skips GATE_3 when EBIT / interest data is unavailable (null)", () => {
+    expect(runQualityGates(baseInputs({ ebitTtm: null })).failedGates).not.toContain("GATE_3");
+    expect(
+      runQualityGates(baseInputs({ interestExpenseTtm: null, ebitTtm: 100 })).failedGates,
+    ).not.toContain("GATE_3");
+  });
 });
