@@ -68,4 +68,20 @@ describe("runQualityGates", () => {
     expect(result.passed).toBe(false);
     expect(result.failedGates.length).toBeGreaterThanOrEqual(3);
   });
+
+  it("skips GATE_1 for financials even when FCF coverage is poor", () => {
+    // Banks/insurers have no conventional operating-FCF line, so the
+    // coverage gate is meaningless for them (e.g. LGEN.L was failing spuriously).
+    const result = runQualityGates(
+      baseInputs({ sector: "financial", fcfTtm: -50, dividendsPaidTtm: 100 }),
+    );
+    expect(result.failedGates).not.toContain("GATE_1");
+  });
+
+  it("still fires GATE_1 for a non-financial with poor coverage", () => {
+    const result = runQualityGates(
+      baseInputs({ sector: "healthcare", fcfTtm: 50, dividendsPaidTtm: 100 }),
+    );
+    expect(result.failedGates).toContain("GATE_1");
+  });
 });

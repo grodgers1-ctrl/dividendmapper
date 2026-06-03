@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { classifySector, isRealEstate, isUtility, type Sector } from "../sector";
+import { classifySector, isRealEstate, isUtility, isFinancial, type Sector } from "../sector";
 
 describe("classifySector", () => {
   it("classifies REIT industries as real_estate", () => {
@@ -33,5 +33,17 @@ describe("classifySector", () => {
     expect(isRealEstate("utility" as Sector)).toBe(false);
     expect(isUtility("utility" as Sector)).toBe(true);
     expect(isUtility("other" as Sector)).toBe(false);
+  });
+});
+
+describe("isFinancial", () => {
+  it("is true for bank/insurer/asset-manager industries", () => {
+    expect(isFinancial(classifySector("Insurance - Life"))).toBe(true);
+    expect(isFinancial(classifySector("Banks - Diversified"))).toBe(true);
+    expect(isFinancial(classifySector("Asset Management"))).toBe(true);
+  });
+  it("is false for non-financials", () => {
+    expect(isFinancial(classifySector("Drug Manufacturers"))).toBe(false);
+    expect(isFinancial(classifySector("Utilities - Regulated"))).toBe(false);
   });
 });

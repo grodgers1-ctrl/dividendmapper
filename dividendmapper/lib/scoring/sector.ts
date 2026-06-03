@@ -42,3 +42,4 @@ export function classifySector(industry: string | null): Sector {
 
 export const isRealEstate = (s: Sector): boolean => s === "real_estate";
 export const isUtility = (s: Sector): boolean => s === "utility";
+export const isFinancial = (s: Sector): boolean => s === "financial";

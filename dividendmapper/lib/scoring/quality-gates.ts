@@ -5,7 +5,7 @@
 // 0.95 (regulated cash flow stability).
 
 import type { Sector } from "./sector";
-import { isRealEstate, isUtility } from "./sector";
+import { isRealEstate, isUtility, isFinancial } from "./sector";
 
 export type GateCode = "GATE_1" | "GATE_2" | "GATE_3" | "GATE_4" | "GATE_5";
 
@@ -37,7 +37,13 @@ export function runQualityGates(inputs: QualityGateInputs): QualityGateResult {
   const coverage = inputs.dividendsPaidTtm > 0
     ? inputs.fcfTtm / inputs.dividendsPaidTtm
     : Number.POSITIVE_INFINITY;
-  if (coverage < fcfCoverageThreshold(inputs.sector)) failed.push("GATE_1");
+  // Financials (banks, insurers) have no conventional operating-FCF line, so
+  // FCF-coverage-of-dividends is not a meaningful solvency check for them and
+  // was failing healthy names like LGEN.L. REITs/Utilities keep their softened
+  // thresholds; financials skip GATE_1 entirely.
+  if (!isFinancial(inputs.sector) && coverage < fcfCoverageThreshold(inputs.sector)) {
+    failed.push("GATE_1");
+  }
 
   if (inputs.dividendCutInLast5Years) failed.push("GATE_2");
 
