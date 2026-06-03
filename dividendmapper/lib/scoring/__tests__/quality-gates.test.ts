@@ -10,6 +10,7 @@ const baseInputs = (overrides: Partial<QualityGateInputs> = {}): QualityGateInpu
   interestExpenseTtm: 200,
   netIncomeTtm: 800,
   marketCapUsd: 5_000_000_000,
+  isFundOrEtf: false,
   ...overrides,
 });
 
@@ -108,5 +109,18 @@ describe("runQualityGates", () => {
     expect(
       runQualityGates(baseInputs({ interestExpenseTtm: null, ebitTtm: 100 })).failedGates,
     ).not.toContain("GATE_3");
+  });
+
+  // A fund/ETF has structurally no company earnings — that is NOT a data gap, so
+  // the null-skip must not let it through. (FMP returns no income rows for ETFs,
+  // which is how GATE_4 used to filter them before the null-skip change.)
+  it("fires GATE_4 for a fund/ETF even when net income is null", () => {
+    const result = runQualityGates(baseInputs({ isFundOrEtf: true, netIncomeTtm: null }));
+    expect(result.failedGates).toContain("GATE_4");
+  });
+
+  it("still skips GATE_4 for a real company with a data gap (null, not a fund)", () => {
+    const result = runQualityGates(baseInputs({ isFundOrEtf: false, netIncomeTtm: null }));
+    expect(result.failedGates).not.toContain("GATE_4");
   });
 });

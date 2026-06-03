@@ -105,6 +105,19 @@ describe("assembleScoreInputs", () => {
     expect(result.failedGates).not.toContain("GATE_4");
   });
 
+  it("gates a fund/ETF via GATE_4 (no company earnings, even with no income rows)", async () => {
+    const { computeBuyScore } = await import("../compute-buy-score");
+    const etf = bundle("SCHD", {
+      profile: [
+        { symbol: "SCHD", mktCap: 5e10, sector: "Financial Services", industry: "Asset Management - Income", currency: "USD", exchange: "NYSE", isEtf: true },
+      ],
+      incomeQuarterly: [],
+    });
+    const a = assembleScoreInputs("SCHD", etf, emptyHistory, asOf);
+    expect(a.buy.isFundOrEtf).toBe(true);
+    expect(computeBuyScore(a.buy).failedGates).toContain("GATE_4");
+  });
+
   it("builds a daily yield series long enough for A1", () => {
     const a = assembleScoreInputs("AAPL", bundle("AAPL"), emptyHistory, asOf);
     expect(a.buy.a1.dailyYields.length).toBeGreaterThanOrEqual(250);

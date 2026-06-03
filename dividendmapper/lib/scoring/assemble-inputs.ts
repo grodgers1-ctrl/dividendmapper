@@ -273,6 +273,8 @@ export function assembleScoreInputs(
   const isUs = !/\.L$/i.test(symbol);
   const profile = bundle.profile[0];
   const sector = classifySector(profile?.industry ?? null);
+  const profileRow = profile as unknown as Row;
+  const isFundOrEtf = profileRow?.isEtf === true || profileRow?.isFund === true;
 
   const price = latestClose(bundle);
   const annualDiv = trailingAnnualDividend(bundle.dividends, asOf);
@@ -333,6 +335,7 @@ export function assembleScoreInputs(
     symbol,
     sector,
     isUs,
+    isFundOrEtf,
     fcfTtm,
     dividendsPaidTtm,
     dividendCutInLast5Years: detectDividendCut(bundle.dividends, { asOf }).isCut,

@@ -161,6 +161,8 @@ export interface FmpProfile {
   industry: string | null;
   currency: string | null;
   exchange: string | null;
+  isEtf?: boolean;
+  isFund?: boolean;
 }
 
 export async function getProfile(symbol: string): Promise<FmpProfile[]> {

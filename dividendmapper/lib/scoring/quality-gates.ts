@@ -21,6 +21,10 @@ export interface QualityGateInputs {
   interestExpenseTtm: number | null;
   netIncomeTtm: number | null;
   marketCapUsd: number;
+  // Funds/ETFs have no company earnings to score. This is structural, NOT a data
+  // gap, so it must fail GATE_4 even though netIncomeTtm is null for them.
+  // Optional (defaults to false) so existing callers/fixtures need no change.
+  isFundOrEtf?: boolean;
 }
 
 export interface QualityGateResult {
@@ -58,9 +62,14 @@ export function runQualityGates(inputs: QualityGateInputs): QualityGateResult {
     if (interestCoverage < 2.0) failed.push("GATE_3");
   }
 
-  // GATE_4 — positive earnings. Skipped when net income is unavailable (null);
-  // only a genuine non-null <= 0 is a loss.
-  if (inputs.netIncomeTtm !== null && inputs.netIncomeTtm <= 0) failed.push("GATE_4");
+  // GATE_4 — positive earnings to score. Fires for a fund/ETF (no company
+  // earnings of its own) and for a genuine non-null loss. Skipped when net
+  // income is merely unavailable (null) for a real company — a data gap, not a
+  // loss. (Funds are the case the null-skip must NOT let through: FMP returns no
+  // income rows for them, which is how this gate filtered them before.)
+  if (inputs.isFundOrEtf === true || (inputs.netIncomeTtm !== null && inputs.netIncomeTtm <= 0)) {
+    failed.push("GATE_4");
+  }
 
   if (inputs.marketCapUsd < 500_000_000) failed.push("GATE_5");
 
