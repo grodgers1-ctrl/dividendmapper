@@ -155,6 +155,25 @@ describe("assembleScoreInputs", () => {
     expect(a.dividendPerShareTtm).toBeCloseTo(13.5, 6); // 9.6 + 3.9 only
   });
 
+  it("uses a trailing-12m dividend (not slice(0,4)) for the A1 yield signal", () => {
+    // UK semi-annual payer: 4 payments across ~2 years. The old slice(0,4)
+    // summed all four (~2 years → ~2x inflated yield); the trailing-365 window
+    // must count only the recent pair (9.6 + 3.9 = 13.5). With dividendYieldTTM
+    // absent, todayYield falls back to annualDiv / price.
+    const sbry = bundle("SBRY.L", {
+      ratiosTtm: [{ symbol: "SBRY.L" }],
+      dividends: [
+        { date: daysAgo(60), adjDividend: 9.6, dividend: 9.6 },
+        { date: daysAgo(240), adjDividend: 3.9, dividend: 3.9 },
+        { date: daysAgo(420), adjDividend: 9.2, dividend: 9.2 }, // >365d ago
+        { date: daysAgo(600), adjDividend: 3.6, dividend: 3.6 }, // >365d ago
+      ],
+    });
+    const a = assembleScoreInputs("SBRY.L", sbry, emptyHistory, asOf);
+    const price = a.buy.b1.currentPrice;
+    expect(a.buy.a1.todayYield).toBeCloseTo(13.5 / price, 6);
+  });
+
   it("produces a buy score result when fed through computeBuyScore", async () => {
     const { computeBuyScore } = await import("../compute-buy-score");
     const a = assembleScoreInputs("AAPL", bundle("AAPL"), emptyHistory, asOf);

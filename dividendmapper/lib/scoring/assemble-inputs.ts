@@ -125,17 +125,12 @@ function latestClose(bundle: RawFmpBundle): number {
   );
 }
 
-// Trailing-12-month regular dividend (sum of last 4 declared payments).
-function annualDividend(dividends: FmpDividend[]): number {
-  return dividends.slice(0, 4).reduce((a, d) => a + (Number.isFinite(d.dividend) ? d.dividend : 0), 0);
-}
-
 // Trailing-12-month dividend per share: sum of declared payments dated within
 // the 365 days before asOf. Frequency-agnostic, so UK semi-annual payers (2/yr,
-// e.g. SBRY.L) and US quarterly (4/yr) both yield a true annual figure. This
-// feeds the persisted dividend_per_share (LSE income display) — NOT the scoring
-// signals. annualDividend() above keeps its fixed 4-payment window for the yield
-// signals under the scoring-engine freeze.
+// e.g. SBRY.L) and US quarterly (4/yr) both yield a true annual figure. Feeds
+// BOTH the persisted dividend_per_share (income display) AND the A1 yield
+// signals (todayYield + the daily yield series) — the old fixed 4-payment
+// annualDividend() over-counted UK semi-annual payers ~2x and is now removed.
 export function trailingAnnualDividend(
   dividends: { date: string; dividend: number }[],
   asOf: Date,
@@ -236,7 +231,7 @@ export function assembleScoreInputs(
   const sector = classifySector(profile?.industry ?? null);
 
   const price = latestClose(bundle);
-  const annualDiv = annualDividend(bundle.dividends);
+  const annualDiv = trailingAnnualDividend(bundle.dividends, asOf);
   const todayYield =
     bundle.ratiosTtm[0]?.dividendYieldTTM ?? (price > 0 ? annualDiv / price : 0);
 
@@ -371,7 +366,7 @@ export function assembleScoreInputs(
     buy,
     trim,
     risk,
-    dividendPerShareTtm: trailingAnnualDividend(bundle.dividends, asOf),
+    dividendPerShareTtm: annualDiv,
     meta: { isUs, sector, dataQualityUk: !isUs },
   };
 }
