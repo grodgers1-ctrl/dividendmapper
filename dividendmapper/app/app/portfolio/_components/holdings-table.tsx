@@ -6,6 +6,8 @@ import { Trash2, Clock } from "lucide-react";
 import type { QuoteResult } from "@/lib/market/quote";
 import type { HoldingScore } from "@/lib/scoring/portfolio-scores";
 import type { ScoreType } from "@/lib/scoring/chip-display";
+import { resolveRowIncome, type RowIncomeStatus } from "@/lib/portfolio/row-income";
+import type { ActualIncome } from "@/lib/portfolio/income";
 import { ScoreChip } from "./score-chip";
 import { ScoreDrawer } from "./score-drawer";
 import { UpgradePill } from "./upgrade-pill";
@@ -75,24 +77,6 @@ function formatIncome(amount: number, currency: string): string {
   return prefix ? `${prefix}${formatted}/yr` : `${formatted} ${currency}/yr`;
 }
 
-type RowIncomeStatus =
-  | { kind: "ok"; amount: number; currency: string }
-  | { kind: "no_data" }
-  | { kind: "failed" };
-
-function resolveRowIncome(
-  row: HoldingRow,
-  quotes: Record<string, QuoteResult>,
-): RowIncomeStatus {
-  const quote = quotes[row.ticker];
-  if (!quote || !quote.ok) return { kind: "failed" };
-  const { dividend, currency } = quote.data;
-  if (!dividend || dividend <= 0 || !currency) return { kind: "no_data" };
-  const annual = Number(row.quantity) * dividend;
-  if (!Number.isFinite(annual) || annual <= 0) return { kind: "no_data" };
-  return { kind: "ok", amount: annual, currency };
-}
-
 interface IncomeCellProps {
   status: RowIncomeStatus;
   className?: string;
@@ -102,6 +86,11 @@ function IncomeCell({ status, className }: IncomeCellProps) {
   if (status.kind === "ok") {
     return (
       <span
+        title={
+          status.source === "actual"
+            ? "Your real dividends from the last 12 months, synced from your broker."
+            : "Estimated from the latest annual dividend per share."
+        }
         className={`font-mono tabular-nums text-foreground ${className ?? ""}`}
       >
         {formatIncome(status.amount, status.currency)}
@@ -223,6 +212,8 @@ function MobileScorePill({
 interface HoldingsTableProps {
   rows: HoldingRow[];
   quotes: Record<string, QuoteResult>;
+  /** Per-holding real synced dividends (TTM), keyed `ticker::wrapper`. */
+  actualsByKey?: Record<string, ActualIncome>;
   tier: "free" | "pro" | "premium";
   pricingPublic: boolean;
   isBeta: boolean;
@@ -234,6 +225,7 @@ interface HoldingsTableProps {
 export function HoldingsTable({
   rows,
   quotes,
+  actualsByKey,
   tier,
   pricingPublic,
   isBeta,
@@ -337,7 +329,7 @@ export function HoldingsTable({
             <tbody>
               {rows.map((row) => {
                 const pending = pendingIds.has(row.id);
-                const incomeStatus = resolveRowIncome(row, quotes);
+                const incomeStatus = resolveRowIncome(row, quotes, actualsByKey);
                 const score = scoresByTicker[row.ticker];
                 return (
                   <tr
@@ -404,7 +396,7 @@ export function HoldingsTable({
       <ul className="space-y-3 md:hidden" aria-label="Your holdings">
         {rows.map((row) => {
           const pending = pendingIds.has(row.id);
-          const incomeStatus = resolveRowIncome(row, quotes);
+          const incomeStatus = resolveRowIncome(row, quotes, actualsByKey);
           const score = scoresByTicker[row.ticker];
           return (
             <li

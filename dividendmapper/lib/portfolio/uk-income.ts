@@ -67,3 +67,57 @@ export function mergeUkDividends(
   }
   return out;
 }
+
+// Build a dividend-only quote from a scoring-table dividend_per_share for ANY
+// ticker. LSE (.L) values are pence (GBX) → ÷100, GBP; everything else (the
+// scored US universe) is already in USD. Mirrors ukDividendQuote, US-aware.
+export function scoringDividendQuote(
+  ticker: string,
+  dividendPerShare: number | null,
+): QuoteResult | null {
+  if (isUkTicker(ticker)) return ukDividendQuote(ticker, dividendPerShare);
+  if (
+    dividendPerShare === null ||
+    dividendPerShare === undefined ||
+    dividendPerShare <= 0
+  ) {
+    return null;
+  }
+  return {
+    ok: true,
+    cached: false,
+    data: {
+      ticker,
+      source: "FMP",
+      price: null,
+      dividend: dividendPerShare,
+      dividendYield: null,
+      dividendGrowth3yr: null,
+      currency: "USD",
+      exchange: null,
+      name: null,
+      fetchedAt: new Date(0).toISOString(),
+    },
+  };
+}
+
+// FMP is our dividend source. The live quote path (Polygon for US, EODHD for
+// LSE) is rate-limited / retired, so for income we prefer the nightly
+// FMP-sourced equity_score_history.dividend_per_share for EVERY scored holding,
+// US and LSE alike. Scoring data WINS where present (income then matches the
+// scores the user already sees, and a Polygon 429 can't drop a holding); the
+// live quote is kept only for tickers not yet scored. Pure — never mutates.
+export function mergeScoringDividends(
+  quotes: ReadonlyMap<string, QuoteResult>,
+  tickers: ReadonlyArray<string>,
+  dividendByTicker: ReadonlyMap<string, number>,
+): Map<string, QuoteResult> {
+  const out = new Map(quotes);
+  for (const ticker of tickers) {
+    const scoringDps = dividendByTicker.get(ticker);
+    if (scoringDps == null) continue; // no FMP datum yet → keep the live quote
+    const synth = scoringDividendQuote(ticker, scoringDps);
+    if (synth) out.set(ticker, synth);
+  }
+  return out;
+}

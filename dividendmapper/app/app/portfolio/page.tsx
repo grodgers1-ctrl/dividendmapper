@@ -34,6 +34,7 @@ export default async function PortfolioPage() {
     atFreeLimit,
     holdingsError,
     quotesByTicker,
+    actualsByKey,
     income,
   } = await loadPricedHoldings(user.id);
 
@@ -111,6 +112,7 @@ export default async function PortfolioPage() {
             <HoldingsTable
               rows={visibleRows}
               quotes={quotesByTicker}
+              actualsByKey={actualsByKey}
               tier={tier}
               pricingPublic={pricingPublic}
               isBeta={isBeta()}

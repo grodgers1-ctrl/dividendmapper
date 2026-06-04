@@ -1,6 +1,12 @@
 import { describe, it, expect } from "vitest";
 import type { QuoteResult } from "@/lib/market/quote";
-import { isUkTicker, ukDividendQuote, mergeUkDividends } from "../uk-income";
+import {
+  isUkTicker,
+  ukDividendQuote,
+  mergeUkDividends,
+  scoringDividendQuote,
+  mergeScoringDividends,
+} from "../uk-income";
 
 describe("isUkTicker", () => {
   it("matches .L suffix case-insensitively", () => {
@@ -90,5 +96,78 @@ describe("mergeUkDividends", () => {
     ]);
     mergeUkDividends(quotes, ["LGEN.L"], new Map([["LGEN.L", 15.67]]));
     expect(quotes.get("LGEN.L")?.ok).toBe(false);
+  });
+});
+
+describe("scoringDividendQuote", () => {
+  it("treats LSE values as pence (÷100, GBP)", () => {
+    const q = scoringDividendQuote("LGEN.L", 21.79);
+    expect(q?.ok).toBe(true);
+    if (q?.ok) {
+      expect(q.data.dividend).toBeCloseTo(0.2179, 6);
+      expect(q.data.currency).toBe("GBP");
+    }
+  });
+
+  it("treats US values as already in USD (no conversion)", () => {
+    const q = scoringDividendQuote("MSFT", 3.56);
+    expect(q?.ok).toBe(true);
+    if (q?.ok) {
+      expect(q.data.dividend).toBe(3.56);
+      expect(q.data.currency).toBe("USD");
+    }
+  });
+
+  it("returns null when there is no usable dividend", () => {
+    expect(scoringDividendQuote("MSFT", null)).toBeNull();
+    expect(scoringDividendQuote("MSFT", 0)).toBeNull();
+  });
+});
+
+describe("mergeScoringDividends", () => {
+  it("patches a US ticker whose live quote failed (Polygon 429), from FMP scoring data", () => {
+    const quotes = new Map<string, QuoteResult>([
+      ["MSFT", { ok: false, error: "polygon_snapshot_429", status: 429 }],
+    ]);
+    const merged = mergeScoringDividends(quotes, ["MSFT"], new Map([["MSFT", 3.56]]));
+    const q = merged.get("MSFT");
+    expect(q?.ok).toBe(true);
+    if (q?.ok) {
+      expect(q.data.dividend).toBe(3.56);
+      expect(q.data.currency).toBe("USD");
+    }
+  });
+
+  it("lets FMP scoring data win even over a present live dividend (FMP is the source)", () => {
+    const quotes = new Map<string, QuoteResult>([["MSFT", okQuote(3.0, "USD")]]);
+    const merged = mergeScoringDividends(quotes, ["MSFT"], new Map([["MSFT", 3.56]]));
+    const q = merged.get("MSFT");
+    if (q?.ok) expect(q.data.dividend).toBe(3.56);
+  });
+
+  it("patches LSE tickers as pence too", () => {
+    const quotes = new Map<string, QuoteResult>([
+      ["VOD.L", { ok: false, error: "eodhd_unconfigured", status: 503 }],
+    ]);
+    const merged = mergeScoringDividends(quotes, ["VOD.L"], new Map([["VOD.L", 3.9054]]));
+    const q = merged.get("VOD.L");
+    if (q?.ok) {
+      expect(q.data.dividend).toBeCloseTo(0.039054, 6);
+      expect(q.data.currency).toBe("GBP");
+    }
+  });
+
+  it("keeps the live quote when there is no scoring datum yet (just-added ticker)", () => {
+    const quotes = new Map<string, QuoteResult>([["NEW", okQuote(1.23, "USD")]]);
+    const merged = mergeScoringDividends(quotes, ["NEW"], new Map());
+    const q = merged.get("NEW");
+    if (q?.ok) expect(q.data.dividend).toBe(1.23);
+  });
+
+  it("does not mutate the input map", () => {
+    const quotes = new Map<string, QuoteResult>([["MSFT", okQuote(null, "USD")]]);
+    mergeScoringDividends(quotes, ["MSFT"], new Map([["MSFT", 3.56]]));
+    const q = quotes.get("MSFT");
+    if (q?.ok) expect(q.data.dividend).toBeNull();
   });
 });

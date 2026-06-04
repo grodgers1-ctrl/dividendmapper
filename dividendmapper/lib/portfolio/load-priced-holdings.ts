@@ -7,7 +7,7 @@ import {
   type PortfolioIncome,
 } from "@/lib/portfolio/income";
 import { fetchPortfolioQuotes } from "@/lib/portfolio/quotes";
-import { isUkTicker, mergeUkDividends } from "@/lib/portfolio/uk-income";
+import { mergeScoringDividends } from "@/lib/portfolio/uk-income";
 import { FREE_TIER_LIMIT } from "@/app/app/portfolio/_components/free-tier-copy";
 
 export type HoldingRow = {
@@ -36,6 +36,8 @@ export interface PricedHoldings {
   holdingsError: unknown;
   quotes: Map<string, QuoteResult>;
   quotesByTicker: Record<string, QuoteResult>;
+  /** Per-holding real synced dividends (TTM), keyed `ticker::wrapper`. */
+  actualsByKey: Record<string, ActualIncome>;
   income: PortfolioIncome;
 }
 
@@ -78,30 +80,30 @@ export async function loadPricedHoldings(userId: string): Promise<PricedHoldings
 
   const rawQuotes = await fetchPortfolioQuotes(allHoldings);
 
-  // UK (.L) holdings lost their income when EODHD was cancelled (FMP took over
-  // scoring 2026-05-29). FMP already pulls LSE dividends nightly into
-  // equity_score_history, so patch those tickers from there (pence -> £).
-  const ukTickers = [...new Set(allHoldings.map((h) => h.ticker))].filter(
-    isUkTicker,
-  );
-  const ukDividendByTicker = new Map<string, number>();
-  if (ukTickers.length > 0) {
-    const { data: ukDivRows } = await supabase
+  // FMP is our dividend source. The live quote path (Polygon for US, EODHD for
+  // LSE) is only a backup and is rate-limited (a burst of parallel calls 429s),
+  // so income reads each holding's dividend from the nightly FMP-sourced
+  // equity_score_history instead — for EVERY ticker, US and LSE alike. This is
+  // also why a Polygon 429 no longer drops a US holding's income.
+  const allTickers = [...new Set(allHoldings.map((h) => h.ticker))];
+  const scoringDividendByTicker = new Map<string, number>();
+  if (allTickers.length > 0) {
+    const { data: divRows } = await supabase
       .from("equity_score_history")
       .select("ticker, dividend_per_share, observed_at")
-      .in("ticker", ukTickers)
+      .in("ticker", allTickers)
       .order("observed_at", { ascending: false })
       .returns<
         { ticker: string; dividend_per_share: number | null; observed_at: string }[]
       >();
-    for (const r of ukDivRows ?? []) {
+    for (const r of divRows ?? []) {
       // rows are newest-first; keep the first (latest) per ticker.
-      if (!ukDividendByTicker.has(r.ticker) && r.dividend_per_share != null) {
-        ukDividendByTicker.set(r.ticker, Number(r.dividend_per_share));
+      if (!scoringDividendByTicker.has(r.ticker) && r.dividend_per_share != null) {
+        scoringDividendByTicker.set(r.ticker, Number(r.dividend_per_share));
       }
     }
   }
-  const quotes = mergeUkDividends(rawQuotes, ukTickers, ukDividendByTicker);
+  const quotes = mergeScoringDividends(rawQuotes, allTickers, scoringDividendByTicker);
 
   // Per-user ACTUAL dividends (broker sync): TTM sum per (ticker_scoring ×
   // wrapper), in the account currency. Preferred over the FMP estimate by the
@@ -129,6 +131,7 @@ export async function loadPricedHoldings(userId: string): Promise<PricedHoldings
   // server/client boundary; the table receives an empty Map on return
   // navigation. Plain object survives.
   const quotesByTicker = Object.fromEntries(quotes);
+  const actualsByKey = Object.fromEntries(actuals);
 
   return {
     tier,
@@ -140,6 +143,7 @@ export async function loadPricedHoldings(userId: string): Promise<PricedHoldings
     holdingsError,
     quotes,
     quotesByTicker,
+    actualsByKey,
     income,
   };
 }
