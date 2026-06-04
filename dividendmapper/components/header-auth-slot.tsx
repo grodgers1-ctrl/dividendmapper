@@ -50,13 +50,26 @@ export function HeaderAuthSlot() {
     );
   }
 
+  // Signed out (and during the loading flash): returning users need a way in,
+  // so show "Sign in" next to the waitlist CTA. Loading mirrors this markup,
+  // aria-hidden, so the answer arriving doesn't shift layout.
   return (
-    <Link
-      href="/waitlist"
-      className="hidden rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-700 sm:inline-flex"
+    <div
+      className="hidden items-center gap-3 sm:flex"
       aria-hidden={state.kind === "loading"}
     >
-      Join the waitlist
-    </Link>
+      <Link
+        href="/login"
+        className="text-sm font-medium text-foreground underline-offset-2 hover:underline"
+      >
+        Sign in
+      </Link>
+      <Link
+        href="/waitlist"
+        className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-700"
+      >
+        Join the waitlist
+      </Link>
+    </div>
   );
 }
