@@ -9,6 +9,7 @@ import { DeleteAccount } from "./_components/delete-account";
 import { FoundingCodeCard } from "./_components/founding-code-card";
 import { WelcomeRefresh } from "./_components/welcome-refresh";
 import { AccountWizardEntry } from "./_components/account-wizard-entry";
+import { BrokerConnection, type BrokerConnectionState } from "./_components/broker-connection";
 
 export const metadata: Metadata = {
   title: "Account",
@@ -64,7 +65,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
   // Founding-member codes are RLS-readable by the owner (member_user_id =
   // auth.uid()), so the standard SSR client picks them up. Parallel with the
   // profile read since neither depends on the other.
-  const [profileResult, codesResult, prefs] = await Promise.all([
+  const [profileResult, codesResult, prefs, brokerResult] = await Promise.all([
     supabase
       .from("profiles")
       .select(
@@ -79,10 +80,32 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
       .order("created_at", { ascending: true })
       .returns<FoundingCodeRow[]>(),
     loadUserPreferences(user.id),
+    supabase
+      .from("broker_connections")
+      .select("provider, wrapper, status, last_synced_at, last_sync_error")
+      .eq("user_id", user.id)
+      .eq("provider", "trading212")
+      .maybeSingle<{
+        provider: "trading212";
+        wrapper: "isa" | "gia" | null;
+        status: BrokerConnectionState["status"];
+        last_synced_at: string | null;
+        last_sync_error: string | null;
+      }>(),
   ]);
 
   const profile = profileResult.data;
   const foundingCodes = codesResult.data ?? [];
+  const brokerRow = brokerResult.data;
+  const brokerInitial: BrokerConnectionState | null = brokerRow
+    ? {
+        provider: brokerRow.provider,
+        wrapper: brokerRow.wrapper,
+        status: brokerRow.status,
+        lastSyncedAt: brokerRow.last_synced_at,
+        lastSyncError: brokerRow.last_sync_error,
+      }
+    : null;
   const tier = profile?.tier ?? "free";
   const isFoundingMember = profile?.founding_member ?? false;
   // Gate the billing-portal button: a portal session needs a Stripe customer.
@@ -288,6 +311,18 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
         >
           Manage alert emails
         </Link>
+      </section>
+
+      <section className="mt-6 rounded-xl border border-border bg-card p-5 md:p-6">
+        <h2 className="font-display text-lg font-semibold text-foreground">
+          Connected brokers
+        </h2>
+        <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+          Sync your Trading 212 holdings and real dividend income automatically. Pro feature.
+        </p>
+        <div className="mt-4">
+          <BrokerConnection isPro={tier !== "free"} initial={brokerInitial} />
+        </div>
       </section>
 
       <form action={signOut} className="mt-8">
