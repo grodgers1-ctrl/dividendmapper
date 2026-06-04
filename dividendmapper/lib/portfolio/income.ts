@@ -29,6 +29,23 @@ export interface IncomeRow {
   /** Annual dividend income summed across holdings in this bucket. */
   annualIncome: number;
   holdingsCount: number;
+  /**
+   * Where this bucket's figure came from: 'actual' if every contributing
+   * holding had real broker-synced dividends, 'estimate' if all were the FMP
+   * quantity×dps estimate, 'mixed' if the bucket blends both.
+   */
+  source: "actual" | "estimate" | "mixed";
+}
+
+/** A holding's trailing-12-month ACTUAL dividend income, from broker sync. */
+export interface ActualIncome {
+  amount: number;
+  currency: string;
+}
+
+/** Actuals map key: `${tickerScoring}::${wrapper}` (holdings.ticker is the scoring ticker). */
+export function actualKey(ticker: string, wrapper: string): string {
+  return `${ticker}::${wrapper}`;
 }
 
 export interface IncomeCurrencyTotal {
@@ -77,25 +94,69 @@ const EMPTY: PortfolioIncome = {
 export function aggregatePortfolioIncome<T extends IncomeHolding>(
   holdings: ReadonlyArray<T>,
   quotes: ReadonlyMap<string, QuoteResult>,
+  actuals: ReadonlyMap<string, ActualIncome> = new Map(),
 ): PortfolioIncome {
   if (holdings.length === 0) {
     return { ...EMPTY, fetchedAt: new Date().toISOString() };
   }
 
-  // Bucket by (wrapper × dividend-currency). Holdings with no usable dividend
-  // (failed quote, null dividend, unknown currency, unknown wrapper) get
-  // counted as "missing" so the UI can show "N rows have no dividend data."
+  // Bucket by (wrapper × dividend-currency). Per holding we PREFER the actual
+  // broker-synced TTM income; if there's none we fall back to the FMP
+  // quantity×dps estimate. Holdings with neither (failed quote, null dividend,
+  // unknown currency/wrapper) are counted as "missing" so the UI can show
+  // "N rows have no dividend data." actualCount/estimateCount drive the row's
+  // source label.
   const buckets = new Map<
     string,
-    { wrapper: WrapperKey; currency: string; total: number; count: number }
+    {
+      wrapper: WrapperKey;
+      currency: string;
+      total: number;
+      count: number;
+      actualCount: number;
+      estimateCount: number;
+    }
   >();
   let missing = 0;
+
+  const add = (
+    wrapper: WrapperKey,
+    currency: string,
+    annual: number,
+    kind: "actual" | "estimate",
+  ) => {
+    const key = `${wrapper}:${currency}`;
+    const existing = buckets.get(key);
+    if (existing) {
+      existing.total += annual;
+      existing.count += 1;
+      if (kind === "actual") existing.actualCount += 1;
+      else existing.estimateCount += 1;
+    } else {
+      buckets.set(key, {
+        wrapper,
+        currency,
+        total: annual,
+        count: 1,
+        actualCount: kind === "actual" ? 1 : 0,
+        estimateCount: kind === "estimate" ? 1 : 0,
+      });
+    }
+  };
 
   for (const h of holdings) {
     if (!isWrapperKey(h.wrapper)) {
       missing += 1;
       continue;
     }
+
+    // Actual broker-synced income wins, in its own (account) currency.
+    const actual = actuals.get(actualKey(h.ticker, h.wrapper));
+    if (actual && actual.amount > 0 && actual.currency) {
+      add(h.wrapper, actual.currency, actual.amount, "actual");
+      continue;
+    }
+
     const quote = quotes.get(h.ticker);
     if (!quote || !quote.ok) {
       missing += 1;
@@ -111,19 +172,7 @@ export function aggregatePortfolioIncome<T extends IncomeHolding>(
       missing += 1;
       continue;
     }
-    const key = `${h.wrapper}:${currency}`;
-    const existing = buckets.get(key);
-    if (existing) {
-      existing.total += annual;
-      existing.count += 1;
-    } else {
-      buckets.set(key, {
-        wrapper: h.wrapper,
-        currency,
-        total: annual,
-        count: 1,
-      });
-    }
+    add(h.wrapper, currency, annual, "estimate");
   }
 
   const rows: IncomeRow[] = Array.from(buckets.entries())
@@ -133,6 +182,12 @@ export function aggregatePortfolioIncome<T extends IncomeHolding>(
       currency: b.currency,
       annualIncome: b.total,
       holdingsCount: b.count,
+      source:
+        b.actualCount > 0 && b.estimateCount > 0
+          ? ("mixed" as const)
+          : b.actualCount > 0
+            ? ("actual" as const)
+            : ("estimate" as const),
     }))
     .sort((a, b) => b.annualIncome - a.annualIncome);
 

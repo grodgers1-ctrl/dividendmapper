@@ -161,7 +161,8 @@ export async function POST(req: Request) {
   if (tier === "free") {
     const { count, error: countError } = await supabase
       .from("holdings")
-      .select("id", { count: "exact", head: true });
+      .select("id", { count: "exact", head: true })
+      .is("archived_at", null);
     if (countError) {
       console.error("[portfolio/holdings] count error", countError);
       return NextResponse.json({ error: "count_failed" }, { status: 500 });
