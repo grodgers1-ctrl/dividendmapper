@@ -20,7 +20,25 @@ type HoldingRow = {
   broker_label: string | null;
   notes: string | null;
   created_at: string;
+  source?: "manual" | "trading212" | "csv";
 };
+
+// Provenance shown in the Broker column: a synced row gets a "Trading 212"
+// badge; a manual row falls back to its free-text broker label (or a dash).
+function BrokerCell({ row }: { row: HoldingRow }) {
+  if (row.source === "trading212") {
+    return (
+      <span className="inline-flex items-center rounded-full border border-brand-500/30 bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700 dark:border-brand-400/20 dark:bg-brand-900/20 dark:text-brand-300">
+        Trading 212
+      </span>
+    );
+  }
+  return row.broker_label ? (
+    <span className="text-muted-foreground">{row.broker_label}</span>
+  ) : (
+    <span className="text-muted-foreground/60">—</span>
+  );
+}
 
 const WRAPPER_LABEL: Record<string, string> = {
   isa: "ISA",
@@ -361,9 +379,7 @@ export function HoldingsTable({
                       </td>
                     )}
                     <td className="px-4 py-3 text-muted-foreground">
-                      {row.broker_label ?? (
-                        <span className="text-muted-foreground/60">—</span>
-                      )}
+                      <BrokerCell row={row} />
                     </td>
                     <td className="px-4 py-3 text-right">
                       <button
@@ -461,9 +477,7 @@ export function HoldingsTable({
                     Broker
                   </dt>
                   <dd className="mt-0.5 text-foreground">
-                    {row.broker_label ?? (
-                      <span className="text-muted-foreground/60">—</span>
-                    )}
+                    <BrokerCell row={row} />
                   </dd>
                 </div>
               </dl>

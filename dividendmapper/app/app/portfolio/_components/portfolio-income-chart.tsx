@@ -75,6 +75,32 @@ function formatAmount(amount: number, currency: string): string {
     : `${formatter.format(Math.round(amount))} ${currency}`;
 }
 
+// When a bucket's figure comes from real broker-synced dividends we say so;
+// the unlabelled default is the FMP estimate the header already describes.
+function SourceBadge({ source }: { source: IncomeRow["source"] }) {
+  if (source === "actual") {
+    return (
+      <span
+        title="From your real paid dividends, synced from your broker."
+        className="ml-2 inline-flex items-center rounded-full border border-positive/30 bg-positive/10 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-positive"
+      >
+        Actual
+      </span>
+    );
+  }
+  if (source === "mixed") {
+    return (
+      <span
+        title="Some holdings use real synced dividends, the rest use an estimate."
+        className="ml-2 inline-flex items-center rounded-full border border-border bg-secondary px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground"
+      >
+        Part actual
+      </span>
+    );
+  }
+  return null;
+}
+
 interface RowProps {
   row: IncomeRow;
   isOverAllowance: boolean;
@@ -104,6 +130,7 @@ function RowLine({ row, isOverAllowance }: RowProps) {
                 {row.holdingsCount} holdings
               </span>
             ) : null}
+            <SourceBadge source={row.source} />
           </p>
           <p
             className={
@@ -234,8 +261,8 @@ export function PortfolioIncomeChart({ income }: { income: PortfolioIncome }) {
           Annual income
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Projected over the next 12 months based on each holding&apos;s most
-          recent annual dividend per share.
+          Your real synced dividends where we have them, otherwise an estimate
+          from each holding&apos;s most recent annual dividend per share.
         </p>
       </header>
 
