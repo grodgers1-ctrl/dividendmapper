@@ -328,16 +328,15 @@ function useInViewOnce<T extends HTMLElement>(
   rootMargin = "0px"
 ): [React.RefObject<T | null>, boolean] {
   const ref = React.useRef<T | null>(null);
-  const [seen, setSeen] = React.useState(false);
+  const [seen, setSeen] = React.useState(
+    () => typeof window !== "undefined" && typeof IntersectionObserver === "undefined"
+  );
 
   React.useEffect(() => {
     if (seen) return;
     const el = ref.current;
     if (!el) return;
-    if (typeof IntersectionObserver === "undefined") {
-      setSeen(true);
-      return;
-    }
+    if (typeof IntersectionObserver === "undefined") return;
     const obs = new IntersectionObserver(
       (entries) => {
         if (entries.some((e) => e.isIntersecting)) {

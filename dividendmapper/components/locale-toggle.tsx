@@ -23,39 +23,40 @@ const OPTIONS = [
 const HINT_KEY = "dm_locale_hint_seen";
 const HINT_TIMEOUT_MS = 8000;
 
+function hasSeenLocaleHint(): boolean {
+  try {
+    return window.localStorage.getItem(HINT_KEY) === "1";
+  } catch {
+    return true;
+  }
+}
+
 export function LocaleToggle() {
   const { config, setLocale } = useLocale();
   const pathname = usePathname();
-  const [showHint, setShowHint] = useState(false);
+  const [hintDismissed, setHintDismissed] = useState(() => hasSeenLocaleHint());
 
-  useEffect(() => {
-    if (!pathname?.startsWith("/tools/")) return;
-    let seen = false;
-    try {
-      seen = window.localStorage.getItem(HINT_KEY) === "1";
-    } catch {
-      return;
-    }
-    if (seen) return;
-    setShowHint(true);
-    const timer = window.setTimeout(() => {
-      setShowHint(false);
-      try {
-        window.localStorage.setItem(HINT_KEY, "1");
-      } catch {
-        // private mode / blocked storage — fine
-      }
-    }, HINT_TIMEOUT_MS);
-    return () => window.clearTimeout(timer);
-  }, [pathname]);
+  const showHint = Boolean(pathname?.startsWith("/tools/")) && !hintDismissed;
 
-  function dismissHint() {
-    setShowHint(false);
+  function markHintSeen() {
+    setHintDismissed(true);
     try {
       window.localStorage.setItem(HINT_KEY, "1");
     } catch {
       // no-op
     }
+  }
+
+  useEffect(() => {
+    if (!showHint) return;
+    const timer = window.setTimeout(() => {
+      markHintSeen();
+    }, HINT_TIMEOUT_MS);
+    return () => window.clearTimeout(timer);
+  }, [showHint]);
+
+  function dismissHint() {
+    markHintSeen();
   }
 
   function handleSelect(value: "uk" | "us") {

@@ -26,31 +26,34 @@ export function TickerSearch({ onSelect, disabled, placeholder, id }: Props) {
   const [results, setResults] = useState<TickerSearchResult[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [resolvedQuery, setResolvedQuery] = useState("");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const trimmedQuery = query.trim();
+  const hasMinQueryLength = trimmedQuery.length >= MIN_QUERY_LENGTH;
+  const showResults = hasMinQueryLength && resolvedQuery === trimmedQuery ? results : [];
+  const dropdownOpen = hasMinQueryLength && resolvedQuery === trimmedQuery && isOpen;
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (query.trim().length < MIN_QUERY_LENGTH) {
-      setResults([]);
-      setIsOpen(false);
-      return;
-    }
+    if (trimmedQuery.length < MIN_QUERY_LENGTH) return;
     debounceRef.current = setTimeout(async () => {
       abortRef.current?.abort();
       const ctrl = new AbortController();
       abortRef.current = ctrl;
       setLoading(true);
       try {
-        const res = await fetch(`/api/search/tickers?q=${encodeURIComponent(query.trim())}`, {
+        const res = await fetch(`/api/search/tickers?q=${encodeURIComponent(trimmedQuery)}`, {
           signal: ctrl.signal,
         });
         if (!res.ok) throw new Error(`status ${res.status}`);
         const body = (await res.json()) as { results: TickerSearchResult[] };
+        setResolvedQuery(trimmedQuery);
         setResults(body.results);
         setIsOpen(body.results.length > 0);
       } catch (err) {
         if ((err as { name?: string })?.name === "AbortError") return;
+        setResolvedQuery(trimmedQuery);
         setResults([]);
         setIsOpen(false);
       } finally {
@@ -61,7 +64,7 @@ export function TickerSearch({ onSelect, disabled, placeholder, id }: Props) {
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [query]);
+  }, [trimmedQuery]);
 
   function selectResult(r: TickerSearchResult): void {
     onSelect(r);
@@ -74,7 +77,7 @@ export function TickerSearch({ onSelect, disabled, placeholder, id }: Props) {
       e.preventDefault();
       const upper = query.trim().toUpperCase();
       if (TICKER_RE.test(upper)) {
-        const exact = results.find(
+        const exact = showResults.find(
           (r) => r.symbol.toUpperCase() === upper || r.symbol.toUpperCase().split(".")[0] === upper,
         );
         if (exact) {
@@ -82,8 +85,8 @@ export function TickerSearch({ onSelect, disabled, placeholder, id }: Props) {
           return;
         }
       }
-      if (results.length === 1) {
-        selectResult(results[0]);
+      if (showResults.length === 1) {
+        selectResult(showResults[0]);
       }
     } else if (e.key === "Escape") {
       setIsOpen(false);
@@ -106,19 +109,19 @@ export function TickerSearch({ onSelect, disabled, placeholder, id }: Props) {
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         onKeyDown={handleKeyDown}
-        onFocus={() => results.length > 0 && setIsOpen(true)}
+        onFocus={() => showResults.length > 0 && setIsOpen(true)}
         className="block w-full rounded-lg border border-input bg-background px-3 py-2.5 text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 focus:ring-offset-background disabled:opacity-60"
       />
       {loading && (
         <p className="mt-1 text-xs text-muted-foreground">Searching…</p>
       )}
-      {isOpen && (
+      {dropdownOpen && (
         <ul
           role="listbox"
           id={id ? `${id}-listbox` : undefined}
           className="absolute z-50 mt-1 max-h-72 w-full overflow-y-auto rounded-lg border border-border bg-background shadow-xl ring-1 ring-foreground/5"
         >
-          {results.map((r) => (
+          {showResults.map((r) => (
             <li
               key={r.symbol}
               role="option"
