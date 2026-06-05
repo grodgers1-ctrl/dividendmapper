@@ -55,6 +55,16 @@ export const POSTS: BlogPost[] = [
     tags: ["UK", "Broker", "SIPP"],
     locale: "uk",
   },
+  {
+    slug: "sharesight-vs-dividendmapper-uk-income-investors",
+    title: "Sharesight vs DividendMapper: what UK income investors actually need",
+    description:
+      "A straight comparison for UK dividend investors: where Sharesight is strong, where DividendMapper is different, and when you might use one, both, or neither.",
+    publishedAt: "2026-06-04",
+    readingTime: "9 min",
+    tags: ["UK", "Comparison", "Dividend"],
+    locale: "uk",
+  },
 ];
 
 /** Looks up a post by slug. Throws if not found — fail loudly during build. */
