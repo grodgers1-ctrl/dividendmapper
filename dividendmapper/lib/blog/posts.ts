@@ -65,6 +65,16 @@ export const POSTS: BlogPost[] = [
     tags: ["UK", "Comparison", "Dividend"],
     locale: "uk",
   },
+  {
+    slug: "why-headline-yield-can-be-misleading",
+    title: "Why headline yield can be misleading",
+    description:
+      "A practical guide for UK dividend investors on the difference between a high quoted yield and income that is actually likely to hold up.",
+    publishedAt: "2026-06-05",
+    readingTime: "8 min",
+    tags: ["UK", "Dividend", "Education"],
+    locale: "uk",
+  },
 ];
 
 /** Looks up a post by slug. Throws if not found — fail loudly during build. */
