@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { Trash2, Clock } from "lucide-react";
 import type { QuoteResult } from "@/lib/market/quote";
 import type { HoldingScore } from "@/lib/scoring/portfolio-scores";
@@ -10,6 +10,12 @@ import { resolveRowIncome, type RowIncomeStatus } from "@/lib/portfolio/row-inco
 import { resolveRowValue, type RowValueStatus, type TickerPrice } from "@/lib/portfolio/row-value";
 import { actualKey, type ActualIncome } from "@/lib/portfolio/income";
 import { formatMoney } from "@/lib/portfolio/format-money";
+import {
+  sortHoldings,
+  SORT_LABELS,
+  DEFAULT_SORT,
+  type SortKey,
+} from "@/lib/portfolio/sort-holdings";
 import { ScoreChip } from "./score-chip";
 import { ScoreDrawer } from "./score-drawer";
 import { UpgradePill } from "./upgrade-pill";
@@ -291,6 +297,34 @@ export function HoldingsTable({
     null,
   );
 
+  // Sort defaults to value-desc; the user's choice persists in localStorage.
+  // Initial render uses the default (deterministic for SSR), then we hydrate
+  // the saved preference in an effect to avoid a hydration mismatch.
+  const [sortKey, setSortKey] = useState<SortKey>(DEFAULT_SORT);
+  useEffect(() => {
+    const saved = window.localStorage.getItem("dm.holdings-sort");
+    if (saved && saved in SORT_LABELS) setSortKey(saved as SortKey);
+  }, []);
+  const changeSort = (key: SortKey) => {
+    setSortKey(key);
+    try {
+      window.localStorage.setItem("dm.holdings-sort", key);
+    } catch {
+      // private mode / storage disabled — sorting still works for the session.
+    }
+  };
+
+  const sortedRows = useMemo(() => {
+    const buyScoreByTicker: Record<string, number | null> = {};
+    for (const [t, s] of Object.entries(scoresByTicker)) buyScoreByTicker[t] = s.buy;
+    return sortHoldings(rows, sortKey, {
+      priceByTicker,
+      quotes,
+      actualsByKey,
+      buyScoreByTicker,
+    });
+  }, [rows, sortKey, priceByTicker, quotes, actualsByKey, scoresByTicker]);
+
   const isFree = tier === "free";
   const handleOpenScore: OpenScore = (ticker, type) =>
     setOpenScore({ ticker, type });
@@ -344,6 +378,28 @@ export function HoldingsTable({
 
   return (
     <>
+      {/* Sort control — applies to both the desktop table and mobile cards. */}
+      <div className="mb-3 flex items-center justify-end gap-2">
+        <label
+          htmlFor="holdings-sort"
+          className="text-xs font-medium uppercase tracking-wider text-muted-foreground"
+        >
+          Sort
+        </label>
+        <select
+          id="holdings-sort"
+          value={sortKey}
+          onChange={(e) => changeSort(e.target.value as SortKey)}
+          className="rounded-md border border-border bg-card px-2 py-1 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+        >
+          {(Object.keys(SORT_LABELS) as SortKey[]).map((k) => (
+            <option key={k} value={k}>
+              {SORT_LABELS[k]}
+            </option>
+          ))}
+        </select>
+      </div>
+
       {/* Desktop / tablet — full table */}
       <div className="hidden overflow-hidden rounded-xl border border-border bg-card md:block">
         <div className="overflow-x-auto">
@@ -385,7 +441,7 @@ export function HoldingsTable({
               </tr>
             </thead>
             <tbody>
-              {rows.map((row) => {
+              {sortedRows.map((row) => {
                 const pending = pendingIds.has(row.id);
                 const incomeStatus = resolveRowIncome(row, quotes, actualsByKey);
                 const valueStatus = resolveRowValue(row, priceByTicker ?? {});
@@ -467,7 +523,7 @@ export function HoldingsTable({
 
       {/* Mobile — stacked cards */}
       <ul className="space-y-3 md:hidden" aria-label="Your holdings">
-        {rows.map((row) => {
+        {sortedRows.map((row) => {
           const pending = pendingIds.has(row.id);
           const incomeStatus = resolveRowIncome(row, quotes, actualsByKey);
           const valueStatus = resolveRowValue(row, priceByTicker ?? {});

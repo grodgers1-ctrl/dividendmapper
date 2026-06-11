@@ -49,6 +49,7 @@ const schdScore: HoldingScore = {
 };
 
 beforeEach(() => {
+  window.localStorage.clear();
   globalThis.fetch = vi.fn().mockResolvedValue({
     ok: true,
     status: 200,
@@ -225,6 +226,42 @@ describe("<HoldingsTable> Value + Received columns", () => {
     expect(
       within(table).getByTitle(/Value appears after the next nightly price update/),
     ).toBeInTheDocument();
+  });
+});
+
+describe("<HoldingsTable> sort control", () => {
+  const sortProps = {
+    rows: [row("1", "AAPL"), row("2", "MSFT")],
+    quotes: {},
+    // MSFT worth more than AAPL: 100×400 vs 100×200.
+    priceByTicker: {
+      AAPL: { price: 200, currency: "USD" },
+      MSFT: { price: 400, currency: "USD" },
+    },
+    tier: "pro" as const,
+    pricingPublic: true,
+    isBeta: true,
+    scoresByTicker: {},
+    showScores: false,
+  };
+
+  function firstDataRowTicker() {
+    const table = screen.getByRole("table");
+    const allRows = within(table).getAllByRole("row");
+    return allRows[1].querySelector("td")?.textContent ?? "";
+  }
+
+  it("defaults to value-desc (highest value first)", () => {
+    render(<HoldingsTable {...sortProps} />);
+    expect(firstDataRowTicker()).toContain("MSFT");
+  });
+
+  it("reorders and persists when the user picks a different sort", async () => {
+    const user = userEvent.setup();
+    render(<HoldingsTable {...sortProps} />);
+    await user.selectOptions(screen.getByLabelText("Sort"), "ticker");
+    expect(firstDataRowTicker()).toContain("AAPL");
+    expect(window.localStorage.getItem("dm.holdings-sort")).toBe("ticker");
   });
 });
 
