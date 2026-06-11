@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import {
   QUADRANT_LABEL,
   QUADRANT_NOTE,
@@ -8,6 +8,7 @@ import {
   type Quadrant,
   type QuadrantPoint,
 } from "@/lib/scoring/quadrant";
+import { TopographyMotif } from "@/components/visual/topography-motif";
 import { ScoreDrawer } from "./score-drawer";
 
 // Hand-rolled scatter (positioned dots) rather than a charting lib: matches the
@@ -22,6 +23,34 @@ function dotClass(trimElevated: boolean): string {
     : "bg-brand-500/80 ring-brand-600";
 }
 
+function dotGlow(trimElevated: boolean): string {
+  return trimElevated ? "var(--shadow-glow-trim)" : "var(--shadow-glow-quality)";
+}
+
+// Each holding gets a hairline edge to its k nearest neighbours. Edges are
+// deduplicated by sorted-ticker-pair so we render each line once. Pure
+// geometric — no force layout, no transitions.
+function buildEdges(points: QuadrantPoint[], k = 3): { a: QuadrantPoint; b: QuadrantPoint }[] {
+  if (points.length < 2) return [];
+  const seen = new Set<string>();
+  const edges: { a: QuadrantPoint; b: QuadrantPoint }[] = [];
+  for (const p of points) {
+    const others = points
+      .filter((o) => o.ticker !== p.ticker)
+      .map((o) => ({ o, d: (o.x - p.x) ** 2 + (o.y - p.y) ** 2 }))
+      .sort((a, b) => a.d - b.d)
+      .slice(0, k);
+    for (const { o } of others) {
+      const key = p.ticker < o.ticker ? `${p.ticker}|${o.ticker}` : `${o.ticker}|${p.ticker}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        edges.push({ a: p, b: o });
+      }
+    }
+  }
+  return edges;
+}
+
 export function QuadrantMap({
   points,
   excluded,
@@ -32,6 +61,7 @@ export function QuadrantMap({
   isBeta: boolean;
 }) {
   const [openTicker, setOpenTicker] = useState<string | null>(null);
+  const edges = useMemo(() => buildEdges(points), [points]);
 
   return (
     <section
@@ -68,11 +98,35 @@ export function QuadrantMap({
               </div>
               <div
                 data-testid="quadrant-scatter"
-                className="relative aspect-square w-full max-w-xl rounded-lg border border-border bg-background"
+                className="relative isolate aspect-square w-full max-w-xl overflow-hidden rounded-lg border border-border bg-background"
               >
+                <TopographyMotif
+                  intensity="subtle"
+                  className="absolute inset-0 -z-10 h-full w-full opacity-70"
+                />
                 {/* quadrant divider lines */}
                 <div className="absolute inset-x-0 top-1/2 h-px bg-border" aria-hidden />
                 <div className="absolute inset-y-0 left-1/2 w-px bg-border" aria-hidden />
+                {/* nearest-neighbour mesh edges (hairline, pointer-events-none) */}
+                <svg
+                  aria-hidden
+                  viewBox="0 0 100 100"
+                  preserveAspectRatio="none"
+                  className="pointer-events-none absolute inset-0 h-full w-full"
+                >
+                  {edges.map(({ a, b }) => (
+                    <line
+                      key={`${a.ticker}-${b.ticker}`}
+                      x1={a.x}
+                      y1={100 - a.y}
+                      x2={b.x}
+                      y2={100 - b.y}
+                      stroke="var(--mesh-strong)"
+                      strokeWidth={0.25}
+                      strokeOpacity={0.7}
+                    />
+                  ))}
+                </svg>
                 {/* corner labels */}
                 <span className="absolute left-2 top-2 text-xs font-medium text-muted-foreground">
                   {QUADRANT_LABEL.core}
@@ -99,6 +153,7 @@ export function QuadrantMap({
                         bottom: `${p.y}%`,
                         width: `${p.radius * 2}px`,
                         height: `${p.radius * 2}px`,
+                        boxShadow: dotGlow(p.trimElevated),
                       }}
                     />
                     <span
