@@ -47,6 +47,8 @@ export interface PricedHoldings {
   priceByTicker: Record<string, TickerPrice>;
   /** Per-currency portfolio total value (quantity × price). */
   valueTotalsByCurrency: ValueCurrencyTotal[];
+  /** Company name per ticker (FMP profile), for the table. Ticker falls back. */
+  nameByTicker: Record<string, string>;
   income: PortfolioIncome;
 }
 
@@ -97,6 +99,7 @@ export async function loadPricedHoldings(userId: string): Promise<PricedHoldings
   const allTickers = [...new Set(allHoldings.map((h) => h.ticker))];
   const scoringDividendByTicker = new Map<string, number>();
   const priceByTicker: Record<string, TickerPrice> = {};
+  const nameByTicker: Record<string, string> = {};
   if (allTickers.length > 0) {
     const { data: divRows } = await supabase
       .from("equity_score_history")
@@ -120,6 +123,17 @@ export async function loadPricedHoldings(userId: string): Promise<PricedHoldings
         const p = scoringPrice(r.ticker, r.current_price);
         if (p) priceByTicker[r.ticker] = p;
       }
+    }
+
+    // Company names live on equity_scores (latest snapshot), written nightly
+    // from the FMP profile. Ticker falls back when absent (manual/unscored).
+    const { data: nameRows } = await supabase
+      .from("equity_scores")
+      .select("ticker, name")
+      .in("ticker", allTickers)
+      .returns<{ ticker: string; name: string | null }[]>();
+    for (const r of nameRows ?? []) {
+      if (r.name) nameByTicker[r.ticker] = r.name;
     }
   }
   const quotes = mergeScoringDividends(rawQuotes, allTickers, scoringDividendByTicker);
@@ -169,6 +183,7 @@ export async function loadPricedHoldings(userId: string): Promise<PricedHoldings
     actualsByKey,
     priceByTicker,
     valueTotalsByCurrency,
+    nameByTicker,
     income,
   };
 }

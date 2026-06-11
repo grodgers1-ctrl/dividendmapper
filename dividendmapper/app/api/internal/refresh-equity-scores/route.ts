@@ -280,6 +280,7 @@ async function handle(req: Request): Promise<Response> {
       const { error: scoresErr } = await supabase.from("equity_scores").upsert(
         {
           ticker,
+          name: bundle.profile[0]?.companyName ?? null,
           buy_score: buy.score,
           buy_quality_gate_passed: buy.qualityGatePassed,
           buy_failed_gates: buy.failedGates,

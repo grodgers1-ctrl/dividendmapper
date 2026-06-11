@@ -39,7 +39,7 @@ export default async function PortfolioManagerPage(props: {
   const hasAnsweredWizard = !!(prefs?.wizard_completed_at || prefs?.wizard_skipped_at);
 
   const pricingPublic = isPricingPublic();
-  const { visibleRows, quotesByTicker, actualsByKey, priceByTicker, allHoldings, quotes } = priced;
+  const { visibleRows, quotesByTicker, actualsByKey, priceByTicker, nameByTicker, allHoldings, quotes } = priced;
 
   const analytics =
     visibleRows.length > 0
@@ -111,6 +111,7 @@ export default async function PortfolioManagerPage(props: {
               quotes={quotesByTicker}
               actualsByKey={actualsByKey}
               priceByTicker={priceByTicker}
+              nameByTicker={nameByTicker}
               tier={priced.tier}
               pricingPublic={pricingPublic}
               isBeta={isBeta()}

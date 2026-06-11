@@ -176,6 +176,39 @@ describe("<HoldingsTable> Value + Received columns", () => {
     expect(within(table).getByText("£112")).toBeInTheDocument();
   });
 
+  it("shows the company name under the ticker when supplied", () => {
+    render(
+      <HoldingsTable
+        rows={[row("1", "MSFT")]}
+        quotes={{}}
+        nameByTicker={{ MSFT: "Microsoft Corporation" }}
+        tier="pro"
+        pricingPublic={true}
+        isBeta={true}
+        scoresByTicker={{}}
+        showScores={false}
+      />,
+    );
+    expect(screen.getAllByText("Microsoft Corporation").length).toBeGreaterThan(0);
+  });
+
+  it("shows only the ticker when no name is supplied (manual/unscored)", () => {
+    render(
+      <HoldingsTable
+        rows={[row("1", "MSFT")]}
+        quotes={{}}
+        tier="pro"
+        pricingPublic={true}
+        isBeta={true}
+        scoresByTicker={{}}
+        showScores={false}
+      />,
+    );
+    const table = screen.getByRole("table");
+    expect(within(table).getByText("MSFT")).toBeInTheDocument();
+    expect(screen.queryByText("Microsoft Corporation")).not.toBeInTheDocument();
+  });
+
   it("shows a dash for value when the ticker is not yet priced", () => {
     render(
       <HoldingsTable

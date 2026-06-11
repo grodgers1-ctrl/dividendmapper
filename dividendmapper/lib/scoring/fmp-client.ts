@@ -156,6 +156,7 @@ export async function fetchEndpoint(
 
 export interface FmpProfile {
   symbol: string;
+  companyName?: string | null;
   mktCap: number;
   sector: string | null;
   industry: string | null;

@@ -262,6 +262,8 @@ interface HoldingsTableProps {
   actualsByKey?: Record<string, ActualIncome>;
   /** Latest FMP price per ticker (display units), for the Value column. */
   priceByTicker?: Record<string, TickerPrice>;
+  /** Company name per ticker; the ticker is shown alone when absent. */
+  nameByTicker?: Record<string, string>;
   tier: "free" | "pro" | "premium";
   pricingPublic: boolean;
   isBeta: boolean;
@@ -275,6 +277,7 @@ export function HoldingsTable({
   quotes,
   actualsByKey,
   priceByTicker,
+  nameByTicker,
   tier,
   pricingPublic,
   isBeta,
@@ -395,8 +398,15 @@ export function HoldingsTable({
                       pending ? "opacity-50" : ""
                     }`}
                   >
-                    <td className="px-4 py-3 font-mono text-sm font-medium text-foreground">
-                      {row.ticker}
+                    <td className="px-4 py-3">
+                      <span className="font-mono text-sm font-medium text-foreground">
+                        {row.ticker}
+                      </span>
+                      {nameByTicker?.[row.ticker] && (
+                        <span className="mt-0.5 block max-w-[16rem] truncate text-xs text-muted-foreground">
+                          {nameByTicker[row.ticker]}
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       <span className="inline-flex items-center rounded-full border border-border bg-secondary px-2 py-0.5 text-xs font-medium text-foreground">
@@ -475,6 +485,11 @@ export function HoldingsTable({
                   <p className="font-mono text-base font-semibold text-foreground">
                     {row.ticker}
                   </p>
+                  {nameByTicker?.[row.ticker] && (
+                    <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                      {nameByTicker[row.ticker]}
+                    </p>
+                  )}
                   <span className="mt-1 inline-flex items-center rounded-full border border-border bg-secondary px-2 py-0.5 text-xs font-medium text-foreground">
                     {WRAPPER_LABEL[row.wrapper] ?? row.wrapper}
                   </span>
