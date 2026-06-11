@@ -17,7 +17,11 @@ export function SiteHeader() {
     ? [...BASE_NAV, { href: "/pricing", label: "Pricing" }]
     : BASE_NAV;
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-sm">
+    <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-sm isolate">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 bottom-[-1px] h-px bg-gradient-to-r from-transparent via-brand-500/50 to-transparent dark:via-brand-400/60"
+      />
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 md:px-6 lg:px-8">
         <Link
           href="/"
@@ -40,7 +44,7 @@ export function SiteHeader() {
             <Link
               key={item.href}
               href={item.href}
-              className="rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+              className="rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition-all duration-200 hover:bg-secondary hover:text-foreground hover:shadow-sm hover:shadow-brand-500/20"
             >
               {item.label}
             </Link>

@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { FooterResources } from "./footer-resources";
+import { TopographyMotif } from "./visual/topography-motif";
 import { isPricingPublic } from "@/lib/flags/pricing";
 
 interface ColumnDef {
@@ -54,7 +55,11 @@ function FooterColumn({ column }: { column: ColumnDef }) {
 
 export function SiteFooter() {
   return (
-    <footer className="border-t border-border bg-card">
+    <footer className="relative isolate overflow-hidden border-t border-border bg-card">
+      <TopographyMotif
+        intensity="subtle"
+        className="pointer-events-none absolute inset-0 -z-10 h-full w-full opacity-40"
+      />
       <div className="mx-auto max-w-7xl px-4 py-10 md:px-6 lg:px-8">
         <div className="grid gap-10 md:grid-cols-4">
           <div className="space-y-3">
