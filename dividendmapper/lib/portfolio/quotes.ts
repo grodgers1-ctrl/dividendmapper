@@ -1,5 +1,10 @@
 import "server-only";
 import { fetchQuote, type QuoteResult } from "@/lib/market/quote";
+import { mapWithConcurrency } from "@/lib/portfolio/map-concurrent";
+
+// Cap parallel upstream calls. The quote path is FMP-primary now and FMP Pro
+// throttles on bursts (~750/min); a Promise.all over every holding could 429.
+const QUOTE_CONCURRENCY = 6;
 
 // Parallel quote fetch for every unique ticker in a holdings list.
 //
@@ -24,10 +29,10 @@ export async function fetchPortfolioQuotes<T extends HoldingTicker>(
   const uniqueTickers = Array.from(new Set(holdings.map((h) => h.ticker)));
   if (uniqueTickers.length === 0) return new Map();
 
-  const results = await Promise.all(
-    uniqueTickers.map(
-      async (ticker) => [ticker, await fetchQuote(ticker)] as const,
-    ),
+  const results = await mapWithConcurrency(
+    uniqueTickers,
+    QUOTE_CONCURRENCY,
+    async (ticker) => [ticker, await fetchQuote(ticker)] as const,
   );
   return new Map(results);
 }

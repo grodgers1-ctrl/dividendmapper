@@ -11,6 +11,8 @@
 // Callers must handle null prices / null dividends — failures should never
 // block a UI render.
 
+import { getProfile, getDividends, type FmpDividend } from "@/lib/scoring/fmp-client";
+
 export interface QuoteData {
   ticker: string;
   source: "EODHD" | "Polygon" | "FMP";
@@ -83,16 +85,25 @@ export async function fetchQuote(rawTicker: string): Promise<QuoteResult> {
     return { ok: true, data: cached.data, cached: true };
   }
 
+  // FMP is the primary source (it powers scoring + income); Polygon (US) and
+  // EODHD (LSE) are explicit fallbacks. This fixes the LSE quote path (the
+  // EODHD tier was cancelled and now 401s) and unifies the app on one provider.
   const isUk = ticker.endsWith(".L") || ticker.endsWith(".LON");
   try {
-    const data = isUk ? await fetchEodhd(ticker) : await fetchPolygon(ticker);
+    const data = await fetchFmpQuote(ticker);
     putInCache(ticker, data);
     return { ok: true, data, cached: false };
-  } catch (err) {
-    console.error("[market/quote]", ticker, err);
-    const code = err instanceof QuoteError ? err.code : "fetch_failed";
-    const status = err instanceof QuoteError && err.status ? err.status : 502;
-    return { ok: false, error: code, status };
+  } catch (fmpErr) {
+    try {
+      const data = isUk ? await fetchEodhd(ticker) : await fetchPolygon(ticker);
+      putInCache(ticker, data);
+      return { ok: true, data, cached: false };
+    } catch (err) {
+      console.error("[market/quote]", ticker, "fmp:", fmpErr, "fallback:", err);
+      const code = err instanceof QuoteError ? err.code : "fetch_failed";
+      const status = err instanceof QuoteError && err.status ? err.status : 502;
+      return { ok: false, error: code, status };
+    }
   }
 }
 
@@ -103,6 +114,51 @@ function putInCache(ticker: string, data: QuoteData): void {
     if (oldest !== undefined) cache.delete(oldest);
   }
   cache.set(ticker, { data, expires: Date.now() + CACHE_TTL_MS });
+}
+
+/* ─────────────────────────────────── FMP (primary, US + LSE) */
+
+// One profile call gives price/currency/name; the dividends history gives the
+// TTM dividend + 3yr CAGR (reusing the shared maths below). LSE prices and
+// dividends come back in pence (currency "GBp"/"GBX") → ÷100, displayed as GBP.
+async function fetchFmpQuote(ticker: string): Promise<QuoteData> {
+  const symbol = ticker.replace(/\.LON$/, ".L");
+  const [profiles, dividends] = await Promise.all([
+    getProfile(symbol),
+    getDividends(symbol, 30).catch(() => [] as FmpDividend[]),
+  ]);
+  const p = profiles[0];
+  const rawPrice = pickNumber(p?.price ?? null);
+  if (!p || rawPrice === null) throw new QuoteError("ticker_not_found", 404);
+
+  const isPence = p.currency === "GBp" || p.currency === "GBX";
+  const price = isPence ? rawPrice / 100 : rawPrice;
+  const currency = isPence ? "GBP" : (p.currency ?? null);
+
+  const events: DividendEvent[] = (dividends ?? [])
+    .map((d) => ({
+      date: new Date(d.date),
+      amount: isPence ? d.dividend / 100 : d.dividend,
+    }))
+    .filter((e) => !Number.isNaN(e.date.getTime()) && Number.isFinite(e.amount));
+
+  const dividend = sumLast12Months(events);
+  const dividendGrowth3yr = compute3yrCagr(events);
+  const dividendYield =
+    price > 0 && dividend && dividend > 0 ? dividend / price : null;
+
+  return {
+    ticker,
+    source: "FMP",
+    price,
+    dividend,
+    dividendYield,
+    dividendGrowth3yr,
+    currency,
+    exchange: p.exchange ?? null,
+    name: p.companyName ?? null,
+    fetchedAt: new Date().toISOString(),
+  };
 }
 
 /* ─────────────────────────────────── EODHD (UK / LSE) */
