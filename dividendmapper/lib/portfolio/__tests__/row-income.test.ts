@@ -24,9 +24,28 @@ function okQuote(dividend: number | null, currency: string): QuoteResult {
 const row = (ticker: string, quantity: number, wrapper = "isa") => ({ ticker, quantity, wrapper });
 
 describe("resolveRowIncome", () => {
-  it("prefers the actual synced dividend over the estimate", () => {
+  it("prefers the FMP estimate over the actual — income/year is a forward run-rate", () => {
+    // The actual may only cover part of a year (a recently-bought position),
+    // so it must not override the forward estimate under an "/yr" label.
     const r = resolveRowIncome(row("TW.L", 100), { "TW.L": okQuote(0.05, "GBP") }, { "TW.L::isa": { amount: 110.54, currency: "GBP" } });
-    expect(r).toEqual({ kind: "ok", amount: 110.54, currency: "GBP", source: "actual" });
+    expect(r).toEqual({ kind: "ok", amount: 5, currency: "GBP", source: "estimate" });
+  });
+
+  it("shows the full-year estimate for a partial-year actual (W7L.L bug)", () => {
+    // W7L.L: 390 shares. FMP TTM estimate is 11.5p/share -> £44.85 forward.
+    // Broker sync only captured the £15.60 Nov interim (bought mid-year), so
+    // the actual under-reports. The /yr column must show the estimate.
+    const r = resolveRowIncome(
+      row("W7L.L", 390),
+      { "W7L.L": okQuote(0.115, "GBP") },
+      { "W7L.L::isa": { amount: 15.6, currency: "GBP" } },
+    );
+    expect(r.kind).toBe("ok");
+    if (r.kind === "ok") {
+      expect(r.amount).toBeCloseTo(44.85, 2);
+      expect(r.currency).toBe("GBP");
+      expect(r.source).toBe("estimate");
+    }
   });
 
   it("falls back to the quantity×dps estimate when there's no actual", () => {
@@ -44,7 +63,7 @@ describe("resolveRowIncome", () => {
     expect(r).toEqual({ kind: "no_data" });
   });
 
-  it("uses the actual even when the quote is missing entirely (synced LSE, no live quote)", () => {
+  it("falls back to the actual ONLY when there is no estimate (no FMP-scored quote)", () => {
     const r = resolveRowIncome(row("BME.L", 50), {}, { "BME.L::isa": { amount: 49.22, currency: "GBP" } });
     expect(r).toEqual({ kind: "ok", amount: 49.22, currency: "GBP", source: "actual" });
   });

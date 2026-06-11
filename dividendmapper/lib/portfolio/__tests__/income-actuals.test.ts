@@ -23,7 +23,7 @@ function quote(ticker: string, dividend: number, currency: string): QuoteResult 
 
 const holding = (ticker: string, wrapper: string, quantity = 10) => ({ ticker, quantity, wrapper });
 
-describe("aggregatePortfolioIncome — actuals preference", () => {
+describe("aggregatePortfolioIncome — estimate preference (forward run-rate)", () => {
   it("is unchanged when no actuals are supplied (estimate path)", () => {
     const out = aggregatePortfolioIncome(
       [holding("VOD.L", "isa")],
@@ -33,32 +33,32 @@ describe("aggregatePortfolioIncome — actuals preference", () => {
     expect(out.rows[0]).toMatchObject({ wrapper: "isa", currency: "GBP", annualIncome: 5, source: "estimate" });
   });
 
-  it("prefers the actual TTM sum over the quantity×dps estimate and labels the row 'actual'", () => {
+  it("prefers the FMP estimate over a (possibly partial-year) actual", () => {
     const actuals = new Map<string, ActualIncome>([["VOD.L::isa", { amount: 42, currency: "GBP" }]]);
     const out = aggregatePortfolioIncome(
       [holding("VOD.L", "isa")],
-      new Map([["VOD.L", quote("VOD.L", 0.5, "GBP")]]), // estimate would be 5
-      actuals,
-    );
-    expect(out.rows[0]).toMatchObject({ annualIncome: 42, source: "actual" });
-  });
-
-  it("falls back to the estimate when the actual is missing or zero", () => {
-    const actuals = new Map<string, ActualIncome>([["VOD.L::isa", { amount: 0, currency: "GBP" }]]);
-    const out = aggregatePortfolioIncome(
-      [holding("VOD.L", "isa")],
-      new Map([["VOD.L", quote("VOD.L", 0.5, "GBP")]]),
+      new Map([["VOD.L", quote("VOD.L", 0.5, "GBP")]]), // estimate is 5
       actuals,
     );
     expect(out.rows[0]).toMatchObject({ annualIncome: 5, source: "estimate" });
   });
 
-  it("marks a bucket 'mixed' when it blends actual and estimated holdings", () => {
-    const actuals = new Map<string, ActualIncome>([["VOD.L::isa", { amount: 30, currency: "GBP" }]]);
+  it("falls back to the actual ONLY when there is no estimate quote", () => {
+    const actuals = new Map<string, ActualIncome>([["BME.L::isa", { amount: 49.22, currency: "GBP" }]]);
     const out = aggregatePortfolioIncome(
-      [holding("VOD.L", "isa"), holding("ULVR.L", "isa")],
+      [holding("BME.L", "isa")],
+      new Map(), // no quote -> no estimate
+      actuals,
+    );
+    expect(out.rows[0]).toMatchObject({ annualIncome: 49.22, source: "actual" });
+  });
+
+  it("marks a bucket 'mixed' when it blends an estimate and an estimate-less actual fallback", () => {
+    const actuals = new Map<string, ActualIncome>([["BME.L::isa", { amount: 30, currency: "GBP" }]]);
+    const out = aggregatePortfolioIncome(
+      [holding("BME.L", "isa"), holding("ULVR.L", "isa")],
       new Map([
-        ["VOD.L", quote("VOD.L", 0.5, "GBP")],
+        // BME.L: no quote -> actual fallback (30)
         ["ULVR.L", quote("ULVR.L", 1, "GBP")], // estimate 10
       ]),
       actuals,
@@ -67,19 +67,19 @@ describe("aggregatePortfolioIncome — actuals preference", () => {
     expect(isaGbp).toMatchObject({ annualIncome: 40, holdingsCount: 2, source: "mixed" });
   });
 
-  it("buckets an actual by its own currency (account ccy GBP), separate from a USD estimate", () => {
+  it("uses the USD estimate for a US stock even when a GBP actual exists", () => {
     // A US stock in an ISA: actual dividends arrive in GBP (account ccy), but the
-    // FMP estimate would be in USD — they must land in different buckets.
+    // /yr column is the forward estimate, so it lands in the USD bucket.
     const actuals = new Map<string, ActualIncome>([["AAPL::isa", { amount: 12, currency: "GBP" }]]);
     const out = aggregatePortfolioIncome(
       [holding("AAPL", "isa"), holding("MSFT", "isa")],
       new Map([
-        ["AAPL", quote("AAPL", 1, "USD")], // would-be estimate, ignored in favour of actual
+        ["AAPL", quote("AAPL", 1, "USD")], // estimate 10 USD — preferred over the GBP actual
         ["MSFT", quote("MSFT", 2, "USD")], // estimate 20 USD
       ]),
       actuals,
     );
-    expect(out.rows.find((r) => r.key === "isa:GBP")).toMatchObject({ annualIncome: 12, source: "actual" });
-    expect(out.rows.find((r) => r.key === "isa:USD")).toMatchObject({ annualIncome: 20, source: "estimate" });
+    expect(out.rows.find((r) => r.key === "isa:GBP")).toBeUndefined();
+    expect(out.rows.find((r) => r.key === "isa:USD")).toMatchObject({ annualIncome: 30, source: "estimate" });
   });
 });

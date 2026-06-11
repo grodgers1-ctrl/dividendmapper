@@ -100,12 +100,14 @@ export function aggregatePortfolioIncome<T extends IncomeHolding>(
     return { ...EMPTY, fetchedAt: new Date().toISOString() };
   }
 
-  // Bucket by (wrapper × dividend-currency). Per holding we PREFER the actual
-  // broker-synced TTM income; if there's none we fall back to the FMP
-  // quantity×dps estimate. Holdings with neither (failed quote, null dividend,
-  // unknown currency/wrapper) are counted as "missing" so the UI can show
-  // "N rows have no dividend data." actualCount/estimateCount drive the row's
-  // source label.
+  // Bucket by (wrapper × dividend-currency). Income is a FORWARD annual
+  // run-rate, so per holding we PREFER the FMP quantity×dps estimate; a
+  // broker-synced actual is only a fallback for tickers FMP doesn't score
+  // (actuals are a trailing sum that under-reports positions bought partway
+  // through the year, so they must not override the estimate). Holdings with
+  // neither (failed quote, null dividend, unknown currency/wrapper) are counted
+  // as "missing" so the UI can show "N rows have no dividend data."
+  // actualCount/estimateCount drive the row's source label.
   const buckets = new Map<
     string,
     {
@@ -150,29 +152,28 @@ export function aggregatePortfolioIncome<T extends IncomeHolding>(
       continue;
     }
 
-    // Actual broker-synced income wins, in its own (account) currency.
+    // Forward estimate wins, in the quote's listed currency.
+    const quote = quotes.get(h.ticker);
+    if (quote?.ok) {
+      const { dividend: dps, currency } = quote.data;
+      if (dps && dps > 0 && currency) {
+        const annual = Number(h.quantity) * dps;
+        if (Number.isFinite(annual) && annual > 0) {
+          add(h.wrapper, currency, annual, "estimate");
+          continue;
+        }
+      }
+    }
+
+    // No forward estimate (FMP doesn't score this ticker) — fall back to the
+    // real broker-synced income, in its own (account) currency.
     const actual = actuals.get(actualKey(h.ticker, h.wrapper));
     if (actual && actual.amount > 0 && actual.currency) {
       add(h.wrapper, actual.currency, actual.amount, "actual");
       continue;
     }
 
-    const quote = quotes.get(h.ticker);
-    if (!quote || !quote.ok) {
-      missing += 1;
-      continue;
-    }
-    const { dividend: dps, currency } = quote.data;
-    if (!dps || dps <= 0 || !currency) {
-      missing += 1;
-      continue;
-    }
-    const annual = Number(h.quantity) * dps;
-    if (!Number.isFinite(annual) || annual <= 0) {
-      missing += 1;
-      continue;
-    }
-    add(h.wrapper, currency, annual, "estimate");
+    missing += 1;
   }
 
   const rows: IncomeRow[] = Array.from(buckets.entries())
