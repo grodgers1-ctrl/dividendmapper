@@ -70,8 +70,13 @@ export function TopographyMotif({
   const Group = reallyAnimated ? motion.g : "g";
   const groupProps = reallyAnimated
     ? {
-        animate: { y: [0, -10, 0] },
-        transition: { duration: 8, ease: "easeInOut" as const, repeat: Infinity },
+        initial: { y: 12, opacity: 0 },
+        animate: { y: [12, -2, 0], opacity: [0, 1, 1] },
+        transition: {
+          duration: 1.8,
+          ease: [0.22, 1, 0.36, 1] as const,
+          times: [0, 0.7, 1],
+        },
       }
     : {};
 

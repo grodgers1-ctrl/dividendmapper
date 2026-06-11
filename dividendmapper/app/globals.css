@@ -79,12 +79,6 @@
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
 
-  /* Score-orb + chip glow accents. Translucent so they read on either bg. */
-  --shadow-glow-quality: 0 0 14px rgba(16, 185, 129, 0.45);
-  --shadow-glow-trim: 0 0 14px rgba(245, 158, 11, 0.45);
-  --shadow-glow-risk: 0 0 14px rgba(239, 68, 68, 0.45);
-  --shadow-glow-brand: 0 0 18px rgba(14, 168, 116, 0.35);
-
   /* Topography motif — mesh line colour bridges :root/.dark vars below. */
   --color-mesh: var(--mesh);
   --color-mesh-strong: var(--mesh-strong);
@@ -143,6 +137,12 @@
   /* Topography motif — subtle slate-emerald mesh on white surfaces */
   --mesh: rgba(14, 168, 116, 0.18);
   --mesh-strong: rgba(14, 168, 116, 0.32);
+
+  /* Score-orb + chip glow accents. Translucent rgba so they read on either bg. */
+  --shadow-glow-quality: 0 0 14px rgba(16, 185, 129, 0.45);
+  --shadow-glow-trim: 0 0 14px rgba(245, 158, 11, 0.45);
+  --shadow-glow-risk: 0 0 14px rgba(239, 68, 68, 0.45);
+  --shadow-glow-brand: 0 0 18px rgba(14, 168, 116, 0.35);
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
@@ -195,6 +195,12 @@
   /* Topography motif — vivid emerald mesh on near-black; this is the hero look */
   --mesh: rgba(52, 211, 153, 0.32);
   --mesh-strong: rgba(52, 211, 153, 0.55);
+
+  /* Score-orb + chip glow accents — slightly stronger in dark mode for punch */
+  --shadow-glow-quality: 0 0 18px rgba(16, 185, 129, 0.65);
+  --shadow-glow-trim: 0 0 18px rgba(245, 158, 11, 0.6);
+  --shadow-glow-risk: 0 0 18px rgba(239, 68, 68, 0.6);
+  --shadow-glow-brand: 0 0 22px rgba(52, 211, 153, 0.45);
 }
 
 @layer base {
