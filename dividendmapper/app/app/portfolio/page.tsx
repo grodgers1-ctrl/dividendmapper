@@ -3,9 +3,10 @@ import Link from "next/link";
 import { requireUser } from "@/lib/auth/server";
 import { isPricingPublic } from "@/lib/flags/pricing";
 import { isBeta } from "@/lib/scoring/config";
-import { loadPricedHoldings } from "@/lib/portfolio/load-priced-holdings";
+import { loadPricedHoldings, loadArchivedHoldings } from "@/lib/portfolio/load-priced-holdings";
 import { formatMoney } from "@/lib/portfolio/format-money";
 import { HoldingsTable } from "./_components/holdings-table";
+import { ArchivedHoldings } from "./_components/archived-holdings";
 import { AddHoldingLauncher } from "./_components/add-holding-launcher";
 import { PortfolioIncomeChart } from "./_components/portfolio-income-chart";
 import { FREE_TIER_LIMIT } from "./_components/free-tier-copy";
@@ -41,6 +42,7 @@ export default async function PortfolioPage() {
     nameByTicker,
     income,
   } = await loadPricedHoldings(user.id);
+  const archived = await loadArchivedHoldings();
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-12 md:px-6 md:py-16">
@@ -136,6 +138,11 @@ export default async function PortfolioPage() {
               </p>
             )}
             <PortfolioIncomeChart income={income} />
+          </div>
+        )}
+        {archived.length > 0 && (
+          <div className="mt-6">
+            <ArchivedHoldings rows={archived} />
           </div>
         )}
       </div>

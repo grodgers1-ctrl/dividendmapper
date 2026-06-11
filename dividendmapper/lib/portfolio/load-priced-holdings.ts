@@ -187,3 +187,22 @@ export async function loadPricedHoldings(userId: string): Promise<PricedHoldings
     income,
   };
 }
+
+/**
+ * Archived (superseded/closed) holdings for the current user — the rows the
+ * provenance reconcile set `archived_at` on (e.g. a manual holding replaced by
+ * a synced one). RLS scopes to the owner. Used by the "Archived holdings" view
+ * so users can see and restore/delete what was hidden.
+ */
+export async function loadArchivedHoldings(): Promise<HoldingRow[]> {
+  const supabase = await createSupabaseServerClient();
+  const { data } = await supabase
+    .from("holdings")
+    .select(
+      "id, ticker, quantity, avg_cost, cost_currency, wrapper, broker_label, notes, created_at, source",
+    )
+    .not("archived_at", "is", null)
+    .order("created_at", { ascending: false })
+    .returns<HoldingRow[]>();
+  return data ?? [];
+}
