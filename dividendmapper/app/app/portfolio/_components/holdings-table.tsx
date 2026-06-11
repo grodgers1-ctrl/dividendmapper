@@ -250,7 +250,7 @@ function MobileScorePill({
       data-testid="mobile-score-pill"
       onClick={() => setExpanded(true)}
       aria-label="Show Buy, Trim and Risk scores"
-      className="inline-flex items-center gap-1 rounded-full border border-border bg-secondary px-2.5 py-0.5 font-mono text-xs font-medium tabular-nums text-foreground"
+      className="inline-flex items-center gap-1 rounded-full border border-border bg-secondary px-2.5 py-0.5 font-mono text-xs font-medium tabular-nums text-foreground shadow-sm shadow-brand-500/20"
     >
       <span>{score.buy ?? "—"}</span>
       <span className="text-muted-foreground">/</span>

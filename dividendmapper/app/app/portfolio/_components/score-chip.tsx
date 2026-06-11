@@ -10,6 +10,14 @@ const TYPE_LABEL: Record<ScoreType, string> = {
   risk: "Risk",
 };
 
+// Glow shadow per type — resolves to translucent rgba via :root vars and
+// brightens in dark mode. Gate-failed chips do NOT glow.
+const GLOW_BY_TYPE: Record<ScoreType, string> = {
+  buy: "var(--shadow-glow-quality)",
+  trim: "var(--shadow-glow-trim)",
+  risk: "var(--shadow-glow-risk)",
+};
+
 // Readable text colour over the chip's background. The two lightest tiers
 // (light amber, grey-blue) need dark ink; everything else takes white.
 const DARK_INK_BACKGROUNDS = new Set(["#fbbf24", "#94a3b8"]);
@@ -40,6 +48,7 @@ export function ScoreChip({
   const bg = gateFailed ? GATE_FAIL_COLOR : chipColor(type, score).hex;
   const ink = inkFor(bg);
   const label = TYPE_LABEL[type];
+  const glow = gateFailed || hidden ? "none" : GLOW_BY_TYPE[type];
 
   return (
     <button
@@ -53,8 +62,8 @@ export function ScoreChip({
           ? `${label} score unavailable: ${gateReason ?? "quality concern"}`
           : `${label} score ${score}${hidden ? ", hidden" : ""}`
       }
-      className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 focus:ring-offset-card"
-      style={{ backgroundColor: bg, color: ink }}
+      className="inline-flex items-center gap-1 rounded-full px-2 py-px text-[11px] font-medium leading-tight transition-[opacity,box-shadow] duration-200 hover:opacity-95 hover:-translate-y-px focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 focus:ring-offset-card"
+      style={{ backgroundColor: bg, color: ink, boxShadow: glow }}
     >
       {hidden ? (
         <span className="font-medium">Hidden</span>
@@ -65,7 +74,7 @@ export function ScoreChip({
       ) : (
         <>
           <span className="font-mono font-semibold tabular-nums">{score}</span>
-          <span className="opacity-90">{label}</span>
+          <span className="opacity-90 tracking-wide">{label}</span>
           {isBeta && (
             <sup className="ml-0.5 text-[0.6rem] leading-none opacity-80">β</sup>
           )}
