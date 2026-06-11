@@ -6,6 +6,8 @@ import { useEffect, useState, useTransition } from "react";
 import { chipColor, type ScoreType } from "@/lib/scoring/chip-display";
 import { primaryGateReason } from "@/lib/scoring/gate-reasons";
 import type { GateCode } from "@/lib/scoring/quality-gates";
+import { TopographyMotif } from "@/components/visual/topography-motif";
+import { ScoreOrb } from "./score-orb";
 
 type SignalRow = {
   signalCode: string;
@@ -141,21 +143,32 @@ export function ScoreDrawer({
 
           {!loading && data && (
             <>
-              <div className="mt-6 flex items-baseline gap-3">
-                {gateFailed ? (
-                  <span className="text-sm font-medium text-foreground">
-                    {gateReason ?? "Quality concern"}
-                  </span>
-                ) : (
-                  <span
-                    data-testid="drawer-active-score"
-                    className="font-mono text-5xl font-bold tabular-nums"
-                    style={{ color: accent }}
-                  >
-                    {score}
-                  </span>
-                )}
+              <div className="relative isolate mt-6 overflow-hidden rounded-2xl border border-border bg-card/40 px-4 py-6">
+                <TopographyMotif
+                  intensity="subtle"
+                  className="absolute inset-0 -z-10 h-full w-full opacity-60"
+                />
+                <ScoreOrb
+                  ticker={ticker}
+                  quality={data.buyScore}
+                  trim={data.trimScore}
+                  risk={data.riskScore}
+                  qualityGateReason={gateReason}
+                  size="md"
+                />
+                <span
+                  data-testid="drawer-active-score"
+                  className="sr-only"
+                  style={{ color: accent }}
+                >
+                  {score ?? "—"}
+                </span>
               </div>
+              {gateFailed && (
+                <p className="mt-4 text-center text-sm font-medium text-foreground">
+                  {gateReason ?? "Quality concern"}
+                </p>
+              )}
 
               {/* Signal contribution bars */}
               {signals.length > 0 && (
