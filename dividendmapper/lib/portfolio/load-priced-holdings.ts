@@ -8,6 +8,11 @@ import {
 } from "@/lib/portfolio/income";
 import { fetchPortfolioQuotes } from "@/lib/portfolio/quotes";
 import { mergeScoringDividends } from "@/lib/portfolio/uk-income";
+import { scoringPrice, type TickerPrice } from "@/lib/portfolio/row-value";
+import {
+  aggregatePortfolioValue,
+  type ValueCurrencyTotal,
+} from "@/lib/portfolio/portfolio-value";
 import { FREE_TIER_LIMIT } from "@/app/app/portfolio/_components/free-tier-copy";
 
 export type HoldingRow = {
@@ -38,6 +43,10 @@ export interface PricedHoldings {
   quotesByTicker: Record<string, QuoteResult>;
   /** Per-holding real synced dividends (TTM), keyed `ticker::wrapper`. */
   actualsByKey: Record<string, ActualIncome>;
+  /** Latest FMP price per ticker (display units), for the table's Value column. */
+  priceByTicker: Record<string, TickerPrice>;
+  /** Per-currency portfolio total value (quantity × price). */
+  valueTotalsByCurrency: ValueCurrencyTotal[];
   income: PortfolioIncome;
 }
 
@@ -87,23 +96,37 @@ export async function loadPricedHoldings(userId: string): Promise<PricedHoldings
   // also why a Polygon 429 no longer drops a US holding's income.
   const allTickers = [...new Set(allHoldings.map((h) => h.ticker))];
   const scoringDividendByTicker = new Map<string, number>();
+  const priceByTicker: Record<string, TickerPrice> = {};
   if (allTickers.length > 0) {
     const { data: divRows } = await supabase
       .from("equity_score_history")
-      .select("ticker, dividend_per_share, observed_at")
+      .select("ticker, dividend_per_share, current_price, observed_at")
       .in("ticker", allTickers)
       .order("observed_at", { ascending: false })
       .returns<
-        { ticker: string; dividend_per_share: number | null; observed_at: string }[]
+        {
+          ticker: string;
+          dividend_per_share: number | null;
+          current_price: number | null;
+          observed_at: string;
+        }[]
       >();
     for (const r of divRows ?? []) {
-      // rows are newest-first; keep the first (latest) per ticker.
+      // rows are newest-first; keep the first (latest) non-null per ticker.
       if (!scoringDividendByTicker.has(r.ticker) && r.dividend_per_share != null) {
         scoringDividendByTicker.set(r.ticker, Number(r.dividend_per_share));
+      }
+      if (!(r.ticker in priceByTicker)) {
+        const p = scoringPrice(r.ticker, r.current_price);
+        if (p) priceByTicker[r.ticker] = p;
       }
     }
   }
   const quotes = mergeScoringDividends(rawQuotes, allTickers, scoringDividendByTicker);
+  const { totalsByCurrency: valueTotalsByCurrency } = aggregatePortfolioValue(
+    allHoldings,
+    priceByTicker,
+  );
 
   // Per-user ACTUAL dividends (broker sync): TTM sum per (ticker_scoring ×
   // wrapper), in the account currency. Preferred over the FMP estimate by the
@@ -144,6 +167,8 @@ export async function loadPricedHoldings(userId: string): Promise<PricedHoldings
     quotes,
     quotesByTicker,
     actualsByKey,
+    priceByTicker,
+    valueTotalsByCurrency,
     income,
   };
 }

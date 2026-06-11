@@ -7,7 +7,9 @@ import type { QuoteResult } from "@/lib/market/quote";
 import type { HoldingScore } from "@/lib/scoring/portfolio-scores";
 import type { ScoreType } from "@/lib/scoring/chip-display";
 import { resolveRowIncome, type RowIncomeStatus } from "@/lib/portfolio/row-income";
-import type { ActualIncome } from "@/lib/portfolio/income";
+import { resolveRowValue, type RowValueStatus, type TickerPrice } from "@/lib/portfolio/row-value";
+import { actualKey, type ActualIncome } from "@/lib/portfolio/income";
+import { formatMoney } from "@/lib/portfolio/format-money";
 import { ScoreChip } from "./score-chip";
 import { ScoreDrawer } from "./score-drawer";
 import { UpgradePill } from "./upgrade-pill";
@@ -117,6 +119,50 @@ function IncomeCell({ status, className }: IncomeCellProps) {
   );
 }
 
+// Position value: quantity × latest FMP price. "—" until the nightly cron prices it.
+function ValueCell({ status, className }: { status: RowValueStatus; className?: string }) {
+  if (status.kind === "ok") {
+    return (
+      <span
+        title="Estimated position value: quantity × latest price."
+        className={`font-mono tabular-nums text-foreground ${className ?? ""}`}
+      >
+        {formatMoney(status.amount, status.currency)}
+      </span>
+    );
+  }
+  return (
+    <span
+      title="Value appears after the next nightly price update."
+      className={`cursor-help text-muted-foreground/70 ${className ?? ""}`}
+    >
+      —
+    </span>
+  );
+}
+
+// Real dividends received in the trailing 12 months, from broker sync. "—" if none.
+function ReceivedCell({ actual, className }: { actual?: ActualIncome; className?: string }) {
+  if (actual && actual.amount > 0 && actual.currency) {
+    return (
+      <span
+        title="Dividends actually received in the last 12 months, synced from your broker."
+        className={`font-mono tabular-nums text-foreground ${className ?? ""}`}
+      >
+        {formatMoney(actual.amount, actual.currency)}
+      </span>
+    );
+  }
+  return (
+    <span
+      title="No broker-synced dividends in the last 12 months. Connect a broker to track what you actually received."
+      className={`cursor-help text-muted-foreground/70 ${className ?? ""}`}
+    >
+      —
+    </span>
+  );
+}
+
 type OpenScore = (ticker: string, type: ScoreType) => void;
 
 // Shown for a holding the nightly cron hasn't scored yet (e.g. just added).
@@ -214,6 +260,8 @@ interface HoldingsTableProps {
   quotes: Record<string, QuoteResult>;
   /** Per-holding real synced dividends (TTM), keyed `ticker::wrapper`. */
   actualsByKey?: Record<string, ActualIncome>;
+  /** Latest FMP price per ticker (display units), for the Value column. */
+  priceByTicker?: Record<string, TickerPrice>;
   tier: "free" | "pro" | "premium";
   pricingPublic: boolean;
   isBeta: boolean;
@@ -226,6 +274,7 @@ export function HoldingsTable({
   rows,
   quotes,
   actualsByKey,
+  priceByTicker,
   tier,
   pricingPublic,
   isBeta,
@@ -311,7 +360,13 @@ export function HoldingsTable({
                   Avg cost
                 </th>
                 <th scope="col" className="px-4 py-3 text-right">
+                  Value
+                </th>
+                <th scope="col" className="px-4 py-3 text-right">
                   Income
+                </th>
+                <th scope="col" className="px-4 py-3 text-right">
+                  Received (12m)
                 </th>
                 {showScores && (
                   <th scope="col" className="px-4 py-3 text-right">
@@ -330,6 +385,8 @@ export function HoldingsTable({
               {rows.map((row) => {
                 const pending = pendingIds.has(row.id);
                 const incomeStatus = resolveRowIncome(row, quotes, actualsByKey);
+                const valueStatus = resolveRowValue(row, priceByTicker ?? {});
+                const received = actualsByKey?.[actualKey(row.ticker, row.wrapper)];
                 const score = scoresByTicker[row.ticker];
                 return (
                   <tr
@@ -353,7 +410,13 @@ export function HoldingsTable({
                       {formatCost(Number(row.avg_cost), row.cost_currency)}
                     </td>
                     <td className="px-4 py-3 text-right text-sm">
+                      <ValueCell status={valueStatus} />
+                    </td>
+                    <td className="px-4 py-3 text-right text-sm">
                       <IncomeCell status={incomeStatus} />
+                    </td>
+                    <td className="px-4 py-3 text-right text-sm">
+                      <ReceivedCell actual={received} />
                     </td>
                     {showScores && (
                       <td className="px-4 py-3 text-right">
@@ -397,6 +460,8 @@ export function HoldingsTable({
         {rows.map((row) => {
           const pending = pendingIds.has(row.id);
           const incomeStatus = resolveRowIncome(row, quotes, actualsByKey);
+          const valueStatus = resolveRowValue(row, priceByTicker ?? {});
+          const received = actualsByKey?.[actualKey(row.ticker, row.wrapper)];
           const score = scoresByTicker[row.ticker];
           return (
             <li
@@ -458,10 +523,26 @@ export function HoldingsTable({
                 </div>
                 <div>
                   <dt className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Value
+                  </dt>
+                  <dd className="mt-0.5 text-sm">
+                    <ValueCell status={valueStatus} />
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                     Income
                   </dt>
                   <dd className="mt-0.5 text-sm">
                     <IncomeCell status={incomeStatus} />
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Received (12m)
+                  </dt>
+                  <dd className="mt-0.5 text-sm">
+                    <ReceivedCell actual={received} />
                   </dd>
                 </div>
                 <div>

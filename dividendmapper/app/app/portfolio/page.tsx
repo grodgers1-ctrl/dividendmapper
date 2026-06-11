@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/auth/server";
 import { isPricingPublic } from "@/lib/flags/pricing";
 import { isBeta } from "@/lib/scoring/config";
 import { loadPricedHoldings } from "@/lib/portfolio/load-priced-holdings";
+import { formatMoney } from "@/lib/portfolio/format-money";
 import { HoldingsTable } from "./_components/holdings-table";
 import { AddHoldingLauncher } from "./_components/add-holding-launcher";
 import { PortfolioIncomeChart } from "./_components/portfolio-income-chart";
@@ -35,6 +36,8 @@ export default async function PortfolioPage() {
     holdingsError,
     quotesByTicker,
     actualsByKey,
+    priceByTicker,
+    valueTotalsByCurrency,
     income,
   } = await loadPricedHoldings(user.id);
 
@@ -113,12 +116,23 @@ export default async function PortfolioPage() {
               rows={visibleRows}
               quotes={quotesByTicker}
               actualsByKey={actualsByKey}
+              priceByTicker={priceByTicker}
               tier={tier}
               pricingPublic={pricingPublic}
               isBeta={isBeta()}
               scoresByTicker={{}}
               showScores={tier === "free"}
             />
+            {valueTotalsByCurrency.length > 0 && (
+              <p className="text-sm text-muted-foreground">
+                Estimated portfolio value:{" "}
+                <span className="font-mono font-medium text-foreground">
+                  {valueTotalsByCurrency
+                    .map((v) => formatMoney(v.total, v.currency))
+                    .join(" · ")}
+                </span>
+              </p>
+            )}
             <PortfolioIncomeChart income={income} />
           </div>
         )}

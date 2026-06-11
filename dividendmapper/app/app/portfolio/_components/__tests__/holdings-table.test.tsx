@@ -134,6 +134,67 @@ describe("<HoldingsTable> score column (Pro)", () => {
   });
 });
 
+describe("<HoldingsTable> Value + Received columns", () => {
+  it("renders the position value from priceByTicker (qty × price)", () => {
+    render(
+      <HoldingsTable
+        rows={[row("1", "MSFT")]}
+        quotes={{}}
+        priceByTicker={{ MSFT: { price: 400, currency: "USD" } }}
+        tier="pro"
+        pricingPublic={true}
+        isBeta={true}
+        scoresByTicker={{}}
+        showScores={false}
+      />,
+    );
+    // 100 shares × $400 = $40,000
+    const table = screen.getByRole("table");
+    expect(within(table).getByText("$40,000")).toBeInTheDocument();
+    expect(
+      screen.getByRole("columnheader", { name: "Value" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("columnheader", { name: /Received/ }),
+    ).toBeInTheDocument();
+  });
+
+  it("renders real received dividends from actualsByKey for the holding's wrapper", () => {
+    render(
+      <HoldingsTable
+        rows={[row("1", "TW.L")]}
+        quotes={{}}
+        actualsByKey={{ "TW.L::isa": { amount: 112, currency: "GBP" } }}
+        tier="pro"
+        pricingPublic={true}
+        isBeta={true}
+        scoresByTicker={{}}
+        showScores={false}
+      />,
+    );
+    const table = screen.getByRole("table");
+    expect(within(table).getByText("£112")).toBeInTheDocument();
+  });
+
+  it("shows a dash for value when the ticker is not yet priced", () => {
+    render(
+      <HoldingsTable
+        rows={[row("1", "NEW")]}
+        quotes={{}}
+        tier="pro"
+        pricingPublic={true}
+        isBeta={true}
+        scoresByTicker={{}}
+        showScores={false}
+      />,
+    );
+    const table = screen.getByRole("table");
+    expect(
+      within(table).getByTitle(/Value appears after the next nightly price update/),
+    ).toBeInTheDocument();
+  });
+});
+
 describe("<HoldingsTable> score column (Free)", () => {
   it("shows the upgrade pill instead of chips", () => {
     render(
