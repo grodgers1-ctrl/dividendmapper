@@ -143,6 +143,9 @@ export default async function PricingPage() {
                 forever
               </span>
             </p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              No card. No commitment.
+            </p>
           </div>
 
           <Link
