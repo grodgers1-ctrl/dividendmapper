@@ -48,12 +48,12 @@ export function RefreshScoresButton() {
   const inFlight = busy || pending;
 
   return (
-    <div className="flex flex-col items-end gap-1">
+    <div className="flex shrink-0 flex-col items-end gap-1">
       <button
         type="button"
         onClick={run}
         disabled={inFlight}
-        className="inline-flex h-10 items-center gap-2 rounded-lg bg-brand-600 px-4 text-sm font-medium text-white transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
+        className="inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-lg bg-brand-600 px-4 text-sm font-medium text-white transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
       >
         <RefreshCw className={`h-4 w-4 ${inFlight ? "animate-spin" : ""}`} aria-hidden="true" />
         {inFlight

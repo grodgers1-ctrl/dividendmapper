@@ -66,7 +66,7 @@ export default async function WatchlistPage() {
           <h1 className="font-display text-3xl font-bold tracking-tight text-foreground md:text-4xl">
             Watchlist
           </h1>
-          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
             Track tickers you don&apos;t own yet. They&apos;re scored in the nightly update alongside
             your holdings. Signals are a resilience check, not a buy recommendation. Not financial
             advice.
