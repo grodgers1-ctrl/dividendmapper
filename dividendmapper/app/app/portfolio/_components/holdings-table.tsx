@@ -197,8 +197,8 @@ function ScoreChipStack({
   onOpen: OpenScore;
 }) {
   return (
-    <div className="flex flex-col items-end gap-1">
-      <div className="flex flex-wrap items-center justify-end gap-1">
+    <div className="flex flex-col items-start gap-0.5">
+      <div className="flex items-center gap-1">
         <ScoreChip
           type="buy"
           score={score.buy}
@@ -409,33 +409,33 @@ export function HoldingsTable({
                 <th scope="col" className="px-4 py-3">
                   Ticker
                 </th>
-                <th scope="col" className="px-4 py-3">
+                <th scope="col" className="w-px whitespace-nowrap px-3 py-3">
                   Wrapper
                 </th>
-                <th scope="col" className="px-4 py-3 text-right">
-                  Quantity
-                </th>
-                <th scope="col" className="px-4 py-3 text-right">
-                  Avg cost
-                </th>
-                <th scope="col" className="px-4 py-3 text-right">
-                  Value
-                </th>
-                <th scope="col" className="px-4 py-3 text-right">
-                  Income
-                </th>
-                <th scope="col" className="px-4 py-3 text-right">
-                  Received (12m)
-                </th>
                 {showScores && (
-                  <th scope="col" className="px-4 py-3 text-right">
+                  <th scope="col" className="px-4 py-3">
                     Scores
                   </th>
                 )}
-                <th scope="col" className="px-4 py-3">
+                <th scope="col" className="w-px whitespace-nowrap px-3 py-3 text-right">
+                  Quantity
+                </th>
+                <th scope="col" className="w-px whitespace-nowrap px-3 py-3 text-right">
+                  Avg cost
+                </th>
+                <th scope="col" className="w-px whitespace-nowrap px-3 py-3 text-right">
+                  Value
+                </th>
+                <th scope="col" className="w-px whitespace-nowrap px-3 py-3 text-right">
+                  Income
+                </th>
+                <th scope="col" className="w-px whitespace-nowrap px-3 py-3 text-right">
+                  Received (12m)
+                </th>
+                <th scope="col" className="w-px whitespace-nowrap px-3 py-3">
                   Broker
                 </th>
-                <th scope="col" className="px-4 py-3 text-right">
+                <th scope="col" className="w-px whitespace-nowrap px-3 py-3 text-right">
                   <span className="sr-only">Actions</span>
                 </th>
               </tr>
@@ -459,33 +459,18 @@ export function HoldingsTable({
                         {row.ticker}
                       </span>
                       {nameByTicker?.[row.ticker] && (
-                        <span className="mt-0.5 block max-w-[16rem] truncate text-xs text-muted-foreground">
+                        <span className="mt-0.5 block max-w-[11rem] truncate text-xs text-muted-foreground">
                           {nameByTicker[row.ticker]}
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="w-px whitespace-nowrap px-3 py-3">
                       <span className="inline-flex items-center rounded-full border border-border bg-secondary px-2 py-0.5 text-xs font-medium text-foreground">
                         {WRAPPER_LABEL[row.wrapper] ?? row.wrapper}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-right font-mono text-foreground">
-                      {formatQuantity(Number(row.quantity))}
-                    </td>
-                    <td className="px-4 py-3 text-right font-mono text-foreground">
-                      {formatCost(Number(row.avg_cost), row.cost_currency)}
-                    </td>
-                    <td className="px-4 py-3 text-right text-sm">
-                      <ValueCell status={valueStatus} />
-                    </td>
-                    <td className="px-4 py-3 text-right text-sm">
-                      <IncomeCell status={incomeStatus} />
-                    </td>
-                    <td className="px-4 py-3 text-right text-sm">
-                      <ReceivedCell actual={received} />
-                    </td>
                     {showScores && (
-                      <td className="px-4 py-3 text-right">
+                      <td className="whitespace-nowrap px-4 py-3 text-left">
                         {isFree ? (
                           <UpgradePill pricingPublic={pricingPublic} />
                         ) : score ? (
@@ -499,10 +484,25 @@ export function HoldingsTable({
                         )}
                       </td>
                     )}
-                    <td className="px-4 py-3 text-muted-foreground">
+                    <td className="w-px whitespace-nowrap px-3 py-3 text-right font-mono text-foreground">
+                      {formatQuantity(Number(row.quantity))}
+                    </td>
+                    <td className="w-px whitespace-nowrap px-3 py-3 text-right font-mono text-foreground">
+                      {formatCost(Number(row.avg_cost), row.cost_currency)}
+                    </td>
+                    <td className="w-px whitespace-nowrap px-3 py-3 text-right text-sm">
+                      <ValueCell status={valueStatus} />
+                    </td>
+                    <td className="w-px whitespace-nowrap px-3 py-3 text-right text-sm">
+                      <IncomeCell status={incomeStatus} />
+                    </td>
+                    <td className="w-px whitespace-nowrap px-3 py-3 text-right text-sm">
+                      <ReceivedCell actual={received} />
+                    </td>
+                    <td className="w-px whitespace-nowrap px-3 py-3 text-muted-foreground">
                       <BrokerCell row={row} />
                     </td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="w-px whitespace-nowrap px-3 py-3 text-right">
                       <button
                         type="button"
                         onClick={() => handleDelete(row)}
