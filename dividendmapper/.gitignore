@@ -54,3 +54,6 @@ emails-rendered/
 .backtest-cache/
 backtest-out/
 scripts/backtest/__tests__/fixtures/*.bak
+
+# smoke-test harness transient state
+scripts/smoke/.wl-dryrun-state.json

@@ -28,6 +28,18 @@ function parsePref(value: unknown): PrefInput | null | "invalid" {
   return { enabled: v.enabled, threshold: n };
 }
 
+// The watchlist alert is a single on/off toggle (it reuses the user's Risk and
+// Quality thresholds), so it has no threshold of its own.
+const WATCHLIST_EVENT = "watchlist_alert";
+
+function parseToggle(value: unknown): boolean | null | "invalid" {
+  if (value === undefined || value === null) return null;
+  if (typeof value !== "object") return "invalid";
+  const v = value as Record<string, unknown>;
+  if (typeof v.enabled !== "boolean") return "invalid";
+  return v.enabled;
+}
+
 async function userId(supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>) {
   const { data } = await supabase.auth.getClaims();
   return (data?.claims?.sub as string | undefined) ?? null;
@@ -44,9 +56,10 @@ export async function GET() {
     .eq("user_id", uid);
 
   const rows = (data ?? []) as { event_type: string; enabled: boolean; threshold_value: number | null }[];
-  const out: Record<PrefKey, PrefInput> = {
+  const out: Record<PrefKey, PrefInput> & { watchlist: { enabled: boolean } } = {
     quality: { enabled: false, threshold: DEFAULT_THRESHOLD.quality },
     risk: { enabled: false, threshold: DEFAULT_THRESHOLD.risk },
+    watchlist: { enabled: false },
   };
   for (const key of Object.keys(EVENT_BY_KEY) as PrefKey[]) {
     const row = rows.find((r) => r.event_type === EVENT_BY_KEY[key]);
@@ -57,6 +70,8 @@ export async function GET() {
       };
     }
   }
+  const watchlistRow = rows.find((r) => r.event_type === WATCHLIST_EVENT);
+  if (watchlistRow) out.watchlist = { enabled: watchlistRow.enabled };
   return NextResponse.json(out);
 }
 
@@ -87,6 +102,19 @@ export async function PUT(req: Request) {
       updated_at: now,
     });
   }
+
+  const watchlist = parseToggle(b.watchlist);
+  if (watchlist === "invalid") return NextResponse.json({ error: "invalid_input" }, { status: 400 });
+  if (watchlist !== null) {
+    rows.push({
+      user_id: uid,
+      event_type: WATCHLIST_EVENT,
+      enabled: watchlist,
+      threshold_value: null,
+      updated_at: now,
+    });
+  }
+
   if (rows.length === 0) return NextResponse.json({ ok: true });
 
   const { error } = await supabase

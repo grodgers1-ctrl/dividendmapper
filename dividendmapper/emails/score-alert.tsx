@@ -14,6 +14,8 @@ export interface AlertRow {
 interface ScoreAlertProps {
   qualityCrossings: AlertRow[];
   riskCrossings: AlertRow[];
+  watchlistRiskCrossings: AlertRow[];
+  watchlistQualityCrossings: AlertRow[];
   manageUrl: string;
   unsubscribeUrl: string;
 }
@@ -25,9 +27,12 @@ function Line({ children }: { children: ReactNode }) {
 export function ScoreAlertEmail({
   qualityCrossings = [],
   riskCrossings = [],
+  watchlistRiskCrossings = [],
+  watchlistQualityCrossings = [],
   manageUrl = "https://dividendmapper.com/app/account/notifications",
   unsubscribeUrl = "https://dividendmapper.com/api/notifications/unsubscribe?token=",
 }: Partial<ScoreAlertProps> = {}) {
+  const hasWatchlist = watchlistRiskCrossings.length > 0 || watchlistQualityCrossings.length > 0;
   return (
     <EmailLayout preview="A resilience update on your holdings.">
       <Text style={EMAIL_STYLES.heading}>Your holdings update</Text>
@@ -57,6 +62,24 @@ export function ScoreAlertEmail({
           {riskCrossings.map((c) => (
             <Line key={`r-${c.ticker}`}>
               {c.ticker}: now {c.to}, was {c.from}.
+            </Line>
+          ))}
+        </>
+      )}
+
+      {hasWatchlist && (
+        <>
+          <Text style={{ ...EMAIL_STYLES.text, fontWeight: 700, margin: "24px 0 8px 0" }}>
+            On your watchlist
+          </Text>
+          {watchlistQualityCrossings.map((c) => (
+            <Line key={`wq-${c.ticker}`}>
+              {c.ticker}: resilience now {c.to}, was {c.from}.
+            </Line>
+          ))}
+          {watchlistRiskCrossings.map((c) => (
+            <Line key={`wr-${c.ticker}`}>
+              {c.ticker}: risk now {c.to}, was {c.from}.
             </Line>
           ))}
         </>

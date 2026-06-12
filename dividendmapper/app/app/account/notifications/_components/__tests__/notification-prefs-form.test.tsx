@@ -5,6 +5,7 @@ import { NotificationPrefsForm } from "../notification-prefs-form";
 const initial = {
   quality: { enabled: false, threshold: 30 },
   risk: { enabled: true, threshold: 75 },
+  watchlist: { enabled: false },
 };
 
 afterEach(() => cleanup());
@@ -27,5 +28,21 @@ describe("NotificationPrefsForm", () => {
       "/api/notifications",
       expect.objectContaining({ method: "PUT" }),
     );
+  });
+
+  it("renders a Pro-gated Watchlist alerts toggle and PUTs its state", async () => {
+    render(<NotificationPrefsForm initial={initial} isPro />);
+    const toggle = screen.getByLabelText("Watchlist alerts") as HTMLInputElement;
+    expect(toggle.disabled).toBe(false);
+    fireEvent.click(toggle);
+    fireEvent.click(screen.getByRole("button", { name: /save/i }));
+    const opts = (fetch as unknown as { mock: { calls: unknown[][] } }).mock.calls[0][1] as { body: string };
+    const body = JSON.parse(opts.body);
+    expect(body.watchlist).toEqual({ enabled: true });
+  });
+
+  it("disables the Watchlist toggle for Free users", () => {
+    render(<NotificationPrefsForm initial={initial} isPro={false} />);
+    expect((screen.getByLabelText("Watchlist alerts") as HTMLInputElement).disabled).toBe(true);
   });
 });

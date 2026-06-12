@@ -7,9 +7,13 @@ export interface PrefState {
   enabled: boolean;
   threshold: number;
 }
+export interface ToggleState {
+  enabled: boolean;
+}
 export interface PrefsShape {
   quality: PrefState;
   risk: PrefState;
+  watchlist: ToggleState;
 }
 
 export function NotificationPrefsForm({
@@ -22,8 +26,13 @@ export function NotificationPrefsForm({
   const [prefs, setPrefs] = useState<PrefsShape>(initial);
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
 
-  function set(key: keyof PrefsShape, patch: Partial<PrefState>) {
+  type ThresholdKey = "quality" | "risk";
+  function set(key: ThresholdKey, patch: Partial<PrefState>) {
     setPrefs((p) => ({ ...p, [key]: { ...p[key], ...patch } }));
+    setStatus("idle");
+  }
+  function setWatchlist(enabled: boolean) {
+    setPrefs((p) => ({ ...p, watchlist: { enabled } }));
     setStatus("idle");
   }
 
@@ -41,7 +50,7 @@ export function NotificationPrefsForm({
     }
   }
 
-  const row = (key: keyof PrefsShape, label: string, help: string) => (
+  const row = (key: ThresholdKey, label: string, help: string) => (
     <div className="flex items-start justify-between gap-4 border-b border-border py-4 last:border-0">
       <div>
         <label htmlFor={`${key}-enabled`} className="text-sm font-medium text-foreground">
@@ -90,6 +99,26 @@ export function NotificationPrefsForm({
 
       {row("quality", "Quality alerts", "Email me when a holding's Quality score falls below this level.")}
       {row("risk", "Risk alerts", "Email me when a holding's Risk score rises to this level or above.")}
+
+      <div className="flex items-start justify-between gap-4 border-b border-border py-4 last:border-0">
+        <div>
+          <label htmlFor="watchlist-enabled" className="text-sm font-medium text-foreground">
+            Watchlist alerts
+          </label>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Email me when a ticker on my watchlist crosses the same levels.
+          </p>
+        </div>
+        <input
+          id="watchlist-enabled"
+          type="checkbox"
+          aria-label="Watchlist alerts"
+          disabled={!isPro}
+          checked={prefs.watchlist.enabled}
+          onChange={(e) => setWatchlist(e.target.checked)}
+          className="mt-1 h-5 w-5 disabled:opacity-50"
+        />
+      </div>
 
       <p className="mt-4 text-xs text-muted-foreground">
         At most one summary email per day. These scores are a resilience check, not financial advice.

@@ -16,6 +16,7 @@ export const metadata: Metadata = {
 const DEFAULTS: PrefsShape = {
   quality: { enabled: false, threshold: 30 },
   risk: { enabled: false, threshold: 75 },
+  watchlist: { enabled: false },
 };
 
 export default async function NotificationsPage() {
@@ -37,6 +38,7 @@ export default async function NotificationsPage() {
   const prefs: PrefsShape = {
     quality: { ...DEFAULTS.quality },
     risk: { ...DEFAULTS.risk },
+    watchlist: { ...DEFAULTS.watchlist },
   };
   for (const r of (rows ?? []) as { event_type: string; enabled: boolean; threshold_value: number | null }[]) {
     if (r.event_type === "buy_threshold_crossed") {
@@ -44,6 +46,9 @@ export default async function NotificationsPage() {
     }
     if (r.event_type === "risk_threshold_crossed") {
       prefs.risk = { enabled: r.enabled, threshold: r.threshold_value ?? DEFAULTS.risk.threshold };
+    }
+    if (r.event_type === "watchlist_alert") {
+      prefs.watchlist = { enabled: r.enabled };
     }
   }
 
@@ -58,8 +63,8 @@ export default async function NotificationsPage() {
       </Link>
       <h1 className="mt-4 font-display text-2xl font-semibold text-foreground">Alert emails</h1>
       <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-        Get one summary email when a holding&apos;s resilience scores move past a level you set.
-        Opt in below. Not financial advice.
+        Get one summary email when a holding or watchlist ticker&apos;s resilience scores move past a
+        level you set. Opt in below. Not financial advice.
       </p>
       <div className="mt-6 rounded-xl border border-border bg-card p-5 md:p-6">
         <NotificationPrefsForm initial={prefs} isPro={isPro} />
