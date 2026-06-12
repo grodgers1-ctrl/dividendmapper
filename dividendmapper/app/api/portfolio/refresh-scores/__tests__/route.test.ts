@@ -49,10 +49,6 @@ vi.mock("@/lib/supabase/server", () => ({
 
 import { POST } from "../route";
 
-function req() {
-  return new Request("http://localhost/api/portfolio/refresh-scores", { method: "POST" });
-}
-
 beforeEach(() => {
   vi.clearAllMocks();
   tier = "pro";
@@ -69,7 +65,7 @@ describe("POST /api/portfolio/refresh-scores", () => {
   it("403 for free tier", async () => {
     tier = "free";
     holdings = [{ ticker: "AAPL.US" }];
-    const res = await POST(req());
+    const res = await POST();
     expect(res.status).toBe(403);
     expect((await res.json()).code).toBe("pro_required");
     expect(scoreTicker).not.toHaveBeenCalled();
@@ -78,7 +74,7 @@ describe("POST /api/portfolio/refresh-scores", () => {
   it("scores missing tickers and stamps last_score_refresh_at", async () => {
     holdings = [{ ticker: "AAPL.US" }, { ticker: "MSFT.US" }];
     scores = []; // both missing
-    const res = await POST(req());
+    const res = await POST();
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.scored).toBe(2);
@@ -95,7 +91,7 @@ describe("POST /api/portfolio/refresh-scores", () => {
       { ticker: "AAPL.US", computed_at: old },
       { ticker: "MSFT.US", computed_at: fresh },
     ];
-    const res = await POST(req());
+    const res = await POST();
     const body = await res.json();
     expect(body.scored).toBe(1);
     expect(scoreTicker).toHaveBeenCalledWith(
@@ -109,7 +105,7 @@ describe("POST /api/portfolio/refresh-scores", () => {
   it("caps at 20 and reports remaining", async () => {
     holdings = Array.from({ length: 25 }, (_, i) => ({ ticker: `T${i}.US` }));
     scores = [];
-    const res = await POST(req());
+    const res = await POST();
     const body = await res.json();
     expect(body.scored).toBe(20);
     expect(body.remaining).toBe(5);
@@ -120,7 +116,7 @@ describe("POST /api/portfolio/refresh-scores", () => {
     holdings = [{ ticker: "STALE.US" }, { ticker: "MISS.US" }];
     const old = new Date(Date.now() - 25 * 3600_000).toISOString();
     scores = [{ ticker: "STALE.US", computed_at: old }];
-    await POST(req());
+    await POST();
     expect(scoreTicker.mock.calls[0][1]).toBe("MISS.US");
     expect(scoreTicker.mock.calls[1][1]).toBe("STALE.US");
   });
@@ -130,7 +126,7 @@ describe("POST /api/portfolio/refresh-scores", () => {
     const old = new Date(Date.now() - 25 * 3600_000).toISOString(); // stale → eligible but gated
     scores = [{ ticker: "AAPL.US", computed_at: old }];
     lastRefresh = new Date(Date.now() - 5 * 60_000).toISOString();
-    const res = await POST(req());
+    const res = await POST();
     expect(res.status).toBe(429);
     const body = await res.json();
     expect(body.code).toBe("cooldown");
@@ -142,7 +138,7 @@ describe("POST /api/portfolio/refresh-scores", () => {
     holdings = [{ ticker: "AAPL.US" }];
     scores = []; // missing
     lastRefresh = new Date(Date.now() - 1 * 60_000).toISOString(); // within 15min
-    const res = await POST(req());
+    const res = await POST();
     expect(res.status).toBe(200);
     expect(scoreTicker).toHaveBeenCalledTimes(1);
   });
@@ -151,7 +147,7 @@ describe("POST /api/portfolio/refresh-scores", () => {
     holdings = [{ ticker: "AAPL.US" }];
     scores = [{ ticker: "AAPL.US", computed_at: new Date().toISOString() }];
     lastRefresh = new Date(Date.now() - 60 * 60_000).toISOString(); // > 15min ago
-    const res = await POST(req());
+    const res = await POST();
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body).toMatchObject({ scored: 0, remaining: 0, upToDate: true });

@@ -13,6 +13,7 @@ import { ReinvestCard } from "../_components/reinvest-card";
 import { QuadrantMap } from "../_components/quadrant-map";
 import { ScoreLensToggle } from "../_components/score-lens-toggle";
 import { FirstVisitWizard } from "../_components/first-visit-wizard";
+import { RefreshScoresButton } from "../_components/refresh-scores-button";
 
 export const metadata: Metadata = {
   title: "Portfolio Manager",
@@ -65,14 +66,17 @@ export default async function PortfolioManagerPage(props: {
   return (
     <div className="mx-auto max-w-5xl px-4 py-12 md:px-6 md:py-16">
       <FirstVisitWizard initial={prefs} autoOpen={!hasAnsweredWizard} />
-      <div>
-        <h1 className="font-display text-3xl font-bold tracking-tight text-foreground md:text-4xl">
-          Portfolio Manager
-        </h1>
-        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-          Quality, Trim and Risk across your holdings. Signals are a resilience
-          check, not a buy recommendation. Not financial advice.
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="font-display text-3xl font-bold tracking-tight text-foreground md:text-4xl">
+            Portfolio Manager
+          </h1>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+            Quality, Trim and Risk across your holdings. Signals are a resilience
+            check, not a buy recommendation. Not financial advice.
+          </p>
+        </div>
+        <RefreshScoresButton />
       </div>
 
       <div className="mt-8 space-y-6">
