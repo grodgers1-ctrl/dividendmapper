@@ -1,5 +1,12 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { HeroSection } from "@/components/hero-section";
+
+export const metadata: Metadata = {
+  title: { absolute: "Free UK dividend tracker for ISAs, SIPPs and GIAs" },
+  description:
+    "Free dividend tracker for UK ISAs, SIPPs and US 401(k)s. No card required. Backtested Quality and Trim scores on every holding.",
+};
 
 export default function HomePage() {
   return (
