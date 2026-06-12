@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { HeaderAuthSlot } from "./header-auth-slot";
 import { LocaleToggle } from "./locale-toggle";
+import { MobileMenu } from "./mobile-menu";
 import { ThemeToggle } from "./theme-toggle";
 import { isPricingPublic } from "@/lib/flags/pricing";
 
@@ -26,7 +27,7 @@ export function SiteHeader() {
         <Link
           href="/"
           aria-label="DividendMapper home"
-          className="flex shrink-0 items-center gap-2 font-display text-lg font-bold tracking-tight text-foreground"
+          className="flex shrink-0 items-center gap-2 font-display text-base font-bold tracking-tight text-foreground sm:text-lg"
         >
           <Image
             src="/logo-pin.png"
@@ -37,7 +38,7 @@ export function SiteHeader() {
             aria-hidden
             className="h-8 w-8"
           />
-          <span className="hidden sm:inline">DividendMapper</span>
+          <span>DividendMapper</span>
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex">
@@ -56,6 +57,7 @@ export function SiteHeader() {
           <LocaleToggle />
           <ThemeToggle />
           <HeaderAuthSlot />
+          <MobileMenu nav={nav} />
         </div>
       </div>
     </header>
