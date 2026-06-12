@@ -8,6 +8,7 @@ import { primaryGateReason } from "@/lib/scoring/gate-reasons";
 import type { GateCode } from "@/lib/scoring/quality-gates";
 import { isBeta } from "@/lib/scoring/config";
 import { WatchlistPanel, type WatchRow } from "../_components/watchlist-panel";
+import { RefreshScoresButton } from "../_components/refresh-scores-button";
 
 export const metadata: Metadata = {
   title: "Watchlist",
@@ -60,15 +61,18 @@ export default async function WatchlistPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-12 md:px-6 md:py-16">
-      <div>
-        <h1 className="font-display text-3xl font-bold tracking-tight text-foreground md:text-4xl">
-          Watchlist
-        </h1>
-        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-          Track tickers you don&apos;t own yet. They&apos;re scored in the nightly update alongside
-          your holdings. Signals are a resilience check, not a buy recommendation. Not financial
-          advice.
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="font-display text-3xl font-bold tracking-tight text-foreground md:text-4xl">
+            Watchlist
+          </h1>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+            Track tickers you don&apos;t own yet. They&apos;re scored in the nightly update alongside
+            your holdings. Signals are a resilience check, not a buy recommendation. Not financial
+            advice.
+          </p>
+        </div>
+        <RefreshScoresButton />
       </div>
 
       <div className="mt-8">
