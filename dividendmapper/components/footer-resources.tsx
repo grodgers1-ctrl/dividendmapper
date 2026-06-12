@@ -21,7 +21,7 @@ export function FooterResources() {
             href="/blog"
             className="text-foreground transition-colors hover:text-brand-600 dark:hover:text-brand-400"
           >
-            Blog
+            Research
           </Link>
         </li>
         {localePosts.map((post) => (

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { POSTS, formatPublishedDate } from "@/lib/blog/posts";
 
 export const metadata: Metadata = {
-  title: "Blog",
+  title: "Research",
   description:
     "Practical guides for dividend investors. UK dividend tax, T212 SIPP review, and more.",
   alternates: { canonical: "/blog" },

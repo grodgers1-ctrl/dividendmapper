@@ -14,7 +14,7 @@ const TOOLS_COLUMN: ColumnDef = {
   links: [
     { href: "/tools/retirement-calculator", label: "Retirement calculator" },
     { href: "/tools/dcf-calculator", label: "DCF calculator" },
-    { href: "/scoring", label: "Dividend scores" },
+    { href: "/scoring", label: "Resilience" },
   ],
 };
 

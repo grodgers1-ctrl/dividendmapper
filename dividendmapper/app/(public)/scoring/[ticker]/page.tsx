@@ -103,7 +103,7 @@ export default async function ScoringTickerPage({
       "@context": "https://schema.org",
       "@type": "BreadcrumbList",
       itemListElement: [
-        { "@type": "ListItem", position: 1, name: "Dividend scores", item: `${SITE_URL}/scoring` },
+        { "@type": "ListItem", position: 1, name: "Resilience", item: `${SITE_URL}/scoring` },
         { "@type": "ListItem", position: 2, name: ticker, item: `${SITE_URL}/scoring/${ticker}` },
       ],
     },

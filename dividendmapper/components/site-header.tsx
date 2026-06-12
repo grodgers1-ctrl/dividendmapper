@@ -8,8 +8,8 @@ import { isPricingPublic } from "@/lib/flags/pricing";
 const BASE_NAV = [
   { href: "/tools/retirement-calculator", label: "Retirement" },
   { href: "/tools/dcf-calculator", label: "DCF" },
-  { href: "/scoring", label: "Scores" },
-  { href: "/blog", label: "Blog" },
+  { href: "/scoring", label: "Resilience" },
+  { href: "/blog", label: "Research" },
 ];
 
 export function SiteHeader() {
