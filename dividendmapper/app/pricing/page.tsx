@@ -111,16 +111,6 @@ export default async function PricingPage() {
               ? `You're already on Pro until ${expiresLabel}.`
               : "You're already on Pro through the founding-member window."}
           </p>
-          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-            Your three 50% off Pro referral codes land on your{" "}
-            <Link
-              href="/app/account"
-              className="font-medium text-brand-700 underline-offset-2 hover:underline dark:text-brand-300"
-            >
-              account page
-            </Link>{" "}
-            next week.
-          </p>
         </div>
       )}
 
