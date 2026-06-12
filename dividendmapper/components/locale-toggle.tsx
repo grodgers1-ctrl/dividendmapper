@@ -65,7 +65,7 @@ export function LocaleToggle() {
   }
 
   return (
-    <div className="relative flex items-center gap-2">
+    <div className="relative flex shrink-0 items-center gap-2">
       <span className="hidden text-xs font-medium uppercase tracking-wider text-muted-foreground lg:inline">
         Region
       </span>
@@ -92,7 +92,7 @@ export function LocaleToggle() {
               )}
             >
               <span aria-hidden>{opt.flag}</span>
-              <span>{opt.label}</span>
+              <span className="hidden sm:inline">{opt.label}</span>
             </button>
           );
         })}

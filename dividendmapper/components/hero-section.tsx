@@ -76,15 +76,15 @@ export function HeroSection() {
             {...fadeUp(0.32)}
             className="mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs font-medium text-muted-foreground"
           >
-            <li className="inline-flex items-center gap-1.5">
+            <li className="inline-flex items-start gap-1.5">
               <CheckDot />
               Free tier, no card required
             </li>
-            <li className="inline-flex items-center gap-1.5">
+            <li className="inline-flex items-start gap-1.5">
               <CheckDot />
               UK and US tax wrappers built in
             </li>
-            <li className="inline-flex items-center gap-1.5">
+            <li className="inline-flex items-start gap-1.5">
               <CheckDot />
               Backtested across 4,680 US + UK dividend observations
             </li>
@@ -99,7 +99,7 @@ function CheckDot() {
   return (
     <span
       aria-hidden
-      className="inline-flex h-3.5 w-3.5 items-center justify-center rounded-full bg-brand-100 text-brand-700 dark:bg-brand-900 dark:text-brand-400"
+      className="mt-0.5 inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full bg-brand-100 text-brand-700 dark:bg-brand-900 dark:text-brand-400"
     >
       <svg viewBox="0 0 12 12" className="h-2.5 w-2.5" fill="none">
         <path

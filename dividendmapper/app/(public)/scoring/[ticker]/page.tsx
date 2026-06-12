@@ -130,7 +130,7 @@ export default async function ScoringTickerPage({
           They are not financial advice.
         </p>
 
-        <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-3">
           {SCORE_CARDS.map(({ type, label, blurb }) => {
             const value = scoreValue(type);
             const isGateFail = type === "buy" && value === null;

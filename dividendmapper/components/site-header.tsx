@@ -25,7 +25,8 @@ export function SiteHeader() {
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 md:px-6 lg:px-8">
         <Link
           href="/"
-          className="flex items-center gap-2 font-display text-lg font-bold tracking-tight text-foreground"
+          aria-label="DividendMapper home"
+          className="flex shrink-0 items-center gap-2 font-display text-lg font-bold tracking-tight text-foreground"
         >
           <Image
             src="/logo-pin.png"
@@ -36,7 +37,7 @@ export function SiteHeader() {
             aria-hidden
             className="h-8 w-8"
           />
-          DividendMapper
+          <span className="hidden sm:inline">DividendMapper</span>
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex">
