@@ -82,30 +82,32 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
     loadUserPreferences(user.id),
     supabase
       .from("broker_connections")
-      .select("provider, wrapper, status, last_synced_at, last_sync_error")
+      .select("id, provider, wrapper, status, last_synced_at, last_sync_error")
       .eq("user_id", user.id)
       .eq("provider", "trading212")
-      .maybeSingle<{
-        provider: "trading212";
-        wrapper: "isa" | "gia" | null;
-        status: BrokerConnectionState["status"];
-        last_synced_at: string | null;
-        last_sync_error: string | null;
-      }>(),
+      .order("created_at", { ascending: true })
+      .returns<
+        {
+          id: string;
+          provider: "trading212";
+          wrapper: "isa" | "gia" | null;
+          status: BrokerConnectionState["status"];
+          last_synced_at: string | null;
+          last_sync_error: string | null;
+        }[]
+      >(),
   ]);
 
   const profile = profileResult.data;
   const foundingCodes = codesResult.data ?? [];
-  const brokerRow = brokerResult.data;
-  const brokerInitial: BrokerConnectionState | null = brokerRow
-    ? {
-        provider: brokerRow.provider,
-        wrapper: brokerRow.wrapper,
-        status: brokerRow.status,
-        lastSyncedAt: brokerRow.last_synced_at,
-        lastSyncError: brokerRow.last_sync_error,
-      }
-    : null;
+  const brokerConnections: BrokerConnectionState[] = (brokerResult.data ?? []).map((row) => ({
+    id: row.id,
+    provider: row.provider,
+    wrapper: row.wrapper,
+    status: row.status,
+    lastSyncedAt: row.last_synced_at,
+    lastSyncError: row.last_sync_error,
+  }));
   const tier = profile?.tier ?? "free";
   const isFoundingMember = profile?.founding_member ?? false;
   // Gate the billing-portal button: a portal session needs a Stripe customer.
@@ -321,7 +323,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
           Sync your Trading 212 holdings and real dividend income automatically. Pro feature.
         </p>
         <div className="mt-4">
-          <BrokerConnection isPro={tier !== "free"} initial={brokerInitial} />
+          <BrokerConnection isPro={tier !== "free"} connections={brokerConnections} />
         </div>
       </section>
 

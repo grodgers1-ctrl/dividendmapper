@@ -10,12 +10,14 @@ export const dynamic = "force-dynamic";
 // instruments) can run well past the default function timeout.
 export const maxDuration = 300;
 
-// POST /api/portfolio/broker/sync — on-demand "Sync now". Pro-gated. Pulls the
-// user's T212 holdings + actual dividends and reconciles them (provenance +
-// supersede). The heavy lifting + the compute-before-write guarantee live in
-// runBrokerSync; this route is auth + connection lookup + service-role handoff.
+// POST /api/portfolio/broker/sync — on-demand "Sync now" for ONE connection.
+// Pro-gated. Pulls that connection's T212 holdings + actual dividends and
+// reconciles them (provenance + supersede). A user may have several connections
+// (ISA + Invest), so the client names the one to sync by id in the body. The
+// heavy lifting + the compute-before-write guarantee live in runBrokerSync;
+// this route is auth + connection lookup + service-role handoff.
 
-export async function POST() {
+export async function POST(req: Request) {
   const supabase = await createSupabaseServerClient();
   const { data: claimsData } = await supabase.auth.getClaims();
   const userId = claimsData?.claims?.sub as string | undefined;
@@ -35,11 +37,22 @@ export async function POST() {
     );
   }
 
+  let connectionId: string | undefined;
+  try {
+    const body = (await req.json()) as { connectionId?: unknown };
+    if (typeof body?.connectionId === "string") connectionId = body.connectionId;
+  } catch {
+    // fall through to the 400 below
+  }
+  if (!connectionId) {
+    return NextResponse.json({ error: "missing_connection_id" }, { status: 400 });
+  }
+
   const { data: conn } = await supabase
     .from("broker_connections")
     .select("id, status, wrapper")
     .eq("user_id", userId)
-    .eq("provider", "trading212")
+    .eq("id", connectionId)
     .maybeSingle<{ id: string; status: string; wrapper: Wrapper | null }>();
   if (!conn) {
     return NextResponse.json({ error: "not_connected" }, { status: 404 });

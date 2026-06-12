@@ -4,15 +4,19 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-// Account "Connected brokers" UI. Pro-gated. Two states: a connect form (paste
-// the read-only T212 key + secret, pick the account type) when there's no live
-// connection, or a status card (last synced, "Sync now", disconnect) when there
-// is. All three actions hit the /api/portfolio/broker/* routes; the credential
-// only ever travels up to the connect endpoint and is never returned.
+// Account "Connected brokers" UI. Pro-gated. Renders a status card per live
+// connection (last synced, "Sync now", disconnect) plus a connect form to add
+// another account, until both T212 wrappers (ISA + Invest) are connected. A
+// user can hold several connections; each action targets ONE connection by id.
+// All actions hit the /api/portfolio/broker/* routes; the credential only ever
+// travels up to the connect endpoint and is never returned.
 
 export type BrokerStatus = "active" | "error" | "revoked";
 
+type T212Wrapper = "isa" | "gia";
+
 export interface BrokerConnectionState {
+  id: string;
   provider: "trading212";
   wrapper: "isa" | "gia" | null;
   status: BrokerStatus;
@@ -20,10 +24,12 @@ export interface BrokerConnectionState {
   lastSyncError: string | null;
 }
 
-const WRAPPER_LABEL: Record<"isa" | "gia", string> = {
+const WRAPPER_LABEL: Record<T212Wrapper, string> = {
   isa: "Stocks & Shares ISA",
   gia: "Invest (general account)",
 };
+
+const ALL_T212_WRAPPERS: T212Wrapper[] = ["isa", "gia"];
 
 function formatSynced(iso: string | null): string {
   if (!iso) return "Not synced yet";
@@ -40,13 +46,12 @@ function formatSynced(iso: string | null): string {
 
 export function BrokerConnection({
   isPro,
-  initial,
+  connections,
 }: {
   isPro: boolean;
-  initial: BrokerConnectionState | null;
+  connections: BrokerConnectionState[];
 }) {
   const router = useRouter();
-  const connected = initial != null && initial.status !== "revoked";
 
   if (!isPro) {
     return (
@@ -62,17 +67,43 @@ export function BrokerConnection({
     );
   }
 
-  return connected ? (
-    <ConnectedCard initial={initial!} onChange={() => router.refresh()} />
-  ) : (
-    <ConnectForm onConnected={() => router.refresh()} />
+  const active = connections.filter((c) => c.status !== "revoked");
+  const taken = new Set(active.map((c) => c.wrapper).filter(Boolean) as T212Wrapper[]);
+  const available = ALL_T212_WRAPPERS.filter((w) => !taken.has(w));
+
+  return (
+    <div className="space-y-6">
+      {active.map((conn) => (
+        <ConnectedCard key={conn.id} initial={conn} onChange={() => router.refresh()} />
+      ))}
+
+      {available.length > 0 ? (
+        <ConnectForm
+          availableWrappers={available}
+          hasExisting={active.length > 0}
+          onConnected={() => router.refresh()}
+        />
+      ) : (
+        <p className="text-xs text-muted-foreground">
+          Both your Trading 212 accounts (ISA and Invest) are connected.
+        </p>
+      )}
+    </div>
   );
 }
 
-function ConnectForm({ onConnected }: { onConnected: () => void }) {
+function ConnectForm({
+  availableWrappers,
+  hasExisting,
+  onConnected,
+}: {
+  availableWrappers: T212Wrapper[];
+  hasExisting: boolean;
+  onConnected: () => void;
+}) {
   const [apiKey, setApiKey] = useState("");
   const [apiSecret, setApiSecret] = useState("");
-  const [wrapper, setWrapper] = useState<"isa" | "gia">("isa");
+  const [wrapper, setWrapper] = useState<T212Wrapper>(availableWrappers[0]);
   const [status, setStatus] = useState<"idle" | "connecting" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
 
@@ -106,9 +137,13 @@ function ConnectForm({ onConnected }: { onConnected: () => void }) {
 
   return (
     <div className="space-y-4">
+      {hasExisting && (
+        <h3 className="font-display text-sm font-semibold text-foreground">Add another account</h3>
+      )}
       <p className="text-sm leading-relaxed text-muted-foreground">
-        Connect Trading 212 to pull your holdings and your real paid dividends. Your income view then
-        reflects what you actually received, not an estimate.
+        {hasExisting
+          ? "Got an ISA and an Invest account? Each has its own API key. Add the other one here."
+          : "Connect Trading 212 to pull your holdings and your real paid dividends. Your income view then reflects what you actually received, not an estimate."}
       </p>
 
       <div>
@@ -118,11 +153,14 @@ function ConnectForm({ onConnected }: { onConnected: () => void }) {
         <select
           id="broker-wrapper"
           value={wrapper}
-          onChange={(e) => setWrapper(e.target.value as "isa" | "gia")}
+          onChange={(e) => setWrapper(e.target.value as T212Wrapper)}
           className="mt-1 block h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground"
         >
-          <option value="isa">{WRAPPER_LABEL.isa}</option>
-          <option value="gia">{WRAPPER_LABEL.gia}</option>
+          {availableWrappers.map((w) => (
+            <option key={w} value={w}>
+              {WRAPPER_LABEL[w]}
+            </option>
+          ))}
         </select>
         <p className="mt-1 text-xs text-muted-foreground">
           One API key covers one account, so pick the one this key belongs to.
@@ -202,7 +240,10 @@ function ConnectedCard({
     setMsg(null);
     setErr(null);
     try {
-      const res = await fetch("/api/portfolio/broker/sync", { method: "POST" });
+      const res = await fetch("/api/portfolio/broker/sync", {
+        method: "POST",
+        body: JSON.stringify({ connectionId: initial.id }),
+      });
       if (res.ok) {
         onChange();
         return;
@@ -222,7 +263,10 @@ function ConnectedCard({
     setBusy("disconnecting");
     setErr(null);
     try {
-      const res = await fetch("/api/portfolio/broker/connect", { method: "DELETE" });
+      const res = await fetch("/api/portfolio/broker/connect", {
+        method: "DELETE",
+        body: JSON.stringify({ connectionId: initial.id }),
+      });
       if (res.ok || res.status === 404) {
         onChange();
         return;

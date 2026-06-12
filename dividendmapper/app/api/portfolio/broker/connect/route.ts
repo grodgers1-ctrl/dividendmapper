@@ -9,12 +9,14 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 // POST   /api/portfolio/broker/connect  — connect (validate creds, store encrypted, create connection)
-// DELETE /api/portfolio/broker/connect  — disconnect (delete credential, revoke connection; holdings retained)
+// DELETE /api/portfolio/broker/connect  — disconnect ONE connection by id (delete credential, revoke; holdings retained)
 //
 // Pro-gated. The T212 key+secret is encrypted at rest (AES-256-GCM) in the
 // service-role-only broker_credentials table and NEVER logged or returned to
-// the client. A T212 connection is ONE account, so the user picks the wrapper
-// (ISA vs Invest) — the API doesn't expose it.
+// the client. Each connection is ONE account (one wrapper), so the user picks
+// the wrapper (ISA vs Invest) — the API doesn't expose it. A user may hold more
+// than one connection (e.g. ISA + Invest); uniqueness is (user_id, provider,
+// wrapper), so a second wrapper inserts a new row rather than overwriting.
 
 function adminClient() {
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -91,7 +93,7 @@ export async function POST(req: Request) {
         last_sync_error: null,
         updated_at: new Date().toISOString(),
       },
-      { onConflict: "user_id,provider" },
+      { onConflict: "user_id,provider,wrapper" },
     )
     .select("id")
     .single<{ id: string }>();
@@ -117,7 +119,7 @@ export async function POST(req: Request) {
   );
 }
 
-export async function DELETE() {
+export async function DELETE(req: Request) {
   const supabase = await createSupabaseServerClient();
   const { data: claimsData } = await supabase.auth.getClaims();
   const userId = claimsData?.claims?.sub as string | undefined;
@@ -125,12 +127,25 @@ export async function DELETE() {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  // RLS lets the user read their own connection.
+  // A user can have multiple connections (ISA + Invest), so disconnect targets
+  // ONE by id. The client sends it in the JSON body.
+  let connectionId: string | undefined;
+  try {
+    const body = (await req.json()) as { connectionId?: unknown };
+    if (typeof body?.connectionId === "string") connectionId = body.connectionId;
+  } catch {
+    // fall through to the 400 below
+  }
+  if (!connectionId) {
+    return NextResponse.json({ error: "missing_connection_id" }, { status: 400 });
+  }
+
+  // RLS + the explicit user_id eq ensure the user owns this connection.
   const { data: conn } = await supabase
     .from("broker_connections")
     .select("id")
     .eq("user_id", userId)
-    .eq("provider", "trading212")
+    .eq("id", connectionId)
     .maybeSingle<{ id: string }>();
   if (!conn) {
     return NextResponse.json({ error: "not_connected" }, { status: 404 });
