@@ -64,14 +64,14 @@ export default async function PortfolioManagerPage(props: {
   );
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-12 md:px-6 md:py-16">
+    <div className="mx-auto max-w-7xl px-4 py-12 md:px-6 md:py-16">
       <FirstVisitWizard initial={prefs} autoOpen={!hasAnsweredWizard} />
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="font-display text-3xl font-bold tracking-tight text-foreground md:text-4xl">
             Portfolio Manager
           </h1>
-          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
             Quality, Trim and Risk across your holdings. Signals are a resilience
             check, not a buy recommendation. Not financial advice.
           </p>
