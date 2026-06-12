@@ -45,6 +45,10 @@ const tickersResult = {
   error: null,
 };
 
+// Watchlist tickers, unioned with holdings by the route. Default empty so the
+// existing holdings-only assertions hold; individual tests override it.
+let trackedResult: { data: { ticker: string }[]; error: unknown } = { data: [], error: null };
+
 function makeChain(result: unknown, upsertFn?: ReturnType<typeof vi.fn>) {
   const chain: Record<string, unknown> = {
     select: vi.fn(() => chain),
@@ -59,6 +63,7 @@ function makeChain(result: unknown, upsertFn?: ReturnType<typeof vi.fn>) {
 
 const fromMock = vi.fn((table: string) => {
   if (table === "holdings") return makeChain(tickersResult);
+  if (table === "tracked_tickers") return makeChain(trackedResult);
   if (table === "equity_score_history") return makeChain({ data: [], error: null }, historyUpsert);
   if (table === "equity_score_signals") return makeChain({ data: [], error: null }, signalsUpsert);
   if (table === "equity_scores") return makeChain({ data: [], error: null }, scoresUpsert);
@@ -71,6 +76,7 @@ vi.mock("@supabase/supabase-js", () => ({
 
 beforeEach(() => {
   vi.clearAllMocks();
+  trackedResult = { data: [], error: null };
   process.env.CRON_SECRET = "test-cron-secret";
   process.env.SUPABASE_SERVICE_ROLE_KEY = "service-role-key";
   process.env.NEXT_PUBLIC_SUPABASE_URL = "https://test.supabase.co";
@@ -111,6 +117,18 @@ describe("GET /api/internal/refresh-equity-scores", () => {
     expect(scoresUpsert).toHaveBeenCalledTimes(2);
     expect(historyUpsert).toHaveBeenCalledTimes(2);
     expect(signalsUpsert).toHaveBeenCalledTimes(2);
+  });
+
+  it("scores watchlist tickers that no one holds, deduped against holdings", async () => {
+    trackedResult = {
+      data: [{ ticker: "WATCH.US" }, { ticker: "AAPL.US" }], // WATCH-only + a dup of a held ticker
+      error: null,
+    };
+    const { GET } = await import("../route");
+    const body = await (await GET(authedReq())).json();
+    expect(body.tickerCount).toBe(3); // AAPL.US, ULVR.L, WATCH.US
+    const scored = scoresUpsert.mock.calls.map((c) => c[0].ticker);
+    expect(scored).toContain("WATCH.US");
   });
 
   it("writes a US ticker as data_quality full/sparse and a .L ticker as degraded_uk", async () => {

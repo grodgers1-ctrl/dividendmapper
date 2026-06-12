@@ -233,15 +233,19 @@ async function handle(req: Request): Promise<Response> {
   const startedAt = Date.now();
   const today = isoDateOffset(0);
 
-  const { data: rows, error: tickersErr } = (await supabase.from("holdings").select("ticker")) as {
-    data: { ticker: string }[] | null;
-    error: unknown;
-  };
-  if (tickersErr) {
-    Sentry.captureException(tickersErr);
+  // Score the union of held tickers and watchlisted (tracked) tickers, so Pro
+  // users get live scores on tickers they follow but don't own yet.
+  const [holdingsRes, trackedRes] = (await Promise.all([
+    supabase.from("holdings").select("ticker"),
+    supabase.from("tracked_tickers").select("ticker"),
+  ])) as { data: { ticker: string }[] | null; error: unknown }[];
+  if (holdingsRes.error || trackedRes.error) {
+    Sentry.captureException(holdingsRes.error ?? trackedRes.error);
     return NextResponse.json({ error: "query_failed" }, { status: 500 });
   }
-  const uniqueTickers = Array.from(new Set((rows ?? []).map((r) => r.ticker))).sort();
+  const uniqueTickers = Array.from(
+    new Set([...(holdingsRes.data ?? []), ...(trackedRes.data ?? [])].map((r) => r.ticker)),
+  ).sort();
 
   // One market-wide dividends-calendar pull serves every ticker's D2 lookup.
   let calendar: FmpCalendarDividend[] = [];

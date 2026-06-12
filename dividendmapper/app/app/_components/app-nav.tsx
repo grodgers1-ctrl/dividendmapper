@@ -19,6 +19,7 @@ import { usePathname } from "next/navigation";
 const TABS = [
   { href: "/app/portfolio", label: "Ledger", exact: true, proOnly: false },
   { href: "/app/portfolio/scoring", label: "Portfolio Manager", exact: false, proOnly: true },
+  { href: "/app/portfolio/watchlist", label: "Watchlist", exact: false, proOnly: true },
   { href: "/app/account", label: "Account", exact: false, proOnly: false },
 ] as const;
 
