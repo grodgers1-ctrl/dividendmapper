@@ -150,9 +150,9 @@ export default async function PricingPage() {
 
           <Link
             href="/login?next=%2Fapp%2Fportfolio"
-            className="mt-6 inline-flex h-11 items-center justify-center rounded-lg border border-border bg-background px-5 text-sm font-medium text-foreground transition-colors hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-card"
+            className="mt-6 inline-flex h-11 w-full items-center justify-center rounded-lg border border-border bg-background px-5 text-sm font-medium text-foreground transition-colors hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-card"
           >
-            Get started
+            Get started for free
           </Link>
 
           <ul className="mt-8 space-y-3 text-sm">
@@ -206,7 +206,7 @@ export default async function PricingPage() {
               <input type="hidden" name="lookup_key" value="pro_monthly" />
               <button
                 type="submit"
-                className="inline-flex h-11 w-full items-center justify-center rounded-lg bg-brand-600 px-5 text-sm font-semibold text-white transition-colors hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:ring-offset-card sm:w-auto"
+                className="inline-flex h-11 w-full items-center justify-center rounded-lg bg-brand-600 px-5 text-sm font-semibold text-white transition-colors hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:ring-offset-card"
               >
                 Start Pro
               </button>
@@ -214,7 +214,7 @@ export default async function PricingPage() {
           ) : (
             <Link
               href="/login?next=%2Fpricing"
-              className="mt-6 inline-flex h-11 w-full items-center justify-center rounded-lg bg-brand-600 px-5 text-sm font-semibold text-white transition-colors hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:ring-offset-card sm:w-auto"
+              className="mt-6 inline-flex h-11 w-full items-center justify-center rounded-lg bg-brand-600 px-5 text-sm font-semibold text-white transition-colors hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:ring-offset-card"
             >
               Sign in to start Pro
             </Link>
