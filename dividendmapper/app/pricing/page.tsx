@@ -118,8 +118,12 @@ export default async function PricingPage() {
         {/* Free */}
         <section
           aria-labelledby="plan-free"
-          className="flex flex-col rounded-xl border border-border bg-card p-6 md:p-8"
+          className="group relative flex flex-col overflow-hidden rounded-xl border border-border bg-gradient-to-b from-white to-slate-50 p-6 shadow-md shadow-slate-200/50 transition-all duration-200 ease-out hover:-translate-y-1 hover:shadow-xl hover:shadow-slate-200/70 dark:from-slate-900 dark:to-slate-950 dark:shadow-black/40 dark:hover:shadow-black/60 md:p-8"
         >
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 dark:opacity-100"
+          />
           <header>
             <h2
               id="plan-free"
@@ -164,11 +168,12 @@ export default async function PricingPage() {
         {/* Pro */}
         <section
           aria-labelledby="plan-pro"
-          className="relative flex flex-col rounded-xl border border-brand-500 bg-card p-6 ring-1 ring-brand-500/30 md:p-8"
+          className="group relative flex flex-col overflow-hidden rounded-xl border border-brand-500 bg-gradient-to-b from-white to-slate-50 p-6 shadow-md shadow-brand-500/10 ring-1 ring-brand-500/30 transition-all duration-200 ease-out hover:-translate-y-1 hover:shadow-xl hover:shadow-brand-500/20 dark:from-slate-900 dark:to-slate-950 dark:shadow-black/40 dark:hover:shadow-black/60 md:p-8"
         >
-          <div className="absolute -top-3 right-6 inline-flex items-center rounded-full bg-brand-600 px-2.5 py-1 text-xs font-semibold text-white">
-            Most useful
-          </div>
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent opacity-0 dark:opacity-100"
+          />
 
           <header>
             <h2
@@ -184,6 +189,9 @@ export default async function PricingPage() {
 
           <div className="mt-6">
             <ProPrice />
+            <p className="mt-2 text-sm text-muted-foreground">
+              Billed monthly. Cancel any time from your account.
+            </p>
           </div>
 
           {user ? (
@@ -249,8 +257,8 @@ export default async function PricingPage() {
 
       <footer className="mx-auto mt-12 max-w-3xl space-y-3 text-center text-xs text-muted-foreground md:mt-16">
         <p>
-          Prices include UK VAT where it applies. Cancel any time from the
-          Stripe customer portal.
+          Prices include UK VAT where it applies. Checkout is handled by
+          Stripe; we don&rsquo;t see or store your card details.
         </p>
         <p>
           DividendMapper provides informational tools only. None of this is
