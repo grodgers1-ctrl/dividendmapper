@@ -25,6 +25,7 @@ interface SendOptions {
   userId?: string | null;
   body: ReactElement;
   supabase: SupabaseClient;
+  headers?: Record<string, string>;
 }
 
 export async function sendIdempotent(opts: SendOptions): Promise<SendResult> {
@@ -55,6 +56,7 @@ export async function sendIdempotent(opts: SendOptions): Promise<SendResult> {
       replyTo: EMAIL_REPLY_TO,
       subject: opts.subject,
       html,
+      ...(opts.headers ? { headers: opts.headers } : {}),
     });
 
     if (result.error) {
