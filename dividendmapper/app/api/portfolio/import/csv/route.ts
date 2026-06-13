@@ -1,24 +1,34 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   parseCsvHoldings,
   buildCsvImportPlan,
   type CsvExistingHolding,
   type Wrapper,
 } from "@/lib/brokers/csv-import";
+import {
+  parseCsvDividends,
+  buildCsvDividendImportPlan,
+} from "@/lib/brokers/csv-dividends";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// POST /api/portfolio/import/csv — generic, broker-agnostic CSV holdings import.
+// POST /api/portfolio/import/csv — generic, broker-agnostic CSV import.
+//
+// One endpoint serves two kinds, selected by the `kind` form field:
+//   kind=holdings (default) — positions → holdings (insert/update/supersede)
+//   kind=dividends          — realised payments → user_dividends (upsert)
 //
 // Pro-gated (Free users can't import; the free-tier 10-cap therefore never
 // applies). multipart/form-data: `file` (the CSV) + optional `wrapper` (default
-// for rows with no wrapper column) + `dryRun`. With dryRun the route parses,
-// builds the plan and annotates each ticker against the scoring universe, then
-// returns a PREVIEW without writing. Without it, the plan is applied with the
-// RLS server client (the user owns every row) — inserts, then quantity/cost
-// updates, then manual-supersede archives, mirroring runBrokerSync's apply order.
+// for rows with no wrapper column) + `dryRun` + `kind`. With dryRun the route
+// parses, builds the plan and annotates each ticker against the scoring
+// universe, then returns a PREVIEW without writing. Without it, the plan is
+// applied with the RLS server client (the user owns every row). The holdings
+// path mirrors runBrokerSync's apply order; the dividends path upserts on
+// (user_id, external_id) so re-uploads are idempotent — no duplicates.
 
 const MAX_BYTES = 1_000_000; // ~1 MB upload cap
 const MAX_ROWS = 2000; // bound the work per import
@@ -80,6 +90,37 @@ export async function POST(req: Request) {
       ? (wrapperRaw as Wrapper)
       : "gia";
 
+  const kind = form.get("kind") === "dividends" ? "dividends" : "holdings";
+  if (kind === "dividends") {
+    return importDividends({ supabase, userId, text, dryRun, defaultWrapper });
+  }
+  return importHoldings({ supabase, userId, text, dryRun, defaultWrapper });
+}
+
+interface ImportArgs {
+  supabase: SupabaseClient;
+  userId: string;
+  text: string;
+  dryRun: boolean;
+  defaultWrapper: Wrapper;
+}
+
+// Annotate which tickers we actually score (others are value-tracked only).
+async function loadScoredTickers(
+  supabase: SupabaseClient,
+  tickers: string[],
+): Promise<Set<string>> {
+  const known = new Set<string>();
+  if (tickers.length === 0) return known;
+  const { data: scored } = (await supabase
+    .from("equity_scores")
+    .select("ticker")
+    .in("ticker", tickers)) as { data: { ticker: string }[] | null };
+  for (const s of scored ?? []) known.add(s.ticker);
+  return known;
+}
+
+async function importHoldings({ supabase, userId, text, dryRun, defaultWrapper }: ImportArgs) {
   const parsed = parseCsvHoldings(text, { defaultWrapper });
   if (parsed.missingColumns.length > 0) {
     return NextResponse.json(
@@ -122,14 +163,7 @@ export async function POST(req: Request) {
 
   // Universe annotation: mark tickers we don't score (value-tracked only).
   const tickers = [...new Set(parsed.rows.map((r) => r.ticker))];
-  const knownTickers = new Set<string>();
-  if (tickers.length > 0) {
-    const { data: scored } = (await supabase
-      .from("equity_scores")
-      .select("ticker")
-      .in("ticker", tickers)) as { data: { ticker: string }[] | null };
-    for (const s of scored ?? []) knownTickers.add(s.ticker);
-  }
+  const knownTickers = await loadScoredTickers(supabase, tickers);
   const preview = plan.preview.map((p) => ({ ...p, scored: knownTickers.has(p.ticker) }));
 
   const summary = {
@@ -166,6 +200,52 @@ export async function POST(req: Request) {
     }
   } catch (err) {
     console.error("[portfolio/import/csv] apply failed", err);
+    return NextResponse.json({ error: "import_apply_failed" }, { status: 500 });
+  }
+
+  return NextResponse.json({ ok: true, dryRun: false, summary, errors: parsed.errors });
+}
+
+async function importDividends({ supabase, userId, text, dryRun, defaultWrapper }: ImportArgs) {
+  const parsed = parseCsvDividends(text, { defaultWrapper });
+  if (parsed.missingColumns.length > 0) {
+    return NextResponse.json(
+      { error: "missing_columns", missingColumns: parsed.missingColumns },
+      { status: 400 },
+    );
+  }
+  if (parsed.rows.length > MAX_ROWS) {
+    return NextResponse.json({ error: "too_many_rows", max: MAX_ROWS }, { status: 413 });
+  }
+
+  const plan = buildCsvDividendImportPlan({ userId, rows: parsed.rows });
+
+  // Universe annotation: mark tickers we don't score (value-tracked only).
+  const tickers = [...new Set(parsed.rows.map((r) => r.ticker))];
+  const knownTickers = await loadScoredTickers(supabase, tickers);
+  const preview = plan.preview.map((p) => ({ ...p, scored: knownTickers.has(p.ticker) }));
+
+  const summary = {
+    dividends: plan.upserts.length,
+    invalid: parsed.errors.length,
+    unknownTickers: preview.filter((p) => !p.scored).length,
+  };
+
+  if (dryRun) {
+    return NextResponse.json({ ok: true, dryRun: true, preview, errors: parsed.errors, summary });
+  }
+
+  // Apply: upsert on (user_id, external_id) so re-uploads never duplicate.
+  // RLS scopes to this user; user_id is set on every row.
+  try {
+    if (plan.upserts.length) {
+      const { error } = await supabase
+        .from("user_dividends")
+        .upsert(plan.upserts, { onConflict: "user_id,external_id" });
+      if (error) throw error;
+    }
+  } catch (err) {
+    console.error("[portfolio/import/csv] dividend apply failed", err);
     return NextResponse.json({ error: "import_apply_failed" }, { status: 500 });
   }
 
