@@ -35,8 +35,8 @@ export function LifecycleWelcomeFreeEmail({
       </Text>
       <Text style={EMAIL_STYLES.text}>
         Free tier covers up to 10 holdings. Pro is for when you want the full
-        portfolio view across ISA, SIPP, and GIA, plus Buy, Trim, and Reinvest
-        recommendations on each one.
+        portfolio view across every account you hold, plus Buy, Trim, and
+        Reinvest recommendations on each one.
       </Text>
       <Text style={EMAIL_STYLES.text}>
         Standing ask: if anything looks broken or off, reply to this email and
