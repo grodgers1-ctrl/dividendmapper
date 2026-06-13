@@ -86,7 +86,7 @@ The unique constraint on `send_key` guarantees one send per (user, step) for lif
 
 ### Schema additions
 
-One migration (`0011_lifecycle_emails.sql`):
+One migration (`0013_lifecycle_emails.sql`):
 
 ```sql
 alter table public.profiles
