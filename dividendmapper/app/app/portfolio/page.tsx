@@ -8,6 +8,7 @@ import { formatMoney } from "@/lib/portfolio/format-money";
 import { HoldingsTable } from "./_components/holdings-table";
 import { ArchivedHoldings } from "./_components/archived-holdings";
 import { AddHoldingLauncher } from "./_components/add-holding-launcher";
+import { ImportCsvLauncher } from "./_components/import-csv-launcher";
 import { PortfolioIncomeChart } from "./_components/portfolio-income-chart";
 import { FREE_TIER_LIMIT } from "./_components/free-tier-copy";
 
@@ -61,10 +62,13 @@ export default async function PortfolioPage() {
                 }`}
           </p>
         </div>
-        <AddHoldingLauncher
-          atFreeLimit={atFreeLimit}
-          pricingPublic={pricingPublic}
-        />
+        <div className="flex shrink-0 items-center gap-2">
+          {tier !== "free" && <ImportCsvLauncher />}
+          <AddHoldingLauncher
+            atFreeLimit={atFreeLimit}
+            pricingPublic={pricingPublic}
+          />
+        </div>
       </div>
 
       <div className="mt-8">

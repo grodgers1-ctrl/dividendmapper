@@ -1,0 +1,4 @@
+ticker,quantity,avg_cost,currency,wrapper
+VOD.L,1000,0.75,GBP,isa
+ULVR.L,40,42.10,GBP,gia
+AAPL,15,180.25,USD,brokerage
