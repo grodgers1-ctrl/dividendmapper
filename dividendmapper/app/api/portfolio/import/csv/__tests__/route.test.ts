@@ -7,6 +7,7 @@ const equitySelect = vi.fn();
 const insertSpy = vi.fn();
 const updateEqSpy = vi.fn();
 const updateInSpy = vi.fn();
+const dividendUpsertSpy = vi.fn();
 
 vi.mock("@/lib/supabase/server", () => ({
   createSupabaseServerClient: async () => ({
@@ -17,6 +18,14 @@ vi.mock("@/lib/supabase/server", () => ({
       }
       if (table === "equity_scores") {
         return { select: () => ({ in: () => equitySelect() }) };
+      }
+      if (table === "user_dividends") {
+        return {
+          upsert: (rows: unknown) => {
+            dividendUpsertSpy(rows);
+            return Promise.resolve({ error: null });
+          },
+        };
       }
       // holdings
       return {
@@ -135,5 +144,78 @@ describe("POST /api/portfolio/import/csv", () => {
     expect(insertSpy).not.toHaveBeenCalled();
     expect(updateEqSpy).toHaveBeenCalledTimes(1);
     expect(updateEqSpy.mock.calls[0][1]).toBe("h1");
+  });
+});
+
+const VALID_DIV_CSV = ["ticker,amount,paid_on,wrapper", "VOD.L,12.50,2026-03-01,isa"].join("\n");
+
+describe("POST /api/portfolio/import/csv — kind=dividends", () => {
+  it("403 for a Free user", async () => {
+    profileTier.mockResolvedValue({ data: { tier: "free" } });
+    const res = await POST(csvRequest(VALID_DIV_CSV, { kind: "dividends" }));
+    expect(res.status).toBe(403);
+  });
+
+  it("400 with missingColumns when dividend headers are absent", async () => {
+    const res = await POST(csvRequest("ticker,wrapper\nVOD.L,isa", { kind: "dividends" }));
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toBe("missing_columns");
+    expect(body.missingColumns.sort()).toEqual(["amount", "paid_on"]);
+  });
+
+  it("dryRun returns a dividend preview + summary and writes nothing", async () => {
+    const res = await POST(csvRequest(VALID_DIV_CSV, { kind: "dividends", dryRun: "true" }));
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.dryRun).toBe(true);
+    expect(body.preview).toHaveLength(1);
+    expect(body.preview[0]).toMatchObject({ ticker: "VOD.L", paidOn: "2026-03-01", amount: 12.5 });
+    expect(body.summary).toMatchObject({ dividends: 1, invalid: 0 });
+    expect(dividendUpsertSpy).not.toHaveBeenCalled();
+  });
+
+  it("flags an unknown dividend ticker as value-only in the preview", async () => {
+    equitySelect.mockResolvedValue({ data: [], error: null });
+    const res = await POST(csvRequest(VALID_DIV_CSV, { kind: "dividends", dryRun: "true" }));
+    const body = await res.json();
+    expect(body.preview[0].scored).toBe(false);
+    expect(body.summary.unknownTickers).toBe(1);
+  });
+
+  it("applies the plan: upserts a source=csv dividend row with ticker_scoring set", async () => {
+    const res = await POST(csvRequest(VALID_DIV_CSV, { kind: "dividends", dryRun: "false" }));
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.dryRun).toBe(false);
+    expect(dividendUpsertSpy).toHaveBeenCalledTimes(1);
+    const rows = dividendUpsertSpy.mock.calls[0][0] as Array<{
+      ticker: string;
+      ticker_scoring: string;
+      source: string;
+      user_id: string;
+      connection_id: null;
+      external_id: string;
+    }>;
+    expect(rows[0]).toMatchObject({
+      ticker: "VOD.L",
+      ticker_scoring: "VOD.L",
+      source: "csv",
+      user_id: "u1",
+      connection_id: null,
+    });
+    expect(rows[0].external_id).toMatch(/^csv:/);
+    // never touches holdings on the dividend path
+    expect(insertSpy).not.toHaveBeenCalled();
+  });
+
+  it("is idempotent: re-applying the same file upserts identical external_ids", async () => {
+    const first = await POST(csvRequest(VALID_DIV_CSV, { kind: "dividends", dryRun: "false" }));
+    const second = await POST(csvRequest(VALID_DIV_CSV, { kind: "dividends", dryRun: "false" }));
+    expect(first.status).toBe(200);
+    expect(second.status).toBe(200);
+    const idA = (dividendUpsertSpy.mock.calls[0][0] as Array<{ external_id: string }>)[0].external_id;
+    const idB = (dividendUpsertSpy.mock.calls[1][0] as Array<{ external_id: string }>)[0].external_id;
+    expect(idA).toBe(idB);
   });
 });

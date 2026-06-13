@@ -1,0 +1,4 @@
+ticker,amount,paid_on,currency,wrapper,gross_amount_per_share,type
+VOD.L,12.50,2026-03-01,GBP,isa,0.075,dividend
+ULVR.L,18.20,2026-02-15,GBP,gia,1.10,dividend
+AAPL,3.84,2026-02-13,USD,brokerage,0.24,dividend
