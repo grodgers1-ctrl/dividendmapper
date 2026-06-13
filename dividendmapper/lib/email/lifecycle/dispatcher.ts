@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { sendIdempotent } from "@/lib/email/send";
+import { sendIdempotent, type SendResult } from "@/lib/email/send";
+import { captureServerEvent } from "@/lib/analytics/posthog-server";
 import { signLifecycleUnsubToken } from "./unsub-token";
 import { SEQUENCE, type LifecycleStepKey } from "./sequence";
 import type { LifecycleContext } from "./build-context";
@@ -39,6 +40,17 @@ export async function dispatchLifecycleStep(args: DispatchArgs): Promise<SendSte
   const step = STEPS[args.stepKey];
   if (!step) return { ok: false, reason: "unknown_step" };
 
+  const settle = async (result: SendResult): Promise<SendStepResult> => {
+    if (result.ok) {
+      await captureServerEvent(args.user.userId, "lifecycle_email_sent", {
+        template: step.key,
+        days_after_signup: step.daysAfterSignup,
+      });
+      return { ok: true, emailId: result.emailId };
+    }
+    return { ok: false, reason: result.reason };
+  };
+
   const unsubToken = signLifecycleUnsubToken(args.user.userId, args.cronSecret);
   const unsubscribeUrl = `${args.siteUrl}/api/lifecycle/unsubscribe?token=${unsubToken}`;
   const addHoldingUrl = `${args.siteUrl}/app`;
@@ -66,9 +78,7 @@ export async function dispatchLifecycleStep(args: DispatchArgs): Promise<SendSte
         ...common,
         body: LifecycleWelcomeFreeEmail({ addHoldingUrl, unsubscribeUrl }),
       });
-      return result.ok
-        ? { ok: true, emailId: result.emailId }
-        : { ok: false, reason: result.reason };
+      return settle(result);
     }
 
     case "activation_nudge": {
@@ -76,9 +86,7 @@ export async function dispatchLifecycleStep(args: DispatchArgs): Promise<SendSte
         ...common,
         body: LifecycleActivationNudgeEmail({ addHoldingUrl, unsubscribeUrl }),
       });
-      return result.ok
-        ? { ok: true, emailId: result.emailId }
-        : { ok: false, reason: result.reason };
+      return settle(result);
     }
 
     case "score_explainer": {
@@ -96,9 +104,7 @@ export async function dispatchLifecycleStep(args: DispatchArgs): Promise<SendSte
           unsubscribeUrl,
         }),
       });
-      return result.ok
-        ? { ok: true, emailId: result.emailId }
-        : { ok: false, reason: result.reason };
+      return settle(result);
     }
 
     case "pro_pitch_1": {
@@ -113,9 +119,7 @@ export async function dispatchLifecycleStep(args: DispatchArgs): Promise<SendSte
           unsubscribeUrl,
         }),
       });
-      return result.ok
-        ? { ok: true, emailId: result.emailId }
-        : { ok: false, reason: result.reason };
+      return settle(result);
     }
 
     case "monthly_recap": {
@@ -134,9 +138,7 @@ export async function dispatchLifecycleStep(args: DispatchArgs): Promise<SendSte
           unsubscribeUrl,
         }),
       });
-      return result.ok
-        ? { ok: true, emailId: result.emailId }
-        : { ok: false, reason: result.reason };
+      return settle(result);
     }
 
     case "pro_pitch_final": {
@@ -164,9 +166,7 @@ export async function dispatchLifecycleStep(args: DispatchArgs): Promise<SendSte
           unsubscribeUrl,
         }),
       });
-      return result.ok
-        ? { ok: true, emailId: result.emailId }
-        : { ok: false, reason: result.reason };
+      return settle(result);
     }
   }
 }

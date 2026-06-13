@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
+vi.mock("server-only", () => ({}));
+
+vi.mock("@/lib/analytics/posthog-server", () => ({
+  captureServerEvent: vi.fn().mockResolvedValue(undefined),
+}));
+
 beforeEach(() => {
   process.env.CRON_SECRET = "test-secret";
   process.env.NEXT_PUBLIC_SUPABASE_URL = "https://x";

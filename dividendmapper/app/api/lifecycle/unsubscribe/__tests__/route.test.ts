@@ -8,6 +8,11 @@ beforeEach(() => {
 
 let updateCalled: { table: string; column?: string; value?: unknown; userId?: string } | null = null;
 
+const captureSpy = vi.fn().mockResolvedValue(undefined);
+vi.mock("@/lib/analytics/posthog-server", () => ({
+  captureServerEvent: (...a: unknown[]) => captureSpy(...a),
+}));
+
 vi.mock("@supabase/supabase-js", () => ({
   createClient: () => ({
     from(table: string) {
@@ -29,6 +34,7 @@ import { signLifecycleUnsubToken } from "@/lib/email/lifecycle/unsub-token";
 describe("GET /api/lifecycle/unsubscribe", () => {
   beforeEach(() => {
     updateCalled = null;
+    captureSpy.mockClear();
   });
 
   it("flips lifecycle_emails_unsubscribed=true for a valid token", async () => {
@@ -52,5 +58,20 @@ describe("GET /api/lifecycle/unsubscribe", () => {
   it("rejects a missing token", async () => {
     const res = await GET(new Request("https://x/api/lifecycle/unsubscribe"));
     expect(res.status).toBe(400);
+  });
+
+  it("emits lifecycle_email_unsubscribed after a successful flip", async () => {
+    const tok = signLifecycleUnsubToken("user-123", "test-secret");
+    await GET(new Request(`https://x/api/lifecycle/unsubscribe?token=${tok}`));
+    expect(captureSpy).toHaveBeenCalledWith(
+      "user-123",
+      "lifecycle_email_unsubscribed",
+      { source: "one_click" },
+    );
+  });
+
+  it("does NOT emit lifecycle_email_unsubscribed when the token is invalid", async () => {
+    await GET(new Request("https://x/api/lifecycle/unsubscribe?token=bad"));
+    expect(captureSpy).not.toHaveBeenCalled();
   });
 });

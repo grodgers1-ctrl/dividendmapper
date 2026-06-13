@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { verifyLifecycleUnsubToken } from "@/lib/email/lifecycle/unsub-token";
+import { captureServerEvent } from "@/lib/analytics/posthog-server";
 
 // One-click unsubscribe target for lifecycle emails. Validates the HMAC
 // token, flips profiles.lifecycle_emails_unsubscribed, renders a plain
@@ -30,6 +31,7 @@ async function handle(req: Request): Promise<Response> {
     auth: { autoRefreshToken: false, persistSession: false },
   });
   await supabase.from("profiles").update({ lifecycle_emails_unsubscribed: true }).eq("id", userId);
+  await captureServerEvent(userId, "lifecycle_email_unsubscribed", { source: "one_click" });
 
   return page("Done. You will no longer receive lifecycle or marketing emails from DividendMapper.");
 }

@@ -3,6 +3,7 @@ import type Stripe from "stripe";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { getStripe } from "@/lib/billing/stripe";
 import { sendIdempotent } from "@/lib/email/send";
+import { captureServerEvent } from "@/lib/analytics/posthog-server";
 import { WelcomePaidEmail } from "@/emails/welcome-paid";
 import { SITE_URL } from "@/lib/site";
 
@@ -185,12 +186,29 @@ async function handleRedemption(
   const recipientEmail =
     session.customer_details?.email ?? session.customer_email ?? null;
 
+  const lifecycleCouponId = process.env.STRIPE_COUPON_LIFECYCLE_DAY60;
+
   for (const discount of discounts) {
     const promotionCodeId =
       typeof discount.promotion_code === "string"
         ? discount.promotion_code
         : discount.promotion_code?.id ?? null;
     if (!promotionCodeId) continue;
+
+    // Lifecycle day-60 50% off code: distinct from founding-member codes,
+    // not mirrored in any DB table. Emit a PostHog event so we can measure
+    // day-60 → Pro conversion, then skip the founding-code path.
+    const couponId =
+      typeof discount.coupon === "string"
+        ? discount.coupon
+        : discount.coupon?.id ?? null;
+    if (lifecycleCouponId && couponId === lifecycleCouponId) {
+      await captureServerEvent(userId, "lifecycle_pro_code_redeemed", {
+        promotion_code_id: promotionCodeId,
+        coupon_id: couponId,
+      });
+      continue;
+    }
 
     const { data: codeRow, error: codeError } = await supabase
       .from("founding_member_codes")

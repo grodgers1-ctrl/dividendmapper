@@ -7,6 +7,11 @@ vi.mock("@/lib/email/send", () => ({
   sendIdempotent: (...a: unknown[]) => sendIdempotentSpy(...a),
 }));
 
+const captureSpy = vi.fn().mockResolvedValue(undefined);
+vi.mock("@/lib/analytics/posthog-server", () => ({
+  captureServerEvent: (...a: unknown[]) => captureSpy(...a),
+}));
+
 const generateProCodeSpy = vi
   .fn()
   .mockResolvedValue({ promoCodeId: "promo_123", code: "DM60-AB12CD" });
@@ -47,6 +52,37 @@ const baseCtx: LifecycleContext = {
 beforeEach(() => {
   sendIdempotentSpy.mockClear();
   generateProCodeSpy.mockClear();
+  captureSpy.mockClear();
+});
+
+describe("dispatchLifecycleStep PostHog instrumentation", () => {
+  it("emits lifecycle_email_sent after a successful welcome", async () => {
+    await dispatchLifecycleStep({
+      user: baseUser,
+      stepKey: "welcome_free",
+      context: { ...baseCtx, holdingsCount: 0, lowestScoringTicker: null, proPitchLines: [] },
+      supabase: fakeSupabase,
+      siteUrl: "https://dividendmapper.com",
+      cronSecret: "test-secret",
+    });
+    expect(captureSpy).toHaveBeenCalledWith(
+      "u1",
+      "lifecycle_email_sent",
+      expect.objectContaining({ template: "welcome_free", days_after_signup: 0 }),
+    );
+  });
+
+  it("does NOT emit lifecycle_email_sent when the dispatcher short-circuits", async () => {
+    await dispatchLifecycleStep({
+      user: baseUser,
+      stepKey: "score_explainer",
+      context: { ...baseCtx, lowestScoringTicker: null },
+      supabase: fakeSupabase,
+      siteUrl: "https://dividendmapper.com",
+      cronSecret: "test-secret",
+    });
+    expect(captureSpy).not.toHaveBeenCalled();
+  });
 });
 
 describe("dispatchLifecycleStep (welcome + activation)", () => {

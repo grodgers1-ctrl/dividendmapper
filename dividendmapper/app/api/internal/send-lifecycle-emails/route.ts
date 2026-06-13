@@ -7,6 +7,7 @@ import * as Sentry from "@sentry/nextjs";
 import { runLifecycle } from "@/lib/email/lifecycle/run-lifecycle";
 import { buildLifecycleContext } from "@/lib/email/lifecycle/build-context";
 import { dispatchLifecycleStep } from "@/lib/email/lifecycle/dispatcher";
+import { captureServerEvent } from "@/lib/analytics/posthog-server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -104,6 +105,11 @@ async function handle(req: Request): Promise<Response> {
         supabase,
         siteUrl: site,
         cronSecret: secret,
+      }),
+    onSkipped: (uid, stepKey, reason) =>
+      captureServerEvent(uid, "lifecycle_email_skipped", {
+        template: stepKey,
+        reason,
       }),
   });
 
