@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useSyncExternalStore, useTransition } from "react";
 import { Trash2, Clock } from "lucide-react";
 import type { QuoteResult } from "@/lib/market/quote";
 import type { HoldingScore } from "@/lib/scoring/portfolio-scores";
@@ -32,6 +32,31 @@ type HoldingRow = {
   created_at: string;
   source?: "manual" | "trading212" | "csv";
 };
+
+const SORT_STORAGE_KEY = "dm.holdings-sort";
+const SORT_CHANGE_EVENT = "dm:holdings-sort-change";
+
+function readStoredSortKey(): SortKey {
+  if (typeof window === "undefined") return DEFAULT_SORT;
+  const saved = window.localStorage.getItem(SORT_STORAGE_KEY);
+  return saved && saved in SORT_LABELS ? (saved as SortKey) : DEFAULT_SORT;
+}
+
+function subscribeSortKey(callback: () => void) {
+  if (typeof window === "undefined") return () => {};
+  const onStorage = (event: StorageEvent) => {
+    if (event.key === SORT_STORAGE_KEY) callback();
+  };
+  const onCustom = () => callback();
+  window.addEventListener("storage", onStorage);
+  window.addEventListener(SORT_CHANGE_EVENT, onCustom);
+  return () => {
+    window.removeEventListener("storage", onStorage);
+    window.removeEventListener(SORT_CHANGE_EVENT, onCustom);
+  };
+}
+
+const getServerSortKey = (): SortKey => DEFAULT_SORT;
 
 // Provenance shown in the Broker column: a synced row gets a "Trading 212"
 // badge; a manual row falls back to its free-text broker label (or a dash).
@@ -297,18 +322,17 @@ export function HoldingsTable({
     null,
   );
 
-  // Sort defaults to value-desc; the user's choice persists in localStorage.
-  // Initial render uses the default (deterministic for SSR), then we hydrate
-  // the saved preference in an effect to avoid a hydration mismatch.
-  const [sortKey, setSortKey] = useState<SortKey>(DEFAULT_SORT);
-  useEffect(() => {
-    const saved = window.localStorage.getItem("dm.holdings-sort");
-    if (saved && saved in SORT_LABELS) setSortKey(saved as SortKey);
-  }, []);
+  // Sort defaults to value-desc on the server, then hydrates from
+  // localStorage on the client without a setState-in-effect lint violation.
+  const sortKey = useSyncExternalStore(
+    subscribeSortKey,
+    readStoredSortKey,
+    getServerSortKey,
+  );
   const changeSort = (key: SortKey) => {
-    setSortKey(key);
     try {
-      window.localStorage.setItem("dm.holdings-sort", key);
+      window.localStorage.setItem(SORT_STORAGE_KEY, key);
+      window.dispatchEvent(new Event(SORT_CHANGE_EVENT));
     } catch {
       // private mode / storage disabled — sorting still works for the session.
     }
