@@ -104,6 +104,17 @@ export default function WaitlistPage() {
           </ol>
 
           <div className="mt-8 border-t border-border pt-6">
+            <p className="mb-3 text-sm leading-relaxed text-muted-foreground">
+              Still deciding whether you need a broad portfolio tracker or a
+              more wrapper-first dividend workflow? Start with our honest{" "}
+              <Link
+                href="/blog/sharesight-vs-dividendmapper-uk-income-investors"
+                className="font-medium text-brand-600 transition-colors hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
+              >
+                Sharesight vs DividendMapper comparison
+              </Link>
+              .
+            </p>
             <Link
               href="/tools/retirement-calculator"
               className="text-sm font-medium text-brand-600 transition-colors hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"

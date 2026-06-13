@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { RetirementCalculator } from "./_components/retirement-calculator";
 
 export const metadata: Metadata = {
@@ -67,6 +68,39 @@ export default function RetirementCalculatorPage() {
       <div className="mt-10">
         <RetirementCalculator />
       </div>
+
+      <section className="mx-auto mt-12 max-w-3xl rounded-2xl border border-border bg-card/60 p-6">
+        <h2 className="font-display text-xl font-semibold text-foreground">
+          Read next
+        </h2>
+        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+          If the calculator changed how you think about wrapper mix, these two
+          guides are the best next reads before you make the income plan more
+          concrete.
+        </p>
+        <div className="mt-5 space-y-3 text-sm leading-relaxed">
+          <p>
+            <Link
+              href="/blog/uk-dividend-tax-guide"
+              className="font-medium text-brand-600 transition-colors hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
+            >
+              UK Dividend Tax Guide 2026/27
+            </Link>
+            {" "}for the allowance, band, and wrapper rules that shape what you
+            actually keep.
+          </p>
+          <p>
+            <Link
+              href="/blog/why-headline-yield-can-be-misleading"
+              className="font-medium text-brand-600 transition-colors hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
+            >
+              Why Headline Yield Can Be Misleading
+            </Link>
+            {" "}if you want the income target to be built on a payout that is more
+            likely to hold up.
+          </p>
+        </div>
+      </section>
     </div>
   );
 }
