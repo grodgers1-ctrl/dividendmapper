@@ -31,6 +31,7 @@ function parsePref(value: unknown): PrefInput | null | "invalid" {
 // The watchlist alert is a single on/off toggle (it reuses the user's Risk and
 // Quality thresholds), so it has no threshold of its own.
 const WATCHLIST_EVENT = "watchlist_alert";
+const WEEKLY_EVENT = "weekly_digest";
 
 function parseToggle(value: unknown): boolean | null | "invalid" {
   if (value === undefined || value === null) return null;
@@ -56,10 +57,14 @@ export async function GET() {
     .eq("user_id", uid);
 
   const rows = (data ?? []) as { event_type: string; enabled: boolean; threshold_value: number | null }[];
-  const out: Record<PrefKey, PrefInput> & { watchlist: { enabled: boolean } } = {
+  const out: Record<PrefKey, PrefInput> & {
+    watchlist: { enabled: boolean };
+    weeklyDigest: { enabled: boolean };
+  } = {
     quality: { enabled: false, threshold: DEFAULT_THRESHOLD.quality },
     risk: { enabled: false, threshold: DEFAULT_THRESHOLD.risk },
     watchlist: { enabled: false },
+    weeklyDigest: { enabled: false },
   };
   for (const key of Object.keys(EVENT_BY_KEY) as PrefKey[]) {
     const row = rows.find((r) => r.event_type === EVENT_BY_KEY[key]);
@@ -72,6 +77,8 @@ export async function GET() {
   }
   const watchlistRow = rows.find((r) => r.event_type === WATCHLIST_EVENT);
   if (watchlistRow) out.watchlist = { enabled: watchlistRow.enabled };
+  const weeklyRow = rows.find((r) => r.event_type === WEEKLY_EVENT);
+  if (weeklyRow) out.weeklyDigest = { enabled: weeklyRow.enabled };
   return NextResponse.json(out);
 }
 
@@ -110,6 +117,18 @@ export async function PUT(req: Request) {
       user_id: uid,
       event_type: WATCHLIST_EVENT,
       enabled: watchlist,
+      threshold_value: null,
+      updated_at: now,
+    });
+  }
+
+  const weeklyDigest = parseToggle(b.weeklyDigest);
+  if (weeklyDigest === "invalid") return NextResponse.json({ error: "invalid_input" }, { status: 400 });
+  if (weeklyDigest !== null) {
+    rows.push({
+      user_id: uid,
+      event_type: WEEKLY_EVENT,
+      enabled: weeklyDigest,
       threshold_value: null,
       updated_at: now,
     });
