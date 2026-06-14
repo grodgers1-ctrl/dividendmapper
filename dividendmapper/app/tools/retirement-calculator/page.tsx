@@ -58,12 +58,12 @@ export default function RetirementCalculatorPage() {
           When can you retire on dividends?
         </h1>
         <p className="mt-4 text-base leading-relaxed text-muted-foreground md:text-lg">
-                  See how much dividend income your portfolio could produce at
-                  retirement. Three projections (Bear, Base, Bull) plus a
-                  probability-weighted average, for UK ISA / SIPP / GIA and State
-                  Pension, or US 401(k) / IRA / Brokerage and Social Security. Numbers
-                  stay in your browser.
-                </p>
+          See how much dividend income your portfolio could produce at
+          retirement. Three projections (Bear, Base, Bull) plus a
+          probability-weighted average, for UK ISA / SIPP / GIA and State
+          Pension, or US 401(k) / IRA / Brokerage and Social Security. Numbers
+          stay in your browser.
+        </p>
       </header>
 
       <div className="mt-10">
@@ -75,7 +75,7 @@ export default function RetirementCalculatorPage() {
           Read next
         </h2>
         <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-          If the calculator changed how you think about wrapper mix, these two
+          If the calculator changed how you think about wrapper mix, these three
           guides are the best next reads before you make the income plan more
           concrete.
         </p>
@@ -99,6 +99,16 @@ export default function RetirementCalculatorPage() {
             </Link>
             {" "}if you want the income target to be built on a payout that is more
             likely to hold up.
+          </p>
+          <p>
+            <Link
+              href="/blog/retirement-income-calculator-guide"
+              className="font-medium text-brand-600 transition-colors hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
+            >
+              Retirement Income Calculator Guide
+            </Link>
+            {" "}for what each scenario means, how the Bear / Base / Bull
+            projections work, and how to apply them to your own portfolio.
           </p>
         </div>
       </section>
