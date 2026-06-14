@@ -26,6 +26,17 @@ export interface BlogPost {
 
 export const POSTS: BlogPost[] = [
   {
+    slug: "retirement-income-calculator-guide",
+    title:
+      "Retirement Income Calculator Guide: What Your Dividend Portfolio Could Pay",
+    description:
+      "A practical UK guide to the retirement income calculator: what the Bear, Base and Bull scenarios mean, how yield and wrapper choices change your post-tax picture, and how to use projections in your dividend planning.",
+    publishedAt: "2026-06-13",
+    readingTime: "7 min",
+    tags: ["UK", "Retirement", "Calculator"],
+    locale: "uk",
+  },
+  {
     slug: "isa-vs-sipp-dividend-investors",
     title: "ISA vs SIPP for Dividend Investors: What Actually Changes in Practice",
     description:
