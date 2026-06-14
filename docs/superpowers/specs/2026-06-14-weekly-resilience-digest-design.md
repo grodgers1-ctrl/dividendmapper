@@ -11,7 +11,7 @@ An opt-in, Pro-gated **weekly** email that summarises **7-day movement** across 
 and watchlist tickers. It is a *pure movement recap* — threshold-independent — and is deliberately
 different from the existing daily alert (`send-score-alerts`), which is silent unless a score *crosses*
 a user-set threshold. The weekly digest answers "here's how my portfolio's resilience drifted this
-week", presented as scannable tables and including share-price ± %.
+week", presented as scannable tables and including each ticker's price % swing over the week.
 
 ### How it differs from the existing daily alert
 
@@ -20,7 +20,7 @@ week", presented as scannable tables and including share-price ± %.
 | Send model | Event-driven; silent unless a threshold crosses | Periodic; sends weekly as a recap |
 | Comparison | Last two adjacent history rows (≈day-over-day) | Current vs closest snapshot on/before 7 days ago |
 | Reported | Threshold crossings only | Any qualifying movement (threshold-independent) |
-| Metrics | Resilience + risk scores | Resilience + risk scores **+ share price ± %** |
+| Metrics | Resilience + risk scores | Resilience + risk scores **+ price % swing** |
 | Schedule | Daily 07:00 UTC | Sunday 17:00 UTC (own cron) |
 | Send key | `${uid}:digest:${date}` | `${uid}:weekly:${isoYearWeek}` |
 | Template | `emails/score-alert.tsx` (crossing-worded) | `emails/weekly-digest.tsx` (new) |
@@ -35,10 +35,10 @@ week", presented as scannable tables and including share-price ± %.
 - **Eligibility:** Pro/Premium only (cron skips `tier === 'free'`); skips users whose `paused_until`
   is in the future; honours the existing global unsubscribe token.
 - **Inclusion rule (what counts as "moved"):** a ticker appears if, over the window,
-  **resilience Δ ≠ 0 OR risk Δ ≠ 0 OR |price Δ%| ≥ 5%**. This captures every meaningful score change
-  plus large price swings, while filtering out daily price noise. A ticker that has a current snapshot
-  but **no baseline** (added < ~7 days ago, or a history gap) is **silently skipped** until it has a
-  week of history — it cannot have a computable delta.
+  **resilience Δ ≠ 0 OR risk Δ ≠ 0 OR |price swing %| ≥ 5%**. This captures every meaningful score
+  change plus large price swings, while filtering out daily price noise. A ticker that has a current
+  snapshot but **no baseline** (added < ~7 days ago, or a history gap) is **silently skipped** until it
+  has a week of history — it cannot have a computable delta (including no price swing %).
 - **Quiet week:** if the user holds/watches tickers but none qualified, **still send** a short
   "all steady this week" note (honours the weekly cadence + reassurance value). If the user has **zero**
   holdings AND **zero** watchlist tickers, **skip** the send entirely (nothing to summarise).
@@ -51,21 +51,22 @@ Two tables, mirroring the daily email's section structure:
 2. **On your watchlist** — qualifying tickers from `watchedNotHeld(tracked, held)` (reuses the existing
    `lib/alerts/watchlist-selection.ts` dedup).
 
-Each row shows all three metrics as current value + delta. Flat metrics render `=`; movers render a
-signed delta (scores) or signed percentage (price):
+Each row shows resilience and risk as current value + signed delta, and price as a signed % swing over
+the week (no absolute price — sidesteps GBX/GBP/USD currency handling entirely). Flat scores render `=`;
+a flat/sub-noise price swing renders `=`:
 
 ```
 YOUR HOLDINGS
-Ticker  Resilience   Risk        Price
-SHEL    72  +3       41  -2      £28.40  +1.8%
-LGEN    55  =        68  =       £2.34   -6.2%
+Ticker  Resilience   Risk        Price swing
+SHEL    72  +3       41  -2      +1.8%
+LGEN    55  =        68  =       -6.2%
 
 ON YOUR WATCHLIST
-Ticker  Resilience   Risk        Price
-DGE     61  -4       52  +3      £19.80  -2.1%
+Ticker  Resilience   Risk        Price swing
+DGE     61  -4       52  +3      -2.1%
 ```
 
-(A row can qualify on price alone, in which case its score columns show `=`.)
+(A row can qualify on its price swing alone, in which case its score columns show `=`.)
 
 ## Data
 
@@ -75,12 +76,11 @@ Read-only over the **frozen scoring engine** — no engine changes. All data fro
 - **Current row:** the latest `observed_at` for the ticker.
 - **Baseline row:** the row with the greatest `observed_at` that is **on or before** `today − 7 days`.
   Using on/before (not exactly 7 days) tolerates weekend/holiday snapshot gaps.
-- **Metrics:** `buy_score` → resilience, `risk_score` → risk, `current_price` → price.
-- **Currency:** the price **% change is currency-agnostic and always shown**. The absolute price uses a
-  currency symbol inferred from `equity_scores.ticker_market` (best-effort). Exact GBX-vs-GBP (pence vs
-  pounds) handling and the symbol-inference table are an implementation detail to finalise in the plan;
-  if currency is uncertain, fall back to the bare number. The % change remains the primary, always-safe
-  signal.
+- **Metrics:** `buy_score` → resilience, `risk_score` → risk, `current_price` → **price % swing only**
+  (`(currPrice − basePrice) / basePrice`).
+- **Currency:** none displayed. Showing only the % swing makes the price column currency-agnostic, so
+  no symbol inference and no GBX-vs-GBP (pence vs pounds) handling is needed. The absolute price is read
+  from history solely to compute the percentage and is never rendered.
 
 ## Components
 
@@ -90,8 +90,9 @@ Each unit is isolated, single-purpose, and built test-first (TDD).
    (`{ ticker, currResilience, baseResilience, currRisk, baseRisk, currPrice, basePrice, dataQuality }`),
    returns the qualifying movers with computed deltas, or an empty list. Encodes the inclusion rule and
    the noise floor. Mirrors the style of `lib/alerts/build-digest.ts`. Likely shape:
-   `selectWeeklyMovers(observations) → Mover[]` where a `Mover` carries the three metric values + their
-   deltas + flat/up/down direction per metric. Like the daily digest, it should not emit a mover that
+   `selectWeeklyMovers(observations) → Mover[]` where a `Mover` carries the resilience + risk values and
+   deltas, the price **% swing** (computed from curr/base price — the absolute prices are inputs only,
+   never surfaced), and a flat/up/down direction per metric. Like the daily digest, it should not emit a mover that
    only moved via a `degraded_uk` data gap (skip `dataQuality === 'degraded_uk'`).
 
 2. **`fetchWeeklyObservations(supabase, tickers, asOfDate)` helper.** Fetches, per ticker, the current
@@ -134,16 +135,17 @@ here — the workflow-script restriction does not apply to route handlers).
 
 ## Testing (TDD)
 
-- **`weekly-digest.ts` (pure):** qualifies on score Δ; qualifies on |price Δ%| ≥ 5%; excludes price
-  drift < 5% with flat scores; excludes missing-baseline tickers; correct delta signs + flat (`=`)
-  direction per metric; `degraded_uk` skipped; empty input → empty (drives quiet-week).
+- **`weekly-digest.ts` (pure):** qualifies on score Δ; qualifies on |price swing %| ≥ 5%; excludes
+  price drift < 5% with flat scores; excludes missing-baseline tickers; correct delta signs + price
+  swing % sign + flat (`=`) direction per metric; `degraded_uk` skipped; empty input → empty (drives
+  quiet-week).
 - **Baseline selection:** picks closest row on/before 7d ago; tolerates gaps; null when no baseline.
 - **Cron route:** rejects bad/absent bearer; Pro gate (Free excluded); opt-in filter; `paused_until`
   excludes; idempotency (second run sends 0); quiet-week sends the "all steady" note when positions
   exist; zero-positions skips; `last_sent_at` stamped on success.
 - **Email render:** snapshot/smoke render of both the populated and quiet-week variants.
 - **Live Pro smoke** (post-deploy, Glenn): opt in as Pro, run the cron against a synthetic ticker with a
-  ≥5% price move and a score change, confirm the email + idempotent re-run, then tear down (reuse the
+  ≥5% price swing and a score change, confirm the email + idempotent re-run, then tear down (reuse the
   `scripts/smoke/watchlist-alert-dryrun.mjs` harness pattern).
 
 ## Out of scope
