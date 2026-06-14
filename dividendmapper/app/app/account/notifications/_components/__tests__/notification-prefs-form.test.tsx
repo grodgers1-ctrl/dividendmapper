@@ -6,6 +6,7 @@ const initial = {
   quality: { enabled: false, threshold: 30 },
   risk: { enabled: true, threshold: 75 },
   watchlist: { enabled: false },
+  weeklyDigest: { enabled: false },
 };
 
 afterEach(() => cleanup());
@@ -44,5 +45,21 @@ describe("NotificationPrefsForm", () => {
   it("disables the Watchlist toggle for Free users", () => {
     render(<NotificationPrefsForm initial={initial} isPro={false} />);
     expect((screen.getByLabelText("Watchlist alerts") as HTMLInputElement).disabled).toBe(true);
+  });
+
+  it("renders a Pro-gated Weekly digest toggle and PUTs its state", async () => {
+    render(<NotificationPrefsForm initial={initial} isPro />);
+    const toggle = screen.getByLabelText("Weekly digest") as HTMLInputElement;
+    expect(toggle.disabled).toBe(false);
+    fireEvent.click(toggle);
+    fireEvent.click(screen.getByRole("button", { name: /save/i }));
+    const opts = (fetch as unknown as { mock: { calls: unknown[][] } }).mock.calls[0][1] as { body: string };
+    const body = JSON.parse(opts.body);
+    expect(body.weeklyDigest).toEqual({ enabled: true });
+  });
+
+  it("disables the Weekly digest toggle for Free users", () => {
+    render(<NotificationPrefsForm initial={initial} isPro={false} />);
+    expect((screen.getByLabelText("Weekly digest") as HTMLInputElement).disabled).toBe(true);
   });
 });

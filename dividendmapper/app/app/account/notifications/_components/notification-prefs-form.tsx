@@ -14,6 +14,7 @@ export interface PrefsShape {
   quality: PrefState;
   risk: PrefState;
   watchlist: ToggleState;
+  weeklyDigest: ToggleState;
 }
 
 export function NotificationPrefsForm({
@@ -33,6 +34,10 @@ export function NotificationPrefsForm({
   }
   function setWatchlist(enabled: boolean) {
     setPrefs((p) => ({ ...p, watchlist: { enabled } }));
+    setStatus("idle");
+  }
+  function setWeeklyDigest(enabled: boolean) {
+    setPrefs((p) => ({ ...p, weeklyDigest: { enabled } }));
     setStatus("idle");
   }
 
@@ -120,8 +125,29 @@ export function NotificationPrefsForm({
         />
       </div>
 
+      <div className="flex items-start justify-between gap-4 border-b border-border py-4 last:border-0">
+        <div>
+          <label htmlFor="weekly-enabled" className="text-sm font-medium text-foreground">
+            Weekly digest
+          </label>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Email me a weekly summary of how my holdings and watchlist moved, even on a quiet week.
+          </p>
+        </div>
+        <input
+          id="weekly-enabled"
+          type="checkbox"
+          aria-label="Weekly digest"
+          disabled={!isPro}
+          checked={prefs.weeklyDigest.enabled}
+          onChange={(e) => setWeeklyDigest(e.target.checked)}
+          className="mt-1 h-5 w-5 disabled:opacity-50"
+        />
+      </div>
+
       <p className="mt-4 text-xs text-muted-foreground">
-        At most one summary email per day. These scores are a resilience check, not financial advice.
+        At most one summary email per day, plus an optional weekly recap. These scores are a resilience
+        check, not financial advice.
       </p>
 
       {isPro && (
