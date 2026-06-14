@@ -67,6 +67,7 @@ describe("/api/notifications", () => {
       quality: { enabled: true, threshold: 30 },
       risk: { enabled: false, threshold: 75 },
       watchlist: { enabled: true },
+      weeklyDigest: { enabled: false },
     });
   });
 
@@ -91,6 +92,40 @@ describe("/api/notifications", () => {
   it("400 on a malformed watchlist pref", async () => {
     getClaims.mockResolvedValue({ data: { claims: { sub: "u1" } } });
     const res = await PUT(req({ watchlist: { enabled: "yes" } }));
+    expect(res.status).toBe(400);
+    expect(upsert).not.toHaveBeenCalled();
+  });
+
+  it("GET defaults weeklyDigest to disabled when no row exists", async () => {
+    getClaims.mockResolvedValue({ data: { claims: { sub: "u1" } } });
+    selectRows.mockResolvedValue({ data: [] });
+    const res = await GET();
+    expect((await res.json()).weeklyDigest).toEqual({ enabled: false });
+  });
+
+  it("GET reflects an enabled weekly_digest row", async () => {
+    getClaims.mockResolvedValue({ data: { claims: { sub: "u1" } } });
+    selectRows.mockResolvedValue({
+      data: [{ event_type: "weekly_digest", enabled: true, threshold_value: null }],
+    });
+    const res = await GET();
+    expect((await res.json()).weeklyDigest).toEqual({ enabled: true });
+  });
+
+  it("upserts a weekly_digest row (on/off, no threshold)", async () => {
+    getClaims.mockResolvedValue({ data: { claims: { sub: "u1" } } });
+    const res = await PUT(req({ weeklyDigest: { enabled: true } }));
+    expect(res.status).toBe(200);
+    const rows = upsert.mock.calls[0][0] as Record<string, unknown>[];
+    const weekly = rows.find((r) => r.event_type === "weekly_digest")!;
+    expect(weekly.user_id).toBe("u1");
+    expect(weekly.enabled).toBe(true);
+    expect(weekly.threshold_value).toBeNull();
+  });
+
+  it("400 on a malformed weeklyDigest pref", async () => {
+    getClaims.mockResolvedValue({ data: { claims: { sub: "u1" } } });
+    const res = await PUT(req({ weeklyDigest: { enabled: "yes" } }));
     expect(res.status).toBe(400);
     expect(upsert).not.toHaveBeenCalled();
   });

@@ -17,6 +17,7 @@ const DEFAULTS: PrefsShape = {
   quality: { enabled: false, threshold: 30 },
   risk: { enabled: false, threshold: 75 },
   watchlist: { enabled: false },
+  weeklyDigest: { enabled: false },
 };
 
 export default async function NotificationsPage() {
@@ -39,6 +40,7 @@ export default async function NotificationsPage() {
     quality: { ...DEFAULTS.quality },
     risk: { ...DEFAULTS.risk },
     watchlist: { ...DEFAULTS.watchlist },
+    weeklyDigest: { ...DEFAULTS.weeklyDigest },
   };
   for (const r of (rows ?? []) as { event_type: string; enabled: boolean; threshold_value: number | null }[]) {
     if (r.event_type === "buy_threshold_crossed") {
@@ -49,6 +51,9 @@ export default async function NotificationsPage() {
     }
     if (r.event_type === "watchlist_alert") {
       prefs.watchlist = { enabled: r.enabled };
+    }
+    if (r.event_type === "weekly_digest") {
+      prefs.weeklyDigest = { enabled: r.enabled };
     }
   }
 
