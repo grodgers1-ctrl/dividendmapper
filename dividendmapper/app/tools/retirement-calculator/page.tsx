@@ -3,14 +3,14 @@ import Link from "next/link";
 import { RetirementCalculator } from "./_components/retirement-calculator";
 
 export const metadata: Metadata = {
-  title: "Retirement Income Calculator: UK ISA & SIPP, US 401(k) & IRA",
+  title: "Retirement income calculator for dividend investors | UK ISA, SIPP and US 401(k)",
   description:
-    "Free retirement income calculator for dividend investors. Project Bear / Base / Bull scenarios with UK ISA, SIPP, GIA and State Pension, or US 401(k), IRA, Brokerage and Social Security. Toggle anytime.",
+    "Estimate your income at retirement with a free dividend retirement calculator. Model Bear, Base and Bull scenarios across ISA, SIPP, GIA, 401(k), IRA and taxable accounts.",
   alternates: { canonical: "/tools/retirement-calculator" },
   openGraph: {
-    title: "Retirement Income Calculator | DividendMapper",
+    title: "Retirement income calculator for dividend investors | DividendMapper",
     description:
-      "Project dividend income at retirement across three scenarios. UK ISA / SIPP / GIA + State Pension, or US 401(k) / IRA / Brokerage + Social Security. Free, no signup.",
+      "See how much income your portfolio could produce at retirement. Model Bear, Base and Bull scenarios across UK ISA / SIPP / GIA or US 401(k) / IRA / Brokerage. Free, no signup.",
     url: "/tools/retirement-calculator",
     type: "website",
     images: [
@@ -58,11 +58,12 @@ export default function RetirementCalculatorPage() {
           When can you retire on dividends?
         </h1>
         <p className="mt-4 text-base leading-relaxed text-muted-foreground md:text-lg">
-          Three projections (Bear, Base, Bull) alongside a probability-weighted
-          average. UK mode covers ISA, SIPP, GIA and State Pension; US mode
-          covers 401(k), IRA, Brokerage and Social Security. Numbers stay in
-          your browser.
-        </p>
+                  See how much dividend income your portfolio could produce at
+                  retirement. Three projections (Bear, Base, Bull) plus a
+                  probability-weighted average, for UK ISA / SIPP / GIA and State
+                  Pension, or US 401(k) / IRA / Brokerage and Social Security. Numbers
+                  stay in your browser.
+                </p>
       </header>
 
       <div className="mt-10">

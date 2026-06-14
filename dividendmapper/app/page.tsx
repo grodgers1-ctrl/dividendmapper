@@ -6,9 +6,12 @@ import { HeroSection } from "@/components/hero-section";
 // root layout). Without it the homepage emitted no <link rel="canonical">, so a
 // www variant was indexable separately and split ranking signals.
 export const metadata: Metadata = {
-  title: { absolute: "Free UK dividend tracker for ISAs, SIPPs and GIAs" },
+  title: {
+    absolute:
+      "Free UK dividend tracker and retirement income calculator",
+  },
   description:
-    "Free dividend tracker for UK ISAs, SIPPs and US 401(k)s. No card required. Backtested Quality and Trim scores on every holding.",
+    "Free UK dividend tracker and retirement income calculator for ISA, SIPP and GIA investors. Model dividend income, compare retirement scenarios, and see what your portfolio could pay over time.",
   alternates: { canonical: "/" },
 };
 
