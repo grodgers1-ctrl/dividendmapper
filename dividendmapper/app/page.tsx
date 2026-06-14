@@ -11,7 +11,7 @@ export const metadata: Metadata = {
       "Free UK dividend tracker and retirement income calculator",
   },
   description:
-    "Free UK dividend tracker and retirement income calculator for ISA, SIPP and GIA investors. Model dividend income, compare retirement scenarios, and see what your portfolio could pay over time.",
+      "Free UK dividend tracker and retirement income calculator for ISA, SIPP and GIA investors. Model dividend income, compare scenarios, and track what your portfolio could pay over time.",
   alternates: { canonical: "/" },
 };
 
