@@ -4,34 +4,32 @@ import { FaqJsonLd } from "@/components/blog/faq-json-ld";
 
 export const metadata = postMetadata("dividend-tracker-guide-uk-income-investors");
 
-<PostHeader slug="dividend-tracker-guide-uk-income-investors" />
-
 <FaqJsonLd
   items={[
     {
       question: "What is the difference between dividend tracking and portfolio tracking?",
       answer:
-        "Portfolio tracking monitors your total investment value — share prices, asset allocation, and overall return. Dividend tracking specifically measures income: how much each holding pays, when, and how that income is trending over time. A portfolio tracker tells you whether you are richer or poorer; a dividend tracker tells you whether your income stream is growing.",
+        "Portfolio tracking monitors your total investment value: share prices, asset allocation, and overall return. Dividend tracking specifically measures income: how much each holding pays, when, and how that income is trending over time.",
     },
     {
       question: "Do I need a paid dividend tracker as a UK investor?",
       answer:
-        "Not necessarily. For a single-broker portfolio of 5 to 15 UK stocks, a well-structured free spreadsheet is sufficient. Paid trackers become valuable when you hold accounts at multiple brokers, need multi-currency support for US stocks, or want dividend-growth analytics for retirement planning.",
+        "Not necessarily. For a single-broker portfolio of 5-15 UK stocks, a well-structured free spreadsheet is sufficient. Paid trackers become valuable when you have multiple brokers, multi-currency holdings, or need dividend-growth analytics.",
     },
     {
       question: "How does dividend tracking help with tax returns?",
       answer:
-        "Good tracking gives you a per-tax-year, per-wrapper breakdown of your dividend income. At self-assessment time, you know exactly how much dividend income fell in the ISA (tax-free), the SIPP (tax-free while retained), and the GIA (taxable). Without tracking, you reconstruct your totals from broker statements.",
+        "Good tracking gives you a per-tax-year, per-wrapper breakdown. At self-assessment time, you know exactly how much dividend income fell in each wrapper without reconstructing totals from broker statements.",
     },
     {
       question: "What is yield on cost?",
       answer:
-        "Yield on cost is the dividend yield calculated using your original purchase price rather than the current share price. For a stock held for several years with growing dividends, yield on cost can be significantly higher than the current market yield. It is the most relevant metric for buy-and-hold income investors.",
+        "Yield on cost is the dividend yield calculated using your original purchase price rather than the current share price. It is the most relevant metric for buy-and-hold income investors.",
     },
     {
       question: "Can a dividend tracker help me find better dividend stocks?",
       answer:
-        "Indirectly. By tracking yield on cost and dividend growth across your existing holdings, you identify which positions are genuinely growing your income. That evidence informs future buying decisions — you know which characteristics have worked well for your portfolio.",
+        "Indirectly. By tracking yield on cost and dividend growth across your existing holdings, you identify which positions are genuinely growing your income. That informs future buying decisions.",
     },
     {
       question: "What happens to my dividend tracking data if I switch brokers?",
@@ -41,39 +39,42 @@ export const metadata = postMetadata("dividend-tracker-guide-uk-income-investors
   ]}
 />
 
-If you hold dividend-paying stocks in the UK, at some point you face the question: *do I need to track my dividends, or can I just collect them and move on?*
+<PostHeader slug="dividend-tracker-guide-uk-income-investors" />
 
-The honest answer depends on portfolio size, complexity, and whether you want your dividend income to grow predictably. This guide covers what dividend tracking actually means for a UK income investor, the three main approaches available, and how to decide when it is worth the effort.
+If you hold dividend-paying stocks in the UK, at some point you face the question: do I need to track my dividends, or can I just collect them and move on?
 
----
+The honest answer depends on portfolio size, complexity, and whether you actually want your dividend income to grow predictably. This guide covers what dividend tracking means for a UK income investor, the three main approaches available, and how to decide when it is worth the effort.
 
-## What is dividend tracking — and why it matters for UK income investors
+## What is dividend tracking and why it matters for UK income investors
 
-Dividend tracking means recording each dividend payment your portfolio generates — the pay date, the amount received, any tax withheld, and the yield at the time of payment — and using that record to understand your portfolio's income performance over time.
+Dividend tracking means recording each dividend payment your portfolio generates. The pay date, the amount received, any tax withheld, the yield at the time of payment. You then use that record to understand your portfolio's income performance over time.
 
 It differs from generic portfolio tracking in a few important ways:
 
-- **Yield on cost** — what yield you are earning on your original purchase price, not just the current market yield.
-- **Dividend growth** — whether the companies you own are raising, cutting, or holding their payouts steady.
-- **Ex-dividend dates** — knowing when the next payment is due and planning around the pay cycle.
-- **Tax-year allocation** — tracking how much dividend income has landed in each wrapper (ISA, SIPP, GIA) so you know where you stand against the £500 dividend allowance.
+**Yield on cost.** The yield on your original purchase price, not just the current market yield.
 
-Without tracking, you know roughly what your portfolio is worth, but you do not know what it is actually paying you — or whether that income is trending up, down, or flat.
+**Dividend growth.** Whether the companies you own are raising, cutting, or holding their payouts steady.
 
-| Portfolio | Tracking value |
-|-----------|---------------|
-| 1–3 stocks in a single ISA | Low — you can remember the totals |
-| 5–15 stocks across 1–2 accounts | Medium — tracking helps with tax returns and reinvestment decisions |
-| 15+ stocks across multiple brokers and wrappers | High — without tracking you lose visibility of true income trends |
-| Building a retirement-income plan | Essential — you need dividend-growth data to feed into income projections |
+**Ex-dividend dates.** Knowing when the next payment is due so you can plan around the pay cycle.
 
----
+**Tax-year allocation.** Tracking how much dividend income has landed in each wrapper (ISA, SIPP, GIA) so you know where you stand against the £500 dividend allowance.
+
+Without tracking, you know roughly what your portfolio is worth. But you do not know what it is actually paying you, or whether that income is trending up, down, or flat.
+
+### Tracking value by portfolio complexity
+
+| Portfolio complexity | Tracking value |
+| :--- | :--- |
+| 1-3 stocks in a single ISA | **Low.** You can remember the totals. |
+| 5-15 stocks across 1-2 accounts | **Medium.** Helps with tax returns and reinvestment decisions. |
+| 15+ stocks across multiple brokers and wrappers | **High.** Without tracking, you lose visibility of true income trends. |
+| Building a retirement-income plan | **Essential.** You need dividend-growth data to feed into income projections. |
 
 ## Three ways to track your dividends in the UK
 
 ### 1. Manual tracking (spreadsheet)
 
-A well-structured spreadsheet remains the most common approach among UK DIY investors — and for good reason. It is free, fully customisable, and you own your data completely.
+A well-structured spreadsheet remains the most common approach among UK DIY investors, and for good reason. It is free, fully customisable, and you own your data completely.
 
 **What a good dividend tracker spreadsheet needs:**
 
@@ -84,61 +85,64 @@ A well-structured spreadsheet remains the most common approach among UK DIY inve
 
 **Pros:** Free, no data shared with third parties, full control over fields and calculations.
 
-**Cons:** Manual data entry is time-consuming (30–60 minutes per month for a 10-stock portfolio), error-prone at scale, and easy to neglect during busy periods.
+**Cons:** Manual data entry is time-consuming (30-60 minutes per month for a 10-stock portfolio), error-prone at scale, and easy to neglect during busy periods.
 
 ### 2. Broker-provided tracking
 
 Most UK brokers now include some form of dividend tracking in their platform:
 
-- **Hargreaves Lansdown** — shows dividend income per holding in the portfolio view, with a running annual total for each tax year.
-- **AJ Bell** — includes a dividend history per stock and a tax-year dividend summary.
-- **Trading 212** — shows dividend payments received per stock in the activity log, with an auto-calculated portfolio yield.
-- **Interactive Investor** — includes dividend payment tracking per holding with a downloadable statement.
+**Hargreaves Lansdown** shows dividend income per holding in the portfolio view, with a running annual total for each tax year.
 
-**What broker tools get right:** They are automatic — dividends appear in the tracking view without manual entry. For investors who hold everything with one broker, the built-in tracking is often sufficient.
+**AJ Bell** includes a dividend history per stock and a tax-year dividend summary.
+
+**Trading 212** shows dividend payments received per stock in the activity log, with an auto-calculated portfolio yield.
+
+**Interactive Investor** includes dividend payment tracking per holding with a downloadable statement.
+
+**What broker tools get right:** They are automatic. Dividends appear in the tracking view without manual entry. For investors who hold everything with one broker, the built-in tracking is often sufficient.
 
 **What they miss:** Cross-broker consolidation. If you hold a SIPP with AJ Bell and an ISA with Trading 212, neither platform shows your combined dividend picture. Most brokers also lack yield-on-cost tracking, dividend-growth trending, and tax-year allocation across wrappers.
 
 ### 3. Dedicated tracker services
 
-Services like Sharesight and DividendMax sit outside your broker and consolidate data across accounts. They import your transaction history, auto-capture dividend events, and generate reports that broker-native tools do not offer — yield-on-cost tracking, dividend-growth rates, portfolio-level income forecasts, and tax-year breakdowns across all wrappers.
+Services like Sharesight and DividendMax sit outside your broker and consolidate data across accounts. They import your transaction history, auto-capture dividend events, and generate reports that broker-native tools do not offer: yield-on-cost tracking, dividend-growth rates, portfolio-level income forecasts, and tax-year breakdowns across all wrappers.
 
 **What dedicated trackers do well:**
 
-- Multi-broker consolidation — all dividends in one dashboard
-- Automatic dividend capture — once your holdings are set up, dividends are recorded without manual entry
-- Yield-on-cost and dividend-growth analytics
-- Income forecasting and scenario modelling
+- Multi-broker consolidation. All dividends in one dashboard.
+- Automatic dividend capture. Once your holdings are set up, dividends are recorded without manual entry.
+- Yield-on-cost and dividend-growth analytics.
+- Income forecasting and scenario modelling.
 
 **What to watch for:**
 
-- Cost — Sharesight's paid tiers start for portfolios over 10 holdings
-- Data privacy — you are sharing your full portfolio with a third party
-- Lock-in — migrating out of a dedicated tracker can mean rebuilding your history from scratch
+- **Cost.** Sharesight's paid tiers start for portfolios over 10 holdings.
+- **Data privacy.** You are sharing your full portfolio with a third party.
+- **Lock-in.** Migrating out of a dedicated tracker can mean rebuilding your history from scratch.
 
-The [Sharesight vs DividendMapper comparison](/blog/sharesight-vs-dividendmapper-uk-income-investors) covers where each approach fits different portfolio profiles, but the short version is: a dedicated tracker makes sense when cross-broker consolidation or detailed analytics justify the cost and data-sharing trade-off.
+The [Sharesight vs DividendMapper comparison](/blog/sharesight-vs-dividendmapper-uk-income-investors) covers where each approach fits different portfolio profiles. The short version: a dedicated tracker makes sense when cross-broker consolidation or detailed analytics justify the cost and data-sharing trade-off.
 
-For most UK income investors with 5–15 holdings, a well-structured spreadsheet covers the essentials. The threshold for switching to a dedicated tool is not portfolio value but complexity — multiple brokers, frequent trading, foreign dividends, or the need for dividend-growth data to feed retirement-income projections.
+For most UK income investors with 5-15 holdings, a well-structured spreadsheet covers the essentials. The threshold for switching to a dedicated tool is not portfolio value but complexity: multiple brokers, frequent trading, foreign dividends, or the need for dividend-growth data to feed retirement-income projections.
 
----
+## Essential dividend metrics
 
-## What to track: the essential dividend metrics
+### Dividend yield: trailing vs forward vs yield on cost
 
-### Dividend yield — trailing vs forward vs yield on cost
+Three different yield numbers measure three different things.
 
-Three different yield numbers measure three different things:
+**Trailing yield** is dividends paid over the last 12 months ÷ current share price. This is what you see on most stock screeners. It tells you what the market currently prices the yield at, but it is backward-looking.
 
-- **Trailing yield** — dividends paid over the last 12 months ÷ current share price. This is what you see on most stock screeners. It tells you what the market currently prices the yield at, but it is backward-looking.
-- **Forward yield** — the most recent dividend × expected frequency ÷ current share price. Forward-looking but depends on the company maintaining its payout.
-- **Yield on cost** — total dividends received ÷ your original cost basis. This is the number that matters most to a buy-and-hold investor, because it tells you your personal return on what you actually paid. For a stock held for five years with growing dividends, yield on cost can be significantly higher than the current trailing yield — and that is exactly the point of holding income stocks long term.
+**Forward yield** is the most recent dividend × expected frequency ÷ current share price. It is forward-looking but depends on the company maintaining its payout.
+
+**Yield on cost** is total dividends received ÷ your original cost basis. This is the number that matters most to a buy-and-hold investor, because it tells you your personal return on what you actually paid. For a stock held for five years with growing dividends, yield on cost can be significantly higher than the current trailing yield. That is exactly the point of holding income stocks long term.
 
 ### Ex-dividend dates and payment cycles
 
-Knowing when each holding goes ex-dividend helps with cash-flow planning — especially if you rely on dividend income for living expenses or regular reinvestment. Most UK companies pay quarterly or semi-annually; US stocks typically pay quarterly. A tracker that maps ex-dividend dates across your whole portfolio helps you anticipate cash-flow gaps.
+Knowing when each holding goes ex-dividend helps with cash-flow planning, especially if you rely on dividend income for living expenses or regular reinvestment. Most UK companies pay quarterly or semi-annually; US stocks typically pay quarterly. A tracker that maps ex-dividend dates across your whole portfolio helps you anticipate cash-flow gaps.
 
 ### Dividend growth rate and consistency
 
-The most undervalued metric for UK income investors. A stock yielding 4% with a 10-year record of consistent 5% annual dividend growth will produce meaningfully more income over a decade than a stock yielding 6% with flat or declining payouts. Tracking dividend growth per holding lets you distinguish genuine income compounders from high-yield traps.
+This is the most undervalued metric for UK income investors. A stock yielding 4% with a 10-year record of consistent 5% annual dividend growth will produce meaningfully more income over a decade than a stock yielding 6% with flat or declining payouts. Tracking dividend growth per holding lets you distinguish genuine income compounders from high-yield traps.
 
 ### Tax-year tracking
 
@@ -150,84 +154,81 @@ Tracking your dividend income per tax year per wrapper is essential for:
 - Estimating your tax liability before the self-assessment deadline
 - Planning wrapper allocation for the next tax year
 
----
-
-## When a spreadsheet is enough — and when you need a dedicated tool
+## When a spreadsheet is enough and when you need a dedicated tool
 
 | Factor | Spreadsheet works | Dedicated tool helps |
-|--------|------------------|---------------------|
-| Portfolio size | 5–15 holdings | 15+ holdings |
+| :--- | :--- | :--- |
+| Portfolio size | 5-15 holdings | 15+ holdings |
 | Number of brokers | 1 | 2 or more |
 | Trade frequency | Buy-and-hold, few trades per year | Regular rebalancing or dividend reinvestment |
 | Foreign holdings | UK only | US or other foreign stocks with FX conversion |
 | Retirement planning | Not yet projecting forward | Using dividend-growth data for income forecasts |
-| Time available | 30–60 min/month willing to spend | Want to reduce tracking time to ~10 min/month |
+| Time available | 30-60 min/month willing to spend | Want to reduce tracking time to ~10 min/month |
 
-The honest assessment: most UK income investors with a single-broker, buy-and-hold portfolio of 5–15 stocks can manage perfectly well with a structured spreadsheet. The moment you hold accounts at more than one broker, hold foreign stocks, or want dividend-growth data for retirement planning, the spreadsheet becomes harder to maintain and a dedicated tracker starts making sense.
-
----
+The honest assessment: most UK income investors with a single-broker, buy-and-hold portfolio of 5-15 stocks can manage perfectly well with a structured spreadsheet. The moment you hold accounts at more than one broker, hold foreign stocks, or want dividend-growth data for retirement planning, the spreadsheet becomes harder to maintain and a dedicated tracker starts making sense.
 
 ## How dividend tracking connects to retirement-income planning
 
-This is where tracking shifts from *nice to have* to *genuinely useful*.
+This is where tracking shifts from nice to have to genuinely useful.
 
-The [Retirement Income Calculator](/tools/retirement-calculator) projects how much income your dividend portfolio could produce in the future, using Bear, Base, and Bull growth scenarios. The accuracy of those projections depends on knowing your portfolio's current dividend-growth trend — and that data comes from tracking.
+The [Retirement Income Calculator](/blog/retirement-income-calculator-guide) projects how much income your dividend portfolio could produce in the future, using Bear, Base, and Bull growth scenarios. The accuracy of those projections depends on knowing your portfolio's current dividend-growth trend, and that data comes from tracking.
 
 ### A practical example
 
-A UK investor holds 10 dividend-paying stocks across an ISA and a GIA:
+A UK investor holds 10 dividend-paying stocks across an ISA and a GIA.
 
-- **Year 1:** Starts a manual tracking spreadsheet. Records each dividend payment, updates yield-on-cost quarterly. Total tracking time: ~30 minutes per month. At this stage, the dividend-growth data is too sparse to feed meaningful projections.
-- **Year 2:** Opens a SIPP with a second broker. Now tracking across three accounts. The spreadsheet becomes harder to maintain — misses one ex-dividend date, loses a reinvestment opportunity. The dividend-growth record, while patchy, now covers enough time to estimate per-stock trends.
-- **Year 3:** Adopts a dedicated tracker that imports transaction history and auto-captures dividend events. Tracking time drops to ~10 minutes per month. Uses the tracker's dividend-growth data to feed the retirement calculator — now the Bear/Base/Bull scenarios are anchored in real portfolio behaviour rather than assumed averages.
+**Year 1:** Starts a manual tracking spreadsheet. Records each dividend payment, updates yield-on-cost quarterly. Total tracking time: ~30 minutes per month. At this stage, the dividend-growth data is too sparse to feed meaningful projections.
 
-The key insight: the threshold for switching from manual to automated tracking is not portfolio value but portfolio complexity — number of accounts, frequency of trades, and whether the investor needs dividend-growth data for retirement planning.
+**Year 2:** Opens a SIPP with a second broker. Now tracking across three accounts. The spreadsheet becomes harder to maintain. It misses one ex-dividend date, loses a reinvestment opportunity. The dividend-growth record, while patchy, now covers enough time to estimate per-stock trends.
 
----
+**Year 3:** Adopts a dedicated tracker that imports transaction history and auto-captures dividend events. Tracking time drops to ~10 minutes per month. They use the tracker's dividend-growth data to feed the retirement calculator. Now the Bear/Base/Bull scenarios are anchored in real portfolio behaviour rather than assumed averages.
+
+The key insight: the threshold for switching from manual to automated tracking is not portfolio value but portfolio complexity. Number of accounts, frequency of trades, and whether the investor needs dividend-growth data for retirement planning.
 
 ## Common dividend-tracking mistakes UK investors make
 
-1. **Ignoring FX on US-listed stocks.** If you hold US stocks like Coca-Cola or Johnson & Johnson, the dividend you receive in GBP depends on the exchange rate on the payment date. A tracker that ignores FX will show a misleading picture of your true dividend income.
+**Ignoring FX on US-listed stocks.** If you hold US stocks like Coca-Cola or Johnson & Johnson, the dividend you receive in GBP depends on the exchange rate on the payment date. A tracker that ignores FX will show a misleading picture of your true dividend income.
 
-2. **Mixing gross and net yields.** The headline yield on a stock screener is usually gross (before UK withholding tax for US stocks, or before your income tax). Your personal yield is the net amount that lands in your account.
+**Mixing gross and net yields.** The headline yield on a stock screener is usually gross (before UK withholding tax for US stocks, or before your income tax). Your personal yield is the net amount that lands in your account.
 
-3. **Ignoring special dividends and return-of-capital events.** One-off dividends and return-of-capital distributions are not recurring income. Counting them in your annual dividend total inflates your sustainable income estimate.
+**Ignoring special dividends and return-of-capital events.** One-off dividends and return-of-capital distributions are not recurring income. Counting them in your annual dividend total inflates your sustainable income estimate.
 
-4. **Not tracking yield-on-cost separately from current yield.** A stock you bought five years ago at a 5% yield might now trade at a 3% trailing yield because the share price has risen. Your personal return — yield on cost — could be 7% or higher if dividends have grown.
+**Not tracking yield-on-cost separately from current yield.** A stock you bought five years ago at a 5% yield might now trade at a 3% trailing yield because the share price has risen. Your personal return, yield on cost, could be 7% or higher if dividends have grown.
 
-5. **Forgetting to reconcile with the dividend allowance.** The £500 dividend allowance (2026/27) means tax only kicks in above that threshold. Without tracking, you might discover the tax bill only at self-assessment time.
-
----
+**Forgetting to reconcile with the dividend allowance.** The £500 dividend allowance (2026/27) means tax only kicks in above that threshold. Without tracking, you might discover the tax bill only at self-assessment time.
 
 ## Frequently asked questions
 
-### What is the difference between dividend tracking and portfolio tracking?
+**What is the difference between dividend tracking and portfolio tracking?**
 
-Portfolio tracking monitors your total investment value — share prices, asset allocation, and overall return. Dividend tracking specifically measures income: how much each holding pays, when, and how that income is trending over time.
+Portfolio tracking monitors your total investment value: share prices, asset allocation, and overall return. Dividend tracking specifically measures income: how much each holding pays, when, and how that income is trending over time.
 
-### Do I need a paid dividend tracker as a UK investor?
+**Do I need a paid dividend tracker as a UK investor?**
 
-Not necessarily. For a single-broker portfolio of 5–15 UK stocks, a well-structured free spreadsheet is sufficient. Paid trackers become valuable when you have multiple brokers, multi-currency holdings, or need dividend-growth analytics.
+Not necessarily. For a single-broker portfolio of 5-15 UK stocks, a well-structured free spreadsheet is sufficient. Paid trackers become valuable when you have multiple brokers, multi-currency holdings, or need dividend-growth analytics.
 
-### How does dividend tracking help with tax returns?
+**How does dividend tracking help with tax returns?**
 
 Good tracking gives you a per-tax-year, per-wrapper breakdown. At self-assessment time, you know exactly how much dividend income fell in each wrapper without reconstructing totals from broker statements.
 
-### What is yield on cost?
+**What is yield on cost?**
 
 Yield on cost is the dividend yield calculated using your original purchase price rather than the current share price. It is the most relevant metric for buy-and-hold income investors.
 
-### Can a dividend tracker help me find better dividend stocks?
+**Can a dividend tracker help me find better dividend stocks?**
 
-Indirectly. By tracking yield on cost and dividend growth across your existing holdings, you identify which positions are genuinely growing your income — informing future buying decisions.
-
----
+Indirectly. By tracking yield on cost and dividend growth across your existing holdings, you identify which positions are genuinely growing your income. That informs future buying decisions.
 
 ## Related guides
 
 - The [Sharesight vs DividendMapper for UK Income Investors](/blog/sharesight-vs-dividendmapper-uk-income-investors) comparison covers where dedicated tracking fits different portfolio profiles.
-- Use the [Retirement Income Calculator](/tools/retirement-calculator) with your tracking data to project future income.
+- Use the [Retirement Income Calculator](/blog/retirement-income-calculator-guide) with your tracking data to project future income.
 - The [UK Dividend Tax Guide 2026/27](/blog/uk-dividend-tax-guide) explains allowance, rates, and wrapper rules that determine how much dividend income you keep.
 - [Why Headline Yield Can Be Misleading](/blog/why-headline-yield-can-be-misleading) covers yield on cost, payout sustainability, and the difference between a high yield and a reliable one.
 
-<PostFooter slug="dividend-tracker-guide-uk-income-investors" />
+<PostFooter
+  nextHref="/blog/sharesight-vs-dividendmapper-uk-income-investors"
+  nextLabel="Sharesight vs DividendMapper: what UK income investors actually need"
+/>
+
+***Disclaimer:** This is for informational purposes, not financial or tax advice. Tax rates and allowances change. Check current HMRC guidance before making decisions.*
