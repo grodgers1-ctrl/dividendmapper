@@ -4,8 +4,6 @@ import { FaqJsonLd } from "@/components/blog/faq-json-ld";
 
 export const metadata = postMetadata("retirement-income-calculator-guide");
 
-<PostHeader slug="retirement-income-calculator-guide" />
-
 <FaqJsonLd
   items={[
     {
@@ -24,11 +22,6 @@ export const metadata = postMetadata("retirement-income-calculator-guide");
         "Dividends inside an ISA are completely tax-free. A SIPP also grows tax-free but has pension access rules. A GIA is fully taxable — the £500 dividend allowance (2026/27) covers a small portion, with the remainder taxed at your dividend income rate.",
     },
     {
-      question: "Why does the wrapper choice matter more over time?",
-      answer:
-        "Because growth compounds. A 3% annual dividend growth rate applied over 15 years produces roughly 55% more starting income. The tax advantage of an ISA means that growth is fully preserved, while a GIA loses a portion to tax every year — widening the gap as time passes.",
-    },
-    {
       question: "How often should I re-run my retirement income projection?",
       answer:
         "At least annually. Dividend growth rates change, your portfolio composition changes, and tax rules change. The dividend allowance has already fallen from £2,000 (2022/23) to £500 (2026/27) — further changes are possible, and your projections should reflect current rules.",
@@ -36,131 +29,85 @@ export const metadata = postMetadata("retirement-income-calculator-guide");
   ]}
 />
 
-## What Is a Retirement Income Calculator — and Why Dividend Investors Need One
+<PostHeader slug="retirement-income-calculator-guide" />
 
-A retirement income calculator does something most generic pension calculators don't: it models the *income* your portfolio could produce, not just the total value you might accumulate by a target date.
+If you're a UK dividend investor, you've probably run into a dozen pension calculators — and they all ask the wrong question. They want to know how much *capital* you'll have when you stop working. What you actually need to know is how much *income* your portfolio can throw off.
 
-For UK dividend investors, the difference matters. A lump-sum projection tells you how much your portfolio *might be worth*. An income projection tells you how much it could *pay you* — and whether that's enough to live on, supplement a salary, or bridge the gap to a final-salary pension.
+The DividendMapper Retirement Calculator does the second one. It models yield, growth, and tax wrappers together, so you get a spendable number rather than a lump sum you have to mentally convert. Here's how it works and how to get something useful out of it.
 
-The [DividendMapper Retirement Calculator](/tools/retirement-calculator) works this way. You enter your portfolio size, estimate a realistic dividend yield, choose a growth assumption, and select your wrapper types (ISA, SIPP, GIA). It then projects the annual income you could expect under three scenarios, adjusting for the different tax treatment each wrapper receives.
+## What it actually does
 
-This guide walks through each piece of that output: what the three scenarios mean, how yield and growth interact, how wrapper choice changes the post-tax picture, and — most importantly — how to use the projection in your real-world dividend planning.
+Most generic tools assume you'll sell shares for income. This one assumes you'll hold them and live off the dividends. That changes the numbers in important ways — especially once UK tax enters the picture.
 
----
+You feed it four things:
 
-## Which UK Accounts Can You Model? (ISA, SIPP, GIA Explained)
+- **Your portfolio size** — what you have today, not what you hope to have
+- **Weighted average dividend yield** — get this from a tracker, don't guess
+- **Growth assumptions** — how fast you expect your dividends to grow each year
+- **Account types** — ISA, SIPP, GIA, and how much is in each
 
-The calculator lets you allocate your portfolio across three account types. Getting the split right is important because each wrapper treats dividends differently.
+The calculator then tells you whether your portfolio is on track to cover your living expenses, supplement a salary, or bridge the gap between early retirement and a final-salary pension kicking in.
 
-**ISA (Individual Savings Account):** Dividends inside an ISA are completely tax-free. There is no dividend allowance to track, no tax band to worry about, and no reporting on your self-assessment return. For most UK dividend investors, the ISA is the most efficient home for income-producing holdings. The current annual ISA allowance is £20,000 (2026/27 tax year).
+## Why the wrapper matters (2026/27 edition)
 
-**SIPP (Self-Invested Personal Pension):** Dividends inside a SIPP also grow tax-free, but accessing the money follows pension rules. You can typically start drawing from age 57 (rising to 58 from 2028). When you withdraw, 25% is usually tax-free and the rest is taxed as income. The annual allowance is £60,000 (2026/27), though this includes all pension contributions, not just SIPP.
+Three main accounts, three very different tax treatments. The difference between an ISA and a GIA on the same portfolio can be 15–20% of your spendable income.
 
-**GIA (General Investment Account):** Dividends in a GIA are taxable. For 2026/27, the dividend allowance is £500 (down from £1,000 in 2023/24 and £2,000 in 2022/23). Above that, basic-rate taxpayers pay 8.75% on dividend income, higher-rate taxpayers pay 33.75%, and additional-rate taxpayers pay 39.35%. A GIA also triggers capital gains tax when you sell holdings above the annual exempt amount (£3,000 for 2026/27).
+**ISAs** are the cleanest option. Dividends inside an ISA are 100% tax-free, no reporting, nothing to file. Max £20,000 a year.
 
-For a deeper breakdown of how each wrapper affects your tax bill, see the [UK Dividend Tax Guide 2026/27](/blog/uk-dividend-tax-guide). If you're deciding between an ISA and a SIPP for your dividend portfolio, the [ISA vs SIPP for UK Dividend Investors](/blog/isa-vs-sipp-dividend-investors) comparison covers the trade-offs.
+**SIPPs** are more complex. Your investments grow tax-free, but when you withdraw, 75% of the money is taxed as income (25% comes out tax-free). You can access from age 57 (58 from 2028). Annual allowance is £60,000.
 
----
+**GIAs** are taxed. You get a £500 dividend allowance in 2026/27, then pay 8.75% (basic rate), 33.75% (higher), or 39.35% (additional) on the rest. It adds up fast.
 
-## Understanding the Three Scenarios: Bear, Base and Bull
+The calculator adjusts for all of this. If you're split across wrappers, it works out which portion is shielded and which isn't.
 
-The calculator does not predict the future — it shows a range of plausible outcomes so you can plan for uncertainty rather than assuming a single number.
+## Three scenarios, not one number
 
-**Base scenario (3% annual dividend growth):** This assumes your portfolio's dividend income grows roughly in line with long-run UK dividend growth trends. Most investors should treat this as their central planning case.
+Single-point projections are dangerous — they give you false precision. Instead, the tool runs three scenarios:
 
-**Bear scenario (1.5% annual dividend growth):** A slower-growth environment where companies raise dividends more cautiously. This is not a crash scenario — it assumes dividends still grow, just below trend. Use this for conservative planning to check whether your essential expenses would still be covered.
+- **Base scenario (3% growth):** lines up with long-run UK dividend trends. This is your central planning case.
+- **Bear scenario (1.5% growth):** slower, for checking whether your essentials are covered in a rough patch.
+- **Bull scenario (5% growth):** upside to aim for, but don't base your minimum retirement number on it.
 
-**Bull scenario (5% annual dividend growth):** A stronger-growth environment above historical averages. Use this to understand upside potential, but do not base essential spending decisions on it.
+The point isn't to pick a favourite. The point is that if your essentials are covered in the Bear case, you can sleep at night.
 
-Each scenario starts from the same current portfolio yield and applies the growth rate consistently across the full investment horizon. The key variable is how those growth assumptions compound over time — and how wrapper taxes change the post-income picture differently under each path.
+### What that actually looks like: a £200,000 portfolio
 
----
+Say you've got £200,000 invested, yielding 4.2%, split 50/50 between an ISA and a GIA. The difference by scenario is stark:
 
-## How Dividend Yield Assumptions Shape Your Retirement Income Projection
+**Bear (1.5% growth):** the ISA portion clears about £10,920 a year. The GIA portion, after tax, drops to around £9,280. That's £1,600 less from the same investment, just because of who's taxing it.
 
-The calculator uses two key inputs that work together:
+**Base (3% growth):** ISA income hits ~£15,400, GIA brings ~£13,100. The gap widens to about £2,300.
 
-1. **Current portfolio yield** — the weighted average yield of your holdings today (for example, 4.2% on a £200,000 portfolio produces £8,400 in annual dividends at the start).
-2. **Assumed annual dividend growth** — how much those dividends increase each year (3% in the Base scenario).
+**Bull (5% growth):** £21,170 from the ISA, £17,990 from the GIA. A £3,180 tax penalty.
 
-The interaction is straightforward but powerful. A portfolio yielding 4.2% today with 3% annual growth does not simply produce 4.2% of your starting capital forever. After 15 years, the annual dividend payout (before considering wrapper taxes) would be approximately 55% higher than the starting amount — because the *dividends themselves* grow each year, not just the capital.
+The ISA produces roughly 18% more spendable income than the GIA in every scenario. That's not a small rounding error — that's a planning difference.
 
-This is different from focusing on a headline yield number in isolation. A fund that yields 9% today might cut its dividend tomorrow. The calculator's approach assumes sustainable growth from a realistic starting yield, not a speculative chase for the highest headline rate. (For more on why headline yield can mislead, see [Why Headline Yield Can Be Misleading for UK Income Investors](/blog/why-headline-yield-can-be-misleading).)
+## How to use it properly
 
----
+A few things I've found make the difference between a useful projection and a misleading one:
 
-## Example: Projecting Income for a £200,000 Dividend Portfolio
+**Use real yield data.** Don't type in a round number because it looks nice. Pull your weighted average yield from wherever you track your portfolio. Guessing the yield means you're guessing the output.
 
-Let's walk through a concrete hypothetical example.
+**Start with the Bear case.** I know it's not the fun one, but this is the number that tells you whether you'd be in trouble. If your essential expenses are covered at 1.5% growth, everything above that is a bonus.
 
-**Portfolio assumptions:**
+**Look at post-tax numbers only.** Gross projections make for nice headlines — "your portfolio could pay you £50,000 a year!" — but you can't spend gross. The only number that matters is what lands in your bank account after HMRC has taken its cut.
 
-| Input | Value |
-|-------|-------|
-| Current portfolio value | £200,000 |
-| Current portfolio yield | 4.2% |
-| Investment horizon | 15 years |
-| Wrapper split | 50% ISA (£100,000) / 50% GIA (£100,000) |
+**Recalibrate yearly.** Dividend policies change, tax rules shift (the allowance has shrunk twice in three years), and your portfolio mix evolves. A projection made in 2025 is stale by 2026.
 
-**Scenarios:**
+## Where this fits in the bigger picture
 
-| Scenario | Growth assumption | Annual income (ISA) | Annual income (GIA, post-tax) |
-|----------|-------------------|-------------------|------------------------------|
-| Bear | 1.5% | £10,920 | £9,282 |
-| Base | 3.0% | £15,408 | £13,097 |
-| Bull | 5.0% | £21,168 | £17,993 |
+The calculator is one piece. Use it alongside:
 
-*These are illustrative arithmetic projections for educational purposes. Actual outcomes depend on individual portfolio composition, dividend policies of the companies you hold, and tax changes over the projection period.*
+- The **[UK Dividend Tax Guide](/blog/uk-dividend-tax-guide)** for current band breakdowns
+- The **[ISA vs SIPP comparison](/blog/isa-vs-sipp-dividend-investors)** if you're deciding where to allocate
+- A **yield trap check** — high headline yields that aren't sustainable will make every projection look rosy until they stop paying
+- A **gap analysis** — if the calculator says you're short, you need to decide whether to save more, aim for higher yield, shift wrappers, or adjust your target date
 
-**How to read these numbers:**
+The goal isn't to forecast the future — nobody can do that. It's to give you a range of realistic outcomes so you can make decisions with your eyes open.
 
-In the Base scenario, 15 years of 3% annual dividend growth turns £8,400/year of starting income into approximately £13,088/year in gross dividends before wrapper tax. Inside the ISA, all of that is tax-free — £15,408/year of spendable income. Inside the GIA, after the £500 dividend allowance, the remaining £12,588 is taxed at the basic rate of 8.75%, leaving approximately £13,097.
+<PostFooter
+  nextHref="/blog/uk-dividend-tax-guide"
+  nextLabel="UK Dividend Tax Guide 2026/27 — what you actually pay"
+/>
 
-The Bear scenario shows what happens if growth slows: roughly £10,920/year in the ISA versus £9,282 in the GIA. The gap between scenarios widens over time because growth compounds — which is why running all three scenarios matters more than fixating on any single projection.
-
-**The wrapper choice alone** accounts for a meaningful difference. In the Base scenario, the ISA portion produces approximately 18% more spendable income than the GIA portion from the same starting capital — entirely because of the dividend tax exemption.
-
----
-
-## How to Use the Calculator Alongside Your Existing Dividend Portfolio
-
-The calculator works best as a planning tool, not a one-time check. Here is a practical workflow:
-
-1. **Enter your current portfolio data.** If you track holdings in a spreadsheet or portfolio tracker, use your weighted average yield rather than guessing. Include all wrappers — ISA, SIPP, and GIA — because the tax treatment differs meaningfully.
-
-2. **Run all three scenarios.** Do not skip the Bear scenario. The gap between scenarios grows with time, so a 15-year projection that only shows the Base case gives a false sense of precision.
-
-3. **Compare the post-tax numbers.** The gross projection is less useful than the after-tax figure, especially if you hold a significant portion outside an ISA or SIPP wrapper.
-
-4. **Revisit annually.** Dividend growth rates change, your portfolio composition changes, and tax rules change. The £500 dividend allowance (2026/27) is already lower than previous years, and further changes are possible. An annual check keeps your projections grounded in current rules.
-
-For a broader comparison of portfolio tracking tools, the [Sharesight vs DividendMapper for UK Income Investors](/blog/sharesight-vs-dividendmapper-uk-income-investors) article covers how a dedicated dividend tracker complements projection work.
-
----
-
-## Connecting the Calculator to Your Broader Dividend Plan
-
-The calculator is one tool in a wider dividend-planning workflow. Here is how it fits with the rest of your strategy:
-
-- **Tax planning:** The [UK Dividend Tax Guide](/blog/uk-dividend-tax-guide) explains the allowance, tax bands, and wrapper rules that feed directly into the calculator's post-tax outputs.
-- **Wrapper decisions:** The [ISA vs SIPP](/blog/isa-vs-sipp-dividend-investors) comparison helps you decide which account type to prioritise — and therefore how to allocate your portfolio split in the calculator.
-- **Yield assessment:** Use the calculator's growth scenarios alongside the [headline-yield explainer](/blog/why-headline-yield-can-be-misleading) to distinguish between sustainable income and yield traps.
-- **Portfolio tracking:** The calculator projects forward; a dividend tracker (like DividendMapper) monitors what is actually happening today. The two complement each other.
-
-The calculator does not replace regular portfolio tracking, tax advice from a qualified professional, or a financial plan built around your individual circumstances. What it does is give you a structured, numbers-backed answer to the question every dividend investor asks: *roughly how much income could this portfolio produce when I need it?*
-
----
-
-## Next Steps: From Projection to Action
-
-If you have not tried it yet, run your own numbers through the [Retirement Calculator](/tools/retirement-calculator). Start with your current portfolio value and yield, pick a horizon that matches your retirement timeline, and see what the three scenarios produce for each wrapper.
-
-Then:
-
-- If you are unsure about your current dividend yield, use a portfolio tracker to calculate your weighted average rather than guessing.
-- If the calculator shows a gap between your target income and the projected range, revisit your savings rate, yield assumptions, or wrapper allocation.
-- If your goal involves maxing tax efficiency, read the [ISA vs SIPP guide](/blog/isa-vs-sipp-dividend-investors) and [dividend tax guide](/blog/uk-dividend-tax-guide) with your calculator output in hand.
-
-The projection is not a guarantee — it is a planning range. The value is not in the single number but in understanding how yield, growth, wrapper choice, and time interact. Run the scenarios, compare the post-tax outcomes, and use that picture to make better decisions about your dividend portfolio today.
-
-<PostFooter slug="retirement-income-calculator-guide" />
+***Disclaimer:** This is for informational purposes, not financial or tax advice. Tax rates and allowances change. Check current HMRC guidance before making decisions.*

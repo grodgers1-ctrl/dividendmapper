@@ -57,7 +57,17 @@ export const POSTS: BlogPost[] = [
     locale: "uk",
   },
   {
-    slug: "trading-212-sipp-review",
+      slug: "retirement-income-calculator-guide",
+      title: "Retirement Income Calculator Guide: What Your Dividend Portfolio Could Actually Pay",
+      description:
+        "How the DividendMapper retirement calculator works — wrapper-by-wrapper breakdown, three growth scenarios, and why post-tax numbers are the only ones that matter.",
+      publishedAt: "2026-06-14",
+      readingTime: "6 min",
+      tags: ["UK", "Calculator", "Retirement"],
+      locale: "uk",
+    },
+    {
+      slug: "trading-212-sipp-review",
     title: "Trading 212 SIPP Review 2026: First Look",
     description:
       "First look at the Trading 212 SIPP, freshly approved by the FCA in February 2026. Fee structure, the Gaudi operator fee most reviews skip, what's missing, and where it sits vs HL and AJ Bell.",
