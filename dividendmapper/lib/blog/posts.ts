@@ -96,6 +96,16 @@ export const POSTS: BlogPost[] = [
     tags: ["UK", "Dividend", "Education"],
     locale: "uk",
   },
+  {
+    slug: "dividend-tracker-guide-uk-income-investors",
+    title: "What is a dividend tracker — and does every UK income investor need one?",
+    description:
+      "Track your dividends like a pro. Learn what dividend tracking means for UK investors, compare manual vs automated approaches, and find the right fit for your portfolio size.",
+    publishedAt: "2026-06-15",
+    readingTime: "9 min",
+    tags: ["UK", "Dividend", "Tracking"],
+    locale: "uk",
+  },
 ];
 
 /** Looks up a post by slug. Throws if not found — fail loudly during build. */
