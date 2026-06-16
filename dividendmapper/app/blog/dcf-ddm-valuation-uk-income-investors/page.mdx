@@ -21,7 +21,7 @@ export const metadata = postMetadata("dcf-ddm-valuation-uk-income-investors");
     {
       question: "What is a reasonable discount rate for UK stocks?",
       answer:
-        "A reasonable UK equity discount rate is usually between 7% and 10%. This is the single most sensitive input in either model — moving it by half a percentage point can swing the fair value by 10-15%. If you find yourself using 12% or higher, the model is telling you to look harder, not to buy. The DividendMapper DCF calculator lets you adjust this manually; run sensitivity tests at 8%, 9%, and 10% to see how much the output changes.",
+        "A reasonable UK equity discount rate is usually between 7% and 10%. This is the single most sensitive input in either model. Moving it by half a percentage point can swing the fair value by 10-15%. If you find yourself using 12% or higher, the model is telling you to look harder, not to buy. The DividendMapper DCF calculator lets you adjust this manually; run sensitivity tests at 8%, 9%, and 10% to see how much the output changes.",
     },
     {
       question: "Why does the terminal value matter so much in a DCF?",
@@ -49,7 +49,7 @@ It's the textbook intrinsic-valuation framework. And for a UK income investor it
 
 The dividend discount model is DCF tailored for people who buy stocks for the cash they actually receive. Instead of projecting total free cash flow, you project the dividend payments the company is expected to make and discount those back to present value. If you are investing primarily for income, that is the more natural framework because it values the stock based on the money you expect to land in your account.
 
-The logic is simple. A share of stock is worth the present value of all future dividends, adjusted for risk. For a company with a long and stable dividend history — say, a FTSE 100 constituent that has raised its dividend for 15 consecutive years — the DDM can give a surprisingly stable fair-value estimate.
+The logic is simple. A share of stock is worth the present value of all future dividends, adjusted for risk. Take a FTSE 100 constituent that has raised its dividend for 15 consecutive years. The DDM can give it a surprisingly stable fair-value estimate.
 
 The key difference from DCF is that DDM uses dividends as the cash flow proxy rather than total free cash flow. That makes it more relevant for income-focused investors, but also more sensitive to payout policy. If the company cuts its dividend, the DDM output changes immediately even if the underlying business is still healthy.
 
@@ -66,13 +66,13 @@ The model choice depends on the company's payout behaviour, not your preference.
 - It is a cyclical company where dividend cuts during downturns would make DDM unreliable. In that case use a multi-year average FCF approach.
 - You are looking at a small-cap dividend payer with inconsistent growth. Multi-year average FCF is less sensitive to payout policy swings than a DDM would be.
 
-## The three assumptions that matter most — and where to push back
+## The three assumptions that matter most (and where to push back)
 
 Every valuation model is only as good as its inputs. Three deserve scrutiny.
 
 **Discount rate (required rate of return / WACC).** This is the single most sensitive input in either model. Move it by half a percentage point and the fair value can swing 10-15%. A reasonable range for UK equities might be 7-10%, but the exact number is subjective. The DividendMapper DCF calculator lets you adjust this manually. Use that. Run the model at 8%, 9%, and 10% and see how much the output changes.
 
-**Terminal value / perpetual growth rate.** In any DCF, the terminal value — the value of all cash flows beyond the projection period — accounts for most of the total fair value. A 2% perpetual growth assumption expands the terminal value by roughly a third compared to a 1.5% assumption. This is the variable that gets the least scrutiny and has the biggest impact. I cannot stress this enough: check how sensitive your output is to the terminal growth rate.
+**Terminal value / perpetual growth rate.** In any DCF, the terminal value (the value of all cash flows beyond the projection period) accounts for most of the total fair value. A 2% perpetual growth assumption expands the terminal value by roughly a third compared to a 1.5% assumption. This is the variable that gets the least scrutiny and has the biggest impact. I cannot stress this enough: check how sensitive your output is to the terminal growth rate.
 
 **Dividend growth assumptions in DDM.** Past dividend growth is not a guarantee of future growth. A company that grew its dividend at 5% annually for the last five years may not sustain that pace. Use conservative long-term growth assumptions (2-4% for UK mature companies) and test the sensitivity.
 
