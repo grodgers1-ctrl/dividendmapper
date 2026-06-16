@@ -25,6 +25,17 @@ export interface BlogPost {
 }
 
 export const POSTS: BlogPost[] = [
+    {
+      slug: "dcf-ddm-valuation-uk-income-investors",
+      title:
+        "DCF vs DDM for UK income investors: what valuation models actually tell you",
+      description:
+        "A practical guide on when to use DCF vs DDM for UK dividend stocks, how sensitive the outputs are to your assumptions, and how valuation fits in a real income strategy.",
+      publishedAt: "2026-06-16",
+      readingTime: "8 min",
+      tags: ["UK", "Valuation", "Education"],
+      locale: "uk",
+    },
   {
     slug: "retirement-income-calculator-guide",
     title:
@@ -96,26 +107,16 @@ export const POSTS: BlogPost[] = [
     tags: ["UK", "Dividend", "Education"],
     locale: "uk",
   },
-  {
-    slug: "dividend-tracker-guide-uk-income-investors",
-    title: "What is a dividend tracker — and does every UK income investor need one?",
+    {
+      slug: "dividend-tracker-guide-uk-income-investors",
+    title: "What is a dividend tracker, and does every UK income investor need one?",
     description:
       "Track your dividends like a pro. Learn what dividend tracking means for UK investors, compare manual vs automated approaches, and find the right fit for your portfolio size.",
     publishedAt: "2026-06-15",
-    readingTime: "9 min",
+    readingTime: "11 min",
     tags: ["UK", "Dividend", "Tracking"],
     locale: "uk",
-  },
-  {
-    slug: "dcf-ddm-valuation-uk-income-investors",
-    title: "DCF vs DDM for UK income investors: what valuation models actually tell you",
-    description:
-      "A practical guide to DCF and DDM valuation for UK dividend investors: when to use which model, the assumptions that drive the output, and how to use the DividendMapper DCF calculator without fooling yourself.",
-    publishedAt: "2026-06-16",
-    readingTime: "8 min",
-    tags: ["UK", "Valuation", "Education"],
-    locale: "uk",
-  },
+    },
 ];
 
 /** Looks up a post by slug. Throws if not found — fail loudly during build. */
