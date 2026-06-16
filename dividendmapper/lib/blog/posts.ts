@@ -57,17 +57,17 @@ export const POSTS: BlogPost[] = [
     locale: "uk",
   },
   {
-      slug: "retirement-income-calculator-guide",
-      title: "Retirement Income Calculator Guide: What Your Dividend Portfolio Could Actually Pay",
-      description:
-        "How the DividendMapper retirement calculator works — wrapper-by-wrapper breakdown, three growth scenarios, and why post-tax numbers are the only ones that matter.",
-      publishedAt: "2026-06-14",
-      readingTime: "6 min",
-      tags: ["UK", "Calculator", "Retirement"],
-      locale: "uk",
-    },
-    {
-      slug: "trading-212-sipp-review",
+    slug: "retirement-income-calculator-guide",
+    title: "Retirement Income Calculator Guide: What Your Dividend Portfolio Could Actually Pay",
+    description:
+      "How the DividendMapper retirement calculator works — wrapper-by-wrapper breakdown, three growth scenarios, and why post-tax numbers are the only ones that matter.",
+    publishedAt: "2026-06-14",
+    readingTime: "6 min",
+    tags: ["UK", "Calculator", "Retirement"],
+    locale: "uk",
+  },
+  {
+    slug: "trading-212-sipp-review",
     title: "Trading 212 SIPP Review 2026: First Look",
     description:
       "First look at the Trading 212 SIPP, freshly approved by the FCA in February 2026. Fee structure, the Gaudi operator fee most reviews skip, what's missing, and where it sits vs HL and AJ Bell.",
@@ -105,8 +105,18 @@ export const POSTS: BlogPost[] = [
     readingTime: "11 min",
     tags: ["UK", "Dividend", "Tracking"],
     locale: "uk",
-      },
-    ];
+},
+  {
+    slug: "dcf-ddm-valuation-uk-income-investors",
+    title: "DCF vs DDM for UK income investors: what valuation models actually tell you",
+    description:
+      "A practical guide to DCF and DDM valuation for UK dividend investors: when to use which model, the assumptions that drive the output, and how to use the DividendMapper DCF calculator without fooling yourself.",
+    publishedAt: "2026-06-16",
+    readingTime: "8 min",
+    tags: ["UK", "Valuation", "Education"],
+    locale: "uk",
+  },
+];
 
 /** Looks up a post by slug. Throws if not found — fail loudly during build. */
 export function requirePost(slug: string): BlogPost {
