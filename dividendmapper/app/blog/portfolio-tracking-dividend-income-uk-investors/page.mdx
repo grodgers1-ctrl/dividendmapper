@@ -1,0 +1,207 @@
+import { postMetadata } from "@/lib/blog/posts";
+import { PostHeader, PostFooter } from "@/components/blog/post-header";
+import { FaqJsonLd } from "@/components/blog/faq-json-ld";
+
+export const metadata = postMetadata("portfolio-tracking-dividend-income-uk-investors");
+
+<PostHeader slug="portfolio-tracking-dividend-income-uk-investors" />
+
+<FaqJsonLd
+  items={[
+    {
+      question: "Why is tracking a dividend portfolio different from tracking a growth portfolio?",
+      answer:
+        "The evaluation metric, rebalance trigger, and risk framework all shift. An income investor cares about dividend cover, payout ratio sustainability, and yield on cost. A growth investor cares about P/E expansion, revenue acceleration, and total return. The same stock can look attractive to one and problematic to the other depending on which lens you use.",
+    },
+    {
+      question: "How should I track dividends across an ISA, SIPP, and GIA?",
+      answer:
+        "Each wrapper needs separate tracking. An ISA is simplest because no tax to calculate. A SIPP with US holdings needs foreign-exchange and withholding-tax tracking (15% withheld at source). A GIA needs dividend allowance tracking plus capital gains records. Use separate columns or sheets per wrapper, then aggregate in a summary sheet.",
+    },
+    {
+      question: "What is yield on cost and why does it matter?",
+      answer:
+        "Yield on cost is your annual dividend divided by your purchase price, not the current share price. It tells you what return you are earning on your actual investment. A stock you bought at 10 that now trades at 15 with a 0.40 dividend gives a 4% yield on cost even though the current yield is only 2.67%. That is the number for your personal income planning.",
+    },
+    {
+      question: "When should I rebalance an income portfolio?",
+      answer:
+        "Sell when the dividend thesis breaks, not when the share price rises. The triggers are a dividend cut, an unsustainable payout ratio above 90% for two years, sector concentration above 25% of portfolio income, or a change in capital allocation policy. A share-price increase alone is not a reason to sell the income stays the same.",
+    },
+    {
+      question: "When does a spreadsheet stop being enough for dividend tracking?",
+      answer:
+        "Multiple brokers (five or more), frequent trades requiring quarterly updates, international holdings adding FX and withholding-tax complexity, or dividend reinvestment that changes your share count every cycle. At those thresholds a dedicated tool like Sharesight or DividendMapper starts to save real time.",
+    },
+  ]}
+/>
+
+If you already know that tracking your dividends matters (and if you read the [dividend-tracker guide](/blog/dividend-tracker-guide-uk-income-investors), you do), the next question is practical: once I start tracking, how do I actually manage my whole portfolio for income? What should I measure, what should I ignore, and when should I act?
+
+This guide covers the operating manual for a UK dividend-income portfolio across wrappers, across metrics, and across the decisions that actually move your income needle.
+
+## Why a dividend portfolio is different from a growth portfolio
+
+A growth investor and an income investor can hold the same stock and evaluate it completely differently. The growth investor cares about P/E expansion, revenue acceleration, and total return. The income investor cares about dividend cover, payout ratio sustainability, and yield on cost. Same company. Different numbers.
+
+What changes when you optimise for income rather than capital appreciation:
+
+- **Your evaluation metric shifts.** A stock that appreciated 40% but cut its dividend is bad news for an income investor, even though the growth investor is celebrating. The income investor's core question is: _is my income stream growing or shrinking?_
+- **Your rebalance trigger shifts.** You sell when the dividend thesis breaks, not when the share price rises. A stock that doubles in price but keeps paying the same dividend yields half what it did when you bought it. That might be a reason to hold, not a reason to sell.
+- **Your risk framework shifts.** A dividend cut is a signal to investigate. A dividend suspension (especially in a cyclical sector) might mean wait and watch. A stock dropping 30% without a dividend change might be a buying opportunity for income investors who can add at a higher yield.
+
+If you already track your dividends, the data you are collecting feeds directly into these portfolio-management decisions. The two articles are two halves of the same workflow: tracking first, then managing from what you learn.
+
+## Setting up your dividend-tracking system across wrappers
+
+Most UK income investors hold stocks across more than one wrapper. The wrapper structure creates three different tracking contexts for what is essentially one portfolio.
+
+### Why each wrapper needs separate tracking
+
+An ISA, a SIPP, and a GIA can hold the same stock, but the tracking requirements are completely different.
+
+| Wrapper | Holdings | Typical annual income | Dividend allowance status | Key tracking challenge |
+|---------|----------|---------------------|--------------------------|----------------------|
+| ISA | 5 UK stocks | 4,200 (4.2% yield) | Not reportable to HMRC | Simplest to track; no tax overhead |
+| SIPP | 3 UK + 1 US stock | 2,880 (4.8% yield) | Not reportable during accumulation | US withholding tax (15%) on US holdings needs separate recording |
+| GIA | 2 UK stocks + 1 US ETF | 1,560 (3.9% yield) | 500 allowance; 1,060 taxable at dividend rate | Must track gross vs net; FX conversion on US dividends; capital gains records |
+
+The ISA dividends are simple to record: no tax to calculate, no allowance to track. The US holding in the SIPP needs foreign-exchange and withholding-tax tracking (15% withheld at source, reclaimable through the double-taxation treaty). The GIA dividends need tax-year allowance tracking plus capital gains records because disposing of a position in a GIA triggers CGT as well.
+
+A single portfolio-balance number from the broker dashboard hides all of this complexity. The real work is in the per-wrapper tracking.
+
+### Recommended tracking columns
+
+If you use a spreadsheet, structure it around these columns per wrapper:
+
+- Holding name and ticker
+- Number of shares
+- Purchase price per share
+- Current share price
+- Annual dividend per share
+- Current yield
+- Yield on cost
+- Dividend growth (year-on-year)
+- Payout ratio or dividend cover (when available)
+- Next ex-dividend date
+- Ex-dividend frequency
+
+Add a summary sheet that aggregates across wrappers, showing total portfolio income, yield by wrapper, and allowance consumption. The [UK Dividend Tax Guide 2026/27](/blog/uk-dividend-tax-guide) has the detailed wrapper tax rules you need to assign the right columns.
+
+## Yield on cost: the metric most UK income investors ignore
+
+Yield on cost (YoC) is your annual dividend divided by your purchase price, not the current share price. It tells you what return you are earning on _your_ actual investment, not what a new buyer would earn today.
+
+**Worked example:** You buy a stock at 10. The dividend is 0.40 per share, so your YoC is 4%. Five years later, the stock trades at 15. The dividend is still 0.40. Current yield = 2.67%. YoC = 4%.
+
+A new buyer looking at the chart sees a 2.67% yield. You look at the same stock and see 4%. The income thesis is intact. The current yield looks low only if you confuse "what the market would pay for this income stream" with "what this income stream pays _me_."
+
+### When to track both
+
+- **Yield on cost** is the number for your personal income planning. It tells you whether the stock is still delivering the income you expected when you bought it.
+- **Current yield** is the number for valuation and replacement-cost decisions. If a holding's current yield drops below what you could earn on a comparable alternative, it is worth asking whether the capital is better deployed elsewhere. But that question should start with _is the dividend safe?_ rather than _could I squeeze an extra 0.5%?_
+
+A high headline yield with declining dividends is a warning sign, not an opportunity. The [headline yield explainer](/blog/why-headline-yield-can-be-misleading) covers this in detail. The short version is that YoC is more relevant for your personal planning than whatever number a screen shows you today.
+
+## Dividend-growth tracking: measuring whether your income stream is improving
+
+Once you know your YoC per holding, the next question is whether those yields are likely to grow or shrink.
+
+### What to track
+
+Three numbers per holding, reviewed annually:
+
+1. **Dividend per share** the actual cash amount. Year-on-year changes tell you whether management is returning more or less to shareholders.
+2. **Payout ratio** dividends divided by earnings. Above 80% for a non-utility is a yellow flag. Above 100% is a structural problem unless it is a REIT with different payout rules.
+3. **Dividend cover** the inverse of payout ratio. Cover of 2.0 means the company earns twice what it pays out. Cover of 1.2 means there is not much headroom.
+
+### What a 3% dividend growth rate means
+
+If your portfolio's average dividend grows 3% per year, your income doubles every 24 years. That is slow enough to feel like nothing is happening year to year, and fast enough to meaningfully change your retirement picture over two decades.
+
+Track it annually, not monthly. Monthly dividend changes are noise. The year-on-year trend tells you whether your income stream is improving, treading water, or declining. The [DCF/DDM valuation explainer](/blog/dcf-ddm-valuation-uk-income-investors) connects dividend-growth rates to the valuation assumptions that drive stock-level decisions. The growth rate you track here becomes an input to the model.
+
+## Rebalancing for income, not total return
+
+An income portfolio needs different rebalancing rules than a growth or balanced portfolio.
+
+### The structural difference
+
+Selling a stock that appreciated 40% means selling _future dividends_, not just booking gains. A growth investor books the gain and moves on. An income investor should ask: is there another holding that will replace this dividend income at a comparable or better yield?
+
+If the dividend thesis is intact the company still earns enough to pay, the payout ratio is comfortable, the business model has not changed a share-price increase alone is not a reason to sell. The stock is now a smaller percentage of your portfolio by cost, but the income it produces has not changed.
+
+### When to trim
+
+- **Dividend cut.** The income stream is shrinking. Investigate whether it is structural (the business model changed) or cyclical (temporary earnings dip).
+- **Unsustainable payout ratio.** Above 90% for more than two consecutive years, even for a stable company, is a warning.
+- **Sector concentration.** If one sector produces more than 25% of your portfolio income, consider trimming even good holdings. Dividend cuts tend to cluster by sector (2020's banks, 2015's miners, 2008's everything).
+- **Dividend thesis breaks.** The company changes its capital allocation policy, takes on meaningfully more debt, or shifts from returning capital to retaining it.
+
+### When to hold
+
+- **Temporary share-price drops that do not affect the dividend.** A stock dropping 20% because of market-wide sentiment, not a company-specific problem, is not a sell signal for an income investor. The dividend is the same. The yield just went up.
+- **Dividend suspensions explained.** A cyclical company (miner, oil major) suspending during a downturn and reinstating later is historically common. A non-cyclical company suspending without explanation is not.
+- **Transition periods.** A company that pays a variable dividend or special dividend deserves more patience than one that cuts its regular quarterly.
+
+The [Sharesight comparison post](/blog/sharesight-vs-dividendmapper-uk-income-investors) covers portfolio-management tool comparisons if you want a dedicated tool for rebalancing analysis rather than a spreadsheet.
+
+## Using your tracking data for retirement-income planning
+
+Your tracking data is the raw material for retirement-income projections. A retirement calculator is only as good as the inputs you feed it.
+
+### What your tracking data tells the calculator
+
+- Your current portfolio yield (by wrapper, then aggregated)
+- Your yield on cost (the actual income you earn, not the market yield)
+- Your dividend growth rate by holding (is your income stream growing or shrinking?)
+- Your wrapper mix (ISA vs SIPP vs GIA tax treatment changes the post-tax income)
+
+### Practical example
+
+Take the worked example from the wrapper-tracking section above: a 200,000 portfolio, 4.5% blended current yield, 3% dividend growth rate.
+
+| Scenario | Year 1 income | Year 10 income | Year 20 income | Year 30 income |
+|----------|-------------|---------------|---------------|---------------|
+| Bear (low growth, 1%) | 9,000 | 9,900 | 10,900 | 12,000 |
+| Base (current trajectory, 3%) | 9,000 | 12,100 | 16,200 | 21,800 |
+| Bull (improved growth, 5%) | 9,000 | 14,700 | 23,900 | 38,900 |
+
+The point is not that the Bull scenario will happen. The point is that a 2 percentage point difference in dividend growth rate, entirely within your control based on what you hold, changes your projected income from 12,000 to 38,900 over 30 years. That is the difference between needing to supplement retirement income with drawdowns and having your dividend income cover your spending alone.
+
+The [retirement income calculator guide](/blog/retirement-income-calculator-guide) walks through how to use the DividendMapper retirement calculator with real portfolio data, wrapper by wrapper.
+
+## Automation vs manual: when to level up your tracking
+
+A spreadsheet is the right tool for most UK income investors at the start. But thresholds exist where the manual approach stops being practical.
+
+- **Multiple brokers.** Three broker logins to check holdings, dividends, and transactions is manageable. Five starts to eat time.
+- **Frequent trades.** If you add or sell positions quarterly, your spreadsheet drifts between updates.
+- **International holdings.** US stocks in a SIPP or GIA add FX conversion, withholding tax tracking, and dividend-date timezone complexity. The spreadsheet columns grow.
+- **Dividend reinvestment (DRIP).** A DRIP means your share count changes every dividend cycle, which means your yield-on-cost calculation needs updating each time.
+
+### What the alternatives actually do
+
+- **Sharesight** handles multi-broker tracking, corporate actions, capital gains reports, and performance charts. It is excellent at the portfolio-level picture. It is total-return-first, not income-first. You get dividend reports, but the default view optimises for performance, not wrapper-specific income.
+- **Broker-native dashboards (HL, AJ Bell, Trading 212, Interactive Investor)** are sufficient for single-broker investors. Each broker shows your holdings and recent dividends within that wrapper. Cross-broker consolidation requires manual merging.
+- **Yahoo Finance and Google Finance portfolio trackers** give a quick snapshot of value and recent price changes. Income-specific tracking (yield by wrapper, allowance consumption, dividend growth) is not what they are built for.
+
+### The honest assessment
+
+Most UK income investors with 3-10 holdings across 1-2 brokers can manage with a well-structured spreadsheet. The time cost is maybe 30 minutes per month. If that sounds low, it is because the tracking setup matters more than the ongoing maintenance: get the columns right once, and the monthly update is just entering dividend amounts and checking that nothing changed.
+
+When DividendMapper adds portfolio-level dividend tracking (it is not there yet), the value will be in the income-first lens: yield by wrapper, allowance consumption, withholding-tax tracking, and projection into retirement-income scenarios. The product is on the waitlist at [dividendmapper.com/waitlist](https://dividendmapper.com/waitlist).
+
+## What to do next
+
+1. Set up your per-wrapper tracking sheet using the column structure above.
+2. Calculate yield on cost for each holding. It is the single most useful number your current broker dashboard does not show you.
+3. Check your dividend growth rate over the last three years. If it is below 2% for most holdings, that is worth understanding.
+4. Feed your tracking data into the retirement calculator for the Bear, Base, and Bull scenarios.
+5. Review your sector concentration and rebalancing triggers once per quarter, not more often.
+
+The [dividend-tracker guide](/blog/dividend-tracker-guide-uk-income-investors) is the prequel to this article. It covers what dividend tracking is and why you should care. This article covers what to do once you start. Bookmark both; you will revisit the tracking setup when you add a new wrapper or a new holding.
+
+*DividendMapper helps UK dividend investors track, analyse, and project their dividend income across multiple portfolios and tax wrappers. It is not a financial adviser. No personalised investment or tax advice; it does not tell you what to buy or sell. Data calculations happen client-side in the browser.*
+
+<PostFooter slug="portfolio-tracking-dividend-income-uk-investors" />
