@@ -117,6 +117,28 @@ export const POSTS: BlogPost[] = [
     tags: ["UK", "Dividend", "Tracking"],
     locale: "uk",
     },
+  {
+    slug: "portfolio-tracking-dividend-income-uk-investors",
+    title:
+      "Portfolio tracking for dividend income: a UK investor's practical guide",
+    description:
+      "A practical guide to managing a UK dividend-income portfolio across wrappers: yield on cost, dividend-growth tracking, income rebalancing, and retirement-income projections from your actual tracking data.",
+    publishedAt: "2026-06-16",
+    readingTime: "9 min",
+    tags: ["UK", "Dividend", "Portfolio"],
+    locale: "uk",
+  },
+  {
+    slug: "dividend-income-retirement-tax-planning-uk-investors",
+    title:
+      "Dividend income in retirement: tax and planning for UK investors",
+    description:
+      "A practical guide to how retirement changes UK dividend tax rules, covering the personal allowance taper, the £500 dividend allowance, state pension interaction, and the tax-efficient GIA-to-SIPP-to-ISA withdrawal order.",
+    publishedAt: "2026-06-17",
+    readingTime: "12 min",
+    tags: ["UK", "Retirement", "Tax"],
+    locale: "uk",
+  },
 ];
 
 /** Looks up a post by slug. Throws if not found — fail loudly during build. */
