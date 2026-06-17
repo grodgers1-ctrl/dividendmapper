@@ -139,6 +139,17 @@ export const POSTS: BlogPost[] = [
     tags: ["UK", "Retirement", "Tax"],
     locale: "uk",
   },
+  {
+    slug: "uk-platform-fees-comparison",
+    title:
+      "UK dividend-investing platform fees: an ISA, SIPP, and GIA cost comparison for £10k, £50k, and £100k portfolios",
+    description:
+      "A practical cost comparison of UK investment platform fees for dividend investors, covering percentage vs fixed-fee pricing, crossover points at £10k/£50k/£100k+ portfolio sizes, dividend-specific costs, and a switching break-even framework.",
+    publishedAt: "2026-06-18",
+    readingTime: "12 min",
+    tags: ["UK", "Fees", "Platform"],
+    locale: "uk",
+  },
 ];
 
 /** Looks up a post by slug. Throws if not found — fail loudly during build. */

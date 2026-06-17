@@ -1,0 +1,265 @@
+import { postMetadata } from "@/lib/blog/posts";
+import { PostHeader, PostFooter } from "@/components/blog/post-header";
+import { FaqJsonLd } from "@/components/blog/faq-json-ld";
+
+export const metadata = postMetadata("uk-platform-fees-comparison");
+
+<PostHeader slug="uk-platform-fees-comparison" />
+
+<FaqJsonLd
+  items={[
+    {
+      question: "Why do platform fees matter more for dividend investors than growth investors?",
+      answer:
+        "Platform fees consume a larger portion of dividend income because dividend yields (typically 3–5%) are much lower than growth returns (8–12%). A 0.45% platform fee on a £50,000 portfolio earning 4% yield consumes 11.25% of the annual dividend income. For a growth investor earning 10% returns, the same fee consumes only 4.5% of returns.",
+    },
+    {
+      question: "At what portfolio size does a fixed-fee platform become cheaper than a percentage-based platform?",
+      answer:
+        "The crossover point is approximately £26,667 for a £120/year fixed-fee platform versus a 0.45% percentage platform. Below this value, percentage-based platforms are cheaper. Above it, fixed-fee platforms win. The formula is: fixed fee divided by percentage fee rate equals break-even portfolio value.",
+    },
+    {
+      question: "What dividend-specific costs do generic fee comparisons miss?",
+      answer:
+        "Generic comparisons often miss: dividend handling charges (some platforms charge per dividend receipt), dividend reinvestment costs (some charge £5–£10 per reinvestment trade), withholding tax tracking for US holdings (15% witholding under the UK-US treaty), and exit/transfer-out fees that apply when switching platforms.",
+    },
+    {
+      question: "When should a UK dividend investor switch platforms?",
+      answer:
+        "Switch when the annual savings from lower fees break even with the switching costs (transfer-out fees, time out of market, lost dividends during transfer). For a £50k portfolio moving from a 0.45% platform to a £120/year fixed-fee platform, the break-even is approximately 8.5 months. Do not switch if your portfolio is under £15k, you hold complex assets, or switching a GIA would crystallise large capital gains.",
+    },
+    {
+      question: "What is the total annual cost of different UK platforms for a £50k dividend portfolio?",
+      answer:
+        "A five-platform comparison for a £50k portfolio with quarterly trading shows total annual costs ranging from £60 (free-trade platform with £4/month custody) to £280 (uncapped 0.45% platform). Costs include custody fees, trading commissions, DRIP costs, FX charges, and dividend handling. The headline platform fee alone does not tell the full story.",
+    },
+  ]}
+/>
+
+---
+
+## 1. Why platform fees matter more for dividend investors than growth investors
+
+If you are building a UK dividend portfolio, the platform fee you pay is not just a line item — it is a direct drag on your dividend income. For growth investors, a 0.45% platform fee on a portfolio growing at 10%+ per year is barely noticeable. For a dividend investor earning a 4% yield, that same fee consumes **over 11%** of your annual income before you have spent a penny on trading costs, FX charges, or anything else.
+
+**Worked example — the yield erosion problem:**
+
+- Portfolio value: £50,000
+- Dividend yield: 4% (£2,000/year income)
+- Platform fee: 0.45% (£225/year)
+- Fee as a percentage of dividend income: **11.25%**
+
+Every £1 of platform fee reduces the income your portfolio was designed to produce. The higher the fee, the more of your dividend income disappears before it reaches your bank account. This is the second reason — alongside headline yield being misleading — why a platform that looks cheap on paper can be expensive in practice for an income-focused investor.
+
+For a deeper explanation of why headline yield overstates actual returns, see our guide: [why headline yield can be misleading](/blog/why-headline-yield-can-be-misleading).
+
+---
+
+## 2. How UK dividend-investing platforms charge (fee types explained)
+
+UK investment platforms use several different charging models, and most combine multiple fee types. Understanding each one is the first step to comparing platforms honestly.
+
+### Platform / custody fee
+
+This is the ongoing cost of holding your investments on the platform. It comes in three main flavours:
+
+- **Percentage-based:** You pay a percentage of your portfolio value each year. Typical range: 0.25%–0.60%. Common among traditional platforms (Hargreaves Lansdown, AJ Bell, Interactive Investor's standard account tier).
+- **Fixed-fee:** You pay a flat annual or monthly fee regardless of portfolio size. Typical range: £36–£180/year. Common among newer platforms (Freetrade, InvestEngine, some Interactive Investor tiers).
+- **Capped-fee:** You pay a percentage fee up to a maximum. Example: 0.45% capped at £200/year. Common among hybrid platforms (some AJ Bell accounts, old-style platform pricing).
+
+### Trading commissions
+
+The cost of buying and selling investments. For a buy-and-hold dividend investor, trading costs matter less than platform fees — but they still add up, especially if you reinvest dividends quarterly or rebalance annually.
+
+- Per-trade costs: typically £0–£12 per trade depending on the platform and trade type (fund vs shares).
+- Regular investing plans: many platforms offer reduced-cost or free dealing for regular monthly investments.
+- Dividend reinvestment costs: some platforms offer free DRIP (dividend reinvestment plan); others charge per reinvestment trade.
+
+### FX charges
+
+If your dividend portfolio includes US-listed stocks (many UK income investors hold US dividend aristocrats for diversification), FX charges apply when you trade in US dollars:
+
+- Typical FX spread: 0.5%–1.5% on each currency conversion.
+- Annual withholding tax: US dividends incur 15% withholding tax under the UK-US tax treaty. Some platforms handle the reclaim automatically; others require you to track and file a claim through HMRC.
+
+### Dividend-handling fees
+
+Rare among mainstream UK platforms, but worth checking: a small number of platforms charge a fee to process dividend payments or operate a dividend reinvestment service.
+
+### Hidden costs
+
+- **Inactivity fees:** Charged if you do not log in or trade for a period.
+- **Exit / transfer-out fees:** Charged when you transfer your portfolio to another platform. These are the real switching cost that many fee-comparison articles ignore.
+- **Paper-statement fees:** Minor but worth knowing about.
+
+For the tax treatment of dividends and how platform fees interact with your tax position (platform fees are not deductible in an ISA or SIPP, but may be deductible against dividend income in a GIA), see: [UK dividend tax guide](/blog/uk-dividend-tax-guide).
+
+---
+
+## 3. Platform fees by portfolio size: £10k portfolio (starting investor)
+
+At £10,000, the math is clear: **percentage-fee platforms tend to be cheaper** than fixed-fee platforms, because a low percentage of a small number is a small number.
+
+| Fee type | Annual cost at £10k |
+|----------|-------------------|
+| 0.45% percentage platform | £45 |
+| 0.25% percentage platform | £25 |
+| £120/year fixed fee | £120 |
+| £90/year + trades fixed fee | £90 + trading costs |
+
+For a starting investor, percentage-fee platforms charge £25–£60/year, which is manageable. Fixed-fee platforms at £90–£120/year would consume 4.5–6% of the portfolio's annual dividend income (£400/year at 4% yield) — a heavy drag for a small portfolio.
+
+**Considerations for the starting investor:**
+
+- **Trading frequency matters more at small sizes.** If you invest monthly with a £9.99 per-trade platform, you could spend over £100/year on trading costs alone — more than the platform fee. Consider platforms with free regular investing or a flat monthly subscription that covers trades.
+- **ISA vs SIPP matters even at this size.** Some platforms charge different minimum fees for SIPPs vs ISAs. A £10k SIPP on a platform with a separate SIPP admin fee may cost more than the same £10k ISA.
+- **DRIP costs matter proportionally.** If your platform charges £5 per reinvestment and you reinvest quarterly, that is £20/year — half your platform fee.
+
+---
+
+## 4. Platform fees by portfolio size: £50k portfolio (building investor)
+
+At £50,000, the picture changes significantly. This is where **fixed-fee platforms start to become competitive** with percentage-based platforms.
+
+### Crossover point calculation
+
+At what portfolio value does a fixed-fee platform become cheaper than a percentage-based platform?
+
+| Percentage fee platform | Annual cost at £50k | Fixed-fee platform | Annual cost at £50k | Winner |
+|------------------------|---------------------|--------------------|---------------------|--------|
+| Per cent-based (0.45%) | £225 | Fixed £120/yr | £120 plus trades | Fixed-fee |
+| Per cent-based (0.25%) | £125 | Fixed £120/yr | £120 plus trades | Neck-and-neck |
+| Per cent-based (0.45%) | £225 | £90/yr + trades | £90 plus trades | Fixed-fee |
+
+The crossover point — where a £120 fixed-fee platform becomes cheaper than a 0.45% percentage platform — is approximately **£26,667**.
+
+Crossover point formula: `Fixed fee ÷ Percentage fee rate = Break-even portfolio value`
+
+- £120 ÷ 0.0045 = **£26,667**
+- £90 ÷ 0.0045 = **£20,000**
+
+Below these values, percentage-based platforms are cheaper. Above them, fixed-fee platforms win.
+
+### Worked example — £50k dividend portfolio
+
+| Fee component | Percentage-fee platform (0.45%) | Fixed-fee platform A (£120/yr) | Fixed-fee platform B (£90/yr + trades) | Capped-fee platform (0.45% capped at £200) | Free-trade platform (£0 trades, £4/mo custody) |
+|---------------|--------------------------------|-------------------------------|----------------------------------------|-------------------------------------------|----------------------------------------------|
+| Custody/platform fee | £225 | £120 | £90 | £200 | £48 |
+| Trading costs (4 trades/yr) | £40 | £0 | £40 | £40 | £0 |
+| DRIP costs (quarterly reinvestment) | £0 (free DRIP) | £10 | £20 | £0 | £0 |
+| FX costs (US holdings, 1 trade/yr) | £15 | £0 | £15 | £15 | £12 |
+| Dividend handling | £0 | £0 | £0 | £0 | £0 |
+| **Total annual cost** | **£280** | **£130** | **£165** | **£255** | **£60** |
+| Cost as % of £50k portfolio | 0.56% | 0.26% | 0.33% | 0.51% | 0.12% |
+| Cost as % of £2,000 annual dividend income | 14.0% | 6.5% | 8.3% | 12.8% | 3.0% |
+
+**Key insight:** The headline platform fee (0.45%) conceals a huge range in total cost depending on trading frequency, DRIP costs, and FX charges. A 0.45% platform with free DRIP and low trading costs may cost less than a £120 fixed-fee platform if the investor trades frequently.
+
+For a detailed look at how one popular low-cost platform handles dividend investing, see: [Trading 212 SIPP review](/blog/trading-212-sipp-review).
+
+---
+
+## 5. Platform fees by portfolio size: £100k+ portfolio (established investor)
+
+At £100,000+, the math tilts decisively toward **fixed-fee and capped-fee platforms**.
+
+| Fee type | Annual cost at £100k | Annual cost at £250k |
+|----------|---------------------|---------------------|
+| 0.45% percentage (uncapped) | £450 | £1,125 |
+| 0.45% capped at £200 | £200 | £200 |
+| £120/year fixed fee | £120 | £120 |
+| £90/year + trades | £90 + trades | £90 + trades |
+
+The difference is dramatic. An uncapped 0.45% platform costs **£450/year at £100k** and **£1,125/year at £250k**. A capped or fixed-fee platform charges the same £120–£200 regardless of growth.
+
+### Multi-wrapper discounts
+
+Some platforms offer reduced combined fees for holding an ISA, SIPP, and GIA together. These discounts can be meaningful:
+
+- Reduced platform fee on the second and third accounts
+- Bundled trading allowances across accounts
+- Simplified annual fee caps across combined portfolio value
+
+If you hold multiple wrappers, check whether a single-platform approach saves money compared to splitting across platforms.
+
+### The switching barrier
+
+At £100k+, the real cost of being on the wrong platform is high — but so is the cost of leaving. Transfer-out fees of £50–£300 per account, plus time out of market during a transfer (potentially losing 1–2 weeks of dividend income), mean switching is not frictionless. This is not a reason to stay on an expensive platform forever, but it is a reason to get the decision right the first time.
+
+---
+
+## 6. Dividend-specific costs that general fee comparisons miss
+
+Generic broker comparison sites compare platform fees, trading costs, and fund availability. They rarely cover the costs that matter specifically to dividend investors.
+
+### Dividend handling charges
+
+While most UK platforms do not charge per dividend receipt, a small number (mainly international brokers or legacy platforms) levy a fee each time a dividend is paid into your account. Even £1 per dividend across a 20-stock portfolio adds £20/year to your costs.
+
+### Dividend reinvestment costs
+
+Free DRIP is increasingly common among UK platforms, but it is not universal. Some platforms charge per reinvestment trade — £5–£10 per reinvestment. For an investor receiving dividends quarterly on 10 stocks, that could be £200–£400/year in reinvestment costs alone — potentially wiping out the benefit of choosing a cheaper platform.
+
+**Ask before you choose:** Does the platform offer automatic, free dividend reinvestment, or would you need to manually reinvest at per-trade cost?
+
+### Withholding tax tracking for US holdings
+
+Many UK dividend investors hold US-listed stocks for diversification (dividend aristocrats like Coca-Cola, Johnson & Johnson, Procter & Gamble). US dividends incur 15% withholding tax under the UK-US double taxation treaty. Some platforms:
+
+- Handle the reclaim automatically (you receive the net 85% and the platform files the paperwork)
+- Require you to file Form 6166 with HMRC to reclaim the withheld amount
+- Provide no support at all (you must track and claim independently)
+
+The effort of tracking and filing withholding tax reclaims is a real cost — even if it does not appear on a fee schedule.
+
+For how different portfolio management tools handle platform-specific dividend tracking and withholding tax: [Sharesight vs DividendMapper for UK income investors](/blog/sharesight-vs-dividendmapper-uk-income-investors).
+
+---
+
+## 7. When to switch platforms: the math of switching costs
+
+The honest answer: switching platforms has real costs, and the decision to switch should be based on a break-even calculation, not a vague feeling that your current platform is "too expensive."
+
+### Switching cost checklist
+
+| Cost | Typical value |
+|------|-------------|
+| Transfer-out fee (per account) | £25–£100 |
+| Time out of market | 1–4 weeks |
+| Lost dividends during transfer | Variable (£25–£100 for a £50k portfolio at 4% yield) |
+| Crystallisation of capital gains (GIA only) | Depends on your gain position |
+| Setup effort (register, fund, set up DRIP) | 2–4 hours |
+
+### Worked example — switching decision
+
+**Current platform:** 0.45% percentage-based fee (£225/year at £50k)
+**Target platform:** Fixed-fee at £120/year incl. trades
+**Transfer-out fee:** £50
+**Estimated lost dividends during transfer:** £25 (1 week out of market)
+**Annual savings after switch:** £105
+
+Break-even: (£50 + £25) ÷ £105 = **0.71 years ≈ 8.5 months**
+
+After 8.5 months, the switch has paid for itself. Over 10 years, the cumulative saving is **£1,050** — plus the compounding benefit of reinvesting those savings.
+
+### When NOT to switch
+
+- **Small portfolio sizes:** If your portfolio is under £15k, the annual savings from switching may be too small to justify the effort.
+- **Complex holdings:** If you hold US stocks, investment trusts, ETFs, or alternative assets, check that the target platform handles them all before starting the transfer.
+- **GIA with large capital gains:** Switching a GIA crystallises capital gains, which could trigger a tax bill. Consider using your annual CGT allowance before switching, or wait until the portfolio is within the allowance.
+
+---
+
+## 8. How DividendMapper fits into your platform decision
+
+DividendMapper is a portfolio income tracking tool, not a platform — so we do not hold your investments, charge platform fees, or compete with the brokers listed above. What we do is help you **track the income your portfolio produces, regardless of which platform (or platforms) you use** — making it easier to see the real-world impact of fees, reinvestment behaviour, and tax treatment on your dividend income.
+
+If you are comparing platforms and want to understand how fees would affect your specific portfolio, our [retirement calculator](/tools/retirement-calculator) is a free tool to model different income scenarios.
+
+For portfolio management across multiple platforms: [portfolio tracking for dividend income: a UK investor's practical guide](/blog/portfolio-tracking-dividend-income-uk-investors).
+
+---
+
+<PostFooter />
+
+*This article is for educational purposes and does not constitute financial or regulated investment advice. Fee data is current as of June 2026. Platform fees change over time — verify current pricing on each platform's website. Always consider seeking independent financial advice for your specific circumstances. DividendMapper is a software tool, not a financial adviser or regulated entity.*
