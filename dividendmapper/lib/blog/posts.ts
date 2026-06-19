@@ -25,17 +25,27 @@ export interface BlogPost {
 }
 
 export const POSTS: BlogPost[] = [
-    {
-      slug: "dcf-ddm-valuation-uk-income-investors",
-      title:
-        "DCF vs DDM for UK income investors: what valuation models actually tell you",
-      description:
-        "A practical guide on when to use DCF vs DDM for UK dividend stocks, how sensitive the outputs are to your assumptions, and how valuation fits in a real income strategy.",
-      publishedAt: "2026-06-16",
-      readingTime: "8 min",
-      tags: ["UK", "Valuation", "Education"],
-      locale: "uk",
-    },
+  {
+    slug: "dividend-safety-score-uk-income-investors",
+    title: "Dividend safety score: how to tell if a UK dividend stock is truly sustainable",
+    description:
+      "A practical framework for evaluating whether a UK dividend stock's payout is sustainable using payout ratio, dividend cover, free cash flow support, leverage, and sector context.",
+    publishedAt: "2026-06-19",
+    readingTime: "9 min",
+    tags: ["UK", "Dividend", "Education"],
+    locale: "uk",
+  },
+  {
+    slug: "dcf-ddm-valuation-uk-income-investors",
+    title:
+      "DCF vs DDM for UK income investors: what valuation models actually tell you",
+    description:
+      "A practical guide on when to use DCF vs DDM for UK dividend stocks, how sensitive the outputs are to your assumptions, and how valuation fits in a real income strategy.",
+    publishedAt: "2026-06-16",
+    readingTime: "8 min",
+    tags: ["UK", "Valuation", "Education"],
+    locale: "uk",
+  },
   {
     slug: "retirement-income-calculator-guide",
     title:
@@ -107,8 +117,8 @@ export const POSTS: BlogPost[] = [
     tags: ["UK", "Dividend", "Education"],
     locale: "uk",
   },
-    {
-      slug: "dividend-tracker-guide-uk-income-investors",
+  {
+    slug: "dividend-tracker-guide-uk-income-investors",
     title: "What is a dividend tracker, and does every UK income investor need one?",
     description:
       "Track your dividends like a pro. Learn what dividend tracking means for UK investors, compare manual vs automated approaches, and find the right fit for your portfolio size.",
@@ -116,7 +126,7 @@ export const POSTS: BlogPost[] = [
     readingTime: "11 min",
     tags: ["UK", "Dividend", "Tracking"],
     locale: "uk",
-    },
+  },
   {
     slug: "portfolio-tracking-dividend-income-uk-investors",
     title:

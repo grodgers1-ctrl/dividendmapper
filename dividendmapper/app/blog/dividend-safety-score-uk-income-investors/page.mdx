@@ -1,0 +1,218 @@
+import { postMetadata } from "@/lib/blog/posts";
+import { PostHeader, PostFooter } from "@/components/blog/post-header";
+import { FaqJsonLd } from "@/components/blog/faq-json-ld";
+
+export const metadata = postMetadata("dividend-safety-score-uk-income-investors");
+
+<PostHeader slug="dividend-safety-score-uk-income-investors" />
+
+<FaqJsonLd
+  items={[
+    {
+      question: "What is a dividend safety score?",
+      answer:
+        "A dividend safety score is a simple framework for checking whether a company's payout looks sustainable rather than just attractive. In practice, it means looking at payout ratio, dividend cover, free cash flow support, and leverage together instead of relying on yield alone.",
+    },
+    {
+      question: "What is a good payout ratio for a UK dividend stock?",
+      answer:
+        "For many established UK dividend payers, a payout ratio around 40% to 60% is often healthy. Above 80% deserves closer inspection, and above 100% usually means the dividend is not fully covered by earnings. Sector context still matters, especially for REITs, utilities, and infrastructure businesses.",
+    },
+    {
+      question: "Why does dividend cover matter?",
+      answer:
+        "Dividend cover shows how much earnings buffer exists behind the payout. Cover around 1.5x to 2.0x gives a healthier margin for error than cover close to 1.0x. If profits fall and cover is already thin, the dividend becomes much more vulnerable.",
+    },
+    {
+      question: "Is a high dividend yield a sign that a stock is safe?",
+      answer:
+        "Not necessarily. A high yield can be a warning that the market expects a dividend cut or weaker earnings. Yield tells you what is offered today, but not whether the payout will hold up. That is why safety checks need to look at earnings cover, cash generation, and debt as well.",
+    },
+    {
+      question: "Does a dividend safety score tell me what to buy?",
+      answer:
+        "No. It is an educational screening tool, not financial or regulated investment advice. A strong score does not make a stock suitable for every investor, and a weak score is a prompt to investigate further rather than a guaranteed prediction of a dividend cut.",
+    },
+  ]}
+/>
+
+A high dividend yield tells you what the market is offering today. It does not tell you whether that payout will still be there next year.
+
+That is where many investors get caught. They see 6% or 7%, compare it with a savings rate, and assume the higher number must be the better income opportunity. In practice, a high yield is often a warning. The share price has fallen, the market is nervous about earnings, or the dividend has outrun the company's ability to fund it.
+
+We covered that logic in [why headline yield can be misleading](/blog/why-headline-yield-can-be-misleading). The practical follow-up is the real one: if yield is not enough, what should you check instead?
+
+The most useful answer is not one magic ratio. It is a short framework. Look at four things together:
+
+1. payout ratio
+2. dividend cover
+3. free cash flow support
+4. debt pressure
+
+Put those together and you get a much clearer picture of whether a dividend is genuinely sustainable or just looks generous for a reason.
+
+## The four-metric dividend safety score
+
+A dividend safety score is not a product feature here. It is a manual framework you can apply yourself when you read annual reports, company results, or stock research.
+
+The idea is simple: score each metric out of 10, then average the scores. Averaging matters because one strong number should not hide a weak one. A company with a decent payout ratio but terrible cash generation is still risky. A company with good cash flow but stretched leverage is still risky.
+
+Here is the framework.
+
+| Metric | What it checks | Healthy range | Warning range |
+|---|---|---|---|
+| Payout ratio | How much of earnings is being paid out as dividends | Roughly 40% to 60% for many established UK dividend payers | Above 80%, especially above 100% |
+| Dividend cover | How much earnings buffer exists behind the dividend | Around 1.5x to 2.0x or better | Close to 1.0x or below |
+| Free cash flow support | Whether the dividend is backed by real cash, not just accounting earnings | FCF yield comfortably above dividend yield | Dividend yield above FCF yield |
+| Debt / EBITDA | Whether leverage makes the dividend more fragile in a downturn | Under 2.0x for many non-defensive businesses | Above 3.0x outside sectors where leverage is structurally normal |
+
+These are not universal laws. Utilities, REITs, and infrastructure businesses often run with higher payout ratios and more leverage than consumer-goods companies. The point is not to force every sector through the same template. The point is to stop treating a single attractive yield as enough evidence.
+
+## 1. Payout ratio: how much of earnings is already spoken for
+
+The payout ratio is annual dividend per share divided by earnings per share.
+
+If a company earns 100p per share and pays 55p in dividends, the payout ratio is 55%. That leaves 45p for reinvestment, debt reduction, cash reserves, or buybacks. There is room to absorb a weaker year.
+
+If the same company pays 95p on 100p of earnings, the picture changes. There is almost no margin for error. A modest earnings dip turns a stretched payout into an uncovered one very quickly.
+
+A rough way to think about it:
+
+- **Below 40%:** conservative, though sometimes a sign the business is prioritising growth over income
+- **40% to 60%:** often healthy for established UK dividend payers
+- **60% to 80%:** not automatically bad, but you need more context
+- **80% to 100%:** the dividend is vulnerable if trading weakens
+- **Above 100%:** the dividend is not fully covered by earnings
+
+The limitation of payout ratio is that it only tells you about reported earnings. It does not tell you whether the company actually produced enough cash to fund the dividend. For that, you need the next two checks.
+
+If you want the valuation angle as well, [DCF vs DDM for UK income investors](/blog/dcf-ddm-valuation-uk-income-investors) is the companion piece. Valuation tells you what you may be paying for the business. Payout ratio tells you how much of the business's earnings are already committed to the dividend.
+
+## 2. Dividend cover: the size of the earnings buffer
+
+Dividend cover is earnings per share divided by dividend per share. It is the mirror image of payout ratio, but it is often easier to think about in practice because it tells you the size of the buffer directly.
+
+A dividend cover ratio of 2.0x means earnings are twice the dividend. That is comfortable. A ratio of 1.0x means the dividend is exactly covered and there is no cushion. Below 1.0x, the dividend is not being covered by current earnings at all.
+
+That matters most in cyclical sectors. A business that looks fine in a strong year can become stressed very quickly when profits normalise.
+
+Take a simple illustration:
+
+- **Company A:** cover of 1.8x
+- **Company B:** cover of 1.1x
+
+If earnings fall by 20%:
+
+- Company A drops to 1.44x cover and still has a workable buffer
+- Company B drops to 0.88x cover and the dividend is no longer covered
+
+That does not guarantee a cut, but it changes the conversation. A management team can defend a dividend for a while. It cannot ignore arithmetic forever.
+
+This is why high yield often deserves scepticism. A 5% yield with 1.8x cover can be sensible. A 5% yield with 1.05x cover is usually the market telling you the payout is under pressure.
+
+## 3. Free cash flow support: where the dividend really comes from
+
+Dividends are paid in cash, not accounting earnings.
+
+That is why free cash flow is one of the most important safety checks. A business can report profits while still producing weak cash flow because working capital has moved against it, capital expenditure is heavy, or earnings include non-cash adjustments.
+
+A practical way to use this is to compare the free cash flow yield with the dividend yield.
+
+- If the dividend yield is 3.5% and the FCF yield is 5.0%, the business is generating enough cash to support the payout with room to spare.
+- If the dividend yield is 5.0% and the FCF yield is 1.5%, the payout is outrunning cash generation. That is a red flag unless there is a very clear temporary explanation.
+
+That spread matters more than a single isolated number. Positive spread usually means the dividend is cash-backed. Negative spread means the company may be leaning on borrowing, asset sales, or a short-lived earnings pattern to maintain the payout.
+
+This is where many income investors get caught. A company can look fine on earnings-based payout metrics while still having weak cash conversion. That is why free cash flow belongs in the framework rather than as an optional extra.
+
+Once you have worked out which dividends are actually well supported, the next practical step is tracking them properly across wrappers and accounts. That is where [portfolio tracking for dividend income](/blog/portfolio-tracking-dividend-income-uk-investors) becomes useful.
+
+## 4. Debt / EBITDA: the dividend has to compete with lenders too
+
+Debt makes every dividend less flexible.
+
+A business with low leverage can ride out a disappointing year more easily. A business with high leverage has less room. Interest still needs to be paid. Refinancing still needs to happen. In a squeeze, the dividend is often the first discretionary outflow management can cut.
+
+Net debt to EBITDA is not perfect, but it is a practical shorthand.
+
+- **Below 1.0x:** low leverage
+- **1.0x to 2.0x:** usually manageable for many established businesses
+- **2.0x to 3.0x:** elevated, worth closer inspection
+- **Above 3.0x:** concerning outside sectors where leverage is structurally normal
+
+The sector point matters. Utilities and infrastructure businesses often carry more debt because their cash flows are steadier and more regulated. A 3.5x debt / EBITDA ratio means something very different in a regulated utility than in a cyclical industrial business.
+
+This is also why no single metric should dominate the score. A company with 1.5x cover and 0.8x debt / EBITDA is in a very different position from one with 1.5x cover and 3.5x debt / EBITDA, even though the cover ratio alone looks identical.
+
+## A worked example: two dividend stocks, two very different safety profiles
+
+The easiest way to see the framework in action is to compare two illustrative FTSE 350-style businesses.
+
+These are not real-time calls on named companies. They are realistic examples built to show how the arithmetic works.
+
+| Metric | Stock A: large-cap consumer goods | Score | Stock B: mid-cap cyclical industrial | Score |
+|---|---:|---:|---:|---:|
+| Payout ratio | 55% | 8/10 | 95% | 3/10 |
+| Dividend cover | 1.8x | 8/10 | 1.05x | 2/10 |
+| FCF yield minus dividend yield | +1.5 percentage points | 9/10 | -3.5 percentage points | 1/10 |
+| Debt / EBITDA | 1.2x | 8/10 | 2.8x | 4/10 |
+| **Composite safety score** |  | **8.25/10** |  | **2.50/10** |
+
+The point is not that every stock with a score above 8 is safe and every stock below 3 is dangerous. The point is that the second stock's higher yield would almost certainly come with a very different risk profile.
+
+Stock A may only yield around 3.5%, but the dividend looks well supported across all four checks. Stock B may yield 5% or more, but most of that extra yield is compensation for fragility, not free income.
+
+That is the distinction many investors miss. A higher yield is not always more generous. Sometimes it is simply a louder warning.
+
+## When the score can mislead you
+
+A framework like this is useful because it makes you ask better questions. It still has blind spots.
+
+### Temporary earnings dips
+
+A company can show a payout ratio above 100% in a bad year and still be fine over a three- to five-year cycle. That is why one-year snapshots should be treated carefully.
+
+### Cyclical sectors
+
+Mining, oil, housebuilding, and other cyclical sectors can swing from excellent cover to poor cover very quickly. A through-cycle view matters more than one clean annual number.
+
+### Capital-intensive sectors
+
+Utilities, REITs, and infrastructure businesses often look stretched on payout and leverage if you apply generalist rules without adjustment. Their economics are different. Sector context matters.
+
+### Management quality and business risk
+
+The score does not capture competitive position, regulation, capital-allocation discipline, or whether management has a history of protecting the balance sheet. Those are real dividend-safety factors too.
+
+That is why the framework should be treated as a screen, not a verdict. It helps you sort the obviously stronger cases from the obviously weaker ones. It does not replace reading the annual report.
+
+## A practical checklist before you buy a dividend stock
+
+If you want a compact version of the framework, this is the decision chain worth using:
+
+1. **Check the payout ratio.** Is the company paying out a sensible share of earnings, or most of them?
+2. **Check dividend cover.** How much buffer exists if profits fall?
+3. **Check free cash flow support.** Is the dividend actually funded by cash?
+4. **Check leverage.** Would debt pressure make the dividend the easiest thing to cut in a downturn?
+5. **Check sector context.** Are you applying the right standards for this type of business?
+6. **Check the trend, not just the latest year.** One weak number can be noise. Repeated weak numbers are a pattern.
+
+If the answer looks shaky on several of those checks at once, the headline yield is probably not an opportunity. It is a warning.
+
+If the numbers look strong across the board, you still are not finished. You then need to decide where that stock fits in your broader plan, what wrapper makes sense, and how the income affects your long-term goals.
+
+That is where the rest of the DividendMapper content set connects:
+
+- [why headline yield can be misleading](/blog/why-headline-yield-can-be-misleading) explains why yield alone can fool you
+- [DCF vs DDM for UK income investors](/blog/dcf-ddm-valuation-uk-income-investors) covers valuation
+- [portfolio tracking for dividend income](/blog/portfolio-tracking-dividend-income-uk-investors) covers the mechanics of monitoring income across accounts
+- [dividend income in retirement: tax and planning for UK investors](/blog/dividend-income-retirement-tax-planning-uk-investors) shows how safer income feeds into retirement planning
+- [UK dividend tax guide](/blog/uk-dividend-tax-guide) covers the tax treatment of what you receive
+
+If wrapper choice is the next question rather than stock selection, the [ISA vs SIPP guide](/blog/isa-vs-sipp-dividend-investors) covers that side of the decision.
+
+And if you want to see how DividendMapper approaches these income questions as a product, the [waitlist](https://dividendmapper.com/waitlist) is there. Just do not treat any framework, calculator, or blog post as a substitute for doing the underlying work.
+
+*This article is for educational purposes only. It does not constitute financial or regulated investment advice, and it does not recommend any specific stock. DividendMapper is a software tool, not a financial adviser or regulated entity.*
+
+<PostFooter slug="dividend-safety-score-uk-income-investors" />
