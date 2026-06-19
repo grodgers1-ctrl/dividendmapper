@@ -1,5 +1,6 @@
 import { DrawerCollapsedProvider } from "./drawer-collapsed-context";
 import { Drawer } from "./drawer";
+import { MobileDrawer } from "./mobile-drawer";
 import { TopBar } from "./top-bar";
 import type { TierLike } from "./nav-items";
 
@@ -28,8 +29,14 @@ export function DrawerShell({
       <div className="flex h-screen w-screen overflow-hidden bg-[var(--canvas)] text-[var(--text)]">
         <Drawer email={email} tier={tier} isAdmin={isAdmin} />
         <main className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
-          <TopBar />
-          <div className="flex-1 overflow-y-auto px-8 py-6">{children}</div>
+          <TopBar
+            leftAdornment={
+              <MobileDrawer email={email} tier={tier} isAdmin={isAdmin} />
+            }
+          />
+          <div className="flex-1 overflow-y-auto px-4 py-6 md:px-8">
+            {children}
+          </div>
         </main>
       </div>
     </DrawerCollapsedProvider>

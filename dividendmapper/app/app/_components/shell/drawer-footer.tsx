@@ -24,8 +24,20 @@ export function DrawerFooter({ email }: { email: string }) {
   const { collapsed } = useDrawerCollapsed();
   const initials = initialsFromEmail(email);
 
+  // Brand accent #1: contour SVG (4% opacity wrapper baked in) sits behind
+  // the footer with `mix-blend-overlay` so it reads as a faint topographic
+  // texture in both modes.
   return (
-    <div className="border-t border-[var(--border-subtle)] p-3">
+    <div
+      className="border-t border-[var(--border-subtle)] p-3"
+      style={{
+        backgroundColor: "var(--surface)",
+        backgroundImage: "url('/brand/contour.svg')",
+        backgroundSize: "cover",
+        backgroundRepeat: "no-repeat",
+        backgroundBlendMode: "overlay",
+      }}
+    >
       <div className="flex items-center gap-3">
         <div
           aria-hidden
