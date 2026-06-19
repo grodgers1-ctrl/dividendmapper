@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth/server";
 import { isAdmin } from "@/lib/scoring/config";
 import { loadAudit } from "@/lib/scoring/load-audit";
+import { PageHeader } from "../../../_components/page-header/page-header";
 
 export const metadata: Metadata = {
   title: "Scoring audit",
@@ -22,14 +23,12 @@ export default async function AuditPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-12 md:px-6 md:py-16">
-      <h1 className="font-display text-3xl font-bold tracking-tight text-foreground">
-        Scoring audit
-      </h1>
-      <p className="mt-2 text-sm text-muted-foreground">
-        Internal health view of the nightly equity-score run. Read only.
-      </p>
+      <PageHeader
+        title="Scoring audit"
+        subtitle="Health check on the nightly scoring run. Read only."
+      />
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div
           className={`rounded-xl border p-4 ${
             s.stale
