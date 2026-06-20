@@ -3,14 +3,14 @@ import Link from "next/link";
 import { POSTS, formatPublishedDate } from "@/lib/blog/posts";
 
 export const metadata: Metadata = {
-  title: "Research",
+  title: "UK dividend investing guides and calculator explainers",
   description:
-    "Practical guides for dividend investors. UK dividend tax, T212 SIPP review, and more.",
+    "Plain-English UK dividend investing guides covering tax, retirement income planning, platform fees, dividend trackers, and calculator walkthroughs.",
   alternates: { canonical: "/blog" },
   openGraph: {
-    title: "DividendMapper: Practical guides for dividend investors",
+    title: "DividendMapper: UK dividend investing guides and calculator explainers",
     description:
-      "Plain-English guides on UK dividend tax, ISAs, SIPPs, and broker reviews.",
+      "Plain-English UK dividend investing guides on tax, retirement income planning, platform fees, dividend trackers, and calculator walkthroughs.",
     url: "/blog",
     type: "website",
     images: [
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
         url: "/opengraph-image",
         width: 1200,
         height: 630,
-        alt: "DividendMapper Blog: Practical guides for dividend investors",
+        alt: "DividendMapper blog: UK dividend investing guides and calculator explainers",
       },
     ],
   },
@@ -44,11 +44,13 @@ export default function BlogIndexPage() {
           Guides
         </span>
         <h1 className="mt-4 font-display text-3xl font-bold tracking-tight text-foreground md:text-4xl lg:text-5xl">
-          Plain-English guides for dividend investors
+          UK dividend investing guides and calculator explainers
         </h1>
         <p className="mt-4 text-base leading-relaxed text-muted-foreground md:text-lg">
-          UK and US tax mechanics, broker reviews, and dividend-investing
-          strategy. Worked examples and footnotes, no fluff.
+          Plain-English UK dividend tax guides, retirement-income explainers,
+          platform-fee comparisons, dividend-tracker walkthroughs, and
+          calculator support content. Worked examples, tool-linked follow-ons,
+          and no fluff.
         </p>
       </header>
 
