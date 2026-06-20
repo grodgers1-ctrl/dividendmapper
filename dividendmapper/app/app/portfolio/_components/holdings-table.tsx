@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useSyncExternalStore, useTransition } from "react";
 import { Trash2, Clock } from "lucide-react";
@@ -479,9 +480,12 @@ export function HoldingsTable({
                     }`}
                   >
                     <td className="px-4 py-3">
-                      <span className="font-mono text-sm font-medium text-foreground">
+                      <Link
+                        href={`/app/portfolio/${row.ticker}`}
+                        className="font-mono text-sm font-medium text-foreground hover:underline"
+                      >
                         {row.ticker}
-                      </span>
+                      </Link>
                       {nameByTicker?.[row.ticker] && (
                         <span className="mt-0.5 block max-w-[11rem] truncate text-xs text-muted-foreground">
                           {nameByTicker[row.ticker]}
@@ -562,9 +566,12 @@ export function HoldingsTable({
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="font-mono text-base font-semibold text-foreground">
+                  <Link
+                    href={`/app/portfolio/${row.ticker}`}
+                    className="block font-mono text-base font-semibold text-foreground hover:underline"
+                  >
                     {row.ticker}
-                  </p>
+                  </Link>
                   {nameByTicker?.[row.ticker] && (
                     <p className="mt-0.5 truncate text-xs text-muted-foreground">
                       {nameByTicker[row.ticker]}

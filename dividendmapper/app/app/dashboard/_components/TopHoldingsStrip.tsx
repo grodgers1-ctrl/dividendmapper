@@ -73,26 +73,28 @@ export function TopHoldingsStrip({
           const name = nameByTicker[holding.ticker] ?? holding.ticker;
           const score = isPro ? scores.get(holding.ticker) : undefined;
           return (
-            <li
-              key={holding.id}
-              className="grid grid-cols-[5.5rem_1fr_auto] items-center gap-4 py-2.5 text-sm sm:grid-cols-[5.5rem_1fr_auto_auto]"
-            >
-              <span className="font-mono text-[13px] font-semibold tracking-wide text-[var(--text)]">
-                {holding.ticker}
-              </span>
-              <span className="truncate text-[var(--text-muted)]">{name}</span>
-              <span className="font-mono tabular-nums text-[var(--text)]">
-                {format(amount, currency)}
-              </span>
-              {isPro && (
-                <span className="hidden sm:inline-flex">
-                  {score && score.buy !== null ? (
-                    <ScoreChip type="buy" score={score.buy} />
-                  ) : (
-                    <span aria-hidden className="inline-block h-4 w-12" />
-                  )}
+            <li key={holding.id}>
+              <Link
+                href={`/app/portfolio/${holding.ticker}`}
+                className="grid grid-cols-[5.5rem_1fr_auto] items-center gap-4 py-2.5 text-sm hover:bg-[var(--surface-2)] sm:grid-cols-[5.5rem_1fr_auto_auto]"
+              >
+                <span className="font-mono text-[13px] font-semibold tracking-wide text-[var(--text)]">
+                  {holding.ticker}
                 </span>
-              )}
+                <span className="truncate text-[var(--text-muted)]">{name}</span>
+                <span className="font-mono tabular-nums text-[var(--text)]">
+                  {format(amount, currency)}
+                </span>
+                {isPro && (
+                  <span className="hidden sm:inline-flex">
+                    {score && score.buy !== null ? (
+                      <ScoreChip type="buy" score={score.buy} />
+                    ) : (
+                      <span aria-hidden className="inline-block h-4 w-12" />
+                    )}
+                  </span>
+                )}
+              </Link>
             </li>
           );
         })}
