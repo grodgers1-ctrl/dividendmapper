@@ -2,11 +2,16 @@ import type { Metadata } from "next";
 import { requireUser } from "@/lib/auth/server";
 import { loadPricedHoldings } from "@/lib/portfolio/load-priced-holdings";
 import { loadPortfolioAnalytics } from "@/lib/scoring/load-portfolio-analytics";
+import { buildQuadrant } from "@/lib/scoring/quadrant";
+import { isBeta } from "@/lib/scoring/config";
+import { pickFlaggedHolding, type FlaggableScore } from "@/lib/scoring/pick-flagged";
 import { PageHeader } from "../_components/page-header/page-header";
 import { HeroIncomeCard } from "./_components/HeroIncomeCard";
 import { TopHoldingsStrip } from "./_components/TopHoldingsStrip";
 import { UpgradeCard } from "./_components/UpgradeCard";
-import type { FlaggableScore } from "@/lib/scoring/pick-flagged";
+import { FlaggedHoldingCard } from "./_components/FlaggedHoldingCard";
+import { QuadrantSnapshotCard } from "./_components/QuadrantSnapshotCard";
+import { ReinvestStripCard } from "./_components/ReinvestStripCard";
 import type { RidgePoint } from "./_components/RidgeSparkline";
 
 export const metadata: Metadata = {
@@ -58,7 +63,8 @@ export default async function DashboardPage() {
 
   const isPro = tier !== "free";
 
-  // Scores are Pro-only on Day 5. Free path skips the analytics query.
+  // Scores + reinvest card + quadrant points are Pro-only. Free path skips
+  // the analytics query entirely (it's the heaviest server call).
   const analytics = isPro
     ? await loadPortfolioAnalytics({
         userId: user.id,
@@ -76,8 +82,26 @@ export default async function DashboardPage() {
     }
   }
 
+  // Pro-only derivations. Quadrant uses the same builder as the full
+  // Portfolio Manager page so the snapshot matches what users see there.
+  const flaggedTicker = analytics
+    ? pickFlaggedHolding(allHoldings, scoresMap)
+    : null;
+  const flaggedScore =
+    analytics && flaggedTicker
+      ? (analytics.scoresByTicker[flaggedTicker] ?? null)
+      : null;
+  const quadrant = analytics
+    ? buildQuadrant(
+        [...new Set(allHoldings.map((h) => h.ticker))],
+        analytics.scoresByTicker,
+        analytics.weightByTicker,
+      )
+    : { points: [], excluded: [] };
+
   const incomeAnnualGbp = sumIncomeNaive(income.totalsByCurrency);
   const sparkline = syntheticSparkline(new Date(), incomeAnnualGbp);
+  const beta = isBeta();
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-12 md:px-6 md:py-16">
@@ -87,6 +111,7 @@ export default async function DashboardPage() {
       />
 
       <div className="grid grid-cols-12 gap-4">
+        {/* Row 1 — hero income + (Pro: flagged / Free: upgrade) */}
         <div className="col-span-12 md:col-span-8">
           <HeroIncomeCard
             incomeAnnualGbp={incomeAnnualGbp}
@@ -95,20 +120,33 @@ export default async function DashboardPage() {
         </div>
         <div className="col-span-12 md:col-span-4">
           {isPro ? (
-            <div
-              data-testid="dashboard-flagged-slot"
-              className="h-full min-h-[180px] rounded-[10px] border border-dashed border-[var(--border-subtle)] bg-[var(--surface)] p-6 text-sm text-[var(--text-muted)]"
-            >
-              FlaggedHoldingCard ships Day 6.
-            </div>
+            <FlaggedHoldingCard
+              flaggedTicker={flaggedTicker}
+              score={flaggedScore}
+              isBeta={beta}
+            />
           ) : (
             <UpgradeCard />
           )}
         </div>
 
-        {/* Row 2 is intentionally empty on Day 5 — QuadrantSnapshotCard +
-            ReinvestStripCard land on Day 6. */}
+        {/* Row 2 — Pro: quadrant + reinvest planner; Free omitted entirely */}
+        {isPro && (
+          <>
+            <div className="col-span-12 md:col-span-8">
+              <QuadrantSnapshotCard
+                points={quadrant.points}
+                excluded={quadrant.excluded}
+                isBeta={beta}
+              />
+            </div>
+            <div className="col-span-12 md:col-span-4">
+              <ReinvestStripCard reinvestCard={analytics?.reinvestCard ?? null} />
+            </div>
+          </>
+        )}
 
+        {/* Row 3 — top 5 holdings, both tiers */}
         <div className="col-span-12">
           <TopHoldingsStrip
             holdings={allHoldings}

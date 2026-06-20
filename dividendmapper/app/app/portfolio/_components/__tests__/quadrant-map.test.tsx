@@ -84,3 +84,81 @@ describe("<QuadrantMap>", () => {
     expect(screen.getByText(/no scored holdings to map yet/i)).toBeInTheDocument();
   });
 });
+
+describe("<QuadrantMap> graticule (brand accent #4)", () => {
+  const points = [point({ ticker: "PEP" })];
+
+  it("renders the graticule SVG group inside the scatter", () => {
+    const { container } = render(
+      <QuadrantMap points={points} excluded={[]} isBeta={false} />,
+    );
+    expect(
+      container.querySelector("[data-testid='quadrant-graticule']"),
+    ).not.toBeNull();
+  });
+
+  it("renders bolder gridlines at 25 / 50 / 75 on both axes", () => {
+    const { container } = render(
+      <QuadrantMap points={points} excluded={[]} isBeta={false} />,
+    );
+    const g = container.querySelector("[data-testid='quadrant-graticule']");
+    const bold = g?.querySelectorAll("line[stroke-width='1']") ?? [];
+    // 3 vertical + 3 horizontal bolder lines (25, 50, 75).
+    expect(bold.length).toBeGreaterThanOrEqual(6);
+  });
+
+  it("renders minor gridlines (stroke-width 0.5)", () => {
+    const { container } = render(
+      <QuadrantMap points={points} excluded={[]} isBeta={false} />,
+    );
+    const g = container.querySelector("[data-testid='quadrant-graticule']");
+    const minor = g?.querySelectorAll("line[stroke-width='0.5']") ?? [];
+    // Minor lines at every 10% step (excluding the bolder 25/50/75).
+    expect(minor.length).toBeGreaterThanOrEqual(12);
+  });
+
+  it("labels the 25 / 50 / 75 / 100 ticks on each axis", () => {
+    const { container } = render(
+      <QuadrantMap points={points} excluded={[]} isBeta={false} />,
+    );
+    const labels = container.querySelectorAll(
+      "[data-testid='quadrant-axis-label']",
+    );
+    expect(labels.length).toBeGreaterThanOrEqual(8);
+    const texts = Array.from(labels).map((el) => el.textContent ?? "");
+    expect(texts).toContain("25");
+    expect(texts).toContain("50");
+    expect(texts).toContain("75");
+    expect(texts).toContain("100");
+  });
+});
+
+describe("<QuadrantMap> compact prop", () => {
+  const points = [point({ ticker: "PEP" }), point({ ticker: "PYPL", x: 20, y: 79 })];
+
+  it("defaults to non-compact when the prop is omitted", () => {
+    const { container } = render(
+      <QuadrantMap points={points} excluded={[]} isBeta={false} />,
+    );
+    const root = container.querySelector("[data-quadrant-root]");
+    expect(root?.getAttribute("data-compact")).toBe("false");
+  });
+
+  it("flags compact mode on the root element", () => {
+    const { container } = render(
+      <QuadrantMap points={points} excluded={[]} isBeta={false} compact />,
+    );
+    const root = container.querySelector("[data-quadrant-root]");
+    expect(root?.getAttribute("data-compact")).toBe("true");
+  });
+
+  it("hides the section header text in compact mode", () => {
+    render(<QuadrantMap points={points} excluded={[]} isBeta={false} compact />);
+    expect(screen.queryByText(/quality and risk map/i)).toBeNull();
+  });
+
+  it("keeps the section header in default mode", () => {
+    render(<QuadrantMap points={points} excluded={[]} isBeta={false} />);
+    expect(screen.getByText(/quality and risk map/i)).toBeInTheDocument();
+  });
+});
