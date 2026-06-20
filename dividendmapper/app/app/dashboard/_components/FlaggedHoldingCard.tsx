@@ -38,7 +38,7 @@ export function FlaggedHoldingCard({
           Flagged holding
         </p>
         <p className="mt-3 text-sm text-[var(--text-muted)]">
-          Scores collecting — check back overnight.
+          Scores collecting. Check back overnight.
         </p>
       </CardSurround>
     );

@@ -124,7 +124,7 @@ function PositionPnl({
   if (costCurrency !== valueCurrency) {
     return (
       <p className="mt-1 text-xs text-[var(--text-muted)]">
-        P/L unavailable — cost and price are in different currencies.
+        P/L unavailable. Cost and price are in different currencies.
       </p>
     );
   }

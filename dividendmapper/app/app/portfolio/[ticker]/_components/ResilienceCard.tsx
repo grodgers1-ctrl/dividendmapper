@@ -49,13 +49,13 @@ export function ResilienceCard({
           </div>
           {isBeta && (
             <p className="mt-3 text-xs text-[var(--text-muted)]">
-              Scores in beta — weights tune monthly.
+              Scores in beta. Weights tune monthly.
             </p>
           )}
         </>
       ) : (
         <p className="mt-3 text-sm text-[var(--text-muted)]">
-          Scores collecting — check back overnight.
+          Scores collecting. Check back overnight.
         </p>
       )}
       <div className="mt-4 text-right">

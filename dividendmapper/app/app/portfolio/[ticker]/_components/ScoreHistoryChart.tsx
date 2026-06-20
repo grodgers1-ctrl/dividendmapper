@@ -72,7 +72,7 @@ export function ScoreHistoryChart({
           Score history
         </p>
         <p className="mt-3 text-sm text-[var(--text-muted)]">
-          History collecting — 30 days of score data accrues from the nightly
+          History collecting. 30 days of score data accrues from the nightly
           scoring run.
         </p>
       </div>

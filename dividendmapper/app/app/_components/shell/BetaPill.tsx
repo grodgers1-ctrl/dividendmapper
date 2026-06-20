@@ -22,8 +22,8 @@ export function BetaPill() {
         <Popover.Positioner sideOffset={6}>
           <Popover.Popup className="z-50 max-w-xs rounded-md border border-[var(--border-subtle)] bg-[var(--surface)] p-3 text-sm text-[var(--text)] shadow-lg">
             <p className="leading-relaxed">
-              Scores are in beta — methodology evolving, weights tuned
-              monthly.
+              Scores are in beta. The methodology is evolving and weights are
+              tuned monthly.
             </p>
             <p className="mt-2">
               <Link
