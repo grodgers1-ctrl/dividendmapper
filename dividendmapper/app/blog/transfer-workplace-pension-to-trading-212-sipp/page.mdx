@@ -1,0 +1,173 @@
+import { postMetadata } from "@/lib/blog/posts";
+import { PostHeader, PostFooter } from "@/components/blog/post-header";
+import { FaqJsonLd } from "@/components/blog/faq-json-ld";
+
+export const metadata = postMetadata("transfer-workplace-pension-to-trading-212-sipp");
+
+<PostHeader slug="transfer-workplace-pension-to-trading-212-sipp" />
+
+<FaqJsonLd
+  items={[
+    {
+      question: "Can I transfer an old workplace pension into the Trading 212 SIPP?",
+      answer:
+        "Yes, as long as it is a Defined Contribution scheme, is not already in drawdown, and does not have safeguarded benefits like a Guaranteed Annuity Rate. T212 uses the Origo electronic transfer system where both sides support it, and most cash transfers complete within a few weeks.",
+    },
+    {
+      question: "What information does Trading 212 need to start a pension transfer?",
+      answer:
+        "Your current provider (selected from the dropdown in the app), your policy or plan number from that provider, an estimated current value, and confirmation that the pension is not already crystallised. With Aviva, the policy number is in MyAviva or on the latest annual statement.",
+    },
+    {
+      question: "Are there any pensions I should not transfer to a SIPP?",
+      answer:
+        "Yes. Do not transfer a workplace pension that is still receiving employer contributions, a Defined Benefit pension above £30,000 without regulated advice, anything with a Guaranteed Annuity Rate or other safeguarded benefit, with-profits funds when an MVR is in force, or schemes that include bundled life cover or protected tax-free cash above 25%.",
+    },
+    {
+      question: "Will I lose tax relief if I transfer my pension to T212?",
+      answer:
+        "No. Tax relief already received stays in the pot. Future contributions get the same 25% basic-rate top-up automatically; higher and additional-rate taxpayers reclaim the extra through Self Assessment, just as with any SIPP.",
+    },
+    {
+      question: "How long does an Aviva to Trading 212 SIPP transfer take?",
+      answer:
+        "T212 quotes two to eight weeks for cash transfers and four to twelve weeks for in-specie transfers in their help centre. Aviva DC cash transfers on Origo are usually at the faster end of that window.",
+    },
+  ]}
+/>
+
+I just moved a £7,350 Aviva workplace pension into my Trading 212 SIPP. Start to finish in the app, a handful of clicks, no paperwork. The only thing I needed was the policy number from Aviva, which sat on the front page of my last annual statement.
+
+The clicks were the easy bit. The harder bit, and the reason I am writing this post, is the sixty seconds of "should I actually do this?" before pressing transfer. A SIPP transfer can quietly cancel benefits that are worth a lot more than the platform fee you save. Most people will be fine. A meaningful minority will lose something they did not know they had.
+
+Here is the honest version: what the T212 journey looks like, what I had to check before clicking, the case for transferring an old workplace pot, and the cases for leaving it where it is.
+
+## How the T212 transfer journey actually works
+
+Inside the Trading 212 app, the route is Menu, Portfolio Transfer, Get Started. You pick "Pension transfer", choose your current provider from a dropdown, and the rest is mostly typing a couple of numbers. T212 wrote a short [help-centre article on the SIPP transfer flow](https://helpcentre.trading212.com/hc/en-us/articles/30772347994653-What-is-a-SIPP-transfer) which mirrors what I saw on screen.
+
+The information T212 asked me for was minimal:
+
+- the current provider (Aviva, selected from the dropdown)
+- the policy number from that provider, sometimes called the "pension reference" on older paperwork
+- an estimated current value
+- confirmation that the pot was not in drawdown and did not have any safeguarded benefits
+
+That is it. Aviva did not call me. T212 did not call me. There was no signed letter of authority to print out. The transfer ran on [Origo](https://origo.com/origo-services/origo-transfer-service), which is the electronic rail most large UK pension providers sit on. When both sides support Origo, the request goes provider to provider digitally and the paperwork disappears.
+
+T212's published windows in their help centre are two to eight weeks for cash transfers, and four to twelve weeks for in-specie (stock-by-stock) transfers. Most old workplace pensions move as cash, because the default workplace fund gets liquidated by the ceding scheme and the proceeds land in your new SIPP as a single cash credit. You then choose what to buy with it.
+
+If your old pension is invested in an Aviva default lifestyle fund, that is the path you are on. The fund is sold, the cash leaves Aviva, and the cash arrives at Gaudi (the SIPP operator behind T212's wrapper). You then invest it from scratch on the T212 side.
+
+## What I had to check before I clicked transfer
+
+Before I tapped through, I went down a short checklist. None of it took long. All of it would have been expensive to skip.
+
+### Is my employer still paying into it?
+
+This was an old workplace pension from a previous job, so no. If you are about to transfer an active workplace pension that your current employer is still contributing to, you almost certainly should not. Employer contributions are free money. Stopping that flow to save a fraction of a percent in fees is bad arithmetic. T212's own [transferable pension types page](https://helpcentre.trading212.com/hc/en-us/articles/30774441391261-Which-pension-types-can-I-transfer-to-my-SIPP) makes the same point in plainer language.
+
+### Does the scheme have safeguarded benefits?
+
+Safeguarded benefits include Guaranteed Annuity Rates, Guaranteed Minimum Pensions, and any final-salary promise. T212 cannot accept these. A GAR can lock in an income rate two or three times what today's annuity market would pay you, for life. Giving that up to chase a lower platform fee is one of the worst trades a UK saver can make. Older personal pensions from the 1980s and 1990s are the usual culprits. Read the policy summary before you assume yours is clean.
+
+### Is it a Defined Benefit pension worth more than £30,000?
+
+If yes, the FCA requires you to take regulated advice before transferring. This is a statutory rule, not a marketing line. The reasoning is on the [FCA's pension transfer advice page](https://www.fca.org.uk/consumers/pension-transfer-advice-what-expect), and [MoneyHelper covers the consumer angle](https://www.moneyhelper.org.uk/en/pensions-and-retirement/pension-transfers-consolidation/transferring-your-defined-benefit-pension). Most people who get DB transfer advice are told to keep the DB pension. There is a reason. A guaranteed income for life is worth a lot.
+
+### Does it bundle life cover or critical illness?
+
+A surprising number of workplace pensions sit alongside a death-in-service benefit, a private life policy, or a critical illness rider. Transferring out can cancel those. Replacement cover at 45 or 50 is not cheap. Read the scheme booklet or call the pension administrator and ask the question directly: "if I transfer out, what cover do I lose?"
+
+### Is it a with-profits fund that might apply an MVR?
+
+Older Aviva, Prudential and Standard Life with-profits funds can apply a Market Value Reduction when you transfer at the wrong moment. The insurer makes a downward adjustment to your pot to reflect that the underlying assets are not worth what your statement balance implies. [ReAssure has a clear explainer on how MVRs work](https://www.reassure.co.uk/market-value-reduction-mvr-for-with-profits-policies/). Most schemes guarantee no MVR at the normal retirement date, but transfers outside that window are fair game.
+
+### Is there protected tax-free cash above 25%?
+
+Some pre-April-2006 contracts carry a right to tax-free cash above the standard 25%. That right is generally lost on an individual transfer, although it can be preserved on a block transfer (when a whole scheme moves together). Royal London's [adviser note on protected tax-free cash on transfer](https://adviser.royallondon.com/technical-central/pensions/transfers/tax-free-cash-protection-on-transfer/) is the cleanest reference if you suspect this applies to you.
+
+### Do I have a protected pension age of 55?
+
+The normal minimum pension age is 55 today and rises to 57 in April 2028. People who had an unqualified right to draw at 55 before 4 November 2021 may have a protected pension age of 55. An individual transfer can lose that protection for the transferred funds. Quilter has a [briefing on the NMPA change and the protected-pension-age rules](https://www.quilter.com/help-and-support/technical-insights/technical-insights-articles/normal-minimum-pension-age-changes/). For most people in their 30s and 40s this is irrelevant. For someone close to 55 with the right paperwork, it is two years of early access at stake.
+
+### Is any of the pot already crystallised?
+
+T212 only accepts uncrystallised Defined Contribution funds. If you have already taken tax-free cash or moved into drawdown, T212 cannot take that slice. You can still transfer the uncrystallised remainder if there is any.
+
+The point of running through this list is not to scare anyone out of transferring. Most old workplace pensions clear every check easily. The point is that the time to do the checks is before the click, not after.
+
+## The positive case for transferring an old workplace pot
+
+For pots that pass the checklist, the case for moving is real.
+
+### Fees
+
+Legacy workplace pensions are still routinely charging 0.75% to 1.5% a year all in. T212's broker layer is zero, with around £90 a year flowing through to Gaudi as the SIPP operator. On a £40,000 pot at 1%, that is £400 a year going out of the pension. At T212 it is closer to £90, plus a 0.15% FX cost on any non-sterling holdings. Saving £250 to £300 a year on a moderate pot, compounded for twenty years, is real money. The full fee table is in our [Trading 212 SIPP review](/blog/trading-212-sipp-review), including the trap most reviews miss (the Gaudi operator fee on top of T212's zero).
+
+### Investment choice
+
+A workplace default fund is a one-size-fits-all lifestyle product that mechanically de-risks you as you approach retirement. That is the right answer for someone who would not otherwise engage. It is the wrong answer for an investor who knows what they are doing and wants to control their own asset mix. A self-directed SIPP gives you the choice. It also gives you the rope. Be honest with yourself about which kind of investor you actually are.
+
+### Consolidation
+
+If you have three old workplace pensions scattered across three previous employers, you have three logins, three sets of beneficiary nominations, and three different fund choices working against each other. Pulling them into one wrapper makes the whole thing easier to monitor and easier to leave to someone after you. There is nothing magical about consolidation, but the friction it removes is real.
+
+### Tax relief is unchanged
+
+Tax relief that has already gone into the pot stays in the pot. Future contributions inside the T212 SIPP get the same 25% basic-rate top-up automatically; higher and additional-rate taxpayers reclaim the extra through Self Assessment, the same as any other SIPP. The mechanics are covered in more depth in our [ISA vs SIPP guide for dividend investors](/blog/isa-vs-sipp-dividend-investors).
+
+## Aviva-specific notes
+
+A couple of things that are specific to Aviva, since that is the case I have first-hand experience with.
+
+The reference number on your Aviva paperwork is the "policy number". Some older statements call it a "plan number". The T212 dropdown does not care which name you use. Mine was eight digits on the front page of my last annual statement, and inside MyAviva it appeared on the pension dashboard. If you cannot find it, Aviva's [transfer your pension page](https://www.aviva.co.uk/retirement/transfer-your-pension/) points you to MyAviva or the customer service line.
+
+Cash transfers via Origo from an Aviva DC workplace pension typically land within a few weeks. I deliberately do not want to quote a precise number here because providers vary, and a fast Origo flow can complete much sooner than the headline T212 window of two to eight weeks. Watch the T212 in-app status; it updates each time the request moves between systems.
+
+If your Aviva pot is your active workplace pension and you are still receiving employer contributions, transferring closes that conduit. Be very sure the pot you are moving is the old one before pressing go.
+
+## What I did with the cash once it landed
+
+The cash came in as a single sterling credit. There were no leftover units to sell, no fractional holdings to unwind. I bought a small list of UK and US dividend payers I had already been wanting to top up. Nothing fancy. The SIPP is for long-dated income, not for chasing the highest quoted yield I could find. Speaking of which, our post on [why headline yield can be misleading](/blog/why-headline-yield-can-be-misleading) covers the standard mistake new SIPP investors make in the first week with a fresh pot of cash to deploy.
+
+If you want to put numbers on the long-run picture before you click anything, the [retirement calculator](/tools/retirement-calculator) handles ISA, SIPP, GIA and State Pension together. If you are evaluating a specific stock for the new pot, the [DCF calculator](/tools/dcf-calculator) is the right sanity check.
+
+## Frequently asked questions
+
+### Can I transfer an old workplace pension into the Trading 212 SIPP?
+
+Yes, as long as it is a Defined Contribution scheme, is not already in drawdown, and does not have safeguarded benefits like a Guaranteed Annuity Rate. T212 uses the Origo electronic transfer system where both sides support it, and most cash transfers complete within a few weeks.
+
+### What information does Trading 212 need to start a pension transfer?
+
+Your current provider (selected from the dropdown in the app), your policy or plan number from that provider, an estimated current value, and confirmation that the pension is not already crystallised. With Aviva, the policy number is in MyAviva or on the latest annual statement.
+
+### Are there any pensions I should not transfer to a SIPP?
+
+Yes. Do not transfer a workplace pension that is still receiving employer contributions, a Defined Benefit pension above £30,000 without regulated advice, anything with a Guaranteed Annuity Rate or other safeguarded benefit, with-profits funds when an MVR is in force, or schemes that include bundled life cover or protected tax-free cash above 25%.
+
+### Will I lose tax relief if I transfer my pension to T212?
+
+No. Tax relief already received stays in the pot. Future contributions get the same 25% basic-rate top-up automatically; higher and additional-rate taxpayers reclaim the extra through Self Assessment, just as with any SIPP. The wider rules are at [gov.uk on the Annual Allowance](https://www.gov.uk/tax-on-your-private-pension/annual-allowance).
+
+### How long does an Aviva to Trading 212 SIPP transfer take?
+
+T212 quotes two to eight weeks for cash transfers and four to twelve weeks for in-specie transfers in their help centre. Aviva DC cash transfers on Origo are usually at the faster end of that window.
+
+### Where can I get free guidance before I transfer?
+
+UK savers aged 50 and over with a DC pension can book a free Pension Wise appointment through [MoneyHelper's Pension Wise service](https://www.moneyhelper.org.uk/en/pensions-and-retirement/pension-wise) or by phone. For Defined Benefit pensions, regulated advice is mandatory above £30,000 and worth taking even below that threshold. [gov.uk's pension transfer guidance](https://www.gov.uk/transferring-your-pension) is the official starting point.
+
+## The takeaway
+
+The Trading 212 SIPP transfer flow is genuinely the easiest I have used. A few minutes in the app, no paperwork, a single policy number from the ceding provider. For a clean old DC workplace pot, it is a strong move: lower fees, more control, easier admin.
+
+The thing worth slowing down for is the checklist before you click. Read the scheme booklet. Check the safeguarded-benefits box. Confirm the pension is not still receiving employer contributions. Decide whether the with-profits or protected-tax-free-cash flags apply to you. If anything looks unclear, get advice; the [FCA pension transfer advice page](https://www.fca.org.uk/consumers/pension-transfer-advice-what-expect) explains what good advice looks like and what it costs.
+
+This is illustrative, not financial advice. Pension rules change, personal circumstances matter, and the right answer for me may not be the right answer for you.
+
+<PostFooter
+  nextHref="/tools/retirement-calculator"
+  nextLabel="Model your SIPP, ISA and State Pension together"
+/>

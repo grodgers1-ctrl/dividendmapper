@@ -26,6 +26,16 @@ export interface BlogPost {
 
 export const POSTS: BlogPost[] = [
   {
+    slug: "transfer-workplace-pension-to-trading-212-sipp",
+    title: "How I Transferred My Workplace Pension Into the Trading 212 SIPP",
+    description:
+      "A first-hand walkthrough of moving a £7,350 Aviva workplace pension into the Trading 212 SIPP: what the app journey looks like, the watch-outs that catch people, and when it is still the right call.",
+    publishedAt: "2026-06-20",
+    readingTime: "10 min",
+    tags: ["UK", "SIPP", "Pension Transfer"],
+    locale: "uk",
+  },
+  {
     slug: "dividend-safety-score-uk-income-investors",
     title: "Dividend safety score: how to tell if a UK dividend stock is truly sustainable",
     description:
