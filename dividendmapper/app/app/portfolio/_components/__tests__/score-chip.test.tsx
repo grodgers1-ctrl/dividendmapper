@@ -10,26 +10,29 @@ describe("<ScoreChip>", () => {
     expect(screen.getByText(/quality/i)).toBeInTheDocument();
   });
 
-  it("uses the deep-green colour for a high buy score", () => {
+  it("uses the deep-green colour as the border for a high buy score", () => {
     render(<ScoreChip type="buy" score={80} />);
+    // Day 8 restyle: colour moved from bg to a 1px border. data-color still
+    // exposes the tone hex so downstream tests can pin it.
     expect(screen.getByTestId("score-chip")).toHaveAttribute("data-color", "#0a8a4f");
   });
 
-  it("renders a charcoal DNQ chip with the reason on hover when score is null", () => {
+  it("renders DNQ as text on a neutral grey outline (no number)", () => {
     render(
       <ScoreChip type="buy" score={null} gateReason="ETF or fund, not company-scored" />,
     );
     const chip = screen.getByTestId("score-chip");
-    expect(chip).toHaveAttribute("data-color", "#27272a");
     expect(screen.getByText("DNQ")).toBeInTheDocument();
+    // The gate-fail tone is neutral grey, NOT the score-coloured border.
+    expect(chip).toHaveAttribute("data-color", "#94a3b8");
     expect(chip).toHaveAttribute("title", "ETF or fund, not company-scored");
     expect(screen.queryByText(/^\d+$/)).not.toBeInTheDocument();
     expect(screen.queryByText(/ETF or fund/)).not.toBeInTheDocument();
   });
 
-  it("shows a β mark when isBeta", () => {
+  it("does NOT render a β superscript even when isBeta", () => {
     render(<ScoreChip type="buy" score={76} isBeta />);
-    expect(screen.getByText("β")).toBeInTheDocument();
+    expect(screen.queryByText("β")).not.toBeInTheDocument();
   });
 
   it("shows the delta pill when a delta is supplied, and omits it otherwise", () => {

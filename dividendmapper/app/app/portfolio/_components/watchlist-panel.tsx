@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { TickerSearch, type TickerSearchResult } from "@/components/ui/ticker-search";
@@ -142,7 +143,12 @@ export function WatchlistPanel({
               key={row.id}
               className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"
             >
-              <span className="font-mono text-sm font-semibold text-foreground">{row.ticker}</span>
+              <Link
+                href={`/scoring/${row.ticker}`}
+                className="font-mono text-sm font-semibold text-foreground hover:underline"
+              >
+                {row.ticker}
+              </Link>
               <div className="flex flex-1 flex-wrap items-center justify-end gap-1.5">
                 {row.scored ? (
                   (["buy", "trim", "risk"] as ScoreType[]).map((type) => (
