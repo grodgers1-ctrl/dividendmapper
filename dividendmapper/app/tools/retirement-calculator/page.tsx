@@ -92,13 +92,13 @@ export default function RetirementCalculatorPage() {
           </p>
           <p>
             <Link
-              href="/blog/why-headline-yield-can-be-misleading"
+              href="/blog/dividend-income-retirement-tax-planning-uk-investors"
               className="font-medium text-brand-600 transition-colors hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
             >
-              Why Headline Yield Can Be Misleading
+              Dividend Income in Retirement: Tax and Planning for UK Investors
             </Link>
-            {" "}if you want the income target to be built on a payout that is more
-            likely to hold up.
+            {" "}if you want to turn the calculator&apos;s gross income output into a more
+            realistic after-tax retirement plan.
           </p>
           <p>
             <Link
