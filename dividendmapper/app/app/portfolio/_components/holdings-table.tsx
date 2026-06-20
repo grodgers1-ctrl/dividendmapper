@@ -20,6 +20,7 @@ import {
 import { ScoreChip } from "./score-chip";
 import { ScoreDrawer } from "./score-drawer";
 import { UpgradePill } from "./upgrade-pill";
+import { SortSelect } from "@/app/app/_components/SortSelect";
 
 type HoldingRow = {
   id: string;
@@ -407,22 +408,19 @@ export function HoldingsTable({
       <div className="mb-3 flex items-center justify-end gap-2">
         <label
           htmlFor="holdings-sort"
-          className="text-xs font-medium uppercase tracking-wider text-muted-foreground"
+          className="text-[12px] font-medium leading-[16px] text-muted-foreground"
         >
           Sort
         </label>
-        <select
+        <SortSelect
           id="holdings-sort"
           value={sortKey}
-          onChange={(e) => changeSort(e.target.value as SortKey)}
-          className="rounded-md border border-border bg-card px-2 py-1 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-        >
-          {(Object.keys(SORT_LABELS) as SortKey[]).map((k) => (
-            <option key={k} value={k}>
-              {SORT_LABELS[k]}
-            </option>
-          ))}
-        </select>
+          onChange={(v) => changeSort(v as SortKey)}
+          options={(Object.keys(SORT_LABELS) as SortKey[]).map((k) => ({
+            value: k,
+            label: SORT_LABELS[k],
+          }))}
+        />
       </div>
 
       {/* Desktop / tablet — full table */}
@@ -430,7 +428,7 @@ export function HoldingsTable({
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="border-b border-border bg-secondary/40">
-              <tr className="text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              <tr className="text-left text-[12px] font-medium leading-[16px] text-muted-foreground">
                 <th scope="col" className="px-4 py-3">
                   Ticker
                 </th>

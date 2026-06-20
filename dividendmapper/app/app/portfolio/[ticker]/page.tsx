@@ -13,6 +13,10 @@ import { PositionCard } from "./_components/PositionCard";
 import { IncomeCard } from "./_components/IncomeCard";
 import { ResilienceCard } from "./_components/ResilienceCard";
 import { HoldingPagerNav } from "./_components/HoldingPagerNav";
+import { ScoreHistoryChart } from "./_components/ScoreHistoryChart";
+import { FundamentalsCard } from "./_components/FundamentalsCard";
+import { SignalContributionsList } from "./_components/SignalContributionsList";
+import { DividendHistoryCard } from "./_components/DividendHistoryCard";
 import { UpgradeCard } from "@/app/app/dashboard/_components/UpgradeCard";
 
 export const metadata: Metadata = {
@@ -22,10 +26,10 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-// Day 7 holding detail page. Server component — per
-// [[reference_app_page_auth_guard]] every protected page calls requireUser()
-// itself. 404 logic: if the URL ticker doesn't match a row in the user's
-// holdings (RLS keeps cross-user reads impossible), notFound() is raised.
+// Day 7 + 8 holding detail page. Server component. requireUser() guards;
+// notFound() if the URL ticker isn't in the user's owned set.
+
+const SCORE_HISTORY_DAYS = 30;
 
 export default async function HoldingDetailPage({
   params,
@@ -38,26 +42,94 @@ export default async function HoldingDetailPage({
 
   const user = await requireUser(`/app/portfolio/${ticker}`);
 
-  // Reuse the existing loader rather than duplicate the holding/quote/income
-  // plumbing. It's already optimised (single round-trip for holdings + scoring
-  // dividends + names) and the data shapes match what the cards expect.
   const priced = await loadPricedHoldings(user.id);
 
-  // Find the user's row(s) for this ticker. A user can hold the same ticker
-  // in multiple wrappers (ISA + GIA, say); for the v1 detail page we render
-  // the first row — Phase 4 may surface per-wrapper rows.
   const holding = priced.allHoldings.find((h) => h.ticker === ticker);
   if (!holding) notFound();
 
   const isPro = priced.tier !== "free";
   const beta = isBeta();
 
-  // Score is Pro-only: cheaper not to round-trip the equity_scores +
-  // equity_score_signals query for Free users.
   const supabase = await createSupabaseServerClient();
-  const score = isPro ? await loadScore(supabase, ticker) : null;
 
-  // Per-holding value: quantity × scoring price (en GBP for .L, USD for US).
+  // Pro: score + history + dividend list in parallel. Free: skip score
+  // (cheaper) but still show the user's own dividend history.
+  //
+  // react-hooks/purity flags Date.now() during render. Server components
+  // legitimately re-execute per request — Date.now() is the right primitive
+  // for a per-request "30 days ago" cutoff.
+  // eslint-disable-next-line react-hooks/purity
+  const sinceDate = new Date(Date.now() - SCORE_HISTORY_DAYS * 86_400_000)
+    .toISOString()
+    .slice(0, 10);
+
+  const [score, latestRow, history, userDividends, exDivRow] = await Promise.all([
+    isPro ? loadScore(supabase, ticker) : Promise.resolve(null),
+    supabase
+      .from("equity_score_history")
+      .select(
+        "ticker, observed_at, buy_score, trim_score, risk_score, current_price, current_yield, dividend_per_share, eps_avg, net_debt_to_ebitda, interest_coverage",
+      )
+      .eq("ticker", ticker)
+      .order("observed_at", { ascending: false })
+      .limit(1)
+      .maybeSingle<{
+        ticker: string;
+        observed_at: string;
+        buy_score: number | null;
+        trim_score: number | null;
+        risk_score: number | null;
+        current_price: number | null;
+        current_yield: number | null;
+        dividend_per_share: number | null;
+        eps_avg: number | null;
+        net_debt_to_ebitda: number | null;
+        interest_coverage: number | null;
+      }>(),
+    isPro
+      ? supabase
+          .from("equity_score_history")
+          .select("observed_at, buy_score, trim_score, risk_score")
+          .eq("ticker", ticker)
+          .gte("observed_at", sinceDate)
+          .order("observed_at", { ascending: true })
+          .returns<
+            {
+              observed_at: string;
+              buy_score: number | null;
+              trim_score: number | null;
+              risk_score: number | null;
+            }[]
+          >()
+      : Promise.resolve({ data: [] as never[] }),
+    supabase
+      .from("user_dividends")
+      .select("paid_on, amount, currency, ticker_scoring, wrapper")
+      .eq("ticker_scoring", ticker)
+      .eq("wrapper", holding.wrapper)
+      .order("paid_on", { ascending: false })
+      .limit(24)
+      .returns<
+        {
+          paid_on: string;
+          amount: number;
+          currency: string;
+          ticker_scoring: string;
+          wrapper: string;
+        }[]
+      >(),
+    supabase
+      .from("equity_scores")
+      .select("next_ex_div_date, next_ex_div_amount, next_ex_div_pay_date")
+      .eq("ticker", ticker)
+      .maybeSingle<{
+        next_ex_div_date: string | null;
+        next_ex_div_amount: number | null;
+        next_ex_div_pay_date: string | null;
+      }>(),
+  ]);
+
+  // Per-holding value: quantity × FMP price (display units already converted).
   const valueStatus = resolveRowValue(
     { ticker: holding.ticker, quantity: holding.quantity },
     priced.priceByTicker,
@@ -65,8 +137,6 @@ export default async function HoldingDetailPage({
   const valueAmount = valueStatus.kind === "ok" ? valueStatus.amount : null;
   const valueCurrency = valueStatus.kind === "ok" ? valueStatus.currency : null;
 
-  // Forward annual income: quantity × forward dps (FMP). Quote merges already
-  // happened in loadPricedHoldings, so we just read it back here.
   const quote = priced.quotes.get(holding.ticker);
   const forwardDps = quote?.ok ? quote.data.dividend : null;
   const forwardCurrency = quote?.ok ? quote.data.currency : null;
@@ -75,12 +145,8 @@ export default async function HoldingDetailPage({
       ? Number(holding.quantity) * forwardDps
       : null;
 
-  // TTM real broker-synced income for this (ticker × wrapper).
   const actual = priced.actualsByKey[actualKey(ticker, holding.wrapper)] ?? null;
 
-  // Yield on cost: forward annual ÷ (quantity × avg_cost) × 100. Only when
-  // both numbers share a currency (cost row's currency vs the forward income
-  // currency); otherwise the ratio is meaningless without FX.
   const yieldOnCostPct =
     forwardAnnual !== null &&
     forwardCurrency === holding.cost_currency &&
@@ -88,18 +154,28 @@ export default async function HoldingDetailPage({
       ? (forwardAnnual / (Number(holding.quantity) * holding.avg_cost)) * 100
       : null;
 
-  // Next ex-div + payout calendar: equity_scores carries the FMP-sourced
-  // calendar columns. Query directly here — loadPortfolioAnalytics already
-  // does this for the full portfolio, but pulling one row is trivial.
-  const { data: exDivRow } = await supabase
-    .from("equity_scores")
-    .select("next_ex_div_date, next_ex_div_amount, next_ex_div_pay_date")
-    .eq("ticker", ticker)
-    .maybeSingle<{
-      next_ex_div_date: string | null;
-      next_ex_div_amount: number | null;
-      next_ex_div_pay_date: string | null;
-    }>();
+  // Derive fundamentals from the latest equity_score_history row. P/E and
+  // forward P/E need EPS; FMP-derived columns are nightly. Anything we
+  // don't have yet renders as a — placeholder per FundamentalsCard.
+  const latest = latestRow.data;
+  const pe =
+    latest?.current_price != null && latest.eps_avg && latest.eps_avg > 0
+      ? Number(latest.current_price) / Number(latest.eps_avg)
+      : null;
+
+  const scoreHistorySeries = (history.data ?? []).map((row) => ({
+    date: row.observed_at,
+    buy: row.buy_score,
+    trim: row.trim_score,
+    risk: row.risk_score,
+  }));
+
+  const dividendPayments = (userDividends.data ?? []).map((d) => ({
+    date: d.paid_on,
+    amount: Number(d.amount),
+    currency: d.currency,
+    kind: "actual" as const,
+  }));
 
   // Picker + pager use the distinct alpha-sorted ticker set.
   const allTickers = [...new Set(priced.allHoldings.map((h) => h.ticker))];
@@ -143,8 +219,8 @@ export default async function HoldingDetailPage({
             quantity={Number(holding.quantity)}
             costCurrency={holding.cost_currency}
             wrapper={holding.wrapper}
-            nextExDivDate={exDivRow?.next_ex_div_date ?? null}
-            nextExDivAmount={exDivRow?.next_ex_div_amount ?? null}
+            nextExDivDate={exDivRow.data?.next_ex_div_date ?? null}
+            nextExDivAmount={exDivRow.data?.next_ex_div_amount ?? null}
             frequency={null}
           />
         </div>
@@ -161,6 +237,46 @@ export default async function HoldingDetailPage({
           ) : (
             <UpgradeCard />
           )}
+        </div>
+
+        {/* Pro-only deeper widgets — Free users see only Position + Income +
+            UpgradeCard above and Dividend history below. */}
+        {isPro && (
+          <>
+            <div className="col-span-12">
+              <ScoreHistoryChart series={scoreHistorySeries} />
+            </div>
+            <div className="col-span-12 md:col-span-6">
+              <FundamentalsCard
+                pe={pe}
+                forwardPe={null}
+                payoutRatio={null}
+                netDebtToEbitda={
+                  latest?.net_debt_to_ebitda != null
+                    ? Number(latest.net_debt_to_ebitda)
+                    : null
+                }
+                fcfCoverage={null}
+                currentYield={
+                  latest?.current_yield != null
+                    ? Number(latest.current_yield)
+                    : null
+                }
+                dividendCagr5y={null}
+                sector={null}
+              />
+            </div>
+            <div className="col-span-12 md:col-span-6">
+              <SignalContributionsList
+                signals={score?.signals.buy ?? []}
+                title="Quality signals"
+              />
+            </div>
+          </>
+        )}
+
+        <div className="col-span-12">
+          <DividendHistoryCard payments={dividendPayments} />
         </div>
       </div>
 

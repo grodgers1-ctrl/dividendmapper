@@ -39,14 +39,14 @@ describe("<PageHeader>", () => {
     ).toBeInTheDocument();
   });
 
-  it("does not render a betaPill marker when betaPill is false/unset", () => {
+  it("does not render a betaPill when betaPill is false/unset", () => {
     render(<PageHeader title="Account" />);
-    expect(screen.queryByTestId("page-header-beta-pill")).toBeNull();
+    expect(screen.queryByText(/scoring.*beta/i)).toBeNull();
   });
 
-  it("renders a betaPill placeholder when betaPill is true (Day 7 wires the real <BetaPill>)", () => {
+  it("renders the BetaPill when betaPill is true (Day 8 wired the real <BetaPill>)", () => {
     render(<PageHeader title="Portfolio Manager" betaPill />);
-    expect(screen.getByTestId("page-header-beta-pill")).toBeInTheDocument();
+    expect(screen.getByText(/scoring.*beta/i)).toBeInTheDocument();
   });
 
   it("renders the React-node subtitle if provided (e.g. dynamic ${count} interpolation)", () => {

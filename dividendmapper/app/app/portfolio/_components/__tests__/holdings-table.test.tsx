@@ -259,7 +259,14 @@ describe("<HoldingsTable> sort control", () => {
   it("reorders and persists when the user picks a different sort", async () => {
     const user = userEvent.setup();
     render(<HoldingsTable {...sortProps} />);
-    await user.selectOptions(screen.getByLabelText("Sort"), "ticker");
+    // Day 8 swap: native <select> → base-ui <Select>. The table also has a
+    // "Ticker" column header, so we have to scope the option lookup to the
+    // portal-rendered popup. Wait for the listbox to mount, then pick the
+    // option inside it.
+    await user.click(screen.getByLabelText("Sort"));
+    const listbox = await screen.findByRole("listbox");
+    const ticker = within(listbox).getByText(/Ticker \(A.*Z\)/);
+    await user.click(ticker);
     expect(firstDataRowTicker()).toContain("AAPL");
     expect(window.localStorage.getItem("dm.holdings-sort")).toBe("ticker");
   });

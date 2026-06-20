@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { PageTitleSync } from "./page-title-sync";
+import { BetaPill } from "../shell/BetaPill";
 
 // Server component. Drops a small `<PageTitleSync>` client island so the
 // drawer's <TopBar> can mirror the current page title on soft nav.
@@ -8,7 +9,9 @@ import { PageTitleSync } from "./page-title-sync";
 // muted with max-w-prose so it doesn't stretch to the canvas edge on wide
 // viewports. Actions float right and baseline-align with the subtitle.
 //
-// betaPill toggles a placeholder; Day 7 wires the real <BetaPill> component.
+// betaPill mounts the <BetaPill> client island — Day 8 consolidated the
+// per-chip β superscript into a single shared pill with a methodology
+// popover.
 export function PageHeader({
   title,
   subtitle,
@@ -29,15 +32,7 @@ export function PageHeader({
             <h1 className="font-display text-2xl font-semibold tracking-tight text-[var(--text)] md:text-[32px] md:leading-[40px]">
               {title}
             </h1>
-            {betaPill && (
-              <span
-                data-testid="page-header-beta-pill"
-                aria-hidden
-                className="inline-flex items-center rounded-md bg-[var(--surface-2)] px-2 py-0.5 text-[11px] font-medium text-[var(--text-faint)]"
-              >
-                Scoring · beta
-              </span>
-            )}
+            {betaPill && <BetaPill />}
           </div>
           {subtitle && (
             <p className="mt-2 max-w-prose text-sm leading-relaxed text-[var(--text-muted)]">

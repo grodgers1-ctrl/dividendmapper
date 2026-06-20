@@ -108,6 +108,7 @@ export default async function DashboardPage() {
       <PageHeader
         title="Dashboard"
         subtitle="Your portfolio at a glance"
+        betaPill={isPro}
       />
 
       <div className="grid grid-cols-12 gap-4">
