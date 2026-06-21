@@ -1,0 +1,234 @@
+import { postMetadata } from "@/lib/blog/posts";
+import { PostHeader, PostFooter } from "@/components/blog/post-header";
+import { FaqJsonLd } from "@/components/blog/faq-json-ld";
+
+export const metadata = postMetadata("sharesight-june-2026-uk-tax-settings");
+
+<PostHeader slug="sharesight-june-2026-uk-tax-settings" />
+
+<FaqJsonLd
+  items={[
+    {
+      question: "What did Sharesight change in its June 2026 UK update?",
+      answer:
+        "Sharesight rolled out its first dedicated UK feature with UK-specific tax settings configurable on every UK portfolio. The settings support the UK financial year ending 5 April, GBP base currency, and local-versus-foreign income reporting for tax use.",
+    },
+    {
+      question: "Does Sharesight's new UK setting fix dividend reinvestment for UK holdings?",
+      answer:
+        "No. Sharesight's DRP help still says automatic dividend reinvestment is limited to select ASX and NZX holdings. For international holdings, including UK holdings, manual DRP handling is still required.",
+    },
+    {
+      question: "What should UK dividend investors check after enabling Sharesight's UK tax settings?",
+      answer:
+        "UK investors should verify: the portfolio is set to the UK financial year ending 5 April, the base currency is correct, foreign income appears as expected, the Tasks tab shows no unconfirmed items, and every DRP position that is not ASX or NZX still needs manual verification.",
+    },
+    {
+      question: "Is Sharesight's tax-year setting the same as income planning?",
+      answer:
+        "No. A clean tax report tells you what happened in the past year. It does not tell you whether your portfolio is producing enough income across ISA, SIPP and GIA to support your retirement plan. Those are related but different questions.",
+    },
+    {
+      question: "Does the new UK setting mean Sharesight now handles UK dividends automatically?",
+      answer:
+        "The setting improves tax-year framing and reporting context for UK investors. It does not create automatic handling of UK dividend reinvestment, wrapper-level income planning, or the gap between recorded dividends and spendable retirement income.",
+    },
+  ]}
+/>
+
+> ⚠️ **Financial disclaimer:** This article is for information only. It is not personal tax advice, investment advice, or a recommendation to use any specific platform. Tax reporting, dividend reinvestment and wrapper decisions depend on your own circumstances. Check the platform's current documentation and, if needed, speak to a qualified adviser.
+
+Sharesight made a genuinely relevant UK update on 16 June 2026. It said it had rolled out its **first dedicated UK feature** with **UK specific tax settings** configurable on every UK portfolio.
+
+That is useful. It is also easy to overread.
+
+If you are a UK dividend investor, the update probably improves tax-year handling and reporting context. It does **not** mean your tracker suddenly understands every awkward part of UK dividend income. The gap between "better tax settings" and "clean dividend-income visibility" is still wider than most product updates admit.
+
+---
+
+## 1. What changed in Sharesight's June 2026 update
+
+Sharesight's June 2026 product update is pretty specific. It says the company rolled out **UK specific tax settings** and that they are configurable on every UK portfolio.
+
+That matters because the UK tax year is not a calendar-year problem. If a tracker is built around generic reporting assumptions, a UK investor ends up doing mental translation the whole time.
+
+Sharesight's own UK tax-reporting page already says UK portfolios can be set to:
+
+- the **UK financial year ending 5 April**
+- **GBP** as the base currency
+- local-versus-foreign income reporting for tax use
+
+That is the right direction. If you hold UK and overseas dividend stocks in the same tracker, those defaults are not cosmetic. They affect how easy it is to reconcile your year, your income records and your accountant conversation.
+
+---
+
+## 2. Why this is useful for UK dividend investors
+
+A lot of portfolio tools are good at performance and weak at UK context.
+
+That is fine if you only want to know whether your portfolio is up 8% or down 4%. It is less fine if you are trying to answer practical questions like:
+
+- what landed in this tax year rather than the calendar year
+- which dividends were UK income and which were foreign income
+- whether your records match what actually happened across your ISA, SIPP and GIA
+
+This is where the new setting helps. It reduces friction around the basic reporting frame.
+
+If you already use Sharesight, you should want this. It is an improvement, not marketing fluff.
+
+---
+
+## 3. What the update does **not** solve on its own
+
+This is the part that matters more.
+
+A UK tax setting is a reporting improvement. It is not the same thing as complete UK dividend-tracking accuracy, and it is definitely not the same thing as income planning.
+
+Three gaps still matter.
+
+### First: dividend reinvestment is still easy to get wrong
+
+Sharesight's DRP help is blunt about this. Automatic DRP is limited to **select ASX and NZX holdings** where the relevant DRP data exists.
+
+For **international holdings**, including UK holdings, the help docs say you still need to use **manual DRP**.
+
+That is not a minor footnote. It changes whether your holding quantity and cost base stay correct.
+
+If you assumed the new UK tax settings also meant "UK dividend reinvestment is now handled automatically", you would be wrong.
+
+And if your DRP records are wrong, the downstream reports look tidy while the underlying position is wrong. That is worse than having no automation at all because it feels finished.
+
+### Second: wrapper context still matters more than one tax setting
+
+A GIA, an ISA and a SIPP do not mean the same thing just because the dividend came from the same company.
+
+A tracker can get the tax-year boundary right and still leave you doing the real thinking yourself:
+
+- what belongs in the ISA versus the GIA
+- whether your taxable dividend income is creeping into an awkward range outside wrappers
+- whether your retirement-income plan relies too heavily on one account type
+
+That is not a criticism of Sharesight specifically. It is just a different job.
+
+### Third: tax reporting is not income planning
+
+A clean tax report helps you understand what happened. It does not tell you whether your portfolio is producing enough income for the life you are trying to fund.
+
+Those are different questions.
+
+If you want to know your tax-year dividend totals, foreign-income split and trade history, a reporting tool is useful.
+
+If you want to know whether your portfolio can produce the income you need across ISA, SIPP and GIA over time, you need an income-first view instead.
+
+---
+
+## 4. The DRP detail most UK readers will miss
+
+This is the part I would check first after reading the update.
+
+Sharesight says all international holdings use **manual DRP**. It also says auto DRP can only be applied to **unconfirmed system-generated dividends** and that getting the setup right matters because otherwise your **holding quantity** and **cost base** will be inaccurate.
+
+That creates a simple rule for UK readers.
+
+If you hold UK dividend stocks and reinvest those payouts, do not assume the new UK setting has removed the manual reconciliation step. It has not.
+
+The practical risk is obvious:
+
+1. you enable the UK tax setting
+2. the portfolio looks more UK aware
+3. you assume reinvested dividends are now handled in a UK-native way
+4. months later, you discover that the share count or cost base is off because the reinvestment still needed manual confirmation
+
+For a buy-and-hold investor who uses DRIP over years, that error compounds quietly.
+
+---
+
+## 5. A five-minute check after enabling the new setting
+
+If you already use Sharesight, this is the sensible post-update checklist.
+
+### 1) Check the tax-year frame
+
+Make sure the portfolio is actually set to the **UK financial year ending 5 April**. Do not assume the setting was applied globally just because the feature exists.
+
+### 2) Check the base currency
+
+If the portfolio should be GBP, confirm that it is. Mixed-currency portfolios get messy quickly when the base setup is wrong.
+
+### 3) Check how foreign income is appearing
+
+Look at whether US or other overseas dividends are being separated in the way you expect. The UK tax-reporting page makes this part of the sales case, so it is worth verifying with real holdings.
+
+### 4) Check the Tasks tab for unconfirmed items
+
+The June product update also mentions a new notification badge on the Tasks tab. That is useful only if you actually clear the items that need confirmation.
+
+### 5) Check every DRP position that is not ASX or NZX
+
+This is the big one. If the holding is UK, US or otherwise international, treat DRP as a manual verification job unless Sharesight's own help explicitly says otherwise.
+
+---
+
+## 6. Where Sharesight is strong, and where the question changes
+
+Sharesight is strongest when the problem is broad portfolio administration:
+
+- consolidating brokers
+- tracking dividends and trades in one place
+- producing reports you can use at tax time
+- seeing the portfolio-level picture rather than just one broker statement at a time
+
+That is real value.
+
+But UK dividend investors often hit a second question after that:
+
+**"Fine, but what income does this portfolio actually produce across my wrappers, and what does that mean for my plan?"**
+
+That is where the framing changes.
+
+A tax report tells you what happened.
+An income-first tool helps you decide what the portfolio is doing for you.
+
+Those are connected, but they are not interchangeable.
+
+For the broader comparison, see [Sharesight vs DividendMapper: what UK income investors actually need](/blog/sharesight-vs-dividendmapper-uk-income-investors).
+
+For the bigger question of what a dividend tracker should actually help you see, see [what is a dividend tracker, and does every UK income investor need one?](/blog/dividend-tracker-guide-uk-income-investors).
+
+---
+
+## 7. Where DividendMapper fits without pretending it replaces anything
+
+DividendMapper is not a broker and it is not a general portfolio admin tool.
+
+The live product pitch is narrower and, for UK income investors, more useful than that: UK wrappers, dividend-income context and retirement-income modelling in one place, with the calculators staying in the browser.
+
+That does not make Sharesight obsolete. It means the tools start from different questions.
+
+Sharesight asks: how do you consolidate and report the portfolio cleanly?
+
+DividendMapper asks: what income is this portfolio producing across ISA, SIPP and GIA, and how close does that get you to the number you actually need?
+
+If you already use Sharesight, the June UK update makes it a better fit for UK reporting than it was a week ago.
+
+It still does not remove the need to check DRP accuracy, wrapper context or the gap between recorded dividends and spendable retirement income.
+
+---
+
+## 8. The practical takeaway
+
+Sharesight's UK tax settings are a good update.
+
+They are also the kind of update that can trick readers into thinking one setting solves a whole category of problems.
+
+It does not.
+
+If you are a UK dividend investor, the smart read is:
+
+- **good** — the portfolio can now be framed around UK tax-year logic more cleanly
+- **still check** — DRP handling on UK and other international holdings
+- **still separate** — tax reporting from wrapper-level income planning
+
+That is the honest version.
+
+<PostFooter />

@@ -98,6 +98,16 @@ export const POSTS: BlogPost[] = [
     locale: "uk",
   },
   {
+    slug: "sharesight-june-2026-uk-tax-settings",
+    title: "Sharesight added UK tax settings. Here's what UK dividend investors should still check.",
+    description:
+      "Sharesight's June 2026 update adds UK-specific tax settings. Useful move. But UK dividend investors still need to verify DRP handling, wrapper context, and what a tax report does not tell you.",
+    publishedAt: "2026-06-20",
+    readingTime: "9 min",
+    tags: ["UK", "Sharesight", "Tax"],
+    locale: "uk",
+  },
+  {
     slug: "sharesight-vs-dividendmapper-uk-income-investors",
     title: "Sharesight vs DividendMapper: what UK income investors actually need",
     description:
