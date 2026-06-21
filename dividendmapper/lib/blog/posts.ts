@@ -170,6 +170,17 @@ export const POSTS: BlogPost[] = [
     tags: ["UK", "Fees", "Platform"],
     locale: "uk",
   },
+  {
+    slug: "sharesight-ai-importer-uk-dividend-investors",
+    title:
+      "Sharesight's AI importer makes setup easier. UK dividend investors should still check these 4 things.",
+    description:
+      "Sharesight's June 2026 AI importer removes a lot of setup friction. Useful move. But UK dividend investors still need to check wrapper context, dividend confirmation, DRP handling and the gap between tracking and income planning.",
+    publishedAt: "2026-06-20",
+    readingTime: "10 min",
+    tags: ["UK", "Sharesight", "Comparison"],
+    locale: "uk",
+  },
 ];
 
 /** Looks up a post by slug. Throws if not found — fail loudly during build. */

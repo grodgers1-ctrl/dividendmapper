@@ -1,0 +1,240 @@
+import { postMetadata } from "@/lib/blog/posts";
+import { PostHeader, PostFooter } from "@/components/blog/post-header";
+import { FaqJsonLd } from "@/components/blog/faq-json-ld";
+
+export const metadata = postMetadata("sharesight-ai-importer-uk-dividend-investors");
+
+<PostHeader slug="sharesight-ai-importer-uk-dividend-investors" />
+
+<FaqJsonLd
+  items={[
+    {
+      question: "What is Sharesight's AI file importer?",
+      answer:
+        "Sharesight's June 2026 AI file importer reads trade history and opening balances from broker spreadsheets, PDFs, screenshots, and images without requiring manual reformatting into Sharesight's standard CSV shape. It is one of four import methods alongside direct broker API connections, email-forwarded trade confirmations, and standard spreadsheet upload.",
+    },
+    {
+      question: "Does the AI importer remove the need to check imported trades?",
+      answer:
+        "No. Sharesight explicitly says the AI interprets data and that users should review imported trades carefully before confirming because occasional AI errors are possible. A faster import path gets you to a plausible starting point faster, but it does not make the record automatically correct.",
+    },
+    {
+      question: "Does the AI importer solve dividend confirmation or DRP handling for UK holdings?",
+      answer:
+        "No. Sharesight's own DRP help still says automatic DRP is only available for select ASX and NZX holdings. For international holdings, including UK holdings, investors still need manual DRP handling. The importer only solves getting trade data in, not dividend confirmation or dividend reinvestment tracking for UK stocks.",
+    },
+    {
+      question: "Is the AI importer useful for UK dividend investors?",
+      answer:
+        "Yes, for the right problem. It removes setup friction for investors with messy broker files, unsupported formats, or old trades. But it does not change the separate jobs that still matter: reviewing imported data, confirming dividends, checking DRP positions on international holdings, and understanding the wrapper-by-wrapper income picture separately from broad portfolio tracking.",
+    },
+  ]}
+/>
+
+> **Financial disclaimer:** This article is for information only. It is not personal tax advice, investment advice, or a recommendation to use any specific platform. Portfolio tracking, dividend reinvestment and wrapper decisions depend on your own circumstances. Check the platform's current documentation and, if needed, speak to a qualified adviser.
+
+Sharesight published a useful product update on 10 June 2026.
+
+It added an **AI file importer** that can read trade history and opening balances from almost any file type. Broker spreadsheet in the wrong format? PDF contract note? Screenshot of old trades? The pitch is that you can upload it without first cleaning the file into Sharesight's standard CSV shape.
+
+That is genuinely helpful.
+
+It also solves a narrower problem than some readers will assume.
+
+If you are a UK dividend investor, easier setup is good. But easier setup is not the same thing as having a clean dividend-income picture, and it definitely is not the same thing as knowing what your ISA, SIPP and GIA are doing for your long-term plan.
+
+## 1. What changed in Sharesight's June 2026 update
+
+Sharesight now says it offers **four** ways to get trades into the platform:
+
+1. direct broker connection by API
+2. email-forwarded trade confirmations
+3. spreadsheet upload
+4. the new **AI file importer**
+
+The new part is not just another CSV path. Sharesight says the importer can interpret **broker spreadsheets in almost any format**, plus **PDFs, screenshots and images**, and use them to bring in trades and opening balances.
+
+If you have ever tried to set up a tracker after years of investing, you can see the appeal immediately.
+
+The setup problem is usually not the idea of tracking. It is the mess.
+
+Different brokers export different files. Old statements are buried in downloads folders. Some trades are easy to recover. Others live in PDFs you never want to touch again. If the AI importer removes two hours of file-cleanup friction, that matters.
+
+## 2. Why this is genuinely useful
+
+This is one of those features where the practical value is obvious.
+
+A lot of investors never finish setting up a portfolio tool because the first week feels like admin punishment. That is especially true if you moved brokers, built the portfolio gradually, or have old holdings that pre-date your neat digital records.
+
+The AI importer helps in three obvious ways.
+
+### It reduces format pain
+
+The standard importer only works if the file already fits the required shape.
+
+The AI importer is meant for the opposite case: the file exists, but the format is awkward.
+
+### It helps with historical setup
+
+Opening balances and old trades are where a lot of setup jobs die. If the new importer handles those more cleanly, it removes the worst part of the onboarding job.
+
+### It makes unsupported-broker cleanup less annoying
+
+Not every broker connection is direct. Not every export is friendly. A tool that can read the ugly files is useful even if you only use it once.
+
+That is the honest read: it is a convenience feature, but a meaningful one.
+
+## 3. What it still does not solve
+
+This is the part that matters more.
+
+Sharesight also says the importer uses AI to **interpret** data, and that users should **review imported trades carefully before confirming** because occasional errors are possible.
+
+That is not a legal footnote. It is the whole point.
+
+A smoother import path gets you to a plausible starting point faster. It does not magically make the record right.
+
+And even a perfect trade import still leaves three separate jobs on your side.
+
+### First: import is not reconciliation
+
+If the importer reads a trade incorrectly, your starting position is wrong.
+
+That means any later performance, dividend or cost-base output is also wrong. Faster setup is good. Blind trust is not.
+
+### Second: trade history is not the same thing as dividend history
+
+Imported buys and sells help establish the portfolio. They do not remove the need to check what happened with dividends after that.
+
+Sharesight's own dividend-tracker material still tells users to confirm dividend payments. That means easier onboarding does not erase the operational need to review the income side of the record.
+
+### Third: broad tracking is still a different job from income planning
+
+A tracker can tell you what happened in the portfolio.
+
+That is useful.
+
+It still does not answer the narrower question many UK income investors eventually care about: **what income does this portfolio actually produce across ISA, SIPP and GIA, and what does that mean for the plan?**
+
+That is a different workflow.
+
+## 4. The UK detail most readers should not miss: DRP still needs checking
+
+This is the bit I would be most careful about after reading the update.
+
+Sharesight's DRP help still says automatic DRP is only available for select **ASX and NZX** holdings. For **international holdings**, including UK holdings, investors still need **manual DRP** handling.
+
+That matters because the importer only solves the front-door problem: getting trade data in.
+
+It does **not** mean dividend reinvestments on UK holdings are suddenly being inferred perfectly in the background.
+
+Sharesight is explicit about this. If a reinvested dividend is not reflected correctly, the **holding quantity** and **cost base** can be inaccurate.
+
+For a UK dividend investor, that creates a simple rule.
+
+If you use the AI importer, treat it as a faster setup tool. Do **not** treat it as proof that every dividend reinvestment position is now correct.
+
+That is especially true if:
+
+- you reinvest dividends regularly
+- you hold the same income names for years
+- you moved brokers or imported from older statements
+- you care about the wrapper-by-wrapper income picture, not just the headline portfolio value
+
+A tracker that starts cleanly but drifts on DRP is still a problem.
+
+## 5. A five-point post-import check for UK dividend investors
+
+If you use the new importer, this is the sensible five-minute follow-up.
+
+### 1) Check that the imported trades actually match reality
+
+Sharesight itself says to review imported trades before confirming.
+
+So do that.
+
+Pick a few holdings you know well. Check the quantity, average cost and the rough trade timeline against your broker history. If the easy ones are wrong, stop there and fix the base layer first.
+
+### 2) Check the UK tax-year and base-currency setup
+
+Sharesight's UK positioning is still useful here. It supports the UK tax year and GBP base-currency handling.
+
+Make sure the portfolio is actually configured the way you think it is. A smart import is still sitting on top of settings that can be wrong.
+
+### 3) Check that dividend records are being confirmed, not just assumed
+
+An imported trade history is not a finished dividend workflow.
+
+Look at how dividend entries are showing up. If the tool is asking you to confirm items, do not leave the orange-badge admin pile to rot for three months and then pretend the income picture is settled.
+
+### 4) Check every DRP position that sits outside ASX or NZX
+
+This is the big one.
+
+If you hold UK or US dividend stocks and reinvest the cash, assume you still need to verify the DRP handling manually unless Sharesight's own help says otherwise.
+
+That is not anti-Sharesight. It is just what the product documentation says.
+
+### 5) Ask the separate question the importer does not answer
+
+Once the portfolio is in, ask what you actually wanted to know.
+
+Was the goal just to track the holdings more cleanly?
+
+Or was the goal to understand:
+
+- what your ISA income looks like versus your GIA income
+- how much of the total portfolio income is actually taxable
+- what the portfolio could throw off by retirement
+- whether the current setup is moving you toward the income number you care about
+
+Import does not answer that on its own.
+
+## 6. Where DividendMapper fits without pretending it replaces anything
+
+Sharesight and DividendMapper are not trying to do the same job.
+
+Sharesight is strong when the problem is broad portfolio administration: trade history, holdings, reports, multi-broker tracking, and a general performance view.
+
+DividendMapper starts from a narrower question.
+
+It is built around the wrapper-aware income problem: ISA, SIPP and GIA treatment, dividend-focused projections, and a retirement calculator that stays in the browser rather than asking you to hand over your numbers to a server-side dashboard.
+
+That is why the sensible framing is additive, not adversarial.
+
+If you want the broader comparison, see [Sharesight vs DividendMapper: what UK income investors actually need](/blog/sharesight-vs-dividendmapper-uk-income-investors).
+
+If you want the bigger question of what a dividend tracker should actually help you see, see [what is a dividend tracker, and does every UK income investor need one?](/blog/dividend-tracker-guide-uk-income-investors).
+
+If you want the workflow question after setup, see [portfolio tracking for dividend income: a UK investor's practical guide](/blog/portfolio-tracking-dividend-income-uk-investors).
+
+And if the real question is retirement income rather than portfolio admin, the live [retirement calculator](/tools/retirement-calculator) shows the DividendMapper angle more clearly than another generic platform comparison ever could.
+
+## 7. The practical takeaway
+
+Sharesight's AI importer looks like a good feature.
+
+It removes a real setup pain.
+
+That is worth saying clearly.
+
+It also does not change the parts of the job that UK dividend investors still have to care about:
+
+- imported data still needs review
+- dividend confirmation still matters
+- DRP on international holdings still needs manual attention
+- wrapper-aware income planning is still a separate question from broad portfolio tracking
+
+That is the honest version.
+
+Useful update. Narrower promise than the headline might suggest.
+
+## Related guides
+
+- The [Sharesight vs DividendMapper comparison](/blog/sharesight-vs-dividendmapper-uk-income-investors) explains the difference between broad portfolio tracking and income-first planning.
+- The [dividend tracker guide](/blog/dividend-tracker-guide-uk-income-investors) covers what a dividend tracker should actually help you see.
+- [Portfolio tracking for dividend income](/blog/portfolio-tracking-dividend-income-uk-investors) covers the practical post-setup workflow.
+- The [UK dividend tax guide](/blog/uk-dividend-tax-guide) helps with wrapper and tax-year checks.
+- Use the [retirement calculator](/tools/retirement-calculator) to see what wrapper-aware income planning looks like after setup.
+
+<PostFooter slug="sharesight-ai-importer-uk-dividend-investors" />
