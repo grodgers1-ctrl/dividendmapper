@@ -181,6 +181,17 @@ export const POSTS: BlogPost[] = [
     tags: ["UK", "Sharesight", "Comparison"],
     locale: "uk",
   },
+  {
+    slug: "hmrc-june-2026-isa-update-dividend-investors",
+    title:
+      "HMRC's June ISA update is niche. If you hold dividend shares, these are the 4 bits worth caring about.",
+    description:
+      "HMRC's June 2026 ISA newsletter confirms cETNs move to IFISAs for new money and LTAFs qualify for stocks and shares ISAs. The bigger lesson for UK dividend investors: wrapper boundaries are real, they move, and knowing the split between grandfathered and open positions matters more than the niche assets themselves.",
+    publishedAt: "2026-06-19",
+    readingTime: "8 min",
+    tags: ["UK", "HMRC", "ISA", "Tax"],
+    locale: "uk",
+  },
 ];
 
 /** Looks up a post by slug. Throws if not found — fail loudly during build. */
