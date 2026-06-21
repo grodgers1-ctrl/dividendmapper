@@ -7,6 +7,7 @@ import { loadPricedHoldings } from "@/lib/portfolio/load-priced-holdings";
 import { loadPortfolioAnalytics } from "@/lib/scoring/load-portfolio-analytics";
 import { loadUserPreferences } from "@/lib/scoring/preferences";
 import { buildQuadrant } from "@/lib/scoring/quadrant";
+import { PageHeader } from "../../_components/page-header/page-header";
 import { HoldingsTable } from "../_components/holdings-table";
 import { PortfolioInsights } from "../_components/portfolio-insights";
 import { ReinvestCard } from "../_components/reinvest-card";
@@ -66,20 +67,14 @@ export default async function PortfolioManagerPage(props: {
   return (
     <div className="mx-auto max-w-7xl px-4 py-12 md:px-6 md:py-16">
       <FirstVisitWizard initial={prefs} autoOpen={!hasAnsweredWizard} />
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="font-display text-3xl font-bold tracking-tight text-foreground md:text-4xl">
-            Portfolio Manager
-          </h1>
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-            Quality, Trim and Risk across your holdings. Signals are a resilience
-            check, not a buy recommendation. Not financial advice.
-          </p>
-        </div>
-        <RefreshScoresButton />
-      </div>
+      <PageHeader
+        title="Portfolio Manager"
+        subtitle="Quality, Trim and Risk across your holdings. Signals are a resilience check, not a buy recommendation. Not financial advice."
+        actions={<RefreshScoresButton />}
+        betaPill
+      />
 
-      <div className="mt-8 space-y-6">
+      <div className="space-y-6">
         {visibleRows.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border bg-card p-10 text-center">
             <p className="font-display text-base font-semibold text-foreground">

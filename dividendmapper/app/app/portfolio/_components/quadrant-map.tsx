@@ -17,6 +17,96 @@ import { ScoreDrawer } from "./score-drawer";
 
 const QUADRANT_ORDER: Quadrant[] = ["core", "watch", "stable", "review"];
 
+// Brand accent #4: graticule layer behind the scatter. Minor lines at every
+// 10% (excluding the 25/50/75 ticks that get bolder treatment) keep the eye
+// honest about position; bolder lines + tick labels at 25/50/75/100 anchor
+// the chart for quick reading on the dashboard's compact snapshot card.
+const MINOR_TICKS = [10, 20, 30, 40, 60, 70, 80, 90] as const;
+const BOLD_TICKS = [25, 50, 75] as const;
+const AXIS_LABEL_TICKS = [25, 50, 75, 100] as const;
+
+function Graticule() {
+  return (
+    <svg
+      data-testid="quadrant-graticule"
+      aria-hidden
+      viewBox="0 0 100 100"
+      preserveAspectRatio="none"
+      className="pointer-events-none absolute inset-0 -z-[1] h-full w-full"
+    >
+      {MINOR_TICKS.map((t) => (
+        <Fragment key={`minor-${t}`}>
+          <line
+            x1={t}
+            y1={0}
+            x2={t}
+            y2={100}
+            stroke="var(--border-subtle)"
+            strokeWidth="0.5"
+          />
+          <line
+            x1={0}
+            y1={t}
+            x2={100}
+            y2={t}
+            stroke="var(--border-subtle)"
+            strokeWidth="0.5"
+          />
+        </Fragment>
+      ))}
+      {BOLD_TICKS.map((t) => (
+        <Fragment key={`bold-${t}`}>
+          <line
+            x1={t}
+            y1={0}
+            x2={t}
+            y2={100}
+            stroke="var(--border)"
+            strokeWidth="1"
+          />
+          <line
+            x1={0}
+            y1={t}
+            x2={100}
+            y2={t}
+            stroke="var(--border)"
+            strokeWidth="1"
+          />
+        </Fragment>
+      ))}
+    </svg>
+  );
+}
+
+function AxisLabels() {
+  return (
+    <>
+      {AXIS_LABEL_TICKS.map((t) => (
+        <span
+          key={`xlabel-${t}`}
+          data-testid="quadrant-axis-label"
+          aria-hidden
+          className="pointer-events-none absolute font-mono text-[10px] leading-[14px] tracking-wide text-[var(--text-faint)]"
+          style={{ left: `${t}%`, bottom: 0, transform: "translate(-50%, 100%)" }}
+        >
+          {t}
+        </span>
+      ))}
+      {AXIS_LABEL_TICKS.map((t) => (
+        <span
+          key={`ylabel-${t}`}
+          data-testid="quadrant-axis-label"
+          aria-hidden
+          className="pointer-events-none absolute font-mono text-[10px] leading-[14px] tracking-wide text-[var(--text-faint)]"
+          style={{ bottom: `${t}%`, left: 0, transform: "translate(-100%, 50%)" }}
+        >
+          {t}
+        </span>
+      ))}
+    </>
+  );
+}
+
 function dotClass(trimElevated: boolean): string {
   return trimElevated
     ? "bg-amber-500/80 ring-amber-600"
@@ -55,28 +145,45 @@ export function QuadrantMap({
   points,
   excluded,
   isBeta,
+  compact = false,
 }: {
   points: QuadrantPoint[];
   excluded: ExcludedHolding[];
   isBeta: boolean;
+  /**
+   * Compact mode (dashboard QuadrantSnapshotCard): drops the section header
+   * and tightens padding so the parent card supplies the surround.
+   */
+  compact?: boolean;
 }) {
   const [openTicker, setOpenTicker] = useState<string | null>(null);
   const edges = useMemo(() => buildEdges(points), [points]);
 
+  const sectionPadding = compact
+    ? "p-2"
+    : "rounded-xl border border-border bg-card p-4 md:p-6";
+  const labelClass = compact
+    ? "pointer-events-none absolute translate-y-1/2 whitespace-nowrap rounded bg-background/70 px-0.5 font-mono text-[10px] font-medium text-foreground"
+    : "pointer-events-none absolute translate-y-1/2 whitespace-nowrap rounded bg-background/70 px-0.5 font-mono text-[11px] font-medium text-foreground";
+
   return (
     <section
       aria-label="Quality and risk map"
-      className="rounded-xl border border-border bg-card p-4 md:p-6"
+      data-quadrant-root
+      data-compact={compact ? "true" : "false"}
+      className={sectionPadding}
     >
-      <header className="mb-4">
-        <h2 className="font-display text-lg font-semibold text-foreground">
-          Quality and risk map
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Each holding placed by Quality and Risk. Bubble size reflects its share
-          of your portfolio. Amber marks an elevated Trim signal. Not financial advice.
-        </p>
-      </header>
+      {!compact && (
+        <header className="mb-4">
+          <h2 className="font-display text-lg font-semibold text-foreground">
+            Quality and risk map
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Each holding placed by Quality and Risk. Bubble size reflects its share
+            of your portfolio. Amber marks an elevated Trim signal. Not financial advice.
+          </p>
+        </header>
+      )}
 
       {points.length === 0 ? (
         <div className="rounded-lg border border-dashed border-border bg-background p-8 text-center">
@@ -104,6 +211,8 @@ export function QuadrantMap({
                   intensity="subtle"
                   className="absolute inset-0 -z-10 h-full w-full opacity-70"
                 />
+                <Graticule />
+                <AxisLabels />
                 {/* quadrant divider lines */}
                 <div className="absolute inset-x-0 top-1/2 h-px bg-border" aria-hidden />
                 <div className="absolute inset-y-0 left-1/2 w-px bg-border" aria-hidden />
@@ -158,7 +267,7 @@ export function QuadrantMap({
                     />
                     <span
                       aria-hidden
-                      className="pointer-events-none absolute translate-y-1/2 whitespace-nowrap rounded bg-background/70 px-0.5 font-mono text-[11px] font-medium text-foreground"
+                      className={labelClass}
                       style={{
                         left: `${p.x}%`,
                         bottom: `${p.y}%`,

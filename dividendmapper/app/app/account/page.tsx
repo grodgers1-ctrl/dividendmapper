@@ -5,6 +5,7 @@ import { requireUser } from "@/lib/auth/server";
 import { isPricingPublic } from "@/lib/flags/pricing";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { loadUserPreferences } from "@/lib/scoring/preferences";
+import { PageHeader } from "../_components/page-header/page-header";
 import { DeleteAccount } from "./_components/delete-account";
 import { FoundingCodeCard } from "./_components/founding-code-card";
 import { WelcomeRefresh } from "./_components/welcome-refresh";
@@ -132,9 +133,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-12 md:px-6 md:py-24">
-      <h1 className="font-display text-3xl font-bold tracking-tight text-foreground md:text-4xl">
-        Account
-      </h1>
+      <PageHeader title="Account" />
 
       {showWelcome && (
         <>

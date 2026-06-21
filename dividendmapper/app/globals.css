@@ -4,6 +4,13 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Tabular numerals utility — apply to any element rendering financial figures
+   in a non-mono font (e.g. hero income count-up). Mono spans already get
+   tabular-nums via .font-mono in @layer base. */
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+
 /* ──────────────────────────────────────────────────────────────────────────
    DividendMapper brand tokens — Tailwind v4 @theme
    Brand spec: planning/brand/01-colour-palette.md
@@ -125,14 +132,35 @@
   --chart-4: #DB2777;          /* pink-600 */
   --chart-5: #D97706;          /* amber-600 */
 
-  --sidebar: #FFFFFF;
-  --sidebar-foreground: #0F172A;
+  /* App-shell redesign tokens (light) — additive on Day 1, consumed Day 2+.
+     Relationships matter more than exact hex; see plan §Visual design system. */
+  --canvas: #F7F8FA;
+  --surface: #FFFFFF;
+  --surface-2: #F3F5F9;
+  --border-subtle: #E5E8EE;
+  --text: #0E1422;
+  --text-muted: #5A6577;
+  --text-faint: #8A93A6;
+  --brand: #0EA874;
+  --brand-soft: rgba(14, 168, 116, 0.12);
+
+  /* Card elevation — drawn in light mode only; .dark replaces it with an
+     inset-highlight pair (chiselled look, no glow). Consumed by Day 8 card
+     surface pass. */
+  --card-shadow:
+    0 1px 3px rgba(15, 23, 42, 0.06),
+    0 1px 2px rgba(15, 23, 42, 0.04);
+
+  /* Re-point sidebar tokens at the new surface tokens. Drawer-ready, no
+     visible delta in light mode (existing values were near-identical). */
+  --sidebar: var(--surface);
+  --sidebar-foreground: var(--text);
   --sidebar-primary: #059669;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #F1F5F9;
-  --sidebar-accent-foreground: #0F172A;
-  --sidebar-border: #E2E8F0;
-  --sidebar-ring: #0EA874;
+  --sidebar-accent: var(--surface-2);
+  --sidebar-accent-foreground: var(--text);
+  --sidebar-border: var(--border-subtle);
+  --sidebar-ring: var(--brand);
 
   /* Topography motif — subtle slate-emerald mesh on white surfaces */
   --mesh: rgba(14, 168, 116, 0.18);
@@ -183,13 +211,32 @@
   --chart-4: #F472B6;
   --chart-5: #FBBF24;
 
-  --sidebar: #0F172A;
-  --sidebar-foreground: #F8FAFC;
+  /* App-shell redesign tokens (dark). */
+  --canvas: #0A0F1A;
+  --surface: #0F1626;
+  --surface-2: #141C30;
+  --border-subtle: #1F2944;
+  --text: #E6E9F0;
+  --text-muted: #8E97AD;
+  --text-faint: #5E6781;
+  --brand: #0EA874;
+  --brand-soft: rgba(14, 168, 116, 0.16);
+
+  /* Dark mode: no soft shadow (reads AI-generic). Instead a 1px inset
+     top-edge highlight + 1px bottom shadow chisels cards into the canvas. */
+  --card-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 1px 0 rgba(0, 0, 0, 0.4);
+
+  /* Re-point sidebar tokens. Slightly cooler than the prior slate values —
+     ties drawer to new surface system. */
+  --sidebar: var(--surface);
+  --sidebar-foreground: var(--text);
   --sidebar-primary: #0EA874;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #1E293B;
-  --sidebar-accent-foreground: #F8FAFC;
-  --sidebar-border: #334155;
+  --sidebar-accent: var(--surface-2);
+  --sidebar-accent-foreground: var(--text);
+  --sidebar-border: var(--border-subtle);
   --sidebar-ring: #34D399;
 
   /* Topography motif — vivid emerald mesh on near-black; this is the hero look */

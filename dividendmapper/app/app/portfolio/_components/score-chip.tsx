@@ -2,20 +2,19 @@
 
 import { chipColor, type Delta, type ScoreType } from "@/lib/scoring/chip-display";
 
-const GATE_FAIL_COLOR = "#27272a"; // charcoal, per spec — never red (red = Risk)
+// Day 8 restyle: colour moves from the chip's background to a 1px coloured
+// border, sitting on the new --surface-2 token. The β superscript and the
+// dual-text-ink heuristic are gone — labels are always text-muted, numbers
+// are always foreground. DNQ renders as a text-only pill on a neutral grey
+// outline. Same props API as before; no consumer changes.
+
+const GATE_FAIL_COLOR = "#94a3b8"; // neutral grey for DNQ outline
 
 const TYPE_LABEL: Record<ScoreType, string> = {
   buy: "Quality",
   trim: "Trim",
   risk: "Risk",
 };
-
-// Readable text colour over the chip's background. The two lightest tiers
-// (light amber, grey-blue) need dark ink; everything else takes white.
-const DARK_INK_BACKGROUNDS = new Set(["#fbbf24", "#94a3b8"]);
-function inkFor(bg: string): string {
-  return DARK_INK_BACKGROUNDS.has(bg) ? "#1a1a1a" : "#ffffff";
-}
 
 export interface ScoreChipProps {
   type: ScoreType;
@@ -32,13 +31,11 @@ export function ScoreChip({
   score,
   delta,
   gateReason,
-  isBeta,
   hidden,
   onOpen,
 }: ScoreChipProps) {
   const gateFailed = score === null;
-  const bg = gateFailed ? GATE_FAIL_COLOR : chipColor(type, score).hex;
-  const ink = inkFor(bg);
+  const tone = gateFailed ? GATE_FAIL_COLOR : chipColor(type, score).hex;
   const label = TYPE_LABEL[type];
 
   return (
@@ -46,31 +43,32 @@ export function ScoreChip({
       type="button"
       onClick={onOpen}
       data-testid="score-chip"
-      data-color={bg}
+      data-color={tone}
       title={gateFailed ? (gateReason ?? "Quality concern") : undefined}
       aria-label={
         gateFailed
           ? `${label} score unavailable: ${gateReason ?? "quality concern"}`
           : `${label} score ${score}${hidden ? ", hidden" : ""}`
       }
-      className="inline-flex items-center gap-1 rounded-full px-2 py-px text-[11px] font-medium leading-tight transition-transform duration-150 hover:-translate-y-px focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 focus:ring-offset-card"
-      style={{ backgroundColor: bg, color: ink }}
+      className="inline-flex items-center gap-1.5 rounded-full border bg-[var(--surface-2)] px-2 py-0.5 leading-tight text-[var(--text)] transition-transform duration-150 hover:-translate-y-px focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 focus:ring-offset-card"
+      style={{ borderColor: tone }}
     >
       {hidden ? (
-        <span className="font-medium">Hidden</span>
+        <span className="text-[11px] font-medium text-[var(--text-muted)]">Hidden</span>
       ) : gateFailed ? (
-        // Short fixed-width "Did Not Qualify" tag keeps the chip row aligned;
-        // the full reason surfaces on hover (title) + in the drawer.
-        <span className="font-semibold">DNQ</span>
+        <span className="text-[11px] font-semibold tracking-wide text-[var(--text-muted)]">
+          DNQ
+        </span>
       ) : (
         <>
-          <span className="font-mono font-semibold tabular-nums">{score}</span>
-          <span className="opacity-90 tracking-wide">{label}</span>
-          {isBeta && (
-            <sup className="ml-0.5 text-[0.6rem] leading-none opacity-80">β</sup>
-          )}
+          <span className="font-mono text-[13px] font-bold leading-[16px] tabular-nums">
+            {score}
+          </span>
+          <span className="text-[11px] leading-[14px] text-[var(--text-muted)]">
+            {label}
+          </span>
           {delta && (
-            <span className="ml-0.5 inline-flex items-center gap-0.5 opacity-90">
+            <span className="ml-0.5 inline-flex items-center gap-0.5 text-[11px] text-[var(--text-muted)]">
               <span className="tabular-nums">{delta.label}</span>
               <span aria-hidden>{delta.arrow}</span>
             </span>

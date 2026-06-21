@@ -3,7 +3,8 @@ import { headers } from "next/headers";
 import { requireUser } from "@/lib/auth/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { PostHogIdentify } from "@/components/posthog-identify";
-import { AppNav } from "./_components/app-nav";
+import { isAdmin } from "@/lib/scoring/config";
+import { DrawerShell } from "./_components/shell/drawer-shell";
 
 export const metadata: Metadata = {
   // Authenticated routes should never appear in search engines.
@@ -15,6 +16,10 @@ export const metadata: Metadata = {
  * /login?next=… redirect preserves the deep path the user originally
  * hit — without this the layout would always redirect to /login?next=/app
  * and lose the page they actually wanted.
+ *
+ * The Day 1-10 app-shell redesign replaced the legacy <AppNav> sub-nav
+ * with <DrawerShell>; the NEXT_PUBLIC_NEW_SHELL flag was removed at Day 10
+ * merge.
  */
 export default async function AppLayout({
   children,
@@ -32,13 +37,18 @@ export default async function AppLayout({
     .select("tier")
     .eq("id", user.id)
     .maybeSingle<{ tier: "free" | "pro" | "premium" }>();
-  const isPro = (profile?.tier ?? "free") !== "free";
+  const tier = profile?.tier ?? "free";
 
   return (
     <>
       <PostHogIdentify userId={user.id} email={user.email} />
-      <AppNav isPro={isPro} />
-      {children}
+      <DrawerShell
+        email={user.email}
+        tier={tier}
+        isAdmin={isAdmin(user.email)}
+      >
+        {children}
+      </DrawerShell>
     </>
   );
 }

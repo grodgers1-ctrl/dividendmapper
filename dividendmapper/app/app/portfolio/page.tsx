@@ -5,6 +5,7 @@ import { isPricingPublic } from "@/lib/flags/pricing";
 import { isBeta } from "@/lib/scoring/config";
 import { loadPricedHoldings, loadArchivedHoldings } from "@/lib/portfolio/load-priced-holdings";
 import { formatMoney } from "@/lib/portfolio/format-money";
+import { PageHeader } from "../_components/page-header/page-header";
 import { HoldingsTable } from "./_components/holdings-table";
 import { ArchivedHoldings } from "./_components/archived-holdings";
 import { AddHoldingLauncher } from "./_components/add-holding-launcher";
@@ -47,31 +48,29 @@ export default async function PortfolioPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-12 md:px-6 md:py-16">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="font-display text-3xl font-bold tracking-tight text-foreground md:text-4xl">
-            Your portfolio
-          </h1>
-          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-            {total === 0
-              ? "Add your holdings one at a time. Broker sync ships in Phase 3."
-              : `${total} holding${total === 1 ? "" : "s"} · ${
-                  tier === "free"
-                    ? `${Math.min(total, FREE_TIER_LIMIT)}/${FREE_TIER_LIMIT} on Free`
-                    : "Pro · unlimited"
-                }`}
-          </p>
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          {tier !== "free" && <ImportCsvLauncher />}
-          <AddHoldingLauncher
-            atFreeLimit={atFreeLimit}
-            pricingPublic={pricingPublic}
-          />
-        </div>
-      </div>
+      <PageHeader
+        title="Your portfolio"
+        subtitle={
+          total === 0
+            ? "Add your holdings one at a time. Broker sync ships in Phase 3."
+            : `${total} holding${total === 1 ? "" : "s"} · ${
+                tier === "free"
+                  ? `${Math.min(total, FREE_TIER_LIMIT)}/${FREE_TIER_LIMIT} on Free`
+                  : "Pro · unlimited"
+              }`
+        }
+        actions={
+          <>
+            {tier !== "free" && <ImportCsvLauncher />}
+            <AddHoldingLauncher
+              atFreeLimit={atFreeLimit}
+              pricingPublic={pricingPublic}
+            />
+          </>
+        }
+      />
 
-      <div className="mt-8">
+      <div>
         {holdingsError ? (
           <div className="rounded-xl border border-dashed border-border bg-card p-10 text-center">
             <p className="font-display text-base font-semibold text-foreground">
