@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/auth/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { loadPricedHoldings } from "@/lib/portfolio/load-priced-holdings";
 import { actualKey } from "@/lib/portfolio/income";
+import { deriveFrequency } from "@/lib/portfolio/derive-frequency";
 import { resolveRowValue } from "@/lib/portfolio/row-value";
 import { loadScore, normalizeTicker } from "@/lib/scoring/load-score";
 import { isBeta } from "@/lib/scoring/config";
@@ -177,6 +178,17 @@ export default async function HoldingDetailPage({
     kind: "actual" as const,
   }));
 
+  // Derive payment cadence from the user's broker-synced dividend history.
+  // equity_scores has no frequency column; this fills the gap for IncomeCard.
+  // Server components legitimately re-execute per request — Date.now() is the
+  // right primitive for "today" in this derivation.
+  // eslint-disable-next-line react-hooks/purity
+  const today = new Date(Date.now());
+  const frequency = deriveFrequency(
+    (userDividends.data ?? []).map((d) => d.paid_on),
+    today,
+  );
+
   // Picker + pager use the distinct alpha-sorted ticker set.
   const allTickers = [...new Set(priced.allHoldings.map((h) => h.ticker))];
   const neighbours = holdingNeighbours(allTickers, ticker);
@@ -221,7 +233,7 @@ export default async function HoldingDetailPage({
             wrapper={holding.wrapper}
             nextExDivDate={exDivRow.data?.next_ex_div_date ?? null}
             nextExDivAmount={exDivRow.data?.next_ex_div_amount ?? null}
-            frequency={null}
+            frequency={frequency}
           />
         </div>
         <div className="col-span-12">
