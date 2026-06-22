@@ -1,7 +1,15 @@
 import type { Metadata } from "next";
 import { requireUser } from "@/lib/auth/server";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { loadPricedHoldings } from "@/lib/portfolio/load-priced-holdings";
+import { sumIncomeGbp } from "@/lib/portfolio/income";
+import {
+  rollupIncomeHistoryToGbp,
+  type IncomeHistoryRow,
+} from "@/lib/portfolio/income-history";
 import { loadPortfolioAnalytics } from "@/lib/scoring/load-portfolio-analytics";
+import { loadScore } from "@/lib/scoring/load-score";
+import { ratesToGbpFor } from "@/lib/scoring/currency";
 import { buildQuadrant } from "@/lib/scoring/quadrant";
 import { isBeta } from "@/lib/scoring/config";
 import { pickFlaggedHolding, type FlaggableScore } from "@/lib/scoring/pick-flagged";
@@ -13,6 +21,7 @@ import { FlaggedHoldingCard } from "./_components/FlaggedHoldingCard";
 import { QuadrantSnapshotCard } from "./_components/QuadrantSnapshotCard";
 import { ReinvestStripCard } from "./_components/ReinvestStripCard";
 import type { RidgePoint } from "./_components/RidgeSparkline";
+import type { SignalContributionRow } from "@/app/app/portfolio/[ticker]/_components/SignalContributionsList";
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -23,17 +32,11 @@ export const metadata: Metadata = {
 // requireUser() itself because layout guards don't re-run on soft navs.
 export const dynamic = "force-dynamic";
 
-// Naïve cross-currency sum: matches the Portfolio Ledger's display behaviour
-// (its totalsByCurrency rows aren't FX-converted either). Phase 4 will plug
-// in `ratesToGbpFor()` once the hero acquires a multi-currency story.
-function sumIncomeNaive(totals: { currency: string; total: number }[]): number {
-  return totals.reduce((acc, row) => acc + row.total, 0);
-}
-
 // Deterministic 12-month ramp from 70% → 100% of the current run-rate.
-// Day 6+ replaces this with a real historical series from
-// portfolio_income_history once that table starts accruing. For now it gives
-// the ridge sparkline a stable shape so the visual is real on Day 5.
+// Fallback only — used until the user has at least MIN_REAL_HISTORY_DAYS of
+// real portfolio_income_history rows accrued (the daily cron starts populating
+// from migration 0015 onward, so even existing users see synthetic for the
+// first ~month after deploy).
 function syntheticSparkline(now: Date, annualGbp: number): RidgePoint[] {
   if (annualGbp <= 0) return [];
   const points: RidgePoint[] = [];
@@ -45,6 +48,11 @@ function syntheticSparkline(now: Date, annualGbp: number): RidgePoint[] {
   }
   return points;
 }
+
+// Threshold under which we trust synthetic > real — a 5-point real sparkline
+// looks janky vs. the synthetic 12-month ramp. Matches the addendum spec.
+const MIN_REAL_HISTORY_DAYS = 30;
+const HISTORY_WINDOW_DAYS = 365;
 
 export default async function DashboardPage() {
   const user = await requireUser("/app/dashboard");
@@ -91,6 +99,21 @@ export default async function DashboardPage() {
     analytics && flaggedTicker
       ? (analytics.scoresByTicker[flaggedTicker] ?? null)
       : null;
+
+  // Top-3 most-negative Buy/Quality signals for the flagged ticker.
+  // equity_score_signals already holds these per ticker; loadScore() reads
+  // the same rows the per-ticker drawer uses. One extra lookup per render —
+  // skipped entirely when no holding is flagged.
+  let flaggedTopSignals: SignalContributionRow[] = [];
+  if (flaggedTicker) {
+    const supabase = await createSupabaseServerClient();
+    const flaggedScoreFull = await loadScore(supabase, flaggedTicker);
+    flaggedTopSignals = (flaggedScoreFull?.signals.buy ?? [])
+      .filter((s) => (s.contribution ?? 0) < 0)
+      .sort((a, b) => (a.contribution ?? 0) - (b.contribution ?? 0))
+      .slice(0, 3);
+  }
+
   const quadrant = analytics
     ? buildQuadrant(
         [...new Set(allHoldings.map((h) => h.ticker))],
@@ -99,8 +122,41 @@ export default async function DashboardPage() {
       )
     : { points: [], excluded: [] };
 
-  const incomeAnnualGbp = sumIncomeNaive(income.totalsByCurrency);
-  const sparkline = syntheticSparkline(new Date(), incomeAnnualGbp);
+  // FX-convert per-currency income totals AND priced holdings to GBP.
+  // Collecting the union of currencies in one pass means one ratesToGbpFor
+  // call serves both the hero and the TopHoldingsStrip sort.
+  const distinctCurrencies = new Set<string>();
+  for (const t of income.totalsByCurrency) distinctCurrencies.add(t.currency);
+  for (const ticker of Object.keys(priceByTicker)) {
+    const c = priceByTicker[ticker]?.currency;
+    if (c) distinctCurrencies.add(c);
+  }
+  const ratesToGbp = await ratesToGbpFor([...distinctCurrencies]);
+
+  const incomeAnnualGbp = sumIncomeGbp(income.totalsByCurrency, ratesToGbp);
+
+  // Real income history from the snapshot cron — falls back to synthetic
+  // until ~30 days of data have accrued so the line doesn't look stubby.
+  // react-hooks/purity flags Date.now() during render. Server components
+  // legitimately re-execute per request.
+  // eslint-disable-next-line react-hooks/purity
+  const now = new Date(Date.now());
+  const historySince = new Date(now.getTime() - HISTORY_WINDOW_DAYS * 86_400_000)
+    .toISOString()
+    .slice(0, 10);
+  const supabaseForHistory = await createSupabaseServerClient();
+  const { data: historyRows } = await supabaseForHistory
+    .from("portfolio_income_history")
+    .select("snapshot_at, currency, total_annual_run_rate")
+    .gte("snapshot_at", historySince)
+    .order("snapshot_at", { ascending: true })
+    .returns<IncomeHistoryRow[]>();
+  const realSparkline = rollupIncomeHistoryToGbp(historyRows ?? [], ratesToGbp);
+  const sparkline =
+    realSparkline.length >= MIN_REAL_HISTORY_DAYS
+      ? realSparkline
+      : syntheticSparkline(now, incomeAnnualGbp);
+
   const beta = isBeta();
 
   return (
@@ -125,6 +181,7 @@ export default async function DashboardPage() {
               flaggedTicker={flaggedTicker}
               score={flaggedScore}
               isBeta={beta}
+              topSignals={flaggedTopSignals}
             />
           ) : (
             <UpgradeCard />
@@ -155,6 +212,7 @@ export default async function DashboardPage() {
             nameByTicker={nameByTicker}
             scores={scoresMap}
             tier={tier}
+            ratesToGbp={ratesToGbp}
           />
         </div>
       </div>

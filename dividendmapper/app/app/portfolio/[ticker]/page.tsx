@@ -4,7 +4,9 @@ import { requireUser } from "@/lib/auth/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { loadPricedHoldings } from "@/lib/portfolio/load-priced-holdings";
 import { actualKey } from "@/lib/portfolio/income";
+import { deriveFrequency } from "@/lib/portfolio/derive-frequency";
 import { resolveRowValue } from "@/lib/portfolio/row-value";
+import { ratesToGbpFor } from "@/lib/scoring/currency";
 import { loadScore, normalizeTicker } from "@/lib/scoring/load-score";
 import { isBeta } from "@/lib/scoring/config";
 import { holdingNeighbours } from "@/lib/portfolio/holding-neighbours";
@@ -137,6 +139,13 @@ export default async function HoldingDetailPage({
   const valueAmount = valueStatus.kind === "ok" ? valueStatus.amount : null;
   const valueCurrency = valueStatus.kind === "ok" ? valueStatus.currency : null;
 
+  // FX map for the cost + value currencies — feeds PositionCard's
+  // cross-currency P/L. Two currencies max, both cached after first lookup.
+  const positionCurrencies = new Set<string>();
+  positionCurrencies.add(holding.cost_currency);
+  if (valueCurrency) positionCurrencies.add(valueCurrency);
+  const positionRatesToGbp = await ratesToGbpFor([...positionCurrencies]);
+
   const quote = priced.quotes.get(holding.ticker);
   const forwardDps = quote?.ok ? quote.data.dividend : null;
   const forwardCurrency = quote?.ok ? quote.data.currency : null;
@@ -177,6 +186,17 @@ export default async function HoldingDetailPage({
     kind: "actual" as const,
   }));
 
+  // Derive payment cadence from the user's broker-synced dividend history.
+  // equity_scores has no frequency column; this fills the gap for IncomeCard.
+  // Server components legitimately re-execute per request — Date.now() is the
+  // right primitive for "today" in this derivation.
+  // eslint-disable-next-line react-hooks/purity
+  const today = new Date(Date.now());
+  const frequency = deriveFrequency(
+    (userDividends.data ?? []).map((d) => d.paid_on),
+    today,
+  );
+
   // Picker + pager use the distinct alpha-sorted ticker set.
   const allTickers = [...new Set(priced.allHoldings.map((h) => h.ticker))];
   const neighbours = holdingNeighbours(allTickers, ticker);
@@ -195,6 +215,15 @@ export default async function HoldingDetailPage({
         wrapper={holding.wrapper}
         source={holding.source}
         pickerItems={pickerItems}
+        edit={{
+          holdingId: holding.id,
+          quantity: Number(holding.quantity),
+          avgCost: holding.avg_cost,
+          costCurrency:
+            holding.cost_currency === "USD" ? "USD" : "GBP",
+          brokerLabel: holding.broker_label,
+          notes: holding.notes,
+        }}
       />
 
       <div className="grid grid-cols-12 gap-4">
@@ -206,6 +235,7 @@ export default async function HoldingDetailPage({
             valueAmount={valueAmount}
             valueCurrency={valueCurrency}
             wrapper={holding.wrapper}
+            ratesToGbp={positionRatesToGbp}
           />
         </div>
         <div className="col-span-12 md:col-span-6">
@@ -221,7 +251,7 @@ export default async function HoldingDetailPage({
             wrapper={holding.wrapper}
             nextExDivDate={exDivRow.data?.next_ex_div_date ?? null}
             nextExDivAmount={exDivRow.data?.next_ex_div_amount ?? null}
-            frequency={null}
+            frequency={frequency}
           />
         </div>
         <div className="col-span-12">
@@ -249,21 +279,21 @@ export default async function HoldingDetailPage({
             <div className="col-span-12 md:col-span-6">
               <FundamentalsCard
                 pe={pe}
-                forwardPe={null}
-                payoutRatio={null}
+                forwardPe={score?.forwardPe ?? null}
+                payoutRatio={score?.payoutRatio ?? null}
                 netDebtToEbitda={
                   latest?.net_debt_to_ebitda != null
                     ? Number(latest.net_debt_to_ebitda)
                     : null
                 }
-                fcfCoverage={null}
+                fcfCoverage={score?.fcfCoverage ?? null}
                 currentYield={
                   latest?.current_yield != null
                     ? Number(latest.current_yield)
                     : null
                 }
-                dividendCagr5y={null}
-                sector={null}
+                dividendCagr5y={score?.dividendCagr5y ?? null}
+                sector={score?.sector ?? null}
               />
             </div>
             <div className="col-span-12 md:col-span-6">

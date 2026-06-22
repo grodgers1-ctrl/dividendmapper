@@ -5,6 +5,10 @@
       "schedule": "30 22 * * *"
     },
     {
+      "path": "/api/internal/snapshot-portfolio-income",
+      "schedule": "0 1 * * *"
+    },
+    {
       "path": "/api/internal/send-score-alerts",
       "schedule": "0 7 * * *"
     },

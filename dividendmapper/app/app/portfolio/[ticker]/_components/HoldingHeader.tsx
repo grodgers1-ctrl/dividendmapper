@@ -1,8 +1,6 @@
 // Day 7 holding detail. Thin wrapper around <PageHeader> that surfaces the
 // ticker as title, the company name + wrapper + sync provenance as subtitle,
-// and the picker combobox as the only action. The plan calls for an
-// <EditHoldingButton> alongside the picker, but no such component exists yet
-// — the holdings-table row actions still own edit. Day 8+ TODO.
+// and the picker combobox + Edit button as actions.
 
 import Link from "next/link";
 import { PageHeader } from "@/app/app/_components/page-header/page-header";
@@ -10,6 +8,7 @@ import {
   HoldingPickerCombobox,
   type HoldingPickerItem,
 } from "./HoldingPickerCombobox";
+import { EditHoldingButton } from "./EditHoldingButton";
 
 const WRAPPER_SHORT: Record<string, string> = {
   isa: "ISA",
@@ -32,6 +31,14 @@ export interface HoldingHeaderProps {
   wrapper: string;
   source: "manual" | "trading212" | "csv";
   pickerItems: ReadonlyArray<HoldingPickerItem>;
+  edit: {
+    holdingId: string;
+    quantity: number;
+    avgCost: number;
+    costCurrency: "GBP" | "USD";
+    brokerLabel: string | null;
+    notes: string | null;
+  };
 }
 
 export function HoldingHeader({
@@ -40,6 +47,7 @@ export function HoldingHeader({
   wrapper,
   source,
   pickerItems,
+  edit,
 }: HoldingHeaderProps) {
   const wrapperLabel = WRAPPER_SHORT[wrapper] ?? wrapper;
   const syncLabel =
@@ -58,10 +66,24 @@ export function HoldingHeader({
         title={ticker}
         subtitle={subtitleBits.join(" · ")}
         actions={
-          <HoldingPickerCombobox
-            currentTicker={ticker}
-            holdings={pickerItems}
-          />
+          <div className="flex items-center gap-2">
+            <HoldingPickerCombobox
+              currentTicker={ticker}
+              holdings={pickerItems}
+            />
+            <EditHoldingButton
+              holdingId={edit.holdingId}
+              ticker={ticker}
+              initial={{
+                quantity: edit.quantity,
+                avgCost: edit.avgCost,
+                costCurrency: edit.costCurrency,
+                wrapper,
+                brokerLabel: edit.brokerLabel,
+                notes: edit.notes,
+              }}
+            />
+          </div>
         }
       />
     </>

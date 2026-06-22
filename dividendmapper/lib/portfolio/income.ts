@@ -213,3 +213,24 @@ export function aggregatePortfolioIncome<T extends IncomeHolding>(
     fetchedAt: new Date().toISOString(),
   };
 }
+
+/**
+ * FX-convert per-currency income totals to a single GBP figure.
+ *
+ * Rows whose currency is missing from `ratesToGbp`, or whose rate is
+ * non-finite/non-positive, are silently dropped — matching how
+ * `ratesToGbpFor()` omits unsupported currencies. Returns 0 for an empty
+ * input. The dashboard hero uses this; the Ledger keeps source-currency rows.
+ */
+export function sumIncomeGbp(
+  totals: ReadonlyArray<IncomeCurrencyTotal>,
+  ratesToGbp: Readonly<Record<string, number>>,
+): number {
+  return totals.reduce((acc, row) => {
+    const rate = ratesToGbp[row.currency];
+    if (typeof rate !== "number" || !Number.isFinite(rate) || rate <= 0) {
+      return acc;
+    }
+    return acc + row.total * rate;
+  }, 0);
+}

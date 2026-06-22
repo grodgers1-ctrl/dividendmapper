@@ -28,6 +28,7 @@ import {
 import { assembleScoreInputs, type RawFmpBundle, type PriorHistory } from "@/lib/scoring/assemble-inputs";
 import { computeBuyScore } from "@/lib/scoring/compute-buy-score";
 import { computeTrimScore } from "@/lib/scoring/compute-trim-score";
+import { computeDividendCagr5y } from "@/lib/scoring/dividend-cagr";
 import { computeRiskScore } from "@/lib/scoring/compute-risk-score";
 import type { SignalRecord } from "@/lib/scoring/compute-buy-score";
 import { runWithConcurrency } from "@/lib/concurrency";
@@ -219,6 +220,19 @@ export async function scoreTicker(
   // depend on or change because of this.
   const nextDiv = nextUpcomingDividend(calendar, ticker, today);
 
+  // Surfaced on the per-ticker FundamentalsCard. All five are derived from the
+  // same bundle the signals already consume — purely additive persistence.
+  const forwardPe =
+    assembled.buy.a2.forwardPe > 0 ? assembled.buy.a2.forwardPe : null;
+  const payoutRatio =
+    assembled.risk.r3.payoutRatio > 0 ? assembled.risk.r3.payoutRatio : null;
+  const fcfCoverage =
+    assembled.buy.fcfTtm != null && assembled.buy.dividendsPaidTtm > 0
+      ? assembled.buy.fcfTtm / assembled.buy.dividendsPaidTtm
+      : null;
+  const dividendCagr5y = computeDividendCagr5y(bundle.dividends, new Date(today));
+  const sector = assembled.meta.sector ?? null;
+
   const { error: scoresErr } = await admin.from("equity_scores").upsert(
     {
       ticker,
@@ -230,6 +244,11 @@ export async function scoreTicker(
       risk_score: risk.score,
       ticker_market: assembled.meta.isUs ? "US" : "LSE",
       data_quality: dataQuality,
+      sector,
+      forward_pe: forwardPe,
+      payout_ratio: payoutRatio,
+      fcf_coverage: fcfCoverage,
+      dividend_cagr_5y: dividendCagr5y,
       next_ex_div_date: nextDiv?.date ?? null,
       next_ex_div_amount: nextDiv?.dividend ?? null,
       next_ex_div_pay_date:
