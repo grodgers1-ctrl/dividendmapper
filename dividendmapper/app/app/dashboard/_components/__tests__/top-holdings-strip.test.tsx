@@ -218,4 +218,102 @@ describe("TopHoldingsStrip", () => {
       expect(tickers).toEqual(["AAPL", "GSK.L"]);
     });
   });
+
+  describe("fundamentals chips (Pro)", () => {
+    const fundamentals = {
+      AAPL: { forwardPe: 14.2, payoutRatio: 0.45, dividendYield: 0.041 },
+      MSFT: { forwardPe: 22.1, payoutRatio: 0.32, dividendYield: 0.018 },
+    };
+
+    it("renders P/E chip when forwardPe present (Pro)", () => {
+      const { container } = render(
+        <TopHoldingsStrip
+          holdings={SIX_HOLDINGS}
+          priceByTicker={PRICE_BY_TICKER}
+          nameByTicker={NAMES}
+          scores={new Map()}
+          tier="pro"
+          fundamentalsByTicker={fundamentals}
+        />,
+      );
+      const chips = container.querySelectorAll("[data-testid='fundamentals-chip']");
+      expect(chips.length).toBeGreaterThan(0);
+      const aaplChips = Array.from(chips).filter((c) =>
+        c.textContent?.includes("14.2"),
+      );
+      expect(aaplChips.length).toBe(1);
+    });
+
+    it("formats Yield chip from decimal as percentage", () => {
+      const { container } = render(
+        <TopHoldingsStrip
+          holdings={[holding("AAPL", 10)]}
+          priceByTicker={PRICE_BY_TICKER}
+          nameByTicker={NAMES}
+          scores={new Map()}
+          tier="pro"
+          fundamentalsByTicker={fundamentals}
+        />,
+      );
+      const chips = container.querySelectorAll("[data-testid='fundamentals-chip']");
+      const yieldChip = Array.from(chips).find((c) =>
+        c.textContent?.toLowerCase().includes("yield"),
+      );
+      expect(yieldChip).toBeTruthy();
+      expect(yieldChip?.textContent).toContain("4.1%");
+    });
+
+    it("formats Payout chip from decimal as percentage", () => {
+      const { container } = render(
+        <TopHoldingsStrip
+          holdings={[holding("AAPL", 10)]}
+          priceByTicker={PRICE_BY_TICKER}
+          nameByTicker={NAMES}
+          scores={new Map()}
+          tier="pro"
+          fundamentalsByTicker={fundamentals}
+        />,
+      );
+      const chips = container.querySelectorAll("[data-testid='fundamentals-chip']");
+      const payoutChip = Array.from(chips).find((c) =>
+        c.textContent?.toLowerCase().includes("payout"),
+      );
+      expect(payoutChip).toBeTruthy();
+      expect(payoutChip?.textContent).toContain("45%");
+    });
+
+    it("omits the chip strip entirely when all three fundamentals are null", () => {
+      const { container } = render(
+        <TopHoldingsStrip
+          holdings={[holding("TSLA", 5)]}
+          priceByTicker={PRICE_BY_TICKER}
+          nameByTicker={NAMES}
+          scores={new Map()}
+          tier="pro"
+          fundamentalsByTicker={{
+            TSLA: { forwardPe: null, payoutRatio: null, dividendYield: null },
+          }}
+        />,
+      );
+      expect(
+        container.querySelectorAll("[data-testid='fundamentals-chip']").length,
+      ).toBe(0);
+    });
+
+    it("does not render chips for Free tier even if fundamentalsByTicker passed", () => {
+      const { container } = render(
+        <TopHoldingsStrip
+          holdings={[holding("AAPL", 10)]}
+          priceByTicker={PRICE_BY_TICKER}
+          nameByTicker={NAMES}
+          scores={new Map()}
+          tier="free"
+          fundamentalsByTicker={fundamentals}
+        />,
+      );
+      expect(
+        container.querySelectorAll("[data-testid='fundamentals-chip']").length,
+      ).toBe(0);
+    });
+  });
 });

@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/auth/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { loadPricedHoldings } from "@/lib/portfolio/load-priced-holdings";
 import { sumIncomeGbp } from "@/lib/portfolio/income";
+import { aggregatePortfolioCost, sumCostGbp } from "@/lib/portfolio/portfolio-cost";
 import {
   rollupIncomeHistoryToGbp,
   type IncomeHistoryRow,
@@ -20,6 +21,9 @@ import { UpgradeCard } from "./_components/UpgradeCard";
 import { FlaggedHoldingCard } from "./_components/FlaggedHoldingCard";
 import { QuadrantSnapshotCard } from "./_components/QuadrantSnapshotCard";
 import { ReinvestStripCard } from "./_components/ReinvestStripCard";
+import { ValueVsCostCard } from "./_components/ValueVsCostCard";
+import { SectorExposureCard } from "./_components/SectorExposureCard";
+import { rollupSectors } from "@/lib/portfolio/sector-exposure";
 import type { RidgePoint } from "./_components/RidgeSparkline";
 import type { SignalContributionRow } from "@/app/app/portfolio/[ticker]/_components/SignalContributionsList";
 
@@ -124,16 +128,39 @@ export default async function DashboardPage() {
 
   // FX-convert per-currency income totals AND priced holdings to GBP.
   // Collecting the union of currencies in one pass means one ratesToGbpFor
-  // call serves both the hero and the TopHoldingsStrip sort.
+  // call serves the hero, the TopHoldingsStrip sort, and the cost-basis card.
+  // cost_currency is unioned too — a holding can carry a cost currency no
+  // other path needed (e.g. GBP cost on a US ADR); without this, the cost
+  // rollup would silently drop it.
   const distinctCurrencies = new Set<string>();
   for (const t of income.totalsByCurrency) distinctCurrencies.add(t.currency);
   for (const ticker of Object.keys(priceByTicker)) {
     const c = priceByTicker[ticker]?.currency;
     if (c) distinctCurrencies.add(c);
   }
+  for (const h of allHoldings) distinctCurrencies.add(h.cost_currency);
   const ratesToGbp = await ratesToGbpFor([...distinctCurrencies]);
 
   const incomeAnnualGbp = sumIncomeGbp(income.totalsByCurrency, ratesToGbp);
+  const costAggregate = aggregatePortfolioCost(allHoldings);
+  const totalCostGbpRaw = sumCostGbp(costAggregate.totalsByCurrency, ratesToGbp);
+  const totalCostGbp = totalCostGbpRaw > 0 ? totalCostGbpRaw : null;
+  // sumIncomeGbp's shape matches ValueCurrencyTotal exactly — same FX rule.
+  const totalValueGbp = sumIncomeGbp(priced.valueTotalsByCurrency, ratesToGbp);
+
+  // Sector rollup (Pro only — Free skips analytics entirely).
+  const sectorByTicker: Record<string, string | null> = {};
+  if (analytics) {
+    for (const [ticker, f] of Object.entries(analytics.fundamentalsByTicker)) {
+      sectorByTicker[ticker] = f.sector;
+    }
+  }
+  const sectorRollup = analytics
+    ? rollupSectors({
+        weightByTicker: analytics.weightByTicker,
+        sectorByTicker,
+      })
+    : null;
 
   // Real income history from the snapshot cron — falls back to synthetic
   // until ~30 days of data have accrued so the line doesn't look stubby.
@@ -173,6 +200,7 @@ export default async function DashboardPage() {
           <HeroIncomeCard
             incomeAnnualGbp={incomeAnnualGbp}
             sparkline={sparkline}
+            totalCostGbp={totalCostGbp}
           />
         </div>
         <div className="col-span-12 md:col-span-4">
@@ -188,7 +216,21 @@ export default async function DashboardPage() {
           )}
         </div>
 
-        {/* Row 2 — Pro: quadrant + reinvest planner; Free omitted entirely */}
+        {/* Row 2 — Value vs Cost (Free + Pro). Pro pairs it with Sector
+            Exposure on the right; Free renders the full width. */}
+        <div className="col-span-12 md:col-span-4">
+          <ValueVsCostCard
+            valueGbp={totalValueGbp}
+            costGbp={totalCostGbp ?? 0}
+          />
+        </div>
+        {isPro && sectorRollup && (
+          <div className="col-span-12 md:col-span-8">
+            <SectorExposureCard rollup={sectorRollup} />
+          </div>
+        )}
+
+        {/* Row 3 — Pro: quadrant + reinvest planner; Free omitted entirely */}
         {isPro && (
           <>
             <div className="col-span-12 md:col-span-8">
@@ -213,6 +255,7 @@ export default async function DashboardPage() {
             scores={scoresMap}
             tier={tier}
             ratesToGbp={ratesToGbp}
+            fundamentalsByTicker={analytics?.fundamentalsByTicker}
           />
         </div>
       </div>
