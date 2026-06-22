@@ -3,6 +3,10 @@ import { requireUser } from "@/lib/auth/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { loadPricedHoldings } from "@/lib/portfolio/load-priced-holdings";
 import { sumIncomeGbp } from "@/lib/portfolio/income";
+import {
+  rollupIncomeHistoryToGbp,
+  type IncomeHistoryRow,
+} from "@/lib/portfolio/income-history";
 import { loadPortfolioAnalytics } from "@/lib/scoring/load-portfolio-analytics";
 import { loadScore } from "@/lib/scoring/load-score";
 import { ratesToGbpFor } from "@/lib/scoring/currency";
@@ -29,9 +33,10 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 // Deterministic 12-month ramp from 70% → 100% of the current run-rate.
-// Day 6+ replaces this with a real historical series from
-// portfolio_income_history once that table starts accruing. For now it gives
-// the ridge sparkline a stable shape so the visual is real on Day 5.
+// Fallback only — used until the user has at least MIN_REAL_HISTORY_DAYS of
+// real portfolio_income_history rows accrued (the daily cron starts populating
+// from migration 0015 onward, so even existing users see synthetic for the
+// first ~month after deploy).
 function syntheticSparkline(now: Date, annualGbp: number): RidgePoint[] {
   if (annualGbp <= 0) return [];
   const points: RidgePoint[] = [];
@@ -43,6 +48,11 @@ function syntheticSparkline(now: Date, annualGbp: number): RidgePoint[] {
   }
   return points;
 }
+
+// Threshold under which we trust synthetic > real — a 5-point real sparkline
+// looks janky vs. the synthetic 12-month ramp. Matches the addendum spec.
+const MIN_REAL_HISTORY_DAYS = 30;
+const HISTORY_WINDOW_DAYS = 365;
 
 export default async function DashboardPage() {
   const user = await requireUser("/app/dashboard");
@@ -124,7 +134,29 @@ export default async function DashboardPage() {
   const ratesToGbp = await ratesToGbpFor([...distinctCurrencies]);
 
   const incomeAnnualGbp = sumIncomeGbp(income.totalsByCurrency, ratesToGbp);
-  const sparkline = syntheticSparkline(new Date(), incomeAnnualGbp);
+
+  // Real income history from the snapshot cron — falls back to synthetic
+  // until ~30 days of data have accrued so the line doesn't look stubby.
+  // react-hooks/purity flags Date.now() during render. Server components
+  // legitimately re-execute per request.
+  // eslint-disable-next-line react-hooks/purity
+  const now = new Date(Date.now());
+  const historySince = new Date(now.getTime() - HISTORY_WINDOW_DAYS * 86_400_000)
+    .toISOString()
+    .slice(0, 10);
+  const supabaseForHistory = await createSupabaseServerClient();
+  const { data: historyRows } = await supabaseForHistory
+    .from("portfolio_income_history")
+    .select("snapshot_at, currency, total_annual_run_rate")
+    .gte("snapshot_at", historySince)
+    .order("snapshot_at", { ascending: true })
+    .returns<IncomeHistoryRow[]>();
+  const realSparkline = rollupIncomeHistoryToGbp(historyRows ?? [], ratesToGbp);
+  const sparkline =
+    realSparkline.length >= MIN_REAL_HISTORY_DAYS
+      ? realSparkline
+      : syntheticSparkline(now, incomeAnnualGbp);
+
   const beta = isBeta();
 
   return (
