@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { requireUser } from "@/lib/auth/server";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { loadPricedHoldings } from "@/lib/portfolio/load-priced-holdings";
 import { loadPortfolioAnalytics } from "@/lib/scoring/load-portfolio-analytics";
+import { loadScore } from "@/lib/scoring/load-score";
 import { buildQuadrant } from "@/lib/scoring/quadrant";
 import { isBeta } from "@/lib/scoring/config";
 import { pickFlaggedHolding, type FlaggableScore } from "@/lib/scoring/pick-flagged";
@@ -13,6 +15,7 @@ import { FlaggedHoldingCard } from "./_components/FlaggedHoldingCard";
 import { QuadrantSnapshotCard } from "./_components/QuadrantSnapshotCard";
 import { ReinvestStripCard } from "./_components/ReinvestStripCard";
 import type { RidgePoint } from "./_components/RidgeSparkline";
+import type { SignalContributionRow } from "@/app/app/portfolio/[ticker]/_components/SignalContributionsList";
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -91,6 +94,21 @@ export default async function DashboardPage() {
     analytics && flaggedTicker
       ? (analytics.scoresByTicker[flaggedTicker] ?? null)
       : null;
+
+  // Top-3 most-negative Buy/Quality signals for the flagged ticker.
+  // equity_score_signals already holds these per ticker; loadScore() reads
+  // the same rows the per-ticker drawer uses. One extra lookup per render —
+  // skipped entirely when no holding is flagged.
+  let flaggedTopSignals: SignalContributionRow[] = [];
+  if (flaggedTicker) {
+    const supabase = await createSupabaseServerClient();
+    const flaggedScoreFull = await loadScore(supabase, flaggedTicker);
+    flaggedTopSignals = (flaggedScoreFull?.signals.buy ?? [])
+      .filter((s) => (s.contribution ?? 0) < 0)
+      .sort((a, b) => (a.contribution ?? 0) - (b.contribution ?? 0))
+      .slice(0, 3);
+  }
+
   const quadrant = analytics
     ? buildQuadrant(
         [...new Set(allHoldings.map((h) => h.ticker))],
@@ -125,6 +143,7 @@ export default async function DashboardPage() {
               flaggedTicker={flaggedTicker}
               score={flaggedScore}
               isBeta={beta}
+              topSignals={flaggedTopSignals}
             />
           ) : (
             <UpgradeCard />

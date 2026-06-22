@@ -2,6 +2,7 @@ import { describe, it, expect, afterEach, vi } from "vitest";
 import { render, cleanup, screen, fireEvent } from "@testing-library/react";
 import type { HoldingScore } from "@/lib/scoring/portfolio-scores";
 import { FlaggedHoldingCard } from "@/app/app/dashboard/_components/FlaggedHoldingCard";
+import type { SignalContributionRow } from "@/app/app/portfolio/[ticker]/_components/SignalContributionsList";
 
 vi.mock("@/app/app/portfolio/_components/score-drawer", () => ({
   ScoreDrawer: ({
@@ -84,5 +85,63 @@ describe("<FlaggedHoldingCard>", () => {
     const drawer = screen.getByTestId("score-drawer");
     expect(drawer).toHaveTextContent("VOD.L");
     expect(drawer.getAttribute("data-score-type")).toBe("risk");
+  });
+
+  describe("top signal contributors", () => {
+    const topSignals: SignalContributionRow[] = [
+      { signalCode: "A2", humanLabel: "P/E vs 5y history", contribution: -12.4, weight: 0.15 },
+      { signalCode: "A4", humanLabel: "Payout ratio drift", contribution: -8.1, weight: 0.2 },
+      { signalCode: "A6", humanLabel: "FCF coverage gap", contribution: -5.2, weight: 0.18 },
+    ];
+
+    it("renders one signal-row per provided contributor", () => {
+      const { container } = render(
+        <FlaggedHoldingCard
+          flaggedTicker="VOD.L"
+          score={score({ ticker: "VOD.L" })}
+          isBeta={false}
+          topSignals={topSignals}
+        />,
+      );
+      expect(container.querySelectorAll("[data-testid='signal-row']").length).toBe(3);
+      expect(screen.getByText("A2")).toBeInTheDocument();
+      expect(screen.getByText("P/E vs 5y history")).toBeInTheDocument();
+      expect(screen.getByText("−12.4")).toBeInTheDocument();
+    });
+
+    it("omits the signal block entirely when topSignals is empty", () => {
+      const { container } = render(
+        <FlaggedHoldingCard
+          flaggedTicker="VOD.L"
+          score={score({ ticker: "VOD.L" })}
+          isBeta={false}
+          topSignals={[]}
+        />,
+      );
+      expect(container.querySelectorAll("[data-testid='signal-row']").length).toBe(0);
+    });
+
+    it("omits the signal block when topSignals is not provided", () => {
+      const { container } = render(
+        <FlaggedHoldingCard
+          flaggedTicker="VOD.L"
+          score={score({ ticker: "VOD.L" })}
+          isBeta={false}
+        />,
+      );
+      expect(container.querySelectorAll("[data-testid='signal-row']").length).toBe(0);
+    });
+
+    it("does not render the signal block on the empty/no-flagged state", () => {
+      const { container } = render(
+        <FlaggedHoldingCard
+          flaggedTicker={null}
+          score={null}
+          isBeta={false}
+          topSignals={topSignals}
+        />,
+      );
+      expect(container.querySelectorAll("[data-testid='signal-row']").length).toBe(0);
+    });
   });
 });
