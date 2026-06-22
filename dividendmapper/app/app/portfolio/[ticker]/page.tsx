@@ -215,6 +215,15 @@ export default async function HoldingDetailPage({
         wrapper={holding.wrapper}
         source={holding.source}
         pickerItems={pickerItems}
+        edit={{
+          holdingId: holding.id,
+          quantity: Number(holding.quantity),
+          avgCost: holding.avg_cost,
+          costCurrency:
+            holding.cost_currency === "USD" ? "USD" : "GBP",
+          brokerLabel: holding.broker_label,
+          notes: holding.notes,
+        }}
       />
 
       <div className="grid grid-cols-12 gap-4">
