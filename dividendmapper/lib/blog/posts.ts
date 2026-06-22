@@ -192,6 +192,16 @@ export const POSTS: BlogPost[] = [
     tags: ["UK", "HMRC", "ISA", "Tax"],
     locale: "uk",
   },
+  {
+    slug: "reits-uk-income-investors-tax-guide",
+    title: "REITs for UK income investors: tax, yield, and what to watch for",
+    description:
+      "A practical UK guide to REIT dividends: how property income distributions are taxed differently from equity dividends, why the ISA or SIPP wrapper decision is critical, the three REIT sectors and their risk profiles, and the five metrics that actually measure REIT dividend safety.",
+    publishedAt: "2026-06-22",
+    readingTime: "9 min",
+    tags: ["UK", "REITs", "Tax"],
+    locale: "uk",
+  },
 ];
 
 /** Looks up a post by slug. Throws if not found — fail loudly during build. */
