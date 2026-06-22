@@ -52,6 +52,30 @@ export const viewport: Viewport = {
   ],
 };
 
+// Site-wide JSON-LD. Organization disambiguates the brand for LLM search
+// (ChatGPT, Perplexity, Google AI Overviews) — `sameAs` is the lever to
+// add as official profiles go live. WebSite ties the URL to the entity.
+// Per SEO-AEO-AUDIT.md C2 (2026-06-22).
+const ORGANIZATION_JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "@id": "https://dividendmapper.com#org",
+  name: "DividendMapper",
+  url: "https://dividendmapper.com",
+  logo: "https://dividendmapper.com/icon.png",
+  description:
+    "Free dividend portfolio tools and resilience scoring for UK and US investors.",
+  sameAs: [] as string[],
+};
+
+const WEBSITE_JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  url: "https://dividendmapper.com",
+  name: "DividendMapper",
+  publisher: { "@id": "https://dividendmapper.com#org" },
+};
+
 export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
@@ -70,6 +94,12 @@ export default async function RootLayout({
       className={`${display.variable} ${body.variable} ${mono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify([ORGANIZATION_JSON_LD, WEBSITE_JSON_LD]),
+          }}
+        />
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
