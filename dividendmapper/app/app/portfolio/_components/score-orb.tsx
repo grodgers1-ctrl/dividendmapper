@@ -6,6 +6,7 @@ import {
   arcGlowColor,
   arcLength,
   arcStrokeColor,
+  chipTextColor,
   formatScoreLabel,
   orbAriaLabel,
 } from "@/lib/scoring/orb-display";
@@ -121,6 +122,7 @@ export function ScoreOrb({
       >
         {RINGS.map((ring) => {
           const stroke = arcStrokeColor(ring.type);
+          const text = chipTextColor(ring.type);
           const score = scoresByType[ring.type];
           const reason =
             ring.type === "buy" ? (qualityGateReason ?? null) : null;
@@ -128,7 +130,7 @@ export function ScoreOrb({
             <span
               key={ring.type}
               className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1"
-              style={{ backgroundColor: `${stroke}1f`, color: stroke }}
+              style={{ backgroundColor: `${stroke}1f`, color: text }}
             >
               <span
                 aria-hidden

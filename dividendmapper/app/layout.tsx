@@ -78,9 +78,18 @@ export default async function RootLayout({
         >
           <PostHogProvider>
             <LocaleProvider>
-              {showMarketingChrome && <SiteHeader />}
-              <main className="flex-1">{children}</main>
-              {showMarketingChrome && <SiteFooter />}
+              {showMarketingChrome ? (
+                <>
+                  <SiteHeader />
+                  <main className="flex-1">{children}</main>
+                  <SiteFooter />
+                </>
+              ) : (
+                // /app/* routes own their own <main> via DrawerShell. Wrapping
+                // here would produce a nested + duplicate main landmark
+                // (axe-reported 2026-06-22). Pass children through bare.
+                children
+              )}
             </LocaleProvider>
           </PostHogProvider>
         </ThemeProvider>
