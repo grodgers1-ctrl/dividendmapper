@@ -1,8 +1,9 @@
 // Day 5 dashboard. Single upgrade card shown in the FlaggedHolding slot for
 // free users — replaces the Pro-only widgets per the "no blur-and-tease"
-// rule. Brand-left-rail accent (3px var(--brand)) + headline + 2-3 value
-// bullets + primary CTA → /pricing. Copy gets a humaniser pass at the end
-// of Day 9; treat the strings here as placeholders.
+// rule. Brand-tinted surround (5% fill + 30% border) + brand-coloured Pro
+// eyebrow signals "upgrade prompt" without the generic 3px left-stripe
+// SaaS-template cue. Same pattern as the blog post-footer "What to do next"
+// callout for consistency.
 
 import Link from "next/link";
 
@@ -14,12 +15,8 @@ const BULLETS = [
 
 export function UpgradeCard() {
   return (
-    <div className="relative overflow-hidden rounded-[10px] border border-[var(--border-subtle)] bg-[var(--surface)] p-6 shadow-[var(--card-shadow)]">
-      <span
-        aria-hidden
-        className="absolute inset-y-0 left-0 w-[3px] bg-[var(--brand)]"
-      />
-      <p className="text-xs uppercase tracking-[0.08em] text-[var(--text-muted)]">
+    <div className="rounded-[10px] border border-brand-500/30 bg-brand-500/5 p-6 shadow-[var(--card-shadow)]">
+      <p className="text-xs font-medium uppercase tracking-[0.08em] text-brand-700 dark:text-brand-400">
         Pro
       </p>
       <h3 className="mt-1 font-display text-lg font-semibold tracking-tight text-[var(--text)]">
