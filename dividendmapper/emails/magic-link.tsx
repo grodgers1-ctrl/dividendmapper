@@ -9,12 +9,16 @@ import { EmailLayout, EMAIL_STYLES } from "./_layout";
 // {{ .Token }} at send time. SMTP relay is Resend (configured separately
 // in Supabase Auth → SMTP Settings).
 //
-// Why include the 6-digit code as a fallback: email security scanners
+// Why include the OTP code as a fallback: email security scanners
 // (Gmail Safe Browsing, Outlook Defender, antivirus link-scanners) often
 // pre-fetch URLs in emails to scan them, which consumes the single-use
-// PKCE code embedded in the link. The 6-digit token is also single-use
+// PKCE code embedded in the link. The numeric token is also single-use
 // but requires deliberate user action to enter, so it survives scanner
 // pre-fetch. The login form accepts it via verifyOtp.
+//
+// Length is whatever the Supabase Auth dashboard's mailer_otp_length is
+// set to (8 as of 2026-06-22 — the local supabase/config.toml lagged
+// behind for a while; see commit history if there's drift again).
 
 export function MagicLinkEmail() {
   return (
@@ -33,7 +37,7 @@ export function MagicLinkEmail() {
         </Button>
       </Text>
       <Text style={EMAIL_STYLES.text}>
-        Or enter this 6-digit code on the sign-in page:
+        Or enter this code on the sign-in page:
       </Text>
       <Text style={{ margin: "0 0 16px 0" }}>
         <span

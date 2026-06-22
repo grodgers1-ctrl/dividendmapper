@@ -12,7 +12,11 @@ type Status =
   | { kind: "error"; message: string };
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const TOKEN_RE = /^\d{6}$/;
+// Length comes from the live Supabase Auth config (mailer_otp_length); the
+// local supabase/config.toml may lag behind the dashboard. Aligned to 8 on
+// 2026-06-22 after the form silently truncated 8-digit codes to 6.
+const TOKEN_LENGTH = 8;
+const TOKEN_RE = new RegExp(`^\\d{${TOKEN_LENGTH}}$`);
 
 const SUPABASE_ERROR_COPY: Record<string, string> = {
   email_address_invalid: "That doesn't look like a valid email address.",
@@ -41,7 +45,7 @@ export function LoginForm({
       ? {
           kind: "error",
           message:
-            "Your sign-in link couldn't be verified. They're single-use and email scanners sometimes use them up before you click. Try the 6-digit code from the email instead, or send a new one.",
+            "Your sign-in link couldn't be verified. They're single-use and email scanners sometimes use them up before you click. Try the code from the email instead, or send a new one.",
         }
       : { kind: "idle" },
   );
@@ -101,7 +105,7 @@ export function LoginForm({
       e.preventDefault();
       const trimmedCode = code.trim();
       if (!TOKEN_RE.test(trimmedCode)) {
-        setCodeError("Enter the 6-digit code from the email.");
+        setCodeError(`Enter the ${TOKEN_LENGTH}-digit code from the email.`);
         return;
       }
       setCodeError(null);
@@ -140,7 +144,7 @@ export function LoginForm({
           Check your inbox
         </p>
         <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-          We sent a sign-in link plus a 6-digit code to{" "}
+          We sent a sign-in link plus a {TOKEN_LENGTH}-digit code to{" "}
           <span className="font-mono text-foreground">{status.email}</span>.
           Click the link or paste the code below. Both expire after five
           minutes.
@@ -151,7 +155,7 @@ export function LoginForm({
             htmlFor="login-code"
             className="block text-sm font-medium text-foreground"
           >
-            Or paste your 6-digit code
+            Or paste your {TOKEN_LENGTH}-digit code
           </label>
           <div className="flex items-center gap-2">
             <input
@@ -160,20 +164,22 @@ export function LoginForm({
               type="text"
               inputMode="numeric"
               autoComplete="one-time-code"
-              pattern="\d{6}"
-              maxLength={6}
-              placeholder="123456"
+              pattern={`\\d{${TOKEN_LENGTH}}`}
+              maxLength={TOKEN_LENGTH}
+              placeholder={"12345678".slice(0, TOKEN_LENGTH)}
               value={code}
               onChange={(e) => {
-                setCode(e.target.value.replace(/\D/g, "").slice(0, 6));
+                setCode(
+                  e.target.value.replace(/\D/g, "").slice(0, TOKEN_LENGTH),
+                );
                 if (codeError) setCodeError(null);
               }}
               disabled={verifying}
-              className="block w-32 rounded-lg border border-input bg-background px-3 py-2.5 text-center font-mono text-base tracking-[0.3em] text-foreground placeholder:tracking-normal placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 focus:ring-offset-background disabled:opacity-60"
+              className="block w-40 rounded-lg border border-input bg-background px-3 py-2.5 text-center font-mono text-base tracking-[0.25em] text-foreground placeholder:tracking-normal placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 focus:ring-offset-background disabled:opacity-60"
             />
             <button
               type="submit"
-              disabled={verifying || code.length !== 6}
+              disabled={verifying || code.length !== TOKEN_LENGTH}
               className="inline-flex h-11 items-center justify-center rounded-lg bg-brand-600 px-4 text-sm font-medium text-white transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-70"
             >
               {verifying ? (
