@@ -61,6 +61,22 @@ describe("scoreTicker", () => {
     expect((upserts["equity_score_signals"] as unknown[]).length).toBeGreaterThan(0);
   });
 
+  it("persists the FundamentalsCard fields on equity_scores", async () => {
+    const { client, upserts } = makeAdmin();
+    await scoreTicker(client, "TEST", [], "2026-06-12");
+    const row = upserts["equity_scores"][0] as Record<string, unknown>;
+    // sector is classified from FMP profile.industry — "Software - Application" → "technology".
+    expect(row.sector).toBe("technology");
+    // payout_ratio comes from FMP ratiosTtm.dividendPayoutRatioTTM (0.4 in the mock).
+    expect(row.payout_ratio).toBe(0.4);
+    // forward_pe: US ticker, price (latest close 130) / fwdEps (10) = 13.
+    expect(row.forward_pe).toBe(13);
+    // fcf_coverage: TTM fcf (300) / TTM dividends paid (100) = 3.
+    expect(row.fcf_coverage).toBe(3);
+    // Only one dividend in the mock — cannot compute 5y CAGR; expect null.
+    expect(row.dividend_cagr_5y).toBeNull();
+  });
+
   it("throws when an upsert returns an error (so the caller can count it)", async () => {
     // Reads (loadPriorHistory) succeed; every upsert errors. The first upsert is
     // equity_scores, so scoreTicker should reject before finishing.

@@ -249,21 +249,21 @@ export default async function HoldingDetailPage({
             <div className="col-span-12 md:col-span-6">
               <FundamentalsCard
                 pe={pe}
-                forwardPe={null}
-                payoutRatio={null}
+                forwardPe={score?.forwardPe ?? null}
+                payoutRatio={score?.payoutRatio ?? null}
                 netDebtToEbitda={
                   latest?.net_debt_to_ebitda != null
                     ? Number(latest.net_debt_to_ebitda)
                     : null
                 }
-                fcfCoverage={null}
+                fcfCoverage={score?.fcfCoverage ?? null}
                 currentYield={
                   latest?.current_yield != null
                     ? Number(latest.current_yield)
                     : null
                 }
-                dividendCagr5y={null}
-                sector={null}
+                dividendCagr5y={score?.dividendCagr5y ?? null}
+                sector={score?.sector ?? null}
               />
             </div>
             <div className="col-span-12 md:col-span-6">
