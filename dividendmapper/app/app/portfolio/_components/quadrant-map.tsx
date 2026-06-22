@@ -324,34 +324,48 @@ export function QuadrantMap({
         </>
       )}
 
-      {excluded.length > 0 && (
-        <div className="mt-4 border-t border-border pt-3">
-          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            Not on the map
-          </p>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            No Quality score, so these sit off the map. Sorted by Risk.
-          </p>
-          <ul className="mt-2 divide-y divide-border">
-            {excluded.map((e) => (
-              <li
-                key={e.ticker}
-                className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 py-1.5"
-              >
-                <span className="flex items-baseline gap-2">
-                  <span className="font-mono text-xs font-medium text-foreground">
-                    {e.ticker}
+      {excluded.length > 0 && (() => {
+        // Compact dashboard slot caps the list so the right-column card
+        // (REINVEST PLANNER) doesn't strand empty space below it; the
+        // parent card's "Open Portfolio Manager →" CTA already covers
+        // the long tail. Full Portfolio Manager page shows everything.
+        const COMPACT_LIMIT = 5;
+        const visible = compact ? excluded.slice(0, COMPACT_LIMIT) : excluded;
+        const hidden = compact ? Math.max(0, excluded.length - COMPACT_LIMIT) : 0;
+        return (
+          <div className="mt-4 border-t border-border pt-3">
+            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Not on the map
+            </p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              No Quality score, so these sit off the map. Sorted by Risk.
+            </p>
+            <ul className="mt-2 divide-y divide-border">
+              {visible.map((e) => (
+                <li
+                  key={e.ticker}
+                  className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 py-1.5"
+                >
+                  <span className="flex items-baseline gap-2">
+                    <span className="font-mono text-xs font-medium text-foreground">
+                      {e.ticker}
+                    </span>
+                    <span className="font-mono text-xs tabular-nums text-muted-foreground">
+                      {e.collecting ? "—" : `R ${e.risk} · T ${e.trim ?? "—"}`}
+                    </span>
                   </span>
-                  <span className="font-mono text-xs tabular-nums text-muted-foreground">
-                    {e.collecting ? "—" : `R ${e.risk} · T ${e.trim ?? "—"}`}
-                  </span>
-                </span>
-                <span className="text-xs text-muted-foreground">{e.reason}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+                  <span className="text-xs text-muted-foreground">{e.reason}</span>
+                </li>
+              ))}
+            </ul>
+            {hidden > 0 && (
+              <p className="mt-2 text-xs text-muted-foreground">
+                + {hidden} more not scored
+              </p>
+            )}
+          </div>
+        );
+      })()}
 
       {openTicker && (
         <ScoreDrawer
