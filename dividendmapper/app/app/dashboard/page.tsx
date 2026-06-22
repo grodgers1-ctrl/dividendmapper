@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import { requireUser } from "@/lib/auth/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { loadPricedHoldings } from "@/lib/portfolio/load-priced-holdings";
+import { sumIncomeGbp } from "@/lib/portfolio/income";
 import { loadPortfolioAnalytics } from "@/lib/scoring/load-portfolio-analytics";
 import { loadScore } from "@/lib/scoring/load-score";
+import { ratesToGbpFor } from "@/lib/scoring/currency";
 import { buildQuadrant } from "@/lib/scoring/quadrant";
 import { isBeta } from "@/lib/scoring/config";
 import { pickFlaggedHolding, type FlaggableScore } from "@/lib/scoring/pick-flagged";
@@ -25,13 +27,6 @@ export const metadata: Metadata = {
 // Per [[reference_app_page_auth_guard]]: each protected page calls
 // requireUser() itself because layout guards don't re-run on soft navs.
 export const dynamic = "force-dynamic";
-
-// Naïve cross-currency sum: matches the Portfolio Ledger's display behaviour
-// (its totalsByCurrency rows aren't FX-converted either). Phase 4 will plug
-// in `ratesToGbpFor()` once the hero acquires a multi-currency story.
-function sumIncomeNaive(totals: { currency: string; total: number }[]): number {
-  return totals.reduce((acc, row) => acc + row.total, 0);
-}
 
 // Deterministic 12-month ramp from 70% → 100% of the current run-rate.
 // Day 6+ replaces this with a real historical series from
@@ -117,7 +112,18 @@ export default async function DashboardPage() {
       )
     : { points: [], excluded: [] };
 
-  const incomeAnnualGbp = sumIncomeNaive(income.totalsByCurrency);
+  // FX-convert per-currency income totals AND priced holdings to GBP.
+  // Collecting the union of currencies in one pass means one ratesToGbpFor
+  // call serves both the hero and the TopHoldingsStrip sort.
+  const distinctCurrencies = new Set<string>();
+  for (const t of income.totalsByCurrency) distinctCurrencies.add(t.currency);
+  for (const ticker of Object.keys(priceByTicker)) {
+    const c = priceByTicker[ticker]?.currency;
+    if (c) distinctCurrencies.add(c);
+  }
+  const ratesToGbp = await ratesToGbpFor([...distinctCurrencies]);
+
+  const incomeAnnualGbp = sumIncomeGbp(income.totalsByCurrency, ratesToGbp);
   const sparkline = syntheticSparkline(new Date(), incomeAnnualGbp);
   const beta = isBeta();
 
@@ -174,6 +180,7 @@ export default async function DashboardPage() {
             nameByTicker={nameByTicker}
             scores={scoresMap}
             tier={tier}
+            ratesToGbp={ratesToGbp}
           />
         </div>
       </div>

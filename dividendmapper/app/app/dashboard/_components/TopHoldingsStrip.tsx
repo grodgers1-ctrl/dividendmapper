@@ -1,7 +1,11 @@
-// Day 5 dashboard. Top-5 holdings by value (FX-blind raw-amount sort — same
-// behaviour as the Ledger value column). Free tier omits the chip column
-// entirely (no blur-and-tease per Day 5 plan); Pro renders a Buy/Quality
-// chip when the score exists for that ticker.
+// Day 5 dashboard. Top-5 holdings by GBP-equivalent value. Free tier omits
+// the chip column entirely (no blur-and-tease per Day 5 plan); Pro renders a
+// Buy/Quality chip when the score exists for that ticker.
+//
+// Holdings are displayed in their source currency (matches the Ledger and
+// what the user sees in their broker). Ranking uses GBP equivalents so a
+// £100k US position outranks a £50k UK position even though the raw amounts
+// (in USD and GBP) would mis-order them without conversion.
 
 import Link from "next/link";
 import { resolveRowValue, type TickerPrice } from "@/lib/portfolio/row-value";
@@ -15,6 +19,10 @@ export interface TopHoldingsStripProps {
   nameByTicker: Record<string, string>;
   scores: ReadonlyMap<string, FlaggableScore>;
   tier: "free" | "pro" | "premium";
+  /** currency → GBP multiplier from ratesToGbpFor(). Optional: a missing rate
+   *  for a row's currency falls back to raw amount for sorting (degrades to the
+   *  pre-FX behaviour for that one row rather than dropping it). */
+  ratesToGbp?: Readonly<Record<string, number>>;
 }
 
 const TOP_N = 5;
@@ -39,6 +47,7 @@ export function TopHoldingsStrip({
   nameByTicker,
   scores,
   tier,
+  ratesToGbp,
 }: TopHoldingsStripProps) {
   const isPro = tier !== "free";
 
@@ -46,9 +55,17 @@ export function TopHoldingsStrip({
     .map((h) => {
       const v = resolveRowValue(h, priceByTicker);
       if (v.kind !== "ok") return null;
-      return { holding: h, amount: v.amount, currency: v.currency };
+      const rate = ratesToGbp?.[v.currency];
+      const sortKey =
+        typeof rate === "number" && Number.isFinite(rate) && rate > 0
+          ? v.amount * rate
+          : v.amount;
+      return { holding: h, amount: v.amount, currency: v.currency, sortKey };
     })
-    .filter((row): row is { holding: HoldingRow; amount: number; currency: string } => row !== null);
+    .filter(
+      (row): row is { holding: HoldingRow; amount: number; currency: string; sortKey: number } =>
+        row !== null,
+    );
 
   if (priced.length === 0) {
     return (
@@ -58,7 +75,7 @@ export function TopHoldingsStrip({
     );
   }
 
-  priced.sort((a, b) => b.amount - a.amount);
+  priced.sort((a, b) => b.sortKey - a.sortKey);
   const top = priced.slice(0, TOP_N);
 
   return (

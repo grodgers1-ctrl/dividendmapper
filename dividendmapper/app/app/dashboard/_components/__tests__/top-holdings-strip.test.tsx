@@ -160,4 +160,62 @@ describe("TopHoldingsStrip", () => {
     );
     expect(container.querySelector("ul")).toBeNull();
   });
+
+  describe("GBP-equivalent sort", () => {
+    it("sorts mixed-currency holdings by GBP-equivalent value when ratesToGbp is provided", () => {
+      // VOD.L: 10_000 GBp × 0.01 = £100   → raw 10_000, GBP £100
+      // AAPL:  10 × $200 = $2_000 × 0.78  → raw 2_000, GBP £1_560
+      // GSK.L: 50 × £25 = £1_250          → raw 1_250, GBP £1_250
+      //
+      // Raw-amount sort (FX-blind) would put VOD.L on top (10_000 > 2_000 > 1_250).
+      // GBP sort: AAPL £1_560 > GSK.L £1_250 > VOD.L £100.
+      const priceByTicker: Record<string, TickerPrice> = {
+        "VOD.L": { price: 10_000, currency: "GBp" },
+        AAPL: { price: 200, currency: "USD" },
+        "GSK.L": { price: 25, currency: "GBP" },
+      };
+      render(
+        <TopHoldingsStrip
+          holdings={[
+            holding("VOD.L", 1),
+            holding("AAPL", 10),
+            holding("GSK.L", 50),
+          ]}
+          priceByTicker={priceByTicker}
+          nameByTicker={{ "VOD.L": "Vodafone", AAPL: "Apple", "GSK.L": "GSK" }}
+          scores={new Map()}
+          tier="free"
+          ratesToGbp={{ GBP: 1, GBp: 0.01, USD: 0.78 }}
+        />,
+      );
+      const tickers = Array.from(
+        document.querySelectorAll("li .font-semibold"),
+      ).map((el) => el.textContent);
+      expect(tickers).toEqual(["AAPL", "GSK.L", "VOD.L"]);
+    });
+
+    it("falls back to raw amount for currencies missing from ratesToGbp", () => {
+      // AAPL is in USD but USD rate is missing → falls back to raw $2_000
+      // GSK.L is GBP £1_250 — wins on GBP, not USD-raw
+      const priceByTicker: Record<string, TickerPrice> = {
+        AAPL: { price: 200, currency: "USD" },
+        "GSK.L": { price: 25, currency: "GBP" },
+      };
+      render(
+        <TopHoldingsStrip
+          holdings={[holding("AAPL", 10), holding("GSK.L", 50)]}
+          priceByTicker={priceByTicker}
+          nameByTicker={{ AAPL: "Apple", "GSK.L": "GSK" }}
+          scores={new Map()}
+          tier="free"
+          ratesToGbp={{ GBP: 1 }}
+        />,
+      );
+      const tickers = Array.from(
+        document.querySelectorAll("li .font-semibold"),
+      ).map((el) => el.textContent);
+      // AAPL raw 2000 > GSK.L raw 1250 → AAPL first
+      expect(tickers).toEqual(["AAPL", "GSK.L"]);
+    });
+  });
 });
