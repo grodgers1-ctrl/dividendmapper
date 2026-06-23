@@ -224,6 +224,23 @@ export async function scoreTicker(
   // same bundle the signals already consume — purely additive persistence.
   const forwardPe =
     assembled.buy.a2.forwardPe > 0 ? assembled.buy.a2.forwardPe : null;
+  // Trailing TTM P/E direct from FMP. Avoids the page deriving P/E from
+  // current_price / eps_avg — eps_avg holds forward EPS (R4 input) so the
+  // derivation collapses to forward P/E on US tickers and is unit-mismatched
+  // (pence price ÷ £ EPS) on .L tickers. priceToEarningsRatioTTM is the
+  // canonical field; peRatioTTM is a legacy alias on some endpoints.
+  const trailingPeRaw =
+    (bundle.ratiosTtm[0] as { priceToEarningsRatioTTM?: number; peRatioTTM?: number } | undefined)
+      ?.priceToEarningsRatioTTM ??
+    (bundle.ratiosTtm[0] as { priceToEarningsRatioTTM?: number; peRatioTTM?: number } | undefined)
+      ?.peRatioTTM ??
+    null;
+  const trailingPe =
+    trailingPeRaw !== null &&
+    Number.isFinite(trailingPeRaw) &&
+    trailingPeRaw > 0
+      ? trailingPeRaw
+      : null;
   const payoutRatio =
     assembled.risk.r3.payoutRatio > 0 ? assembled.risk.r3.payoutRatio : null;
   const fcfCoverage =
@@ -246,6 +263,7 @@ export async function scoreTicker(
       data_quality: dataQuality,
       sector,
       forward_pe: forwardPe,
+      trailing_pe: trailingPe,
       payout_ratio: payoutRatio,
       fcf_coverage: fcfCoverage,
       dividend_cagr_5y: dividendCagr5y,

@@ -30,6 +30,7 @@ export interface ScoreResult {
   // the first cron run after migration 0014.
   sector: string | null;
   forwardPe: number | null;
+  trailingPe: number | null;
   payoutRatio: number | null;
   fcfCoverage: number | null;
   dividendCagr5y: number | null;
@@ -47,6 +48,7 @@ type ScoreRowDb = {
   computed_at: string;
   sector: string | null;
   forward_pe: number | null;
+  trailing_pe: number | null;
   payout_ratio: number | null;
   fcf_coverage: number | null;
   dividend_cagr_5y: number | null;
@@ -93,7 +95,7 @@ export async function loadScore(
   const { data: score, error: scoreError } = await client
     .from("equity_scores")
     .select(
-      "ticker, buy_score, trim_score, risk_score, buy_quality_gate_passed, buy_failed_gates, data_quality, computed_at, sector, forward_pe, payout_ratio, fcf_coverage, dividend_cagr_5y",
+      "ticker, buy_score, trim_score, risk_score, buy_quality_gate_passed, buy_failed_gates, data_quality, computed_at, sector, forward_pe, trailing_pe, payout_ratio, fcf_coverage, dividend_cagr_5y",
     )
     .eq("ticker", ticker)
     .maybeSingle();
@@ -145,6 +147,7 @@ export async function loadScore(
     computedAt: row.computed_at,
     sector: row.sector,
     forwardPe: row.forward_pe != null ? Number(row.forward_pe) : null,
+    trailingPe: row.trailing_pe != null ? Number(row.trailing_pe) : null,
     payoutRatio: row.payout_ratio != null ? Number(row.payout_ratio) : null,
     fcfCoverage: row.fcf_coverage != null ? Number(row.fcf_coverage) : null,
     dividendCagr5y: row.dividend_cagr_5y != null ? Number(row.dividend_cagr_5y) : null,
