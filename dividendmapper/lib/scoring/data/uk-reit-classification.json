@@ -1,0 +1,181 @@
+{
+  "_metadata": {
+    "description": "Phase 4 / Sprint 1 / Task 1.2 — UK REIT manual classification. Replaces FMP's universally-empty revenue-product-segmentation / revenue-geographic-segmentation endpoints for LSE-listed REITs (probe-confirmed 2026-06-19). Feeds the C_U1 (propertyType) and C_U2 (geographicScope) signals on the UK REIT scoring family.",
+    "schema": {
+      "propertyType": "diversified | industrial | retail | office | residential | healthcare | self_storage | student | social_housing | supermarket | specialty",
+      "geographicScope": "uk_only — operations entirely in UK | overseas_exposed — material (>10% NAV/rental income) exposure outside UK"
+    },
+    "source": "Latest annual report / investor factsheet per company IR page",
+    "captured_at": "2026-06-23",
+    "review_cadence": "quarterly",
+    "_note_on_review": "Glenn to QA this list at Sprint 1 Day 1 close. The geographicScope column is the high-judgement piece — propertyType is largely derivable from FMP sub_sector. Disputed entries get a 'reviewed_by_glenn' flag once confirmed."
+  },
+  "BLND.L": {
+    "name": "British Land Company PLC",
+    "propertyType": "diversified",
+    "geographicScope": "uk_only",
+    "source": "https://www.britishland.com/investors/results-and-presentations"
+  },
+  "LAND.L": {
+    "name": "Land Securities Group plc",
+    "propertyType": "diversified",
+    "geographicScope": "uk_only",
+    "source": "https://landsec.com/investors/results-reports-presentations"
+  },
+  "SGRO.L": {
+    "name": "SEGRO Plc",
+    "propertyType": "industrial",
+    "geographicScope": "overseas_exposed",
+    "notes": "Material continental European exposure (~35-40% of portfolio value, primarily Germany, France, Italy, Spain).",
+    "source": "https://www.segro.com/investors"
+  },
+  "UTG.L": {
+    "name": "Unite Group Plc",
+    "propertyType": "student",
+    "geographicScope": "uk_only",
+    "source": "https://www.unite-group.co.uk/investors"
+  },
+  "BBOX.L": {
+    "name": "Tritax Big Box REIT plc",
+    "propertyType": "industrial",
+    "geographicScope": "uk_only",
+    "notes": "UK-only logistics big-box assets (post-UK Commercial Property REIT acquisition).",
+    "source": "https://tritaxbigbox.co.uk/investors"
+  },
+  "PHP.L": {
+    "name": "Primary Health Properties PLC",
+    "propertyType": "healthcare",
+    "geographicScope": "overseas_exposed",
+    "notes": "UK + Ireland primary care facilities. Irish exposure ~10-15% of rental income.",
+    "source": "https://www.phpgroup.co.uk/investors"
+  },
+  "LMP.L": {
+    "name": "LondonMetric Property Plc",
+    "propertyType": "industrial",
+    "geographicScope": "uk_only",
+    "notes": "UK industrial/long-income (post-LXi REIT merger). Treated as industrial-dominant.",
+    "source": "https://www.londonmetric.com/investors"
+  },
+  "SHC.L": {
+    "name": "Shaftesbury Capital PLC",
+    "propertyType": "retail",
+    "geographicScope": "uk_only",
+    "notes": "West End London mixed-use (Carnaby, Covent Garden, Soho).",
+    "source": "https://shaftesburycapital.com/investors"
+  },
+  "DLN.L": {
+    "name": "Derwent London Plc",
+    "propertyType": "office",
+    "geographicScope": "uk_only",
+    "notes": "Central London offices.",
+    "source": "https://www.derwentlondon.com/investors"
+  },
+  "HMSO.L": {
+    "name": "Hammerson plc",
+    "propertyType": "retail",
+    "geographicScope": "overseas_exposed",
+    "notes": "UK + France + Ireland shopping centres.",
+    "source": "https://www.hammerson.com/investors"
+  },
+  "BYG.L": {
+    "name": "Big Yellow Group Plc",
+    "propertyType": "self_storage",
+    "geographicScope": "uk_only",
+    "source": "https://www.bigyellow.co.uk/about-us/investors"
+  },
+  "GPE.L": {
+    "name": "Great Portland Estates Plc",
+    "propertyType": "office",
+    "geographicScope": "uk_only",
+    "notes": "Central London commercial property.",
+    "source": "https://www.gpe.co.uk/investors"
+  },
+  "SAFE.L": {
+    "name": "Safestore Holdings plc",
+    "propertyType": "self_storage",
+    "geographicScope": "overseas_exposed",
+    "notes": "UK + France + Netherlands + Belgium + Spain self-storage. Continental Europe ~20-25% of revenue.",
+    "source": "https://www.safestore.com/investor-relations"
+  },
+  "SUPR.L": {
+    "name": "Supermarket Income REIT plc",
+    "propertyType": "supermarket",
+    "geographicScope": "overseas_exposed",
+    "notes": "UK + Ireland supermarkets (predominantly Sainsbury's, Tesco).",
+    "source": "https://www.supermarketincomereit.com/investors"
+  },
+  "THRL.L": {
+    "name": "Target Healthcare REIT PLC",
+    "propertyType": "healthcare",
+    "geographicScope": "uk_only",
+    "notes": "UK care homes.",
+    "source": "https://www.targethealthcarereit.co.uk/investors"
+  },
+  "WKP.L": {
+    "name": "Workspace Group plc",
+    "propertyType": "office",
+    "geographicScope": "uk_only",
+    "notes": "London flexible offices for SMEs.",
+    "source": "https://www.workspace.co.uk/investors"
+  },
+  "CREI.L": {
+    "name": "Custodian REIT Plc",
+    "propertyType": "diversified",
+    "geographicScope": "uk_only",
+    "notes": "UK regional commercial real estate.",
+    "source": "https://www.custodianreit.com/investors"
+  },
+  "PCTN.L": {
+    "name": "Picton Property Income Limited",
+    "propertyType": "diversified",
+    "geographicScope": "uk_only",
+    "source": "https://www.picton.co.uk/investors"
+  },
+  "NRR.L": {
+    "name": "NewRiver REIT plc",
+    "propertyType": "retail",
+    "geographicScope": "uk_only",
+    "notes": "UK convenience-led retail and pubs.",
+    "source": "https://nrr.co.uk/investors"
+  },
+  "SOHO.L": {
+    "name": "Triple Point Social Housing REIT plc",
+    "propertyType": "social_housing",
+    "geographicScope": "uk_only",
+    "source": "https://triplepointsocialhousing.co.uk/investors"
+  },
+  "SREI.L": {
+    "name": "Schroder Real Estate Investment Trust Limited",
+    "propertyType": "diversified",
+    "geographicScope": "uk_only",
+    "source": "https://www.schroders.com/en/uk/private-investor/strategic-capabilities/real-estate/schroder-real-estate-investment-trust"
+  },
+  "CLI.L": {
+    "name": "CLS Holdings plc",
+    "propertyType": "office",
+    "geographicScope": "overseas_exposed",
+    "notes": "UK + Germany + France offices. Germany ~45% of portfolio.",
+    "source": "https://www.clsholdings.com/investors"
+  },
+  "AEWU.L": {
+    "name": "AEW UK REIT plc",
+    "propertyType": "diversified",
+    "geographicScope": "uk_only",
+    "notes": "UK regional commercial.",
+    "source": "https://www.aewukreit.com/investors"
+  },
+  "RESI.L": {
+    "name": "Residential Secure Income plc",
+    "propertyType": "residential",
+    "geographicScope": "uk_only",
+    "notes": "UK shared-ownership / retirement / local authority housing.",
+    "source": "https://www.resi-reit.com/investors"
+  },
+  "SERE.L": {
+    "name": "Schroder European Real Estate Investment Trust Plc",
+    "propertyType": "diversified",
+    "geographicScope": "overseas_exposed",
+    "notes": "Pan-European (France, Germany, Spain, Netherlands).",
+    "source": "https://www.schroders.com/en/uk/private-investor/strategic-capabilities/real-estate/schroder-european-real-estate-investment-trust"
+  }
+}
