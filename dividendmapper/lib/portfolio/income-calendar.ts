@@ -29,6 +29,17 @@ export interface IncomeCalendarUserDividend {
   currency: string;
 }
 
+/**
+ * 'actual' = a past month, populated from user_dividends (cash already
+ * received).
+ * 'partial' = the current calendar month, populated from user_dividends only
+ * (month-to-date received). Future-pay forecast contributions whose pay_date
+ * lands in this month are intentionally excluded — the bar represents cash
+ * banked, not run-rate. To show projected total for the current month,
+ * compose with the next-3 list.
+ * 'forecast' = a future month, populated from holdings × next_ex_div_amount,
+ * bucketed by pay_date.
+ */
 export type IncomeCalendarMonthKind = "actual" | "partial" | "forecast";
 
 export interface IncomeCalendarMonth {

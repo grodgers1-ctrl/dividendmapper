@@ -44,6 +44,35 @@ describe("buildIncomeCalendar", () => {
     expect(junBucket?.gbp).toBe(10);
   });
 
+  it("excludes current-month forecast contributions from the partial bucket", () => {
+    const holdings = [{ ticker: "AAPL", quantity: 15 }];
+    const exDivByTicker = {
+      // Pay date lands in the current calendar month (June 2026 for the
+      // injected `now`). Forecast contributions in the current bucket are
+      // intentionally dropped — the partial month shows cash banked, not
+      // run-rate.
+      AAPL: {
+        ex_date: "2026-06-25",
+        pay_date: "2026-06-28",
+        amount: 1.05,
+        currency: "USD",
+      },
+    };
+    const result = buildIncomeCalendar({
+      userDividends: [],
+      holdings,
+      exDivByTicker,
+      ratesToGbp,
+      now,
+    });
+    const junBucket = result.months.find((m) => m.ym === "2026-06");
+    expect(junBucket?.kind).toBe("partial");
+    expect(junBucket?.gbp).toBe(0); // forecast in current month not included
+    // But the ex-div still appears in nextThree (it's a future ex-date).
+    expect(result.nextThree).toHaveLength(1);
+    expect(result.nextThree[0].ticker).toBe("AAPL");
+  });
+
   it("aggregates future-forecast ex-divs by pay-date month, multiplied by quantity", () => {
     const holdings = [
       { ticker: "AAPL", quantity: 15 },
@@ -78,7 +107,7 @@ describe("buildIncomeCalendar", () => {
     expect(octBucket?.kind).toBe("forecast");
   });
 
-  it("returns the 12-month window: 6 past months + current + 6 future from 'now'", () => {
+  it("returns the 12-month window: 6 past months + current + 5 future from 'now'", () => {
     const result = buildIncomeCalendar({
       userDividends: [],
       holdings: [],
