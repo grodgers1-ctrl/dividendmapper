@@ -1,6 +1,6 @@
 "use client";
 
-// Dashboard "Best & Worst position" card. Two tiles side-by-side: best and
+// Dashboard "Position performance" card. Two tiles side-by-side: best and
 // worst lifetime P/L vs cost, ranked by GBP pct (not delta). Each tile is a
 // link into the per-ticker page where the full position view + signal
 // breakdown lives. Pro-only.
@@ -39,10 +39,11 @@ export function BestWorstCard({ pnls }: BestWorstCardProps) {
     return (
       <div className="flex h-full flex-col rounded-[10px] border border-[var(--border-subtle)] bg-[var(--surface)] p-6 shadow-[var(--card-shadow)]">
         <p className="text-xs uppercase tracking-[0.08em] text-[var(--text-muted)]">
-          Best & worst
+          Position performance
         </p>
         <p className="mt-3 text-sm text-[var(--text-muted)]">
-          P/L collecting — add cost data to your holdings to see best &amp; worst.
+          P/L collecting — add cost data to your holdings to see your top and
+          bottom performers.
         </p>
       </div>
     );
@@ -59,12 +60,12 @@ export function BestWorstCard({ pnls }: BestWorstCardProps) {
   return (
     <div className="flex h-full flex-col rounded-[10px] border border-[var(--border-subtle)] bg-[var(--surface)] p-6 shadow-[var(--card-shadow)]">
       <p className="text-xs uppercase tracking-[0.08em] text-[var(--text-muted)]">
-        Best &amp; worst
+        Position performance
       </p>
       <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Tile
           testId="best-worst-best"
-          eyebrow="Best"
+          eyebrow="Best performer"
           pnl={best}
           delay={0}
           reduce={!!reduce}
@@ -72,7 +73,7 @@ export function BestWorstCard({ pnls }: BestWorstCardProps) {
         {worst ? (
           <Tile
             testId="best-worst-worst"
-            eyebrow="Worst"
+            eyebrow="Worst performer"
             pnl={worst}
             delay={0.1}
             reduce={!!reduce}
@@ -100,7 +101,7 @@ function Tile({
   reduce,
 }: {
   testId: string;
-  eyebrow: "Best" | "Worst";
+  eyebrow: "Best performer" | "Worst performer";
   pnl: HoldingPnl;
   delay: number;
   reduce: boolean;

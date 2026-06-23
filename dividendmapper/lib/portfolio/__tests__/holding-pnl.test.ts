@@ -180,4 +180,44 @@ describe("computeHoldingsPnl", () => {
     expect(pnls[0].deltaGbp).toBeCloseTo(200, 6);
     expect(pnls[0].pctGbp).toBeCloseTo(0.2, 6);
   });
+
+  it("aggregates multiple rows of the same ticker into one position", () => {
+    // Two HYSD lots: one full (5 @ £100), one residual sliver (5 @ £120).
+    // Without aggregation, the £120-cost sliver and the £100-cost lot
+    // produce two pnl rows, with the higher-cost row appearing as 'worst'
+    // even though the user holds one position. Per-ticker aggregation
+    // collapses both into a single position-level P/L.
+    const pnls = computeHoldingsPnl(
+      [
+        holding({ ticker: "HYSD", quantity: 5, avg_cost: 100 }),
+        holding({ ticker: "HYSD", quantity: 5, avg_cost: 120 }),
+      ],
+      { HYSD: price({ price: 130, currency: "GBP" }) },
+      { GBP: 1 },
+    );
+    expect(pnls).toHaveLength(1);
+    expect(pnls[0].ticker).toBe("HYSD");
+    // cost: 5×100 + 5×120 = 1100; value: 10×130 = 1300; delta = 200
+    expect(pnls[0].deltaGbp).toBeCloseTo(200, 6);
+    expect(pnls[0].pctGbp).toBeCloseTo(200 / 1100, 6);
+  });
+
+  it("aggregates rows even when cost currencies differ for the same ticker", () => {
+    // GBP-cost lot + USD-cost lot of the same ticker (transferred holding).
+    // GBP cost: 5 × 100 × 1 = £500. USD cost: 5 × 130 × 0.8 = £520. Value:
+    // 10 × 150 × 1 = £1500. delta = £480. Cross-currency true because any
+    // row was cross-currency.
+    const pnls = computeHoldingsPnl(
+      [
+        holding({ ticker: "MIX", quantity: 5, avg_cost: 100, cost_currency: "GBP" }),
+        holding({ ticker: "MIX", quantity: 5, avg_cost: 130, cost_currency: "USD" }),
+      ],
+      { MIX: price({ price: 150, currency: "GBP" }) },
+      { GBP: 1, USD: 0.8 },
+    );
+    expect(pnls).toHaveLength(1);
+    expect(pnls[0].deltaGbp).toBeCloseTo(480, 6);
+    expect(pnls[0].pctGbp).toBeCloseTo(480 / 1020, 6);
+    expect(pnls[0].isCrossCurrency).toBe(true);
+  });
 });

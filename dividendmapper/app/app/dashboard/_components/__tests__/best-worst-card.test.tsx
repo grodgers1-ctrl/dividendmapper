@@ -14,7 +14,12 @@ const pnl = (over: Partial<HoldingPnl> = {}): HoldingPnl => ({
 });
 
 describe("<BestWorstCard>", () => {
-  it("renders the Best and Worst eyebrows when given ≥ 2 holdings", () => {
+  it("renders the card title 'Position performance'", () => {
+    render(<BestWorstCard pnls={[pnl()]} />);
+    expect(screen.getByText(/position performance/i)).toBeInTheDocument();
+  });
+
+  it("renders 'Best performer' and 'Worst performer' eyebrows when given ≥ 2 holdings", () => {
     render(
       <BestWorstCard
         pnls={[
@@ -23,8 +28,8 @@ describe("<BestWorstCard>", () => {
         ]}
       />,
     );
-    expect(screen.getByText(/^Best$/)).toBeInTheDocument();
-    expect(screen.getByText(/^Worst$/)).toBeInTheDocument();
+    expect(screen.getByText(/best performer/i)).toBeInTheDocument();
+    expect(screen.getByText(/worst performer/i)).toBeInTheDocument();
   });
 
   it("renders best ticker, signed +pct, and signed GBP delta", () => {
@@ -118,6 +123,8 @@ describe("<BestWorstCard>", () => {
     expect(
       screen.getByText(/p\/l collecting/i),
     ).toBeInTheDocument();
+    // Empty state still uses the polished card title rather than "Best & worst".
+    expect(screen.getByText(/position performance/i)).toBeInTheDocument();
   });
 
   it("renders an FX-today caveat when either tile is cross-currency", () => {
