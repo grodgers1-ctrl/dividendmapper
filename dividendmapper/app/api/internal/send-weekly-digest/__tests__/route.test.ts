@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 const sendIdempotent = vi.fn();
 vi.mock("@/lib/email/send", () => ({ sendIdempotent: (...a: unknown[]) => sendIdempotent(...a) }));
@@ -71,13 +71,25 @@ function makeReq(auth = "Bearer test-secret") {
   return new Request("https://x/api/internal/send-weekly-digest", { headers: { authorization: auth } });
 }
 
+// Fixtures are dated 2026-06-14 (current) and 2026-06-06 (baseline), so the
+// 7-day cutoff has to land between those two for the assertions to hold. Pin
+// the clock to 2026-06-15 so cutoff = 2026-06-08 (after 06-06, before 06-14)
+// regardless of the real wall-clock date when the suite runs.
+const FIXED_NOW = new Date("2026-06-15T12:00:00Z");
+
 beforeEach(() => {
+  vi.useFakeTimers();
+  vi.setSystemTime(FIXED_NOW);
   vi.clearAllMocks();
   process.env.CRON_SECRET = "test-secret";
   process.env.NEXT_PUBLIC_SUPABASE_URL = "https://supa";
   process.env.SUPABASE_SERVICE_ROLE_KEY = "service-key";
   process.env.NEXT_PUBLIC_SITE_URL = "https://dividendmapper.com";
   sendIdempotent.mockResolvedValue({ ok: true, emailId: "e1" });
+});
+
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 describe("send-weekly-digest route", () => {
