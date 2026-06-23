@@ -34,6 +34,26 @@ describe("classifySector", () => {
     expect(isUtility("utility" as Sector)).toBe(true);
     expect(isUtility("other" as Sector)).toBe(false);
   });
+
+  it("classifies Consumer Electronics as technology (AAPL, megacap hardware)", () => {
+    expect(classifySector("Consumer Electronics")).toBe("technology");
+  });
+
+  it("classifies Information Technology Services as technology (WISE.L et al)", () => {
+    expect(classifySector("Information Technology Services")).toBe("technology");
+  });
+
+  it("classifies Discount Stores as consumer_discretionary (BME.L)", () => {
+    expect(classifySector("Discount Stores")).toBe("consumer_discretionary");
+  });
+
+  it("classifies Department Stores as consumer_discretionary", () => {
+    expect(classifySector("Department Stores")).toBe("consumer_discretionary");
+  });
+
+  it("classifies Grocery Stores as consumer_staples (Tesco/Sainsbury's pattern)", () => {
+    expect(classifySector("Grocery Stores")).toBe("consumer_staples");
+  });
 });
 
 describe("isFinancial", () => {
