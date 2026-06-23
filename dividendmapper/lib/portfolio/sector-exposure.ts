@@ -1,8 +1,9 @@
 // Sector-weight rollup for the dashboard's SectorExposureCard. Takes the
 // already-computed ticker weights from PortfolioAnalytics + the per-ticker
 // sector classifications from equity_scores.sector and bins them into
-// top-N + Other. Null/empty sectors bucket into "Unclassified" so a missing
-// FMP profile doesn't silently drop weight off the chart.
+// top-N + a "Smaller Sectors" tail bucket. Null/empty sectors bucket into
+// "Unclassified" so a missing FMP profile doesn't silently drop weight off
+// the chart.
 //
 // max is `top[0]` after sorting — used by the card's overweight pill so it
 // doesn't have to rescan.
@@ -31,7 +32,7 @@ export function rollupSectors(args: {
   sectorByTicker: Record<string, string | null>;
   topN?: number;
 }): SectorRollup {
-  const { weightByTicker, sectorByTicker, topN = 3 } = args;
+  const { weightByTicker, sectorByTicker, topN = 5 } = args;
 
   const totals = new Map<string, number>();
   for (const [ticker, weight] of Object.entries(weightByTicker)) {
@@ -55,6 +56,6 @@ export function rollupSectors(args: {
   const top = sorted.slice(0, topN);
   const tail = sorted.slice(topN);
   const otherWeight = tail.reduce((acc, s) => acc + s.weight, 0);
-  const other: SectorSlice = { sector: "Other", weight: otherWeight };
+  const other: SectorSlice = { sector: "Smaller Sectors", weight: otherWeight };
   return { top, other, max: top[0] };
 }

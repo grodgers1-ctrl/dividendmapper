@@ -1,83 +1,63 @@
-import { describe, it, expect, afterEach } from "vitest";
-import { render, cleanup, screen } from "@testing-library/react";
-import { SectorExposureCard } from "@/app/app/dashboard/_components/SectorExposureCard";
-import type { SectorRollup } from "@/lib/portfolio/sector-exposure";
+import { describe, it, expect } from "vitest";
+import { render } from "@testing-library/react";
+import { SectorExposureCard } from "../SectorExposureCard";
 
-afterEach(cleanup);
+const rollup = {
+  top: [
+    { sector: "technology", weight: 0.43 },
+    { sector: "consumer_staples", weight: 0.19 },
+    { sector: "financial", weight: 0.17 },
+    { sector: "consumer_discretionary", weight: 0.13 },
+    { sector: "industrials", weight: 0.06 },
+  ],
+  other: { sector: "Smaller Sectors", weight: 0.02 },
+  max: { sector: "technology", weight: 0.43 },
+};
 
-function rollup(over: Partial<SectorRollup> = {}): SectorRollup {
-  return {
-    top: [
-      { sector: "technology", weight: 0.4 },
-      { sector: "financials", weight: 0.25 },
-      { sector: "healthcare", weight: 0.15 },
-    ],
-    other: { sector: "Other", weight: 0.2 },
-    max: { sector: "technology", weight: 0.4 },
-    ...over,
-  };
-}
-
-describe("<SectorExposureCard>", () => {
-  it("renders the eyebrow 'Sector exposure'", () => {
-    render(<SectorExposureCard rollup={rollup()} />);
-    expect(screen.getByText(/sector exposure/i)).toBeTruthy();
+describe("SectorExposureCard", () => {
+  it("renders a doughnut SVG with six slices (top-5 + tail)", () => {
+    const { container } = render(<SectorExposureCard rollup={rollup} />);
+    const slices = container.querySelectorAll("svg circle[stroke-dasharray]");
+    expect(slices).toHaveLength(6);
   });
 
-  it("renders all top-3 sector names with title-cased labels", () => {
-    render(<SectorExposureCard rollup={rollup()} />);
-    // Technology appears in both the row label and the overweight pill.
-    expect(screen.getAllByText(/Technology/i).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText(/Financials/i)).toBeTruthy();
-    expect(screen.getByText(/Healthcare/i)).toBeTruthy();
+  it("renders the side legend with Title Case sector names", () => {
+    const { getByText } = render(<SectorExposureCard rollup={rollup} />);
+    expect(getByText("Technology")).toBeInTheDocument();
+    expect(getByText("Consumer Staples")).toBeInTheDocument();
+    expect(getByText("Financial")).toBeInTheDocument();
+    expect(getByText("Consumer Discretionary")).toBeInTheDocument();
+    expect(getByText("Industrials")).toBeInTheDocument();
+    expect(getByText("Smaller Sectors")).toBeInTheDocument();
   });
 
-  it("renders an Other row when there are more sectors than topN", () => {
-    render(<SectorExposureCard rollup={rollup()} />);
-    expect(screen.getByText(/Other/)).toBeTruthy();
-    expect(screen.getByText("20%")).toBeTruthy();
+  it("shows the sector count in the doughnut centre", () => {
+    const { getByText } = render(<SectorExposureCard rollup={rollup} />);
+    expect(getByText("6")).toBeInTheDocument();
+    expect(getByText("sectors")).toBeInTheDocument();
   });
 
-  it("does not render the Other row when other is null", () => {
-    render(<SectorExposureCard rollup={rollup({ other: null })} />);
-    expect(screen.queryByText(/Other/)).toBeNull();
-  });
-
-  it("renders a heavily-formatted weight pct per slice", () => {
-    render(<SectorExposureCard rollup={rollup()} />);
-    expect(screen.getByText("40%")).toBeTruthy();
-    expect(screen.getByText("25%")).toBeTruthy();
-    expect(screen.getByText("15%")).toBeTruthy();
-  });
-
-  it("renders an overweight pill when max.weight > 35%", () => {
-    render(<SectorExposureCard rollup={rollup()} />);
-    const pill = screen.getByTestId("sector-overweight-pill");
-    expect(pill).toBeTruthy();
+  it("renders an overweight pill when max.weight > 0.35, using Title Case", () => {
+    const { getByTestId } = render(<SectorExposureCard rollup={rollup} />);
+    const pill = getByTestId("sector-overweight-pill");
     expect(pill.textContent).toContain("Technology");
-    expect(pill.textContent).toContain("40%");
+    expect(pill.textContent).toContain("43%");
   });
 
-  it("omits the overweight pill when max.weight ≤ 35%", () => {
-    render(
-      <SectorExposureCard
-        rollup={rollup({
-          top: [
-            { sector: "technology", weight: 0.3 },
-            { sector: "financials", weight: 0.25 },
-            { sector: "healthcare", weight: 0.15 },
-          ],
-          max: { sector: "technology", weight: 0.3 },
-        })}
-      />,
-    );
-    expect(screen.queryByTestId("sector-overweight-pill")).toBeNull();
+  it("omits the overweight pill when max.weight ≤ 0.35", () => {
+    const quietRollup = { ...rollup, max: { sector: "technology", weight: 0.33 } };
+    const { queryByTestId } = render(<SectorExposureCard rollup={quietRollup} />);
+    expect(queryByTestId("sector-overweight-pill")).toBeNull();
   });
 
-  it("renders an empty state when top is empty", () => {
-    render(
-      <SectorExposureCard rollup={{ top: [], other: null, max: null }} />,
-    );
-    expect(screen.getByText(/sectors collecting/i)).toBeTruthy();
+  it("uses the shared card-surface utility class", () => {
+    const { container } = render(<SectorExposureCard rollup={rollup} />);
+    expect(container.firstChild).toHaveClass("card-surface");
+  });
+
+  it("renders the empty state when rollup.top is empty", () => {
+    const empty = { top: [], other: null, max: null };
+    const { getByText } = render(<SectorExposureCard rollup={empty} />);
+    expect(getByText(/Sectors collecting/)).toBeInTheDocument();
   });
 });

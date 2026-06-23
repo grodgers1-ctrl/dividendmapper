@@ -21,7 +21,7 @@ describe("rollupSectors", () => {
     expect(out.max?.weight).toBe(0.5);
   });
 
-  it("collapses sectors past topN into a single Other slice", () => {
+  it("collapses sectors past topN into a single Smaller Sectors slice", () => {
     const out = rollupSectors({
       weightByTicker: { A: 0.4, B: 0.25, C: 0.15, D: 0.1, E: 0.1 },
       sectorByTicker: {
@@ -34,7 +34,7 @@ describe("rollupSectors", () => {
       topN: 3,
     });
     expect(out.top.map((s) => s.sector)).toEqual(["tech", "financials", "energy"]);
-    expect(out.other?.sector).toBe("Other");
+    expect(out.other?.sector).toBe("Smaller Sectors");
     expect(out.other?.weight).toBeCloseTo(0.2, 5);
   });
 
@@ -73,18 +73,18 @@ describe("rollupSectors", () => {
     expect(out.top).toEqual([{ sector: "tech", weight: 0.5 }]);
   });
 
-  it("defaults topN to 3 when omitted", () => {
-    const out = rollupSectors({
-      weightByTicker: { A: 0.3, B: 0.25, C: 0.2, D: 0.15, E: 0.1 },
-      sectorByTicker: {
-        A: "tech",
-        B: "financials",
-        C: "energy",
-        D: "utilities",
-        E: "consumer staples",
-      },
-    });
-    expect(out.top).toHaveLength(3);
-    expect(out.other?.weight).toBeCloseTo(0.25, 5);
+  it("defaults topN to 5 and uses 'Smaller Sectors' for the tail bucket", () => {
+    const weightByTicker = {
+      A: 0.20, B: 0.18, C: 0.16, D: 0.14, E: 0.12, F: 0.10, G: 0.10,
+    };
+    const sectorByTicker = {
+      A: "technology", B: "financial", C: "consumer_staples",
+      D: "healthcare", E: "industrials", F: "utility", G: "energy",
+    };
+    const r = rollupSectors({ weightByTicker, sectorByTicker });
+    expect(r.top).toHaveLength(5);
+    expect(r.other).not.toBeNull();
+    expect(r.other?.sector).toBe("Smaller Sectors");
+    expect(r.other?.weight).toBeCloseTo(0.20, 5); // F + G
   });
 });
