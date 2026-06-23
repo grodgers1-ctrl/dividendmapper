@@ -151,6 +151,15 @@
     0 1px 3px rgba(15, 23, 42, 0.06),
     0 1px 2px rgba(15, 23, 42, 0.04);
 
+  /* Layered-offset card treatment — consumed by .card-surface utility.
+     Light mode uses neutral grey tints (not emerald) so the offset reads
+     as subtle elevation rather than coloured accent. */
+  --card-shadow-fill: #f3f4f6;
+  --card-shadow-border: rgba(0, 0, 0, 0.10);
+  --card-shadow-fill-hover: #e5e7eb;
+  --card-shadow-border-hover: rgba(0, 0, 0, 0.18);
+  --card-hover-border: rgba(0, 0, 0, 0.30);
+
   /* Re-point sidebar tokens at the new surface tokens. Drawer-ready, no
      visible delta in light mode (existing values were near-identical). */
   --sidebar: var(--surface);
