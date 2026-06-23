@@ -19,6 +19,13 @@ describe("SectorExposureCard", () => {
     const { container } = render(<SectorExposureCard rollup={rollup} />);
     const slices = container.querySelectorAll("svg circle[stroke-dasharray]");
     expect(slices).toHaveLength(6);
+    // Verify the FIRST slice's arc length matches its weight (43%) — guards
+    // against a regression where all slices render with arc=0.
+    const firstDasharray = slices[0].getAttribute("stroke-dasharray");
+    expect(firstDasharray).not.toBeNull();
+    const firstArc = Number(firstDasharray!.split(" ")[0]);
+    const expectedArc = 0.43 * 2 * Math.PI * 50;
+    expect(firstArc).toBeCloseTo(expectedArc, 1);
   });
 
   it("renders the side legend with Title Case sector names", () => {

@@ -72,6 +72,10 @@ export function SectorExposureCard({ rollup }: SectorExposureCardProps) {
   const overweight =
     rollup.max && rollup.max.weight > OVERWEIGHT_THRESHOLD ? rollup.max : null;
 
+  const ariaLabel = `Sector exposure: ${sliceMeta
+    .map((s) => `${formatSector(s.sector)} ${PCT_0DP.format(s.weight)}`)
+    .join(", ")}`;
+
   return (
     <div className="card-surface flex h-full flex-col">
       <p className="text-xs uppercase tracking-[0.08em] text-[var(--text-muted)]">
@@ -90,7 +94,11 @@ export function SectorExposureCard({ rollup }: SectorExposureCardProps) {
         </div>
       )}
 
-      <div className="mt-4 grid grid-cols-[120px_1fr] gap-4 items-center">
+      <section
+        role="figure"
+        aria-label={ariaLabel}
+        className="mt-4 grid grid-cols-[120px_1fr] gap-4 items-center"
+      >
         <svg
           viewBox="0 0 140 140"
           width="120"
@@ -148,7 +156,7 @@ export function SectorExposureCard({ rollup }: SectorExposureCardProps) {
             </li>
           ))}
         </ul>
-      </div>
+      </section>
     </div>
   );
 }
