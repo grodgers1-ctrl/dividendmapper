@@ -13,7 +13,7 @@ export function BetaPill() {
   return (
     <Popover.Root>
       <Popover.Trigger
-        className="inline-flex items-center rounded-md bg-[var(--surface-2)] px-2 py-0.5 text-[11px] font-medium text-[var(--text-faint)] transition-colors hover:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-ring"
+        className="inline-flex items-center rounded-md bg-[var(--surface-2)] px-2 py-0.5 text-[11px] font-medium text-[var(--text-muted)] transition-colors hover:text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-ring"
         aria-label="Scoring beta details"
       >
         Scoring · beta

@@ -23,6 +23,11 @@ import {
   type ReinvestCard,
   type ExDiv,
 } from "@/lib/reinvest/build-card";
+import {
+  buildIncomeCalendar,
+  type IncomeCalendarResult,
+  type IncomeCalendarExDiv,
+} from "@/lib/portfolio/income-calendar";
 import type { HoldingRow } from "@/lib/portfolio/load-priced-holdings";
 
 // 30 trading days ≈ 42 calendar days; the history row at/just before that point
@@ -30,12 +35,50 @@ import type { HoldingRow } from "@/lib/portfolio/load-priced-holdings";
 // and deltas stay null (chips simply omit the delta pill).
 const DELTA_LOOKBACK_DAYS = 42;
 
+export interface TickerFundamentals {
+  sector: string | null;
+  forwardPe: number | null;
+  payoutRatio: number | null; // decimal
+  dividendYield: number | null; // decimal
+}
+
+export interface NextDividend {
+  ticker: string;
+  date: string; // YYYY-MM-DD ex-dividend date
+  amount: number | null;
+  payDate: string | null;
+}
+
 export interface PortfolioAnalytics {
   scoresByTicker: Record<string, HoldingScore>;
   flagged: { ticker: string; hint: string }[];
   concentration: ConcentrationResult;
   reinvestCard: ReinvestCard | null;
   weightByTicker: Record<string, number>;
+  fundamentalsByTicker: Record<string, TickerFundamentals>;
+  nextDividend: NextDividend | null;
+  incomeCalendar: IncomeCalendarResult;
+}
+
+// Soonest upcoming ex-dividend across the user's held tickers. Ex-div rows in
+// the past (date < today) are discarded; null when no future date exists.
+function pickNextDividend(
+  exDivByTicker: Record<string, ExDiv>,
+  today: string,
+): NextDividend | null {
+  let soonest: NextDividend | null = null;
+  for (const [ticker, e] of Object.entries(exDivByTicker)) {
+    if (e.date < today) continue;
+    if (soonest === null || e.date < soonest.date) {
+      soonest = {
+        ticker,
+        date: e.date,
+        amount: e.amount,
+        payDate: e.payDate,
+      };
+    }
+  }
+  return soonest;
 }
 
 /**
@@ -82,11 +125,14 @@ export async function loadPortfolioAnalytics(args: {
   const cutoff = new Date(now.getTime() - DELTA_LOOKBACK_DAYS * 86_400_000)
     .toISOString()
     .slice(0, 10);
-  const [scoresRes, overridesRes, historyRes] = await Promise.all([
+  const calendarSince = new Date(now.getTime() - 200 * 86_400_000)
+    .toISOString()
+    .slice(0, 10);
+  const [scoresRes, overridesRes, historyRes, latestYieldRes, userDividendsForCalendarRes] = await Promise.all([
     supabase
       .from("equity_scores")
       .select(
-        "ticker, buy_score, trim_score, risk_score, buy_failed_gates, data_quality, next_ex_div_date, next_ex_div_amount, next_ex_div_pay_date",
+        "ticker, buy_score, trim_score, risk_score, buy_failed_gates, data_quality, next_ex_div_date, next_ex_div_amount, next_ex_div_pay_date, sector, forward_pe, payout_ratio",
       )
       .in("ticker", tickers)
       .returns<
@@ -94,6 +140,9 @@ export async function loadPortfolioAnalytics(args: {
           next_ex_div_date: string | null;
           next_ex_div_amount: number | null;
           next_ex_div_pay_date: string | null;
+          sector: string | null;
+          forward_pe: number | null;
+          payout_ratio: number | null;
         })[]
       >(),
     supabase
@@ -108,6 +157,24 @@ export async function loadPortfolioAnalytics(args: {
       .lte("observed_at", cutoff)
       .order("observed_at", { ascending: false })
       .returns<(PriorHistory & { ticker: string; observed_at: string })[]>(),
+    // Latest current_yield per ticker — equity_scores has no yield column,
+    // so the FundamentalsCard/chip strip reads it from the most recent
+    // equity_score_history row instead. observed_at DESC + take-first-per-ticker
+    // in JS gets us "latest" without a heavier window query.
+    supabase
+      .from("equity_score_history")
+      .select("ticker, current_yield, observed_at")
+      .in("ticker", tickers)
+      .order("observed_at", { ascending: false })
+      .returns<{ ticker: string; current_yield: number | null; observed_at: string }[]>(),
+    // Past ~200 days of received dividends — drives the Income Calendar
+    // "actual" + "partial" buckets on the dashboard card.
+    supabase
+      .from("user_dividends")
+      .select("paid_on, amount, currency")
+      .gte("paid_on", calendarSince)
+      .order("paid_on", { ascending: true })
+      .returns<{ paid_on: string; amount: number; currency: string }[]>(),
   ]);
 
   const overridesByTicker = new Map<string, OverrideRow[]>();
@@ -127,7 +194,17 @@ export async function loadPortfolioAnalytics(args: {
       });
     }
   }
+  // latestYieldRes is sorted newest-first across all observations of every
+  // ticker; first row per ticker is the latest. Maps to TickerFundamentals
+  // alongside the equity_scores fundamentals below.
+  const latestYieldByTicker = new Map<string, number | null>();
+  for (const r of latestYieldRes.data ?? []) {
+    if (!latestYieldByTicker.has(r.ticker)) {
+      latestYieldByTicker.set(r.ticker, r.current_yield != null ? Number(r.current_yield) : null);
+    }
+  }
 
+  const fundamentalsByTicker: Record<string, TickerFundamentals> = {};
   for (const score of scoresRes.data ?? []) {
     scoresByTicker[score.ticker] = buildHoldingScore({
       score,
@@ -136,6 +213,12 @@ export async function loadPortfolioAnalytics(args: {
       now,
       sensitivity,
     });
+    fundamentalsByTicker[score.ticker] = {
+      sector: score.sector,
+      forwardPe: score.forward_pe != null ? Number(score.forward_pe) : null,
+      payoutRatio: score.payout_ratio != null ? Number(score.payout_ratio) : null,
+      dividendYield: latestYieldByTicker.get(score.ticker) ?? null,
+    };
   }
 
   // Opt-in score lens: re-aggregate the Buy/Quality score from persisted
@@ -183,6 +266,7 @@ export async function loadPortfolioAnalytics(args: {
     return sum + Number(h.quantity) * div * rate;
   }, 0);
 
+  const todayIso = now.toISOString().slice(0, 10);
   reinvestCard = buildReinvestCard({
     holdings: allHoldings.map((h) => ({
       id: h.id,
@@ -197,9 +281,50 @@ export async function loadPortfolioAnalytics(args: {
     weightByTicker,
     totalPortfolioIncomeGbp,
     sectorsToAvoid: prefs?.sectors_to_avoid ?? [],
-    today: now.toISOString().slice(0, 10),
+    today: todayIso,
     windowDays: 5,
   });
 
-  return { scoresByTicker, flagged, concentration, reinvestCard, weightByTicker };
+  const nextDividend = pickNextDividend(exDivByTicker, todayIso);
+
+  // Income calendar payload (Pro). Reuses scoresRes' next_ex_div_* columns,
+  // ratesToGbp, and allHoldings; only the user_dividends fetch is new.
+  // Currency heuristic matches build-card: .L => GBp, else USD.
+  const calendarExDivByTicker: Record<string, IncomeCalendarExDiv> = {};
+  for (const row of scoresRes.data ?? []) {
+    if (row.next_ex_div_date) {
+      calendarExDivByTicker[row.ticker] = {
+        ex_date: row.next_ex_div_date,
+        pay_date: row.next_ex_div_pay_date,
+        amount: row.next_ex_div_amount ?? 0,
+        currency: row.ticker.toUpperCase().endsWith(".L") ? "GBp" : "USD",
+      };
+    }
+  }
+
+  const incomeCalendar = buildIncomeCalendar({
+    userDividends: (userDividendsForCalendarRes.data ?? []).map((d) => ({
+      paid_on: d.paid_on,
+      amount: Number(d.amount),
+      currency: d.currency,
+    })),
+    holdings: allHoldings.map((h) => ({
+      ticker: h.ticker,
+      quantity: Number(h.quantity),
+    })),
+    exDivByTicker: calendarExDivByTicker,
+    ratesToGbp,
+    now,
+  });
+
+  return {
+    scoresByTicker,
+    flagged,
+    concentration,
+    reinvestCard,
+    weightByTicker,
+    fundamentalsByTicker,
+    nextDividend,
+    incomeCalendar,
+  };
 }

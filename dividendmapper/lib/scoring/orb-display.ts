@@ -10,6 +10,17 @@ const STROKE: Record<ScoreType, string> = {
   risk: "#ef4444",
 };
 
+// Chip text uses one shade lighter than the arc stroke to clear WCAG AA 4.5:1
+// against the 12%-tinted chip background on the dark canvas. Without this,
+// axe flagged Risk text (#ef4444) at 4.29:1 — 0.21 short of AA. The arc
+// stroke itself stays at the canonical shade so the orb identity reads the
+// same. (Tailwind 400 shades: emerald-400, amber-400, red-400.)
+const CHIP_TEXT: Record<ScoreType, string> = {
+  buy: "#34d399",
+  trim: "#fbbf24",
+  risk: "#f87171",
+};
+
 const GLOW: Record<ScoreType, string> = {
   buy: "rgba(16, 185, 129, 0.45)",
   trim: "rgba(245, 158, 11, 0.45)",
@@ -25,6 +36,10 @@ export function arcLength(score: number | null): number {
 
 export function arcStrokeColor(type: ScoreType): string {
   return STROKE[type];
+}
+
+export function chipTextColor(type: ScoreType): string {
+  return CHIP_TEXT[type];
 }
 
 export function arcGlowColor(type: ScoreType): string {

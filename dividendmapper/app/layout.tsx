@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans, Inter, JetBrains_Mono } from "next/font/google";
+import { headers } from "next/headers";
 import { LocaleProvider } from "@/lib/locale/context";
 import { PostHogProvider } from "@/components/posthog-provider";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -51,9 +52,41 @@ export const viewport: Viewport = {
   ],
 };
 
-export default function RootLayout({
+// Site-wide JSON-LD. Organization disambiguates the brand for LLM search
+// (ChatGPT, Perplexity, Google AI Overviews) — `sameAs` is the lever to
+// add as official profiles go live. WebSite ties the URL to the entity.
+// Per SEO-AEO-AUDIT.md C2 (2026-06-22).
+const ORGANIZATION_JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "@id": "https://dividendmapper.com#org",
+  name: "DividendMapper",
+  url: "https://dividendmapper.com",
+  logo: "https://dividendmapper.com/icon.png",
+  description:
+    "Free dividend portfolio tools and resilience scoring for UK and US investors.",
+  sameAs: [] as string[],
+};
+
+const WEBSITE_JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  url: "https://dividendmapper.com",
+  name: "DividendMapper",
+  publisher: { "@id": "https://dividendmapper.com#org" },
+};
+
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  // proxy.ts injects x-pathname for /app/* (its matcher). For marketing
+  // routes the header is absent and the fallback ("/") doesn't match —
+  // chrome shows. /app/* owns its own shell via DrawerShell and must not
+  // render the marketing SiteHeader/SiteFooter on top of it.
+  const hdrs = await headers();
+  const pathname = hdrs.get("x-pathname") ?? "/";
+  const showMarketingChrome = !pathname.startsWith("/app");
+
   return (
     <html
       lang="en"
@@ -61,6 +94,12 @@ export default function RootLayout({
       className={`${display.variable} ${body.variable} ${mono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify([ORGANIZATION_JSON_LD, WEBSITE_JSON_LD]),
+          }}
+        />
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -69,9 +108,18 @@ export default function RootLayout({
         >
           <PostHogProvider>
             <LocaleProvider>
-              <SiteHeader />
-              <main className="flex-1">{children}</main>
-              <SiteFooter />
+              {showMarketingChrome ? (
+                <>
+                  <SiteHeader />
+                  <main className="flex-1">{children}</main>
+                  <SiteFooter />
+                </>
+              ) : (
+                // /app/* routes own their own <main> via DrawerShell. Wrapping
+                // here would produce a nested + duplicate main landmark
+                // (axe-reported 2026-06-22). Pass children through bare.
+                children
+              )}
             </LocaleProvider>
           </PostHogProvider>
         </ThemeProvider>

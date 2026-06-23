@@ -45,7 +45,7 @@ export interface ConcentrationResult {
  * Compute portfolio concentration.
  *
  * @param holdings    - All user holdings (full set, not the free-tier-clipped slice).
- * @param quotes      - Quote map returned by fetchPortfolioQuotes + mergeUkDividends.
+ * @param quotes      - Quote map returned by fetchPortfolioQuotes + mergeScoringDividends.
  * @param ratesToGbp  - Currency→GBP multiplier map (e.g. { GBP: 1, USD: 0.79 }).
  *                      Resolved by ratesToGbpFor() from lib/scoring/currency.ts.
  *                      A holding whose quote currency is absent from this map is

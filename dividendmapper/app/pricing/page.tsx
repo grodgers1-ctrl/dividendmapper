@@ -11,6 +11,26 @@ export const metadata: Metadata = {
   title: "Pricing",
   description:
     "Free dividend portfolio tools, plus a Pro tier that lifts the 10-holding cap, scores every holding for quality and risk, sends threshold alert emails, and ships broker sync in 2026.",
+  alternates: { canonical: "/pricing" },
+  openGraph: {
+    title: "DividendMapper Pricing: Free + Pro for UK and US investors",
+    description:
+      "Free dividend tools plus a Pro tier with unlimited holdings, resilience scoring, threshold alerts, and broker sync.",
+    url: "/pricing",
+    type: "website",
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "DividendMapper Pricing",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    images: ["/opengraph-image"],
+  },
 };
 
 // Per-user (auth + founding-member status) and per-request, never cached.

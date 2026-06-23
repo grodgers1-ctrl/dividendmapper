@@ -116,11 +116,15 @@ export default async function ScoringTickerPage({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <div className="mx-auto max-w-3xl px-4 py-10 md:px-6 md:py-12">
-        <p className="text-sm text-muted-foreground">
-          <Link href="/scoring" className="underline-offset-2 hover:underline">
-            Dividend scores
+        <nav aria-label="Breadcrumb" className="text-sm text-muted-foreground">
+          <Link
+            href="/scoring"
+            className="inline-flex items-center gap-1 hover:text-foreground"
+          >
+            <span aria-hidden>←</span>
+            All dividend scores
           </Link>
-        </p>
+        </nav>
         <h1 className="mt-2 font-mono text-3xl font-bold tracking-tight text-foreground">
           {ticker}
         </h1>

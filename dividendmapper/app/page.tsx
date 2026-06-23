@@ -1,6 +1,21 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { HeroSection } from "@/components/hero-section";
+import { FaqJsonLd } from "@/components/blog/faq-json-ld";
+
+// Decode the small set of HTML entities used in the FAQ answers so JSON-LD
+// emits flat unicode text per schema.org (the visible <dd> still renders the
+// entities via dangerouslySetInnerHTML — same source, two consumers).
+function decodeEntities(s: string): string {
+  return s
+    .replace(/&rsquo;/g, "’")
+    .replace(/&lsquo;/g, "‘")
+    .replace(/&ldquo;/g, "“")
+    .replace(/&rdquo;/g, "”")
+    .replace(/&mdash;/g, "—")
+    .replace(/&ndash;/g, "–")
+    .replace(/&amp;/g, "&");
+}
 
 // Self-referencing canonical to the apex (resolved against metadataBase in the
 // root layout). Without it the homepage emitted no <link rel="canonical">, so a
@@ -273,6 +288,12 @@ const FAQS = [
 function FaqSection() {
   return (
     <section className="border-t border-border bg-card">
+      <FaqJsonLd
+        items={FAQS.map((item) => ({
+          question: item.q,
+          answer: decodeEntities(item.a),
+        }))}
+      />
       <div className="mx-auto max-w-3xl px-4 py-16 md:px-6 md:py-20 lg:px-8">
         <h2 className="font-display text-3xl font-bold tracking-tight text-foreground md:text-4xl">
           Frequently asked questions

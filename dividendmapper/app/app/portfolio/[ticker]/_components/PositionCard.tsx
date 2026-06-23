@@ -48,6 +48,10 @@ export interface PositionCardProps {
   valueAmount: number | null;
   valueCurrency: string | null;
   wrapper: string;
+  /** currency → GBP multiplier. Lets the card compute a P/L when cost and
+   *  value are in different currencies. Optional: a missing rate for either
+   *  side falls back to "P/L unavailable" rather than a bogus number. */
+  ratesToGbp?: Readonly<Record<string, number>>;
 }
 
 export function PositionCard({
@@ -57,6 +61,7 @@ export function PositionCard({
   valueAmount,
   valueCurrency,
   wrapper,
+  ratesToGbp,
 }: PositionCardProps) {
   const wrapperLabel = WRAPPER_LABEL[wrapper] ?? wrapper;
   const totalCost = quantity * avgCost;
@@ -76,6 +81,7 @@ export function PositionCard({
             costCurrency={costCurrency}
             valueAmount={valueAmount}
             valueCurrency={valueCurrency}
+            ratesToGbp={ratesToGbp}
           />
         </>
       ) : (
@@ -107,38 +113,70 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
-// P/L only when the cost basis and current value share a currency. Mixing
-// USD-cost with GBP-value would need an FX conversion we don't do at this
-// layer — render a neutral hint instead of a bogus number.
+// P/L in cost currency. Same-currency: direct subtraction. Mixed currency
+// (e.g. GBP cost on a USD ticker): convert value into cost currency via the
+// shared ratesToGbp map and note the "FX as of today" caveat — the figure
+// will drift as FX moves, not just as price moves.
 function PositionPnl({
   costAmount,
   costCurrency,
   valueAmount,
   valueCurrency,
+  ratesToGbp,
 }: {
   costAmount: number;
   costCurrency: string;
   valueAmount: number;
   valueCurrency: string;
+  ratesToGbp?: Readonly<Record<string, number>>;
 }) {
-  if (costCurrency !== valueCurrency) {
+  let valueInCostCurrency: number | null;
+  if (costCurrency === valueCurrency) {
+    valueInCostCurrency = valueAmount;
+  } else {
+    const valueRate = ratesToGbp?.[valueCurrency];
+    const costRate = ratesToGbp?.[costCurrency];
+    if (
+      typeof valueRate !== "number" ||
+      !Number.isFinite(valueRate) ||
+      valueRate <= 0 ||
+      typeof costRate !== "number" ||
+      !Number.isFinite(costRate) ||
+      costRate <= 0
+    ) {
+      valueInCostCurrency = null;
+    } else {
+      valueInCostCurrency = (valueAmount * valueRate) / costRate;
+    }
+  }
+
+  if (valueInCostCurrency === null) {
     return (
       <p className="mt-1 text-xs text-[var(--text-muted)]">
         P/L unavailable. Cost and price are in different currencies.
       </p>
     );
   }
-  const delta = valueAmount - costAmount;
+
+  const delta = valueInCostCurrency - costAmount;
   const pct = costAmount > 0 ? (delta / costAmount) * 100 : 0;
   const positive = delta >= 0;
   const arrow = positive ? "↑" : "↓";
   const sign = positive ? "+" : "−";
-  const formatted = formatMoney(Math.abs(delta), valueCurrency);
+  const formatted = formatMoney(Math.abs(delta), costCurrency);
   const tone = positive ? "text-positive" : "text-negative";
+  const isCrossCurrency = costCurrency !== valueCurrency;
   return (
-    <p className={`mt-1 text-sm font-medium ${tone}`}>
-      {sign}
-      {formatted} ({pct.toFixed(1)}%) <span aria-hidden>{arrow}</span>
-    </p>
+    <>
+      <p className={`mt-1 text-sm font-medium ${tone}`}>
+        {sign}
+        {formatted} ({pct.toFixed(1)}%) <span aria-hidden>{arrow}</span>
+      </p>
+      {isCrossCurrency && (
+        <p className="mt-0.5 text-xs text-[var(--text-muted)]">
+          Converted at FX today; the number drifts with FX as well as price.
+        </p>
+      )}
+    </>
   );
 }

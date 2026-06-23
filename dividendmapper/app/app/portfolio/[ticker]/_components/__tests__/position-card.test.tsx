@@ -98,4 +98,95 @@ describe("<PositionCard>", () => {
     );
     expect(screen.getByText(/no recent price/i)).toBeInTheDocument();
   });
+
+  describe("cross-currency P/L", () => {
+    it("computes P/L in cost currency when ratesToGbp covers both sides", () => {
+      // Cost: 10 × £100 = £1,000 GBP
+      // Value: $1,500 USD × 0.80 / 1 = £1,200 GBP-equivalent
+      // P/L: +£200 (+20.0%)
+      const { container } = render(
+        <PositionCard
+          quantity={10}
+          avgCost={100}
+          costCurrency="GBP"
+          valueAmount={1500}
+          valueCurrency="USD"
+          wrapper="isa"
+          ratesToGbp={{ GBP: 1, USD: 0.8 }}
+        />,
+      );
+      const pnl = container.querySelector(".text-positive")?.textContent ?? "";
+      expect(pnl).toContain("+");
+      expect(pnl).toContain("£200");
+      expect(pnl).toContain("20.0");
+      expect(pnl).toContain("↑");
+    });
+
+    it("shows a negative cross-currency P/L when FX makes the position underwater", () => {
+      // Cost: 10 × $200 = $2,000 USD
+      // Value: £1,200 GBP × 1 / 0.80 = $1,500 USD-equivalent
+      // P/L: −$500 (−25.0%)
+      const { container } = render(
+        <PositionCard
+          quantity={10}
+          avgCost={200}
+          costCurrency="USD"
+          valueAmount={1200}
+          valueCurrency="GBP"
+          wrapper="brokerage"
+          ratesToGbp={{ GBP: 1, USD: 0.8 }}
+        />,
+      );
+      const pnl = container.querySelector(".text-negative")?.textContent ?? "";
+      expect(pnl).toContain("−");
+      expect(pnl).toContain("$500");
+      expect(pnl).toContain("25.0");
+      expect(pnl).toContain("↓");
+    });
+
+    it("notes the FX-as-of-now caveat under a cross-currency P/L", () => {
+      render(
+        <PositionCard
+          quantity={10}
+          avgCost={100}
+          costCurrency="GBP"
+          valueAmount={1500}
+          valueCurrency="USD"
+          wrapper="isa"
+          ratesToGbp={{ GBP: 1, USD: 0.8 }}
+        />,
+      );
+      expect(screen.getByText(/fx.*today/i)).toBeInTheDocument();
+    });
+
+    it("falls back to the unavailable message when a needed rate is missing", () => {
+      render(
+        <PositionCard
+          quantity={10}
+          avgCost={100}
+          costCurrency="GBP"
+          valueAmount={1500}
+          valueCurrency="USD"
+          wrapper="isa"
+          ratesToGbp={{ GBP: 1 }} // USD rate missing
+        />,
+      );
+      expect(screen.getByText(/p\/l unavailable/i)).toBeInTheDocument();
+    });
+
+    it("does not show the FX note for same-currency P/L", () => {
+      render(
+        <PositionCard
+          quantity={10}
+          avgCost={150}
+          costCurrency="USD"
+          valueAmount={2000}
+          valueCurrency="USD"
+          wrapper="brokerage"
+          ratesToGbp={{ USD: 0.8, GBP: 1 }}
+        />,
+      );
+      expect(screen.queryByText(/fx.*today/i)).toBeNull();
+    });
+  });
 });

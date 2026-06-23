@@ -1,7 +1,12 @@
 import type { Metadata } from "next";
 import { requireUser } from "@/lib/auth/server";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { loadPricedHoldings } from "@/lib/portfolio/load-priced-holdings";
+import { sumIncomeGbp } from "@/lib/portfolio/income";
+import { aggregatePortfolioCost, sumCostGbp } from "@/lib/portfolio/portfolio-cost";
 import { loadPortfolioAnalytics } from "@/lib/scoring/load-portfolio-analytics";
+import { loadScore } from "@/lib/scoring/load-score";
+import { ratesToGbpFor } from "@/lib/scoring/currency";
 import { buildQuadrant } from "@/lib/scoring/quadrant";
 import { isBeta } from "@/lib/scoring/config";
 import { pickFlaggedHolding, type FlaggableScore } from "@/lib/scoring/pick-flagged";
@@ -11,8 +16,13 @@ import { TopHoldingsStrip } from "./_components/TopHoldingsStrip";
 import { UpgradeCard } from "./_components/UpgradeCard";
 import { FlaggedHoldingCard } from "./_components/FlaggedHoldingCard";
 import { QuadrantSnapshotCard } from "./_components/QuadrantSnapshotCard";
-import { ReinvestStripCard } from "./_components/ReinvestStripCard";
-import type { RidgePoint } from "./_components/RidgeSparkline";
+import { IncomeCalendarCard } from "./_components/IncomeCalendarCard";
+import { ValueVsCostCard } from "./_components/ValueVsCostCard";
+import { SectorExposureCard } from "./_components/SectorExposureCard";
+import { BestWorstCard } from "./_components/BestWorstCard";
+import { rollupSectors } from "@/lib/portfolio/sector-exposure";
+import { computeHoldingsPnl } from "@/lib/portfolio/holding-pnl";
+import type { SignalContributionRow } from "@/app/app/portfolio/[ticker]/_components/SignalContributionsList";
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -22,29 +32,6 @@ export const metadata: Metadata = {
 // Per [[reference_app_page_auth_guard]]: each protected page calls
 // requireUser() itself because layout guards don't re-run on soft navs.
 export const dynamic = "force-dynamic";
-
-// Naïve cross-currency sum: matches the Portfolio Ledger's display behaviour
-// (its totalsByCurrency rows aren't FX-converted either). Phase 4 will plug
-// in `ratesToGbpFor()` once the hero acquires a multi-currency story.
-function sumIncomeNaive(totals: { currency: string; total: number }[]): number {
-  return totals.reduce((acc, row) => acc + row.total, 0);
-}
-
-// Deterministic 12-month ramp from 70% → 100% of the current run-rate.
-// Day 6+ replaces this with a real historical series from
-// portfolio_income_history once that table starts accruing. For now it gives
-// the ridge sparkline a stable shape so the visual is real on Day 5.
-function syntheticSparkline(now: Date, annualGbp: number): RidgePoint[] {
-  if (annualGbp <= 0) return [];
-  const points: RidgePoint[] = [];
-  const start = new Date(now.getFullYear(), now.getMonth() - 11, 1);
-  for (let i = 0; i < 12; i += 1) {
-    const at = new Date(start.getFullYear(), start.getMonth() + i, 1);
-    const ratio = 0.7 + (i / 11) * 0.3;
-    points.push({ at, value: annualGbp * ratio });
-  }
-  return points;
-}
 
 export default async function DashboardPage() {
   const user = await requireUser("/app/dashboard");
@@ -91,6 +78,21 @@ export default async function DashboardPage() {
     analytics && flaggedTicker
       ? (analytics.scoresByTicker[flaggedTicker] ?? null)
       : null;
+
+  // Top-3 most-negative Buy/Quality signals for the flagged ticker.
+  // equity_score_signals already holds these per ticker; loadScore() reads
+  // the same rows the per-ticker drawer uses. One extra lookup per render —
+  // skipped entirely when no holding is flagged.
+  let flaggedTopSignals: SignalContributionRow[] = [];
+  if (flaggedTicker) {
+    const supabase = await createSupabaseServerClient();
+    const flaggedScoreFull = await loadScore(supabase, flaggedTicker);
+    flaggedTopSignals = (flaggedScoreFull?.signals.buy ?? [])
+      .filter((s) => (s.contribution ?? 0) < 0)
+      .sort((a, b) => (a.contribution ?? 0) - (b.contribution ?? 0))
+      .slice(0, 3);
+  }
+
   const quadrant = analytics
     ? buildQuadrant(
         [...new Set(allHoldings.map((h) => h.ticker))],
@@ -99,8 +101,49 @@ export default async function DashboardPage() {
       )
     : { points: [], excluded: [] };
 
-  const incomeAnnualGbp = sumIncomeNaive(income.totalsByCurrency);
-  const sparkline = syntheticSparkline(new Date(), incomeAnnualGbp);
+  // FX-convert per-currency income totals AND priced holdings to GBP.
+  // Collecting the union of currencies in one pass means one ratesToGbpFor
+  // call serves the hero, the TopHoldingsStrip sort, and the cost-basis card.
+  // cost_currency is unioned too — a holding can carry a cost currency no
+  // other path needed (e.g. GBP cost on a US ADR); without this, the cost
+  // rollup would silently drop it.
+  const distinctCurrencies = new Set<string>();
+  for (const t of income.totalsByCurrency) distinctCurrencies.add(t.currency);
+  for (const ticker of Object.keys(priceByTicker)) {
+    const c = priceByTicker[ticker]?.currency;
+    if (c) distinctCurrencies.add(c);
+  }
+  for (const h of allHoldings) distinctCurrencies.add(h.cost_currency);
+  const ratesToGbp = await ratesToGbpFor([...distinctCurrencies]);
+
+  const incomeAnnualGbp = sumIncomeGbp(income.totalsByCurrency, ratesToGbp);
+  const costAggregate = aggregatePortfolioCost(allHoldings);
+  const totalCostGbpRaw = sumCostGbp(costAggregate.totalsByCurrency, ratesToGbp);
+  const totalCostGbp = totalCostGbpRaw > 0 ? totalCostGbpRaw : null;
+  // sumIncomeGbp's shape matches ValueCurrencyTotal exactly — same FX rule.
+  const totalValueGbp = sumIncomeGbp(priced.valueTotalsByCurrency, ratesToGbp);
+
+  // Sector rollup (Pro only — Free skips analytics entirely).
+  const sectorByTicker: Record<string, string | null> = {};
+  if (analytics) {
+    for (const [ticker, f] of Object.entries(analytics.fundamentalsByTicker)) {
+      sectorByTicker[ticker] = f.sector;
+    }
+  }
+  const sectorRollup = analytics
+    ? rollupSectors({
+        weightByTicker: analytics.weightByTicker,
+        sectorByTicker,
+      })
+    : null;
+
+  // Per-holding lifetime P/L in GBP — drives the BestWorstCard at the foot of
+  // the Pro grid. Pure pass over already-loaded holdings + prices + FX rates.
+  // Free path skips: cost data is often incomplete and the card is Pro-gated.
+  const holdingPnls = isPro
+    ? computeHoldingsPnl(allHoldings, priceByTicker, ratesToGbp)
+    : [];
+
   const beta = isBeta();
 
   return (
@@ -116,7 +159,7 @@ export default async function DashboardPage() {
         <div className="col-span-12 md:col-span-8">
           <HeroIncomeCard
             incomeAnnualGbp={incomeAnnualGbp}
-            sparkline={sparkline}
+            totalCostGbp={totalCostGbp}
           />
         </div>
         <div className="col-span-12 md:col-span-4">
@@ -125,13 +168,28 @@ export default async function DashboardPage() {
               flaggedTicker={flaggedTicker}
               score={flaggedScore}
               isBeta={beta}
+              topSignals={flaggedTopSignals}
             />
           ) : (
             <UpgradeCard />
           )}
         </div>
 
-        {/* Row 2 — Pro: quadrant + reinvest planner; Free omitted entirely */}
+        {/* Row 2 — Value vs Cost (Free + Pro). Pro pairs it with Sector
+            Exposure on the right; Free renders the full width. */}
+        <div className="col-span-12 md:col-span-4">
+          <ValueVsCostCard
+            valueGbp={totalValueGbp}
+            costGbp={totalCostGbp ?? 0}
+          />
+        </div>
+        {isPro && sectorRollup && (
+          <div className="col-span-12 md:col-span-8">
+            <SectorExposureCard rollup={sectorRollup} />
+          </div>
+        )}
+
+        {/* Row 3 — Pro: quadrant + reinvest planner; Free omitted entirely */}
         {isPro && (
           <>
             <div className="col-span-12 md:col-span-8">
@@ -142,7 +200,12 @@ export default async function DashboardPage() {
               />
             </div>
             <div className="col-span-12 md:col-span-4">
-              <ReinvestStripCard reinvestCard={analytics?.reinvestCard ?? null} />
+              {analytics && (
+                <IncomeCalendarCard
+                  calendar={analytics.incomeCalendar}
+                  reinvestCard={analytics.reinvestCard}
+                />
+              )}
             </div>
           </>
         )}
@@ -155,8 +218,18 @@ export default async function DashboardPage() {
             nameByTicker={nameByTicker}
             scores={scoresMap}
             tier={tier}
+            ratesToGbp={ratesToGbp}
+            fundamentalsByTicker={analytics?.fundamentalsByTicker}
           />
         </div>
+
+        {/* Row 4 — Pro best/worst lifetime P/L. Sits under TopHoldingsStrip
+            because "look at these specifically" cues naturally land here. */}
+        {isPro && (
+          <div className="col-span-12">
+            <BestWorstCard pnls={holdingPnls} />
+          </div>
+        )}
       </div>
     </div>
   );

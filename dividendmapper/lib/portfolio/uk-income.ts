@@ -62,7 +62,30 @@ export function mergeUkDividends(
       existing.data.dividend !== null &&
       existing.data.dividend > 0;
     if (alreadyHasDividend) continue;
-    const synth = ukDividendQuote(ticker, dividendByTicker.get(ticker) ?? null);
+
+    const scoringDps = dividendByTicker.get(ticker);
+    if (scoringDps == null) continue;
+
+    // If we have a usable live price (e.g. quote succeeded but dividend was
+    // missing — common for LSE), overlay the dividend onto it instead of
+    // replacing the whole quote.
+    if (
+      existing?.ok &&
+      existing.data.price !== null &&
+      existing.data.price !== undefined &&
+      Number.isFinite(existing.data.price) &&
+      existing.data.price > 0
+    ) {
+      out.set(ticker, {
+        ok: true,
+        cached: existing.cached,
+        data: { ...existing.data, dividend: scoringDps / 100 },
+      });
+      continue;
+    }
+
+    // Fallback: synth (price stays null) — the original behaviour.
+    const synth = ukDividendQuote(ticker, scoringDps);
     if (synth) out.set(ticker, synth);
   }
   return out;
@@ -116,6 +139,29 @@ export function mergeScoringDividends(
   for (const ticker of tickers) {
     const scoringDps = dividendByTicker.get(ticker);
     if (scoringDps == null) continue; // no FMP datum yet → keep the live quote
+
+    const existing = out.get(ticker);
+    if (
+      existing?.ok &&
+      existing.data.price !== null &&
+      existing.data.price !== undefined &&
+      Number.isFinite(existing.data.price) &&
+      existing.data.price > 0
+    ) {
+      // Overlay: keep the live price/currency/metadata, replace the dividend.
+      // .L scoring DPS is in pence — divide by 100 because the live quote's
+      // currency has already been normalised to GBP by fetchFmpQuote.
+      const dividend = isUkTicker(ticker) ? scoringDps / 100 : scoringDps;
+      out.set(ticker, {
+        ok: true,
+        cached: existing.cached,
+        data: { ...existing.data, dividend },
+      });
+      continue;
+    }
+
+    // Fallback: no usable live price (FMP failed for this ticker). Synthesise
+    // a dividend-only quote as before — price stays null.
     const synth = scoringDividendQuote(ticker, scoringDps);
     if (synth) out.set(ticker, synth);
   }
