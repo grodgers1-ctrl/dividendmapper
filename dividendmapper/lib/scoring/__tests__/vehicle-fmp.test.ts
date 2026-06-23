@@ -35,6 +35,56 @@ const BLND_EOD_GBX = [
   { symbol: "BLND.L", date: "2026-06-19", close: 410.8, high: 412.0, low: 408.5 },
 ];
 
+const O_DIVS_USD = [
+  { date: "2026-06-01", dividend: 0.2725, adjDividend: 0.2725, paymentDate: "2026-06-15" },
+  { date: "2026-05-01", dividend: 0.265,  adjDividend: 0.265,  paymentDate: "2026-05-15" },
+];
+
+const BLND_DIVS_GBX = [
+  { date: "2026-02-12", dividend: 11.52, adjDividend: 11.52, paymentDate: "2026-05-15" },
+  { date: "2025-11-13", dividend: 6.39,  adjDividend: 6.39,  paymentDate: "2026-02-12" },
+];
+
+describe("vehicle-fmp / fetchVehicleDividendHistory", () => {
+  it("returns dividend rows for a USD ticker", async () => {
+    fetchMock.mockResolvedValueOnce(new Response(JSON.stringify(O_DIVS_USD), { status: 200 }));
+    const mod = await import("../vehicle-fmp");
+    const rows = await mod.fetchVehicleDividendHistory("O", 5, "USD");
+    expect(rows[0]).toEqual({
+      ticker: "O",
+      ex_date: "2026-06-01",
+      payment_date: "2026-06-15",
+      dividend: 0.2725,
+    });
+  });
+
+  it("converts GBX dividend to GBP (÷100) for UK tickers", async () => {
+    fetchMock.mockResolvedValueOnce(new Response(JSON.stringify(BLND_DIVS_GBX), { status: 200 }));
+    const mod = await import("../vehicle-fmp");
+    const rows = await mod.fetchVehicleDividendHistory("BLND.L", 5, "GBX");
+    expect(rows[0].dividend).toBe(0.1152);
+    expect(rows[1].dividend).toBe(0.0639);
+  });
+
+  it("requests yearsBack × 12 records (monthly-payer pessimistic)", async () => {
+    fetchMock.mockResolvedValueOnce(new Response("[]", { status: 200 }));
+    const mod = await import("../vehicle-fmp");
+    await mod.fetchVehicleDividendHistory("O", 10, "USD");
+    const calledUrl = fetchMock.mock.calls[0][0] as string;
+    expect(calledUrl).toContain("/stable/dividends?");
+    expect(calledUrl).toContain("limit=120");
+  });
+
+  it("handles missing paymentDate gracefully", async () => {
+    fetchMock.mockResolvedValueOnce(
+      new Response(JSON.stringify([{ date: "2026-06-01", dividend: 0.27, adjDividend: 0.27 }]), { status: 200 }),
+    );
+    const mod = await import("../vehicle-fmp");
+    const rows = await mod.fetchVehicleDividendHistory("O", 1, "USD");
+    expect(rows[0].payment_date).toBeNull();
+  });
+});
+
 describe("vehicle-fmp / fetchVehiclePrices", () => {
   it("returns close_price rows for a USD ticker", async () => {
     fetchMock.mockResolvedValueOnce(new Response(JSON.stringify(O_EOD_USD), { status: 200 }));

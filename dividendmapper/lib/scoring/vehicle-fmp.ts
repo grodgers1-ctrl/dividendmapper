@@ -10,7 +10,7 @@
 // data is unit-consistent across all three families. Pass `currency`
 // explicitly (sourced from vehicle_universe.currency) to control this.
 
-import { getHistoricalEod } from "./fmp-client";
+import { getDividends, getHistoricalEod } from "./fmp-client";
 
 export type VehicleType = "us_reit" | "us_bdc" | "uk_reit";
 export type Currency = "USD" | "GBP" | "GBX";
@@ -48,5 +48,30 @@ export async function fetchVehiclePrices(
     ticker,
     observed_at: bar.date,
     close_price: normaliseToGbp(bar.close, currency),
+  }));
+}
+
+export interface VehicleDividendRow {
+  ticker: string;
+  ex_date: string;
+  payment_date: string | null;
+  dividend: number;
+}
+
+export async function fetchVehicleDividendHistory(
+  ticker: string,
+  yearsBack: number,
+  currency: Currency,
+): Promise<VehicleDividendRow[]> {
+  // Monthly payers (Realty Income etc.) need yearsBack × 12 records to cover
+  // the full window. Quarterly + semi-annual payers benefit from the same
+  // depth — FMP caps at limit anyway, so over-asking is cheap.
+  const limit = yearsBack * 12;
+  const rows = await getDividends(ticker, limit);
+  return rows.map((row) => ({
+    ticker,
+    ex_date: row.date,
+    payment_date: (row.paymentDate as string | undefined) || null,
+    dividend: normaliseToGbp(row.dividend, currency),
   }));
 }
