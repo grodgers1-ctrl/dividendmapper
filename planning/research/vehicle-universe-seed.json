@@ -1,0 +1,1010 @@
+{
+  "generated_at": "2026-06-23T15:40:09.484Z",
+  "counts": {
+    "us_reit": 50,
+    "us_bdc": 25,
+    "uk_reit": 25
+  },
+  "universe": [
+    {
+      "ticker": "WELL",
+      "vehicle_type": "us_reit",
+      "display_name": "Welltower Inc.",
+      "exchange": "NYSE",
+      "currency": "USD",
+      "sub_sector": "healthcare",
+      "market_cap_at_seed": 145877128100,
+      "fmp_industry": "REIT - Healthcare Facilities"
+    },
+    {
+      "ticker": "PLD",
+      "vehicle_type": "us_reit",
+      "display_name": "Prologis, Inc.",
+      "exchange": "NYSE",
+      "currency": "USD",
+      "sub_sector": "industrial",
+      "market_cap_at_seed": 131030782520,
+      "fmp_industry": "REIT - Industrial"
+    },
+    {
+      "ticker": "EQIX",
+      "vehicle_type": "us_reit",
+      "display_name": "Equinix, Inc.",
+      "exchange": "NASDAQ",
+      "currency": "USD",
+      "sub_sector": "specialty",
+      "market_cap_at_seed": 110011350132,
+      "fmp_industry": "REIT - Specialty"
+    },
+    {
+      "ticker": "AMT",
+      "vehicle_type": "us_reit",
+      "display_name": "American Tower Corporation",
+      "exchange": "NYSE",
+      "currency": "USD",
+      "sub_sector": "specialty",
+      "market_cap_at_seed": 82020474797.45001,
+      "fmp_industry": "REIT - Specialty"
+    },
+    {
+      "ticker": "SPG",
+      "vehicle_type": "us_reit",
+      "display_name": "Simon Property Group, Inc.",
+      "exchange": "NYSE",
+      "currency": "USD",
+      "sub_sector": "retail",
+      "market_cap_at_seed": 69581188740,
+      "fmp_industry": "REIT - Retail"
+    },
+    {
+      "ticker": "DLR",
+      "vehicle_type": "us_reit",
+      "display_name": "Digital Realty Trust, Inc.",
+      "exchange": "NYSE",
+      "currency": "USD",
+      "sub_sector": "specialty",
+      "market_cap_at_seed": 68942343140,
+      "fmp_industry": "REIT - Specialty"
+    },
+    {
+      "ticker": "O",
+      "vehicle_type": "us_reit",
+      "display_name": "Realty Income Corporation",
+      "exchange": "NYSE",
+      "currency": "USD",
+      "sub_sector": "retail",
+      "market_cap_at_seed": 56173350007.200005,
+      "fmp_industry": "REIT - Retail"
+    },
+    {
+      "ticker": "PSA",
+      "vehicle_type": "us_reit",
+      "display_name": "Public Storage",
+      "exchange": "NYSE",
+      "currency": "USD",
+      "sub_sector": "industrial",
+      "market_cap_at_seed": 56715740481.119995,
+      "fmp_industry": "REIT - Industrial"
+    },
+    {
+      "ticker": "VTR",
+      "vehicle_type": "us_reit",
+      "display_name": "Ventas, Inc.",
+      "exchange": "NYSE",
+      "currency": "USD",
+      "sub_sector": "healthcare",
+      "market_cap_at_seed": 40371533797.920006,
+      "fmp_industry": "REIT - Healthcare Facilities"
+    },
+    {
+      "ticker": "IRM",
+      "vehicle_type": "us_reit",
+      "display_name": "Iron Mountain Incorporated",
+      "exchange": "NYSE",
+      "currency": "USD",
+      "sub_sector": "specialty",
+      "market_cap_at_seed": 39231604436.66,
+      "fmp_industry": "REIT - Specialty"
+    },
+    {
+      "ticker": "CCI",
+      "vehicle_type": "us_reit",
+      "display_name": "Crown Castle Inc.",
+      "exchange": "NYSE",
+      "currency": "USD",
+      "sub_sector": "specialty",
+      "market_cap_at_seed": 36277888826.96,
+      "fmp_industry": "REIT - Specialty"
+    },
+    {
+      "ticker": "EXR",
+      "vehicle_type": "us_reit",
+      "display_name": "Extra Space Storage Inc.",
+      "exchange": "NYSE",
+      "currency": "USD",
+      "sub_sector": "industrial",
+      "market_cap_at_seed": 30702551828.88,
+      "fmp_industry": "REIT - Industrial"
+    },
+    {
+      "ticker": "VICI",
+      "vehicle_type": "us_reit",
+      "display_name": "VICI Properties Inc.",
+      "exchange": "NYSE",
+      "currency": "USD",
+      "sub_sector": "specialty",
+      "market_cap_at_seed": 28313935017.165,
+      "fmp_industry": "REIT - Specialty"
+    },
+    {
+      "ticker": "AVB",
+      "vehicle_type": "us_reit",
+      "display_name": "AvalonBay Communities, Inc.",
+      "exchange": "NYSE",
+      "currency": "USD",
+      "sub_sector": "residential",
+      "market_cap_at_seed": 25521354079.999996,
+      "fmp_industry": "REIT - Residential"
+    },
+    {
+      "ticker": "EQR",
+      "vehicle_type": "us_reit",
+      "display_name": "Equity Residential",
+      "exchange": "NYSE",
+      "currency": "USD",
+      "sub_sector": "residential",
+      "market_cap_at_seed": 24012728480,
+      "fmp_industry": "REIT - Residential"
+    },
+    {
+      "ticker": "SBAC",
+      "vehicle_type": "us_reit",
+      "display_name": "SBA Communications Corporation",
+      "exchange": "NASDAQ",
+      "currency": "USD",
+      "sub_sector": "specialty",
+      "market_cap_at_seed": 19982272402.8,
+      "fmp_industry": "REIT - Specialty"
+    },
+    {
+      "ticker": "ESS",
+      "vehicle_type": "us_reit",
+      "display_name": "Essex Property Trust, Inc.",
+      "exchange": "NYSE",
+      "currency": "USD",
+      "sub_sector": "residential",
+      "market_cap_at_seed": 17589398359,
+      "fmp_industry": "REIT - Residential"
+    },
+    {
+      "ticker": "HST",
+      "vehicle_type": "us_reit",
+      "display_name": "Host Hotels & Resorts, Inc.",
+      "exchange": "NASDAQ",
+      "currency": "USD",
+      "sub_sector": "hotels",
+      "market_cap_at_seed": 17128830817.810001,
+      "fmp_industry": "REIT - Hotel & Motel"
+    },
+    {
+      "ticker": "INVH",
+      "vehicle_type": "us_reit",
+      "display_name": "Invitation Homes Inc.",
+      "exchange": "NYSE",
+      "currency": "USD",
+      "sub_sector": "residential",
+      "market_cap_at_seed": 16879703430,
+      "fmp_industry": "REIT - Residential"
+    },
+    {
+      "ticker": "KIM",
+      "vehicle_type": "us_reit",
+      "display_name": "Kimco Realty Corporation",
+      "exchange": "NYSE",
+      "currency": "USD",
+      "sub_sector": "retail",
+      "market_cap_at_seed": 16650689100,
+      "fmp_industry": "REIT - Retail"
+    },
+    {
+      "ticker": "NLY",
+      "vehicle_type": "us_reit",
+      "display_name": "Annaly Capital Management, Inc.",
+      "exchange": "NYSE",
+      "currency": "USD",
+      "sub_sector": "mortgage",
+      "market_cap_at_seed": 16238316160,
+      "fmp_industry": "REIT - Mortgage"
+    },
+    {
+      "ticker": "WPC",
+      "vehicle_type": "us_reit",
+      "display_name": "W. P. Carey Inc.",
+      "exchange": "NYSE",
+      "currency": "USD",
+      "sub_sector": "diversified",
+      "market_cap_at_seed": 15863471580,
+      "fmp_industry": "REIT - Diversified"
+    },
+    {
+      "ticker": "LAMR",
+      "vehicle_type": "us_reit",
+      "display_name": "Lamar Advertising Company",
+      "exchange": "NASDAQ",
+      "currency": "USD",
+      "sub_sector": "specialty",
+      "market_cap_at_seed": 15398847487.25,
+      "fmp_industry": "REIT - Specialty"
+    },
+    {
+      "ticker": "MAA",
+      "vehicle_type": "us_reit",
+      "display_name": "Mid-America Apartment Communities, Inc.",
+      "exchange": "NYSE",
+      "currency": "USD",
+      "sub_sector": "residential",
+      "market_cap_at_seed": 15466376337.779999,
+      "fmp_industry": "REIT - Residential"
+    },
+    {
+      "ticker": "SUI",
+      "vehicle_type": "us_reit",
+      "display_name": "Sun Communities, Inc.",
+      "exchange": "NYSE",
+      "currency": "USD",
+      "sub_sector": "residential",
+      "market_cap_at_seed": 14576966245.53,
+      "fmp_industry": "REIT - Residential"
+    },
+    {
+      "ticker": "REG",
+      "vehicle_type": "us_reit",
+      "display_name": "Regency Centers Corporation",
+      "exchange": "NASDAQ",
+      "currency": "USD",
+      "sub_sector": "retail",
+      "market_cap_at_seed": 14179930901.55,
+      "fmp_industry": "REIT - Retail"
+    },
+    {
+      "ticker": "DOC",
+      "vehicle_type": "us_reit",
+      "display_name": "Healthpeak Properties, Inc.",
+      "exchange": "NYSE",
+      "currency": "USD",
+      "sub_sector": "healthcare",
+      "market_cap_at_seed": 13774611600,
+      "fmp_industry": "REIT - Healthcare Facilities"
+    },
+    {
+      "ticker": "OHI",
+      "vehicle_type": "us_reit",
+      "display_name": "Omega Healthcare Investors, Inc.",
+      "exchange": "NYSE",
+      "currency": "USD",
+      "sub_sector": "healthcare",
+      "market_cap_at_seed": 13261123060,
+      "fmp_industry": "REIT - Healthcare Facilities"
+    },
+    {
+      "ticker": "GLPI",
+      "vehicle_type": "us_reit",
+      "display_name": "Gaming and Leisure Properties, Inc.",
+      "exchange": "NASDAQ",
+      "currency": "USD",
+      "sub_sector": "specialty",
+      "market_cap_at_seed": 12620365234.960001,
+      "fmp_industry": "REIT - Specialty"
+    },
+    {
+      "ticker": "UDR",
+      "vehicle_type": "us_reit",
+      "display_name": "UDR, Inc.",
+      "exchange": "NYSE",
+      "currency": "USD",
+      "sub_sector": "residential",
+      "market_cap_at_seed": 12202220380,
+      "fmp_industry": "REIT - Residential"
+    },
+    {
+      "ticker": "ELS",
+      "vehicle_type": "us_reit",
+      "display_name": "Equity LifeStyle Properties, Inc.",
+      "exchange": "NYSE",
+      "currency": "USD",
+      "sub_sector": "residential",
+      "market_cap_at_seed": 12026067661.529999,
+      "fmp_industry": "REIT - Residential"
+    },
+    {
+      "ticker": "AGNC",
+      "vehicle_type": "us_reit",
+      "display_name": "AGNC Investment Corp.",
+      "exchange": "NASDAQ",
+      "currency": "USD",
+      "sub_sector": "mortgage",
+      "market_cap_at_seed": 11915505843.36,
+      "fmp_industry": "REIT - Mortgage"
+    },
+    {
+      "ticker": "AMH",
+      "vehicle_type": "us_reit",
+      "display_name": "American Homes 4 Rent",
+      "exchange": "NYSE",
+      "currency": "USD",
+      "sub_sector": "residential",
+      "market_cap_at_seed": 11389597800,
+      "fmp_industry": "REIT - Residential"
+    },
+    {
+      "ticker": "CPT",
+      "vehicle_type": "us_reit",
+      "display_name": "Camden Property Trust",
+      "exchange": "NYSE",
+      "currency": "USD",
+      "sub_sector": "residential",
+      "market_cap_at_seed": 10954669600,
+      "fmp_industry": "REIT - Residential"
+    },
+    {
+      "ticker": "EGP",
+      "vehicle_type": "us_reit",
+      "display_name": "EastGroup Properties, Inc.",
+      "exchange": "NYSE",
+      "currency": "USD",
+      "sub_sector": "industrial",
+      "market_cap_at_seed": 10924131744,
+      "fmp_industry": "REIT - Industrial"
+    },
+    {
+      "ticker": "FRT",
+      "vehicle_type": "us_reit",
+      "display_name": "Federal Realty Investment Trust",
+      "exchange": "NYSE",
+      "currency": "USD",
+      "sub_sector": "retail",
+      "market_cap_at_seed": 10515293058.84,
+      "fmp_industry": "REIT - Retail"
+    },
+    {
+      "ticker": "BXP",
+      "vehicle_type": "us_reit",
+      "display_name": "BXP, Inc.",
+      "exchange": "NYSE",
+      "currency": "USD",
+      "sub_sector": "office",
+      "market_cap_at_seed": 10318161900,
+      "fmp_industry": "REIT - Office"
+    },
+    {
+      "ticker": "AHR",
+      "vehicle_type": "us_reit",
+      "display_name": "American Healthcare REIT, Inc.",
+      "exchange": "NYSE",
+      "currency": "USD",
+      "sub_sector": "healthcare",
+      "market_cap_at_seed": 9749023668,
+      "fmp_industry": "REIT - Healthcare Facilities"
+    },
+    {
+      "ticker": "BRX",
+      "vehicle_type": "us_reit",
+      "display_name": "Brixmor Property Group Inc.",
+      "exchange": "NYSE",
+      "currency": "USD",
+      "sub_sector": "retail",
+      "market_cap_at_seed": 9567165718.06,
+      "fmp_industry": "REIT - Retail"
+    },
+    {
+      "ticker": "CUBE",
+      "vehicle_type": "us_reit",
+      "display_name": "CubeSmart",
+      "exchange": "NYSE",
+      "currency": "USD",
+      "sub_sector": "industrial",
+      "market_cap_at_seed": 9215861727.09,
+      "fmp_industry": "REIT - Industrial"
+    },
+    {
+      "ticker": "LINE",
+      "vehicle_type": "us_reit",
+      "display_name": "Lineage, Inc.",
+      "exchange": "NASDAQ",
+      "currency": "USD",
+      "sub_sector": "industrial",
+      "market_cap_at_seed": 9421165223.7,
+      "fmp_industry": "REIT - Industrial"
+    },
+    {
+      "ticker": "CTRE",
+      "vehicle_type": "us_reit",
+      "display_name": "CareTrust REIT, Inc.",
+      "exchange": "NYSE",
+      "currency": "USD",
+      "sub_sector": "healthcare",
+      "market_cap_at_seed": 8856646410.15,
+      "fmp_industry": "REIT - Healthcare Facilities"
+    },
+    {
+      "ticker": "ARE",
+      "vehicle_type": "us_reit",
+      "display_name": "Alexandria Real Estate Equities, Inc.",
+      "exchange": "NYSE",
+      "currency": "USD",
+      "sub_sector": "office",
+      "market_cap_at_seed": 8840666370,
+      "fmp_industry": "REIT - Office"
+    },
+    {
+      "ticker": "ADC",
+      "vehicle_type": "us_reit",
+      "display_name": "Agree Realty Corporation",
+      "exchange": "NYSE",
+      "currency": "USD",
+      "sub_sector": "retail",
+      "market_cap_at_seed": 8814348822.01,
+      "fmp_industry": "REIT - Retail"
+    },
+    {
+      "ticker": "NNN",
+      "vehicle_type": "us_reit",
+      "display_name": "NNN REIT, Inc.",
+      "exchange": "NYSE",
+      "currency": "USD",
+      "sub_sector": "retail",
+      "market_cap_at_seed": 8591607673.32,
+      "fmp_industry": "REIT - Retail"
+    },
+    {
+      "ticker": "FR",
+      "vehicle_type": "us_reit",
+      "display_name": "First Industrial Realty Trust, Inc.",
+      "exchange": "NYSE",
+      "currency": "USD",
+      "sub_sector": "industrial",
+      "market_cap_at_seed": 8432141818.5199995,
+      "fmp_industry": "REIT - Industrial"
+    },
+    {
+      "ticker": "RHP",
+      "vehicle_type": "us_reit",
+      "display_name": "Ryman Hospitality Properties, Inc.",
+      "exchange": "NYSE",
+      "currency": "USD",
+      "sub_sector": "hotels",
+      "market_cap_at_seed": 7898756483.5199995,
+      "fmp_industry": "REIT - Hotel & Motel"
+    },
+    {
+      "ticker": "REXR",
+      "vehicle_type": "us_reit",
+      "display_name": "Rexford Industrial Realty, Inc.",
+      "exchange": "NYSE",
+      "currency": "USD",
+      "sub_sector": "industrial",
+      "market_cap_at_seed": 7765747697.12,
+      "fmp_industry": "REIT - Industrial"
+    },
+    {
+      "ticker": "STAG",
+      "vehicle_type": "us_reit",
+      "display_name": "STAG Industrial, Inc.",
+      "exchange": "NYSE",
+      "currency": "USD",
+      "sub_sector": "industrial",
+      "market_cap_at_seed": 7227548999.999999,
+      "fmp_industry": "REIT - Industrial"
+    },
+    {
+      "ticker": "HR",
+      "vehicle_type": "us_reit",
+      "display_name": "Healthcare Realty Trust Incorporated",
+      "exchange": "NYSE",
+      "currency": "USD",
+      "sub_sector": "healthcare",
+      "market_cap_at_seed": 7071160320,
+      "fmp_industry": "REIT - Healthcare Facilities"
+    },
+    {
+      "ticker": "ARCC",
+      "vehicle_type": "us_bdc",
+      "display_name": "Ares Capital Corporation",
+      "exchange": "NASDAQ",
+      "currency": "USD",
+      "sub_sector": "business_development",
+      "market_cap_at_seed": 12827478126,
+      "fmp_industry": "Asset Management"
+    },
+    {
+      "ticker": "BXSL",
+      "vehicle_type": "us_bdc",
+      "display_name": "Blackstone Secured Lending Fund",
+      "exchange": "NASDAQ",
+      "currency": "USD",
+      "sub_sector": "business_development",
+      "market_cap_at_seed": 5483630976,
+      "fmp_industry": "Asset Management"
+    },
+    {
+      "ticker": "OBDC",
+      "vehicle_type": "us_bdc",
+      "display_name": "Blue Owl Capital Corporation",
+      "exchange": "NASDAQ",
+      "currency": "USD",
+      "sub_sector": "business_development",
+      "market_cap_at_seed": 5354788111,
+      "fmp_industry": "Financial - Credit Services"
+    },
+    {
+      "ticker": "MAIN",
+      "vehicle_type": "us_bdc",
+      "display_name": "Main Street Capital Corporation",
+      "exchange": "NASDAQ",
+      "currency": "USD",
+      "sub_sector": "business_development",
+      "market_cap_at_seed": 4656929184,
+      "fmp_industry": "Asset Management"
+    },
+    {
+      "ticker": "GBDC",
+      "vehicle_type": "us_bdc",
+      "display_name": "Golub Capital BDC, Inc.",
+      "exchange": "NASDAQ",
+      "currency": "USD",
+      "sub_sector": "business_development",
+      "market_cap_at_seed": 3217558327,
+      "fmp_industry": "Asset Management"
+    },
+    {
+      "ticker": "FSK",
+      "vehicle_type": "us_bdc",
+      "display_name": "FS KKR Capital Corp.",
+      "exchange": "NASDAQ",
+      "currency": "USD",
+      "sub_sector": "business_development",
+      "market_cap_at_seed": 2860794522,
+      "fmp_industry": "Asset Management"
+    },
+    {
+      "ticker": "HTGC",
+      "vehicle_type": "us_bdc",
+      "display_name": "Hercules Capital, Inc.",
+      "exchange": "NASDAQ",
+      "currency": "USD",
+      "sub_sector": "business_development",
+      "market_cap_at_seed": 2849816126,
+      "fmp_industry": "Asset Management"
+    },
+    {
+      "ticker": "TSLX",
+      "vehicle_type": "us_bdc",
+      "display_name": "Sixth Street Specialty Lending, Inc.",
+      "exchange": "NASDAQ",
+      "currency": "USD",
+      "sub_sector": "business_development",
+      "market_cap_at_seed": 1566398106,
+      "fmp_industry": "Asset Management"
+    },
+    {
+      "ticker": "CSWC",
+      "vehicle_type": "us_bdc",
+      "display_name": "Capital Southwest Corporation",
+      "exchange": "NASDAQ",
+      "currency": "USD",
+      "sub_sector": "business_development",
+      "market_cap_at_seed": 1445088193,
+      "fmp_industry": "Asset Management"
+    },
+    {
+      "ticker": "TRIN",
+      "vehicle_type": "us_bdc",
+      "display_name": "Trinity Capital Inc.",
+      "exchange": "NASDAQ",
+      "currency": "USD",
+      "sub_sector": "business_development",
+      "market_cap_at_seed": 1259893326,
+      "fmp_industry": "Asset Management"
+    },
+    {
+      "ticker": "PSEC",
+      "vehicle_type": "us_bdc",
+      "display_name": "Prospect Capital Corporation",
+      "exchange": "NASDAQ",
+      "currency": "USD",
+      "sub_sector": "business_development",
+      "market_cap_at_seed": 1137287372,
+      "fmp_industry": "Asset Management"
+    },
+    {
+      "ticker": "BBDC",
+      "vehicle_type": "us_bdc",
+      "display_name": "Barings BDC, Inc.",
+      "exchange": "NASDAQ",
+      "currency": "USD",
+      "sub_sector": "business_development",
+      "market_cap_at_seed": 850743433,
+      "fmp_industry": "Financial - Credit Services"
+    },
+    {
+      "ticker": "MFIC",
+      "vehicle_type": "us_bdc",
+      "display_name": "MidCap Financial Investment Corporation",
+      "exchange": "NASDAQ",
+      "currency": "USD",
+      "sub_sector": "business_development",
+      "market_cap_at_seed": 812605975,
+      "fmp_industry": "Asset Management"
+    },
+    {
+      "ticker": "BCSF",
+      "vehicle_type": "us_bdc",
+      "display_name": "Bain Capital Specialty Finance, Inc.",
+      "exchange": "NASDAQ",
+      "currency": "USD",
+      "sub_sector": "business_development",
+      "market_cap_at_seed": 788801045,
+      "fmp_industry": "Asset Management"
+    },
+    {
+      "ticker": "CGBD",
+      "vehicle_type": "us_bdc",
+      "display_name": "Carlyle Secured Lending, Inc.",
+      "exchange": "NASDAQ",
+      "currency": "USD",
+      "sub_sector": "business_development",
+      "market_cap_at_seed": 748831554,
+      "fmp_industry": "Asset Management"
+    },
+    {
+      "ticker": "PFLT",
+      "vehicle_type": "us_bdc",
+      "display_name": "PennantPark Floating Rate Capital Ltd.",
+      "exchange": "NASDAQ",
+      "currency": "USD",
+      "sub_sector": "business_development",
+      "market_cap_at_seed": 739669415,
+      "fmp_industry": "Asset Management"
+    },
+    {
+      "ticker": "FDUS",
+      "vehicle_type": "us_bdc",
+      "display_name": "Fidus Investment Corporation",
+      "exchange": "NASDAQ",
+      "currency": "USD",
+      "sub_sector": "business_development",
+      "market_cap_at_seed": 690981969,
+      "fmp_industry": "Asset Management"
+    },
+    {
+      "ticker": "SLRC",
+      "vehicle_type": "us_bdc",
+      "display_name": "SLR Investment Corp.",
+      "exchange": "NASDAQ",
+      "currency": "USD",
+      "sub_sector": "business_development",
+      "market_cap_at_seed": 674568049,
+      "fmp_industry": "Asset Management"
+    },
+    {
+      "ticker": "NMFC",
+      "vehicle_type": "us_bdc",
+      "display_name": "New Mountain Finance Corporation",
+      "exchange": "NASDAQ",
+      "currency": "USD",
+      "sub_sector": "business_development",
+      "market_cap_at_seed": 670328683,
+      "fmp_industry": "Asset Management"
+    },
+    {
+      "ticker": "CLDT",
+      "vehicle_type": "us_bdc",
+      "display_name": "Chatham Lodging Trust",
+      "exchange": "NASDAQ",
+      "currency": "USD",
+      "sub_sector": "business_development",
+      "market_cap_at_seed": 634164374,
+      "fmp_industry": "REIT - Hotel & Motel"
+    },
+    {
+      "ticker": "GAIN",
+      "vehicle_type": "us_bdc",
+      "display_name": "Gladstone Investment Corp.",
+      "exchange": "NASDAQ",
+      "currency": "USD",
+      "sub_sector": "business_development",
+      "market_cap_at_seed": 589004751,
+      "fmp_industry": "Asset Management"
+    },
+    {
+      "ticker": "KIO",
+      "vehicle_type": "us_bdc",
+      "display_name": "KKR Income Opportunities Fund",
+      "exchange": "NASDAQ",
+      "currency": "USD",
+      "sub_sector": "business_development",
+      "market_cap_at_seed": 458009219,
+      "fmp_industry": "Asset Management"
+    },
+    {
+      "ticker": "GLAD",
+      "vehicle_type": "us_bdc",
+      "display_name": "Gladstone Capital Corporation",
+      "exchange": "NASDAQ",
+      "currency": "USD",
+      "sub_sector": "business_development",
+      "market_cap_at_seed": 421360737,
+      "fmp_industry": "Asset Management"
+    },
+    {
+      "ticker": "CCAP",
+      "vehicle_type": "us_bdc",
+      "display_name": "Crescent Capital BDC, Inc.",
+      "exchange": "NASDAQ",
+      "currency": "USD",
+      "sub_sector": "business_development",
+      "market_cap_at_seed": 413135775,
+      "fmp_industry": "Asset Management"
+    },
+    {
+      "ticker": "SAR",
+      "vehicle_type": "us_bdc",
+      "display_name": "Saratoga Investment Corp.",
+      "exchange": "NASDAQ",
+      "currency": "USD",
+      "sub_sector": "business_development",
+      "market_cap_at_seed": 362038718,
+      "fmp_industry": "Asset Management"
+    },
+    {
+      "ticker": "SGRO.L",
+      "vehicle_type": "uk_reit",
+      "display_name": "SEGRO Plc",
+      "exchange": "LSE",
+      "currency": "GBX",
+      "sub_sector": "industrial",
+      "market_cap_at_seed": 10008103686.462,
+      "fmp_industry": "REIT - Industrial"
+    },
+    {
+      "ticker": "LAND.L",
+      "vehicle_type": "uk_reit",
+      "display_name": "Land Securities Group plc",
+      "exchange": "LSE",
+      "currency": "GBX",
+      "sub_sector": "diversified",
+      "market_cap_at_seed": 4641628188.190001,
+      "fmp_industry": "REIT - Diversified"
+    },
+    {
+      "ticker": "LMP.L",
+      "vehicle_type": "uk_reit",
+      "display_name": "LondonMetric Property Plc",
+      "exchange": "LSE",
+      "currency": "GBX",
+      "sub_sector": "diversified",
+      "market_cap_at_seed": 4289069195.191,
+      "fmp_industry": "REIT - Diversified"
+    },
+    {
+      "ticker": "BBOX.L",
+      "vehicle_type": "uk_reit",
+      "display_name": "Tritax Big Box REIT plc",
+      "exchange": "LSE",
+      "currency": "GBX",
+      "sub_sector": "industrial",
+      "market_cap_at_seed": 4120607487.348,
+      "fmp_industry": "REIT - Industrial"
+    },
+    {
+      "ticker": "BLND.L",
+      "vehicle_type": "uk_reit",
+      "display_name": "British Land Company PLC",
+      "exchange": "LSE",
+      "currency": "GBX",
+      "sub_sector": "diversified",
+      "market_cap_at_seed": 4103786460,
+      "fmp_industry": "REIT - Diversified"
+    },
+    {
+      "ticker": "UTG.L",
+      "vehicle_type": "uk_reit",
+      "display_name": "Unite Group Plc",
+      "exchange": "LSE",
+      "currency": "GBX",
+      "sub_sector": "diversified",
+      "market_cap_at_seed": 2628356792.625,
+      "fmp_industry": "REIT - Diversified"
+    },
+    {
+      "ticker": "SHC.L",
+      "vehicle_type": "uk_reit",
+      "display_name": "Shaftesbury Capital PLC",
+      "exchange": "LSE",
+      "currency": "GBX",
+      "sub_sector": "retail",
+      "market_cap_at_seed": 2450142194.3040004,
+      "fmp_industry": "REIT - Retail"
+    },
+    {
+      "ticker": "DLN.L",
+      "vehicle_type": "uk_reit",
+      "display_name": "Derwent London Plc",
+      "exchange": "LSE",
+      "currency": "GBX",
+      "sub_sector": "office",
+      "market_cap_at_seed": 2134291300.0000002,
+      "fmp_industry": "REIT - Office"
+    },
+    {
+      "ticker": "HMSO.L",
+      "vehicle_type": "uk_reit",
+      "display_name": "Hammerson plc",
+      "exchange": "LSE",
+      "currency": "GBX",
+      "sub_sector": "retail",
+      "market_cap_at_seed": 1818451317.6200001,
+      "fmp_industry": "REIT - Retail"
+    },
+    {
+      "ticker": "BYG.L",
+      "vehicle_type": "uk_reit",
+      "display_name": "Big Yellow Group Plc",
+      "exchange": "LSE",
+      "currency": "GBX",
+      "sub_sector": "industrial",
+      "market_cap_at_seed": 1685678896.3999999,
+      "fmp_industry": "REIT - Industrial"
+    },
+    {
+      "ticker": "GPE.L",
+      "vehicle_type": "uk_reit",
+      "display_name": "Great Portland Estates Plc",
+      "exchange": "LSE",
+      "currency": "GBX",
+      "sub_sector": "office",
+      "market_cap_at_seed": 1288059144.174,
+      "fmp_industry": "REIT - Office"
+    },
+    {
+      "ticker": "SAFE.L",
+      "vehicle_type": "uk_reit",
+      "display_name": "Safestore Holdings plc",
+      "exchange": "LSE",
+      "currency": "GBX",
+      "sub_sector": "industrial",
+      "market_cap_at_seed": 1270660310.4366598,
+      "fmp_industry": "REIT - Industrial"
+    },
+    {
+      "ticker": "PHP.L",
+      "vehicle_type": "uk_reit",
+      "display_name": "Primary Health Properties PLC",
+      "exchange": "LSE",
+      "currency": "GBP",
+      "sub_sector": "healthcare",
+      "market_cap_at_seed": 1235067163,
+      "fmp_industry": "REIT - Healthcare Facilities"
+    },
+    {
+      "ticker": "SUPR.L",
+      "vehicle_type": "uk_reit",
+      "display_name": "Supermarket Income REIT plc",
+      "exchange": "LSE",
+      "currency": "GBP",
+      "sub_sector": "retail",
+      "market_cap_at_seed": 1045594676.2150002,
+      "fmp_industry": "REIT - Retail"
+    },
+    {
+      "ticker": "THRL.L",
+      "vehicle_type": "uk_reit",
+      "display_name": "Target Healthcare REIT PLC",
+      "exchange": "LSE",
+      "currency": "GBX",
+      "sub_sector": "healthcare",
+      "market_cap_at_seed": 652489687.992,
+      "fmp_industry": "REIT - Healthcare Facilities"
+    },
+    {
+      "ticker": "WKP.L",
+      "vehicle_type": "uk_reit",
+      "display_name": "Workspace Group plc",
+      "exchange": "LSE",
+      "currency": "GBX",
+      "sub_sector": "office",
+      "market_cap_at_seed": 636860015.424,
+      "fmp_industry": "REIT - Office"
+    },
+    {
+      "ticker": "CREI.L",
+      "vehicle_type": "uk_reit",
+      "display_name": "Custodian REIT Plc",
+      "exchange": "LSE",
+      "currency": "GBP",
+      "sub_sector": "diversified",
+      "market_cap_at_seed": 418861321,
+      "fmp_industry": "REIT - Diversified"
+    },
+    {
+      "ticker": "PCTN.L",
+      "vehicle_type": "uk_reit",
+      "display_name": "Picton Property Income Limited",
+      "exchange": "LSE",
+      "currency": "GBP",
+      "sub_sector": "diversified",
+      "market_cap_at_seed": 356984594.925,
+      "fmp_industry": "REIT - Diversified"
+    },
+    {
+      "ticker": "NRR.L",
+      "vehicle_type": "uk_reit",
+      "display_name": "NewRiver REIT plc",
+      "exchange": "LSE",
+      "currency": "GBP",
+      "sub_sector": "retail",
+      "market_cap_at_seed": 319992763.581,
+      "fmp_industry": "REIT - Retail"
+    },
+    {
+      "ticker": "SOHO.L",
+      "vehicle_type": "uk_reit",
+      "display_name": "Triple Point Social Housing REIT plc",
+      "exchange": "LSE",
+      "currency": "GBP",
+      "sub_sector": "residential",
+      "market_cap_at_seed": 292739071.536,
+      "fmp_industry": "REIT - Residential"
+    },
+    {
+      "ticker": "SREI.L",
+      "vehicle_type": "uk_reit",
+      "display_name": "Schroder Real Estate Investment Trust Limited",
+      "exchange": "LSE",
+      "currency": "GBP",
+      "sub_sector": "diversified",
+      "market_cap_at_seed": 224501754.38399997,
+      "fmp_industry": "REIT - Diversified"
+    },
+    {
+      "ticker": "CLI.L",
+      "vehicle_type": "uk_reit",
+      "display_name": "CLS Holdings plc",
+      "exchange": "LSE",
+      "currency": "GBP",
+      "sub_sector": "office",
+      "market_cap_at_seed": 195472374.322,
+      "fmp_industry": "REIT - Office"
+    },
+    {
+      "ticker": "AEWU.L",
+      "vehicle_type": "uk_reit",
+      "display_name": "AEW UK REIT plc",
+      "exchange": "LSE",
+      "currency": "GBX",
+      "sub_sector": "diversified",
+      "market_cap_at_seed": 165339087.416,
+      "fmp_industry": "REIT - Diversified"
+    },
+    {
+      "ticker": "RESI.L",
+      "vehicle_type": "uk_reit",
+      "display_name": "Residential Secure Income plc",
+      "exchange": "LSE",
+      "currency": "GBP",
+      "sub_sector": "residential",
+      "market_cap_at_seed": 99617839.798,
+      "fmp_industry": "REIT - Residential"
+    },
+    {
+      "ticker": "SERE.L",
+      "vehicle_type": "uk_reit",
+      "display_name": "Schroder European Real Estate Investment Trust Plc",
+      "exchange": "LSE",
+      "currency": "GBP",
+      "sub_sector": "specialty",
+      "market_cap_at_seed": 78158184.87314999,
+      "fmp_industry": "REIT - Specialty"
+    }
+  ]
+}
