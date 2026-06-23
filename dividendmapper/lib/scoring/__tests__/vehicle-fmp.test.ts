@@ -35,6 +35,114 @@ const BLND_EOD_GBX = [
   { symbol: "BLND.L", date: "2026-06-19", close: 410.8, high: 412.0, low: 408.5 },
 ];
 
+// One US REIT quarter (Realty Income) — values approximate enough to drive
+// the shape test. Realistic enough that hand-checked period_end maps cleanly.
+const O_INCOME_Q = [
+  { date: "2026-03-31", calendarYear: "2026", period: "Q1", revenue: 1320000000, ebitda: 1180000000, interestExpense: 230000000, netIncome: 250000000, weightedAverageShsOut: 870000000 },
+  { date: "2025-12-31", calendarYear: "2025", period: "Q4", revenue: 1280000000, ebitda: 1140000000, interestExpense: 220000000, netIncome: 240000000, weightedAverageShsOut: 868000000 },
+];
+const O_BALANCE_Q = [
+  { date: "2026-03-31", totalDebt: 27000000000, totalEquity: 38000000000, totalAssets: 70000000000 },
+  { date: "2025-12-31", totalDebt: 26500000000, totalEquity: 37800000000, totalAssets: 69500000000 },
+];
+const O_KEYMETRICS_Q = [
+  { date: "2026-03-31", bookValuePerShare: 43.68, debtToEquity: 0.71 },
+  { date: "2025-12-31", bookValuePerShare: 43.55, debtToEquity: 0.70 },
+];
+
+const ARCC_INCOME_Q = [
+  { date: "2026-03-31", calendarYear: "2026", period: "Q1", interestIncome: 580000000, totalOtherIncomeExpensesNet: -120000000, netIncome: 460000000, weightedAverageShsOut: 630000000 },
+];
+const ARCC_BALANCE_Q = [
+  { date: "2026-03-31", totalDebt: 12000000000, totalEquity: 12300000000, totalAssets: 26800000000 },
+];
+const ARCC_KEYMETRICS_Q = [
+  { date: "2026-03-31", bookValuePerShare: 19.52, debtToEquity: 0.97 },
+];
+
+// UK REIT — semi-annual cadence; FMP reports as "annual" period for half-year
+// interims and annuals indiscriminately, distinguished by date spacing.
+const BLND_INCOME_A = [
+  { date: "2026-03-31", calendarYear: "2026", period: "FY", revenue: 540000000, ebitda: 380000000, interestExpense: 95000000, netIncome: 120000000, weightedAverageShsOut: 970000000 },
+  { date: "2025-09-30", calendarYear: "2026", period: "H1", revenue: 270000000, ebitda: 195000000, interestExpense: 48000000, netIncome: 65000000, weightedAverageShsOut: 970000000 },
+];
+const BLND_BALANCE_A = [
+  { date: "2026-03-31", totalDebt: 4200000000, totalEquity: 6900000000, totalAssets: 11800000000 },
+  { date: "2025-09-30", totalDebt: 4150000000, totalEquity: 6850000000, totalAssets: 11700000000 },
+];
+const BLND_KEYMETRICS_A = [
+  { date: "2026-03-31", bookValuePerShare: 711.34, debtToEquity: 0.61 },
+  { date: "2025-09-30", bookValuePerShare: 706.18, debtToEquity: 0.61 },
+];
+
+describe("vehicle-fmp / fetchVehicleFundamentals", () => {
+  it("us_reit: returns quarterly rows with NAV, debt, EBITDA, interest expense populated", async () => {
+    fetchMock
+      .mockResolvedValueOnce(new Response(JSON.stringify(O_INCOME_Q), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify(O_BALANCE_Q), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify(O_KEYMETRICS_Q), { status: 200 }));
+    const mod = await import("../vehicle-fmp");
+    const rows = await mod.fetchVehicleFundamentals("O", "us_reit", "USD");
+    expect(rows).toHaveLength(2);
+    expect(rows[0]).toMatchObject({
+      ticker: "O",
+      period_end: "2026-03-31",
+      period_type: "quarterly",
+      nav_per_share: 43.68,
+      debt_total: 27000000000,
+      equity_total: 38000000000,
+      ebitda: 1180000000,
+      interest_expense: 230000000,
+    });
+  });
+
+  it("us_bdc: returns quarterly rows; NII left to signal-time derivation", async () => {
+    fetchMock
+      .mockResolvedValueOnce(new Response(JSON.stringify(ARCC_INCOME_Q), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify(ARCC_BALANCE_Q), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify(ARCC_KEYMETRICS_Q), { status: 200 }));
+    const mod = await import("../vehicle-fmp");
+    const rows = await mod.fetchVehicleFundamentals("ARCC", "us_bdc", "USD");
+    expect(rows[0]).toMatchObject({
+      ticker: "ARCC",
+      period_end: "2026-03-31",
+      period_type: "quarterly",
+      nav_per_share: 19.52,
+      debt_total: 12000000000,
+      equity_total: 12300000000,
+    });
+  });
+
+  it("uk_reit: returns semi_annual rows; debt+equity left in GBP (no ÷100 — already absolute)", async () => {
+    fetchMock
+      .mockResolvedValueOnce(new Response(JSON.stringify(BLND_INCOME_A), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify(BLND_BALANCE_A), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify(BLND_KEYMETRICS_A), { status: 200 }));
+    const mod = await import("../vehicle-fmp");
+    const rows = await mod.fetchVehicleFundamentals("BLND.L", "uk_reit", "GBX");
+    expect(rows[0]).toMatchObject({
+      ticker: "BLND.L",
+      period_end: "2026-03-31",
+      period_type: "semi_annual",
+      debt_total: 4200000000,   // absolute £, NOT ÷100 (only per-share quantities scale)
+      equity_total: 6900000000,
+    });
+    expect(rows[0].nav_per_share).toBe(7.1134); // 711.34p ÷ 100 = £7.1134 per share
+  });
+
+  it("uk_reit uses 'income-statement?period=annual' (UK semi-annuals report there)", async () => {
+    fetchMock
+      .mockResolvedValueOnce(new Response("[]", { status: 200 }))
+      .mockResolvedValueOnce(new Response("[]", { status: 200 }))
+      .mockResolvedValueOnce(new Response("[]", { status: 200 }));
+    const mod = await import("../vehicle-fmp");
+    await mod.fetchVehicleFundamentals("BLND.L", "uk_reit", "GBX");
+    const incomeUrl = fetchMock.mock.calls[0][0] as string;
+    expect(incomeUrl).toContain("/stable/income-statement?");
+    expect(incomeUrl).toContain("period=annual");
+  });
+});
+
 const O_DIVS_USD = [
   { date: "2026-06-01", dividend: 0.2725, adjDividend: 0.2725, paymentDate: "2026-06-15" },
   { date: "2026-05-01", dividend: 0.265,  adjDividend: 0.265,  paymentDate: "2026-05-15" },

@@ -10,7 +10,7 @@
 // data is unit-consistent across all three families. Pass `currency`
 // explicitly (sourced from vehicle_universe.currency) to control this.
 
-import { getDividends, getHistoricalEod } from "./fmp-client";
+import { fetchEndpoint, getDividends, getHistoricalEod } from "./fmp-client";
 
 export type VehicleType = "us_reit" | "us_bdc" | "uk_reit";
 export type Currency = "USD" | "GBP" | "GBX";
@@ -49,6 +49,95 @@ export async function fetchVehiclePrices(
     observed_at: bar.date,
     close_price: normaliseToGbp(bar.close, currency),
   }));
+}
+
+export interface VehicleFundamentalsRow {
+  ticker: string;
+  period_end: string;
+  period_type: "quarterly" | "semi_annual" | "annual";
+  ffo_per_share: number | null;
+  affo_per_share: number | null;
+  nii_per_share: number | null;
+  nav_per_share: number | null;
+  debt_total: number | null;
+  equity_total: number | null;
+  ebitda: number | null;
+  interest_expense: number | null;
+  ltv_pct: number | null;
+}
+
+interface FmpFinancialRow {
+  date: string;
+  [k: string]: unknown;
+}
+
+function num(row: Record<string, unknown>, key: string): number | null {
+  const v = row[key];
+  return typeof v === "number" && Number.isFinite(v) ? v : null;
+}
+
+async function fetchFinancialPeriod(
+  endpoint: string,
+  ticker: string,
+  period: "quarter" | "annual",
+  limit: number,
+): Promise<FmpFinancialRow[]> {
+  return (await fetchEndpoint(endpoint, {
+    symbol: ticker,
+    period,
+    limit: String(limit),
+  })) as FmpFinancialRow[];
+}
+
+function alignByDate<T extends FmpFinancialRow>(rows: T[]): Map<string, T> {
+  const m = new Map<string, T>();
+  for (const r of rows) m.set(r.date, r);
+  return m;
+}
+
+export async function fetchVehicleFundamentals(
+  ticker: string,
+  vehicleType: VehicleType,
+  currency: Currency,
+): Promise<VehicleFundamentalsRow[]> {
+  // US REIT + US BDC report quarterly; UK REIT reports H1 + FY (FMP exposes
+  // both as period=annual). Derived metrics (FFO/NII/LTV) computed at signal
+  // time in Sprint 2 — Day 2 ingestion stores the raw inputs only.
+  const fmpPeriod: "quarter" | "annual" = vehicleType === "uk_reit" ? "annual" : "quarter";
+  const periodType: VehicleFundamentalsRow["period_type"] =
+    vehicleType === "uk_reit" ? "semi_annual" : "quarterly";
+  const limit = vehicleType === "uk_reit" ? 10 : 8;
+
+  const [income, balance, keyMetrics] = await Promise.all([
+    fetchFinancialPeriod("income-statement", ticker, fmpPeriod, limit),
+    fetchFinancialPeriod("balance-sheet-statement", ticker, fmpPeriod, limit),
+    fetchFinancialPeriod("key-metrics", ticker, fmpPeriod, limit),
+  ]);
+
+  const balanceByDate = alignByDate(balance);
+  const keyByDate = alignByDate(keyMetrics);
+
+  const rows: VehicleFundamentalsRow[] = [];
+  for (const inc of income) {
+    const bal = balanceByDate.get(inc.date);
+    const km = keyByDate.get(inc.date);
+    const navRaw = km ? num(km, "bookValuePerShare") : null;
+    rows.push({
+      ticker,
+      period_end: inc.date,
+      period_type: periodType,
+      ffo_per_share: null,     // signal-time derivation (Sprint 2)
+      affo_per_share: null,    // V1.1
+      nii_per_share: null,     // signal-time derivation (Sprint 2)
+      nav_per_share: navRaw === null ? null : normaliseToGbp(navRaw, currency),
+      debt_total: bal ? num(bal, "totalDebt") : null,
+      equity_total: bal ? num(bal, "totalEquity") : null,
+      ebitda: num(inc, "ebitda"),
+      interest_expense: num(inc, "interestExpense"),
+      ltv_pct: null,           // signal-time derivation (Sprint 2)
+    });
+  }
+  return rows;
 }
 
 export interface VehicleDividendRow {
