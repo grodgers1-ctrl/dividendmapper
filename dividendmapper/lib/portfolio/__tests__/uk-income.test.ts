@@ -170,4 +170,65 @@ describe("mergeScoringDividends", () => {
     const q = quotes.get("MSFT");
     if (q?.ok) expect(q.data.dividend).toBeNull();
   });
+
+  it("preserves the live quote's price when overlaying the scoring dividend (US)", () => {
+    const liveQuote: QuoteResult = {
+      ok: true,
+      cached: false,
+      data: {
+        ticker: "AAPL",
+        source: "FMP",
+        price: 297.01,
+        dividend: 1.0,
+        dividendYield: null,
+        dividendGrowth3yr: null,
+        currency: "USD",
+        exchange: "NASDAQ",
+        name: "Apple Inc.",
+        fetchedAt: "2026-06-23T00:00:00Z",
+      },
+    };
+    const quotes = new Map<string, QuoteResult>([["AAPL", liveQuote]]);
+    const merged = mergeScoringDividends(quotes, ["AAPL"], new Map([["AAPL", 1.05]]));
+    const q = merged.get("AAPL");
+    expect(q?.ok).toBe(true);
+    if (q?.ok) {
+      expect(q.data.price).toBe(297.01);
+      expect(q.data.dividend).toBe(1.05);
+      expect(q.data.currency).toBe("USD");
+      expect(q.data.exchange).toBe("NASDAQ");
+      expect(q.data.name).toBe("Apple Inc.");
+    }
+  });
+
+  it("preserves the live quote's price when overlaying the scoring dividend (UK, pence)", () => {
+    // Live UK quote is post-normalisation (price in £, currency 'GBP') per
+    // fetchFmpQuote in lib/market/quote.ts. Scoring DPS comes in pence.
+    const liveQuote: QuoteResult = {
+      ok: true,
+      cached: false,
+      data: {
+        ticker: "ULVR.L",
+        source: "FMP",
+        price: 44.045,
+        dividend: 1.5,
+        dividendYield: null,
+        dividendGrowth3yr: null,
+        currency: "GBP",
+        exchange: "LSE",
+        name: "Unilever PLC",
+        fetchedAt: "2026-06-23T00:00:00Z",
+      },
+    };
+    const quotes = new Map<string, QuoteResult>([["ULVR.L", liveQuote]]);
+    const merged = mergeScoringDividends(quotes, ["ULVR.L"], new Map([["ULVR.L", 159.42]]));
+    const q = merged.get("ULVR.L");
+    expect(q?.ok).toBe(true);
+    if (q?.ok) {
+      expect(q.data.price).toBe(44.045);
+      expect(q.data.dividend).toBeCloseTo(1.5942, 6); // 159.42 pence → £1.5942
+      expect(q.data.currency).toBe("GBP");
+      expect(q.data.exchange).toBe("LSE");
+    }
+  });
 });

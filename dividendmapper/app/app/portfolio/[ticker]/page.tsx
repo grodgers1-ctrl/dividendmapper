@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/auth/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { loadPricedHoldings } from "@/lib/portfolio/load-priced-holdings";
 import { actualKey } from "@/lib/portfolio/income";
+import { computeYieldOnCost } from "@/lib/portfolio/yield-on-cost";
 import { deriveFrequency } from "@/lib/portfolio/derive-frequency";
 import { resolveRowValue } from "@/lib/portfolio/row-value";
 import { ratesToGbpFor } from "@/lib/scoring/currency";
@@ -156,21 +157,20 @@ export default async function HoldingDetailPage({
 
   const actual = priced.actualsByKey[actualKey(ticker, holding.wrapper)] ?? null;
 
-  const yieldOnCostPct =
-    forwardAnnual !== null &&
-    forwardCurrency === holding.cost_currency &&
-    holding.avg_cost > 0
-      ? (forwardAnnual / (Number(holding.quantity) * holding.avg_cost)) * 100
-      : null;
+  const yieldOnCostPct = computeYieldOnCost({
+    forwardAnnual,
+    forwardCurrency: forwardCurrency ?? null,
+    quantity: Number(holding.quantity),
+    avgCost: holding.avg_cost,
+    costCurrency: holding.cost_currency,
+  });
 
-  // Derive fundamentals from the latest equity_score_history row. P/E and
-  // forward P/E need EPS; FMP-derived columns are nightly. Anything we
-  // don't have yet renders as a — placeholder per FundamentalsCard.
+  // Derive fundamentals from the latest equity_score_history row.
+  // FMP-derived columns are nightly. Anything we don't have yet renders as a
+  // — placeholder per FundamentalsCard. Trailing P/E now lives on
+  // equity_scores (column trailing_pe) — the page no longer derives it from
+  // price/eps_avg because eps_avg holds forward EPS (R4 input).
   const latest = latestRow.data;
-  const pe =
-    latest?.current_price != null && latest.eps_avg && latest.eps_avg > 0
-      ? Number(latest.current_price) / Number(latest.eps_avg)
-      : null;
 
   const scoreHistorySeries = (history.data ?? []).map((row) => ({
     date: row.observed_at,
@@ -278,7 +278,7 @@ export default async function HoldingDetailPage({
             </div>
             <div className="col-span-12 md:col-span-6">
               <FundamentalsCard
-                pe={pe}
+                pe={score?.trailingPe ?? null}
                 forwardPe={score?.forwardPe ?? null}
                 payoutRatio={score?.payoutRatio ?? null}
                 netDebtToEbitda={

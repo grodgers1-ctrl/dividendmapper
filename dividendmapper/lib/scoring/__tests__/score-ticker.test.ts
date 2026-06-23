@@ -6,7 +6,7 @@ vi.mock("@/lib/scoring/fmp-client", () => {
     getProfile: vi.fn().mockResolvedValue([
       { symbol: "TEST", mktCap: 5_000_000_000, industry: "Software - Application", currency: "USD", companyName: "Test Co" },
     ]),
-    getRatiosTtm: vi.fn().mockResolvedValue([{ symbol: "TEST", dividendPayoutRatioTTM: 0.4, dividendYieldTTM: 0.03 }]),
+    getRatiosTtm: vi.fn().mockResolvedValue([{ symbol: "TEST", dividendPayoutRatioTTM: 0.4, dividendYieldTTM: 0.03, priceToEarningsRatioTTM: 24.5 }]),
     getRatiosQuarterly: arr(),
     getDividends: vi.fn().mockResolvedValue([{ date: "2026-05-01", adjDividend: 0.25, dividend: 0.25 }]),
     getIncomeStatementQuarterly: vi.fn().mockResolvedValue([{ operatingIncome: 250, interestExpense: 50, netIncome: 200 }]),
@@ -75,6 +75,25 @@ describe("scoreTicker", () => {
     expect(row.fcf_coverage).toBe(3);
     // Only one dividend in the mock — cannot compute 5y CAGR; expect null.
     expect(row.dividend_cagr_5y).toBeNull();
+  });
+
+  it("persists trailing_pe from bundle.ratiosTtm[0].priceToEarningsRatioTTM", async () => {
+    const { client, upserts } = makeAdmin();
+    await scoreTicker(client, "TEST", [], "2026-06-12");
+    const row = upserts["equity_scores"][0] as Record<string, unknown>;
+    // From the mock: ratiosTtm[0].priceToEarningsRatioTTM = 24.5.
+    expect(row.trailing_pe).toBe(24.5);
+  });
+
+  it("persists trailing_pe as null when ratiosTtm is missing the field", async () => {
+    const { getRatiosTtm } = await import("@/lib/scoring/fmp-client");
+    vi.mocked(getRatiosTtm).mockResolvedValueOnce([
+      { symbol: "TEST", dividendPayoutRatioTTM: 0.4, dividendYieldTTM: 0.03 },
+    ]);
+    const { client, upserts } = makeAdmin();
+    await scoreTicker(client, "TEST", [], "2026-06-12");
+    const row = upserts["equity_scores"][0] as Record<string, unknown>;
+    expect(row.trailing_pe).toBeNull();
   });
 
   it("throws when an upsert returns an error (so the caller can count it)", async () => {
