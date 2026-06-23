@@ -9,6 +9,12 @@ import type { IncomeCalendarMonth } from "@/lib/portfolio/income-calendar";
 
 const MONTH_LABEL = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
+const GBP_FMT = new Intl.NumberFormat("en-GB", {
+  style: "currency",
+  currency: "GBP",
+  maximumFractionDigits: 0,
+});
+
 function monthName(ym: string): string {
   const m = Number(ym.slice(5, 7));
   return MONTH_LABEL[m - 1] ?? ym;
@@ -24,11 +30,21 @@ export function IncomeCalendarChart({ months }: IncomeCalendarChartProps) {
   // Today divider position: just after the partial month, so at fraction
   // (partialIndex + 1) / 12 of the chart width.
   const dividerLeft =
-    partialIndex >= 0 ? `${((partialIndex + 1) / months.length) * 100}%` : "50%";
+    partialIndex >= 0
+      ? `${((partialIndex + 1) / months.length) * 100}%`
+      : null;
+
+  const chartLabel = `Rolling 12-month income chart: ${months
+    .map((m) => `${monthName(m.ym)} ${GBP_FMT.format(Math.round(m.gbp))} (${m.kind})`)
+    .join(", ")}`;
 
   return (
     <div>
-      <div className="relative h-[130px] flex items-end gap-1.5 border-b border-[var(--border-subtle)]">
+      <section
+        role="figure"
+        aria-label={chartLabel}
+        className="relative h-[130px] flex items-end gap-1.5 border-b border-[var(--border-subtle)]"
+      >
         {months.map((m) => {
           const heightPct = max > 0 ? Math.max(4, (m.gbp / max) * 100) : 4;
           const opacity =
@@ -47,13 +63,15 @@ export function IncomeCalendarChart({ months }: IncomeCalendarChartProps) {
             />
           );
         })}
-        <div
-          data-testid="today-divider"
-          aria-hidden="true"
-          className="absolute top-0 bottom-0 border-l border-dashed border-[var(--border)]"
-          style={{ left: dividerLeft }}
-        />
-      </div>
+        {dividerLeft !== null && (
+          <div
+            data-testid="today-divider"
+            aria-hidden="true"
+            className="absolute top-0 bottom-0 border-l border-dashed border-[var(--border)]"
+            style={{ left: dividerLeft }}
+          />
+        )}
+      </section>
       <div className="mt-1.5 flex gap-1.5">
         {months.map((m) => (
           <span

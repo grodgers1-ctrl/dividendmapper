@@ -62,4 +62,12 @@ describe("IncomeCalendarChart", () => {
     const { container } = render(<IncomeCalendarChart months={flat} />);
     expect(container.querySelectorAll('[data-testid="calendar-bar"]')).toHaveLength(12);
   });
+
+  it("omits the today divider when no month is partial (off-window edge case)", () => {
+    const noPartial: IncomeCalendarMonth[] = fixture().map((m) =>
+      m.kind === "partial" ? { ...m, kind: "actual" } : m,
+    );
+    const { queryByTestId } = render(<IncomeCalendarChart months={noPartial} />);
+    expect(queryByTestId("today-divider")).toBeNull();
+  });
 });
