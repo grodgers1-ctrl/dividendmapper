@@ -75,4 +75,21 @@ describe("<FundamentalsCard>", () => {
     );
     expect(screen.getByText("Consumer Staples")).toBeInTheDocument();
   });
+
+  it("title-cases snake_case sector enum values via formatSector", () => {
+    render(
+      <FundamentalsCard
+        pe={null}
+        forwardPe={null}
+        payoutRatio={null}
+        netDebtToEbitda={null}
+        fcfCoverage={null}
+        currentYield={null}
+        dividendCagr5y={null}
+        sector="consumer_staples"
+      />,
+    );
+    expect(screen.getByText("Consumer Staples")).toBeInTheDocument();
+    expect(screen.queryByText("consumer_staples")).toBeNull();
+  });
 });
