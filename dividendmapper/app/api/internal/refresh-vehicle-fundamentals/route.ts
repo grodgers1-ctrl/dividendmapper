@@ -16,7 +16,9 @@ import { upsertVehicleFundamentals } from "@/lib/scoring/vehicle-persist";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 900; // 15 min — 100 tickers × 3 FMP calls + 1s pacing
+// 300s matches the rest of the internal crons (Vercel Pro cap). Live backfill
+// of fundamentals across all 100 tickers ran in 141s, so 300s leaves headroom.
+export const maxDuration = 300;
 
 const TICKER_PAD_MS =
   process.env.NODE_ENV === "test" ? 0 : Number(process.env.FMP_TICKER_PAD_MS) || 1000;
