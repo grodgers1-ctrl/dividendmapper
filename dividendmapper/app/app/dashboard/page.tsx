@@ -241,7 +241,10 @@ export default async function DashboardPage() {
               />
             </div>
             <div className="col-span-12 md:col-span-4">
-              <ReinvestStripCard reinvestCard={analytics?.reinvestCard ?? null} />
+              <ReinvestStripCard
+                reinvestCard={analytics?.reinvestCard ?? null}
+                nextDividend={analytics?.nextDividend ?? null}
+              />
             </div>
           </>
         )}
