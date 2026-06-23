@@ -27,6 +27,10 @@
     {
       "path": "/api/internal/refresh-vehicle-fundamentals",
       "schedule": "0 2 * * 0"
+    },
+    {
+      "path": "/api/internal/refresh-vehicle-scores",
+      "schedule": "0 9 * * *"
     }
   ]
 }
