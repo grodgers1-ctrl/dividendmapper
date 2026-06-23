@@ -19,11 +19,11 @@ describe("pickFlaggedHolding", () => {
     expect(pickFlaggedHolding([{ ticker: "AAPL" }], scores)).toBeNull();
   });
 
-  it("returns null when every scored holding is DNQ", () => {
+  it("returns null when every scored holding has null Risk", () => {
     const scores = scoreMap([
       { ticker: "AAPL", buy: null, risk: null },
       { ticker: "MSFT", buy: 60, risk: null },
-      { ticker: "TSCO.L", buy: null, risk: 40 },
+      { ticker: "TSCO.L", buy: 40, risk: null },
     ]);
     const holdings = [{ ticker: "AAPL" }, { ticker: "MSFT" }, { ticker: "TSCO.L" }];
     expect(pickFlaggedHolding(holdings, scores)).toBeNull();
@@ -67,13 +67,34 @@ describe("pickFlaggedHolding", () => {
     expect(pickFlaggedHolding(holdings, scores)).toBe("AAPL");
   });
 
-  it("excludes a holding whose Quality is null even if Risk exists", () => {
+  it("surfaces a holding whose Quality is null when its Risk is highest", () => {
+    // HTGC/SMIF.L scenario: real risk score, no Quality because of the BDC
+    // quality-gate / UK C+D collapse. Previously excluded; must now win.
     const scores = scoreMap([
       { ticker: "AAPL", buy: 70, risk: 60 },
-      { ticker: "SPRSE", buy: null, risk: 95 },
+      { ticker: "HTGC", buy: null, risk: 100 },
     ]);
-    const holdings = [{ ticker: "AAPL" }, { ticker: "SPRSE" }];
+    const holdings = [{ ticker: "AAPL" }, { ticker: "HTGC" }];
+    expect(pickFlaggedHolding(holdings, scores)).toBe("HTGC");
+  });
+
+  it("at tied Risk, a real (lower) Quality beats a null Quality", () => {
+    const scores = scoreMap([
+      { ticker: "AAPL", buy: 30, risk: 90 },
+      { ticker: "HTGC", buy: null, risk: 90 },
+    ]);
+    const holdings = [{ ticker: "AAPL" }, { ticker: "HTGC" }];
     expect(pickFlaggedHolding(holdings, scores)).toBe("AAPL");
+  });
+
+  it("at tied Risk with both Qualities null, lower ticker alpha wins", () => {
+    const scores = scoreMap([
+      { ticker: "SMIF.L", buy: null, risk: 100 },
+      { ticker: "HTGC", buy: null, risk: 100 },
+    ]);
+    // Holdings order intentionally reversed to confirm pick is order-independent.
+    const holdings = [{ ticker: "SMIF.L" }, { ticker: "HTGC" }];
+    expect(pickFlaggedHolding(holdings, scores)).toBe("HTGC");
   });
 
   it("returns a deterministic pick when Risk and Quality are tied", () => {
