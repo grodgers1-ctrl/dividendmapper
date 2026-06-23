@@ -37,7 +37,7 @@ export function BestWorstCard({ pnls }: BestWorstCardProps) {
 
   if (pnls.length === 0) {
     return (
-      <div className="flex h-full flex-col rounded-[10px] border border-[var(--border-subtle)] bg-[var(--surface)] p-6 shadow-[var(--card-shadow)]">
+      <div className="card-surface flex h-full flex-col">
         <p className="text-xs uppercase tracking-[0.08em] text-[var(--text-muted)]">
           Position performance
         </p>
@@ -58,7 +58,7 @@ export function BestWorstCard({ pnls }: BestWorstCardProps) {
   const fxCaveat = best.isCrossCurrency || worst?.isCrossCurrency === true;
 
   return (
-    <div className="flex h-full flex-col rounded-[10px] border border-[var(--border-subtle)] bg-[var(--surface)] p-6 shadow-[var(--card-shadow)]">
+    <div className="card-surface flex h-full flex-col">
       <p className="text-xs uppercase tracking-[0.08em] text-[var(--text-muted)]">
         Position performance
       </p>

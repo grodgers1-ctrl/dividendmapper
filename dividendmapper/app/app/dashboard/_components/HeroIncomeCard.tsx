@@ -1,21 +1,13 @@
 "use client";
 
-// Day 5 dashboard hero — augmented in the quick-wins sprint with a 3-cell
-// stat strip (Monthly · Weekly · Yield on cost) tucked between the headline
-// £ and the ridgeline sparkline. Animation language matches ScoreOrb +
-// SignalContributionsList: smooth-out easing, sub-second fade-and-rise with
-// per-cell stagger, useReducedMotion() guard.
-//
-// Brand accent #1 (contour SVG at ~4% opacity baked into the asset) sits as
-// a backgroundImage with `mix-blend-overlay`, matching the drawer-footer
-// treatment. The sparkline (accent #3) lives below the headline.
+// Dashboard hero — £-headline + Monthly/Weekly/YoC stat strip. The
+// decorative ridge sparkline was removed in the 23 Jun redesign; the
+// time-series story now lives in the Income Calendar card next to it.
 
 import { motion, useReducedMotion } from "framer-motion";
-import { RidgeSparkline, type RidgePoint } from "./RidgeSparkline";
 
 export interface HeroIncomeCardProps {
   incomeAnnualGbp: number;
-  sparkline: ReadonlyArray<RidgePoint>;
   /** Sum of cost basis converted to GBP. Null/≤0 → YoC cell renders "—". */
   totalCostGbp?: number | null;
 }
@@ -38,7 +30,6 @@ const STAGGER = 0.06;
 
 export function HeroIncomeCard({
   incomeAnnualGbp,
-  sparkline,
   totalCostGbp,
 }: HeroIncomeCardProps) {
   const reduce = useReducedMotion();
@@ -58,9 +49,8 @@ export function HeroIncomeCard({
 
   return (
     <div
-      className="relative overflow-hidden rounded-[10px] border border-[var(--border-subtle)] p-6 shadow-[var(--card-shadow)]"
+      className="card-surface overflow-hidden"
       style={{
-        backgroundColor: "var(--surface)",
         backgroundImage: "url('/brand/contour.svg')",
         backgroundSize: "cover",
         backgroundRepeat: "no-repeat",
@@ -95,10 +85,6 @@ export function HeroIncomeCard({
             </p>
           </motion.div>
         ))}
-      </div>
-
-      <div className="mt-4">
-        <RidgeSparkline data={sparkline} height={72} />
       </div>
     </div>
   );

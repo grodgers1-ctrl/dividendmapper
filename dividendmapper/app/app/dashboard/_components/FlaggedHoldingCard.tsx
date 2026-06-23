@@ -14,11 +14,7 @@ export interface FlaggedHoldingCardProps {
 }
 
 function CardSurround({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="flex h-full flex-col rounded-[10px] border border-[var(--border-subtle)] bg-[var(--surface)] p-6 shadow-[var(--card-shadow)]">
-      {children}
-    </div>
-  );
+  return <div className="card-surface flex h-full flex-col">{children}</div>;
 }
 
 export function FlaggedHoldingCard({

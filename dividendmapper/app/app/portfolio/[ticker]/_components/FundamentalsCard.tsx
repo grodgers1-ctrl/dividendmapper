@@ -5,6 +5,8 @@
 // render as a — placeholder rather than being hidden, so the row layout
 // stays stable and the user can tell what's not yet collected.
 
+import { formatSector } from "@/lib/scoring/sector-display";
+
 export interface FundamentalsCardProps {
   pe: number | null;
   forwardPe: number | null;
@@ -33,10 +35,6 @@ function pct(value: number | null, fraction = 1): string {
   return `${(value * 100).toFixed(fraction)}%`;
 }
 
-function text(value: string | null): string {
-  return value ?? PLACEHOLDER;
-}
-
 export function FundamentalsCard({
   pe,
   forwardPe,
@@ -60,7 +58,7 @@ export function FundamentalsCard({
         <Row label="FCF coverage" value={multiple(fcfCoverage)} />
         <Row label="Yield" value={pct(currentYield)} />
         <Row label="5y dividend CAGR" value={pct(dividendCagr5y)} />
-        <Row label="Sector" value={text(sector)} />
+        <Row label="Sector" value={sector ? formatSector(sector) : PLACEHOLDER} />
       </dl>
       <p className="mt-4 text-xs text-[var(--text-muted)]">
         From FMP, refreshed nightly.
