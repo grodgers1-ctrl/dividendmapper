@@ -16,7 +16,7 @@ import { TopHoldingsStrip } from "./_components/TopHoldingsStrip";
 import { UpgradeCard } from "./_components/UpgradeCard";
 import { FlaggedHoldingCard } from "./_components/FlaggedHoldingCard";
 import { QuadrantSnapshotCard } from "./_components/QuadrantSnapshotCard";
-import { ReinvestStripCard } from "./_components/ReinvestStripCard";
+import { IncomeCalendarCard } from "./_components/IncomeCalendarCard";
 import { ValueVsCostCard } from "./_components/ValueVsCostCard";
 import { SectorExposureCard } from "./_components/SectorExposureCard";
 import { BestWorstCard } from "./_components/BestWorstCard";
@@ -200,10 +200,12 @@ export default async function DashboardPage() {
               />
             </div>
             <div className="col-span-12 md:col-span-4">
-              <ReinvestStripCard
-                reinvestCard={analytics?.reinvestCard ?? null}
-                nextDividend={analytics?.nextDividend ?? null}
-              />
+              {analytics && (
+                <IncomeCalendarCard
+                  calendar={analytics.incomeCalendar}
+                  reinvestCard={analytics.reinvestCard}
+                />
+              )}
             </div>
           </>
         )}
