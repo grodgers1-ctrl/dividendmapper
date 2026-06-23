@@ -20,11 +20,42 @@ describe("WeeklyDigestEmail", () => {
     expect(html).toContain("On your watchlist");
   });
 
-  it("renders the quiet-week variant when there are no movers", async () => {
+  it("renders the quiet-week variant when there are no movers and no pending baselines", async () => {
     const html = await render(
       WeeklyDigestEmail({ holdings: [], watchlist: [], manageUrl: "https://x/manage", unsubscribeUrl: "https://x/unsub" }),
     );
     expect(html.toLowerCase()).toContain("steady");
     expect(html).not.toContain("Your holdings");
+    expect(html.toLowerCase()).not.toContain("too recently");
+  });
+
+  it("renders the too-fresh variant when there are no movers but pending baselines exist", async () => {
+    const html = await render(
+      WeeklyDigestEmail({
+        holdings: [],
+        watchlist: [],
+        pendingBaselineCount: 3,
+        manageUrl: "https://x/manage",
+        unsubscribeUrl: "https://x/unsub",
+      }),
+    );
+    expect(html.toLowerCase()).toContain("week of scores");
+    expect(html.toLowerCase()).toContain("too recently");
+    expect(html.toLowerCase()).not.toContain("all steady this week");
+  });
+
+  it("ignores pendingBaselineCount when movers exist", async () => {
+    const html = await render(
+      WeeklyDigestEmail({
+        holdings: [{ ticker: "SHEL", resilience: { curr: 72, delta: 3 }, risk: null, priceSwingPct: 0 }],
+        watchlist: [],
+        pendingBaselineCount: 5,
+        manageUrl: "https://x/manage",
+        unsubscribeUrl: "https://x/unsub",
+      }),
+    );
+    expect(html).toContain("SHEL");
+    expect(html.toLowerCase()).not.toContain("too recently");
+    expect(html.toLowerCase()).not.toContain("week of scores");
   });
 });

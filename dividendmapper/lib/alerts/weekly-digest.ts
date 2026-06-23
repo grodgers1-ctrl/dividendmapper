@@ -3,12 +3,16 @@
 // Two responsibilities:
 //   1. pickCurrentAndBaseline — from a ticker's history (newest-first), choose the
 //      current snapshot and the closest snapshot on/before a cutoff date (~7d ago).
-//   2. selectWeeklyMovers — decide which tickers "moved" over the window and
-//      compute each metric's delta/direction for the email.
+//   2. selectWeeklyMovers — decide which tickers "moved" over the window, and
+//      separately count how many fresh tickers have no baseline yet so the email
+//      can tell users honestly that some of their portfolio is too new to compare.
 //
 // Inclusion rule: resilience delta != 0 OR risk delta != 0 OR |price swing %| >= 5.
 // A degraded_uk data gap can move a score artificially; never report it (mirrors
-// build-digest.ts). A ticker missing a baseline cannot have a delta and is skipped.
+// build-digest.ts). A ticker missing a baseline cannot have a delta and is skipped
+// from the movers list — but counted in pendingBaselineCount so the email can
+// surface "your recap will fill out once we have a week of scores" copy instead
+// of silently rendering the quiet-week message.
 
 export const PRICE_SWING_THRESHOLD = 5; // percent
 
@@ -53,6 +57,11 @@ export interface WeeklyMover {
   price: PriceMove | null;
 }
 
+export interface WeeklyDigestSelection {
+  movers: WeeklyMover[];
+  pendingBaselineCount: number;
+}
+
 export function pickCurrentAndBaseline(rowsDesc: HistoryRow[], cutoff: string): CurrentBaseline {
   const current = rowsDesc[0] ?? null;
   const baseline = rowsDesc.find((r) => r.observed_at <= cutoff) ?? null;
@@ -77,8 +86,9 @@ function priceMove(curr: number | null, base: number | null): PriceMove | null {
   return { swingPct, direction: dir(swingPct) };
 }
 
-export function selectWeeklyMovers(observations: WeeklyObservation[]): WeeklyMover[] {
+export function selectWeeklyMovers(observations: WeeklyObservation[]): WeeklyDigestSelection {
   const movers: WeeklyMover[] = [];
+  let pendingBaselineCount = 0;
   for (const o of observations) {
     if (o.dataQuality === "degraded_uk") continue;
 
@@ -91,7 +101,19 @@ export function selectWeeklyMovers(observations: WeeklyObservation[]): WeeklyMov
       (risk !== null && risk.delta !== 0) ||
       (price !== null && Math.abs(price.swingPct) >= PRICE_SWING_THRESHOLD);
 
-    if (qualifies) movers.push({ ticker: o.ticker, resilience, risk, price });
+    if (qualifies) {
+      movers.push({ ticker: o.ticker, resilience, risk, price });
+      continue;
+    }
+
+    // Did not qualify. If it's because we have current data but no baseline at
+    // all (fresh ticker added < 7d ago, or cron only started recently), count
+    // it so the email can distinguish "all steady" from "too new to compare".
+    const hasAnyCurrent = o.currResilience !== null || o.currRisk !== null || o.currPrice !== null;
+    const hasNoBaseline = o.baseResilience === null && o.baseRisk === null && o.basePrice === null;
+    if (hasAnyCurrent && hasNoBaseline) {
+      pendingBaselineCount++;
+    }
   }
-  return movers;
+  return { movers, pendingBaselineCount };
 }

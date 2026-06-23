@@ -49,40 +49,79 @@ describe("pickCurrentAndBaseline", () => {
 
 describe("selectWeeklyMovers", () => {
   it("includes a ticker whose resilience changed and reports the delta + direction", () => {
-    const movers = selectWeeklyMovers([obs({ currResilience: 55, baseResilience: 50 })]);
-    expect(movers).toHaveLength(1);
-    expect(movers[0].resilience).toEqual({ curr: 55, delta: 5, direction: "up" });
-    expect(movers[0].risk).toEqual({ curr: 50, delta: 0, direction: "flat" });
+    const result = selectWeeklyMovers([obs({ currResilience: 55, baseResilience: 50 })]);
+    expect(result.movers).toHaveLength(1);
+    expect(result.movers[0].resilience).toEqual({ curr: 55, delta: 5, direction: "up" });
+    expect(result.movers[0].risk).toEqual({ curr: 50, delta: 0, direction: "flat" });
+    expect(result.pendingBaselineCount).toBe(0);
   });
 
   it("includes a ticker whose price swing is at least the threshold, scores flat", () => {
-    const movers = selectWeeklyMovers([obs({ currPrice: 94, basePrice: 100 })]);
-    expect(movers).toHaveLength(1);
-    expect(movers[0].price).toEqual({ swingPct: -6, direction: "down" });
-    expect(movers[0].resilience).toEqual({ curr: 50, delta: 0, direction: "flat" });
+    const result = selectWeeklyMovers([obs({ currPrice: 94, basePrice: 100 })]);
+    expect(result.movers).toHaveLength(1);
+    expect(result.movers[0].price).toEqual({ swingPct: -6, direction: "down" });
+    expect(result.movers[0].resilience).toEqual({ curr: 50, delta: 0, direction: "flat" });
   });
 
-  it("excludes a ticker with flat scores and a sub-threshold price drift", () => {
-    expect(selectWeeklyMovers([obs({ currPrice: 100.3, basePrice: 100 })])).toEqual([]);
+  it("excludes a ticker with flat scores and a sub-threshold price drift, no baseline pending", () => {
+    const result = selectWeeklyMovers([obs({ currPrice: 100.3, basePrice: 100 })]);
+    expect(result.movers).toEqual([]);
+    expect(result.pendingBaselineCount).toBe(0);
   });
 
-  it("excludes a ticker with no baseline (cannot compute any delta)", () => {
-    const movers = selectWeeklyMovers([
+  it("excludes a fresh ticker with no baseline AND counts it in pendingBaselineCount", () => {
+    const result = selectWeeklyMovers([
       obs({ baseResilience: null, baseRisk: null, basePrice: null }),
     ]);
-    expect(movers).toEqual([]);
+    expect(result.movers).toEqual([]);
+    expect(result.pendingBaselineCount).toBe(1);
+  });
+
+  it("does NOT count a degraded_uk ticker as pending baseline (skipped entirely)", () => {
+    const result = selectWeeklyMovers([
+      obs({
+        dataQuality: "degraded_uk",
+        baseResilience: null, baseRisk: null, basePrice: null,
+        currRisk: 80, currPrice: 100,
+      }),
+    ]);
+    expect(result.movers).toEqual([]);
+    expect(result.pendingBaselineCount).toBe(0);
+  });
+
+  it("does NOT count a ticker with neither current nor baseline data", () => {
+    const result = selectWeeklyMovers([
+      obs({
+        currResilience: null, baseResilience: null,
+        currRisk: null, baseRisk: null,
+        currPrice: null, basePrice: null,
+      }),
+    ]);
+    expect(result.movers).toEqual([]);
+    expect(result.pendingBaselineCount).toBe(0);
+  });
+
+  it("counts multiple pending tickers across a portfolio mix", () => {
+    const result = selectWeeklyMovers([
+      obs({ ticker: "STEADY", currPrice: 100.1, basePrice: 100 }),
+      obs({ ticker: "MOVER", currResilience: 60, baseResilience: 50 }),
+      obs({ ticker: "FRESH1", baseResilience: null, baseRisk: null, basePrice: null }),
+      obs({ ticker: "FRESH2", baseResilience: null, baseRisk: null, basePrice: null }),
+    ]);
+    expect(result.movers.map((m) => m.ticker)).toEqual(["MOVER"]);
+    expect(result.pendingBaselineCount).toBe(2);
   });
 
   it("never includes a degraded_uk ticker even if a metric moved", () => {
-    const movers = selectWeeklyMovers([
+    const result = selectWeeklyMovers([
       obs({ dataQuality: "degraded_uk", currRisk: 80, baseRisk: 50, currPrice: 80, basePrice: 100 }),
     ]);
-    expect(movers).toEqual([]);
+    expect(result.movers).toEqual([]);
   });
 
   it("rounds the price swing to one decimal place", () => {
-    const movers = selectWeeklyMovers([obs({ currPrice: 106.25, basePrice: 100 })]);
-    expect(movers[0].price!.swingPct).toBe(6.3);
+    const result = selectWeeklyMovers([obs({ currPrice: 106.25, basePrice: 100 })]);
+    expect(result.movers[0].price!.swingPct).toBe(6.3);
   });
 
   it("exposes the threshold constant as 5", () => {
