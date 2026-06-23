@@ -14,6 +14,11 @@ export interface WeeklyRow {
 interface WeeklyDigestProps {
   holdings: WeeklyRow[];
   watchlist: WeeklyRow[];
+  // How many tickers fell out of the movers list because we don't have a
+  // baseline for them yet (added < 7d ago, or cron only started recently).
+  // Used to distinguish "all steady" from "your portfolio is too new to
+  // compare" in the quiet-week branch.
+  pendingBaselineCount?: number;
   manageUrl: string;
   unsubscribeUrl: string;
 }
@@ -76,18 +81,28 @@ function Table({ heading, rows }: { heading: string; rows: WeeklyRow[] }) {
 export function WeeklyDigestEmail({
   holdings = [],
   watchlist = [],
+  pendingBaselineCount = 0,
   manageUrl = "https://dividendmapper.com/app/account/notifications",
   unsubscribeUrl = "https://dividendmapper.com/api/notifications/unsubscribe?token=",
 }: Partial<WeeklyDigestProps> = {}) {
   const quiet = holdings.length === 0 && watchlist.length === 0;
+  const allTooFresh = quiet && pendingBaselineCount > 0;
   return (
     <EmailLayout preview="Your weekly resilience digest.">
       <Text style={EMAIL_STYLES.heading}>Your week in resilience</Text>
       {quiet ? (
-        <Text style={EMAIL_STYLES.text}>
-          All steady this week. Nothing on your holdings or watchlist moved enough to flag. This is a
-          prompt to look, not advice.
-        </Text>
+        allTooFresh ? (
+          <Text style={EMAIL_STYLES.text}>
+            Your weekly recap will fill out once we have a week of scores for your holdings. A few
+            tickers were added too recently to compare over seven days; you will see them here from
+            next Sunday.
+          </Text>
+        ) : (
+          <Text style={EMAIL_STYLES.text}>
+            All steady this week. Nothing on your holdings or watchlist moved enough to flag. This is a
+            prompt to look, not advice.
+          </Text>
+        )
       ) : (
         <>
           <Text style={EMAIL_STYLES.text}>

@@ -139,8 +139,9 @@ async function handle(req: Request): Promise<Response> {
       // Nothing to summarise at all -> skip the send entirely.
       if (held.length === 0 && watched.length === 0) continue;
 
-      const holdingMovers = selectWeeklyMovers(await fetchWeeklyObservations(supabase, held, cutoff));
-      const watchlistMovers = selectWeeklyMovers(await fetchWeeklyObservations(supabase, watched, cutoff));
+      const holdingSel = selectWeeklyMovers(await fetchWeeklyObservations(supabase, held, cutoff));
+      const watchlistSel = selectWeeklyMovers(await fetchWeeklyObservations(supabase, watched, cutoff));
+      const pendingBaselineCount = holdingSel.pendingBaselineCount + watchlistSel.pendingBaselineCount;
 
       const unsubscribeUrl = `${site}/api/notifications/unsubscribe?token=${signUnsubToken(uid, secret)}`;
       const manageUrl = `${site}/app/account/notifications`;
@@ -152,8 +153,9 @@ async function handle(req: Request): Promise<Response> {
         sendKey: `${uid}:weekly:${weekKey}`,
         userId: uid,
         body: WeeklyDigestEmail({
-          holdings: holdingMovers.map(toRow),
-          watchlist: watchlistMovers.map(toRow),
+          holdings: holdingSel.movers.map(toRow),
+          watchlist: watchlistSel.movers.map(toRow),
+          pendingBaselineCount,
           manageUrl,
           unsubscribeUrl,
         }),
