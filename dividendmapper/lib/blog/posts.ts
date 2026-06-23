@@ -26,6 +26,16 @@ export interface BlogPost {
 
 export const POSTS: BlogPost[] = [
   {
+    slug: "build-dividend-portfolio-uk-step-by-step",
+    title: "Build a UK dividend portfolio from scratch: a step-by-step beginner guide",
+    description:
+      "A step-by-step guide for UK beginners on building a dividend portfolio from scratch, covering wrapper choice, platform fees, diversification, dividend safety, and how to track income like an income system.",
+    publishedAt: "2026-06-23",
+    readingTime: "12 min",
+    tags: ["UK", "Dividend", "Education"],
+    locale: "uk",
+  },
+  {
     slug: "transfer-workplace-pension-to-trading-212-sipp",
     title: "How I Transferred My Workplace Pension Into the Trading 212 SIPP",
     description:
