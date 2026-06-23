@@ -35,7 +35,7 @@ export function ValueVsCostCard({ valueGbp, costGbp }: ValueVsCostCardProps) {
 
   if (!(costGbp > 0)) {
     return (
-      <div className="flex h-full flex-col rounded-[10px] border border-[var(--border-subtle)] bg-[var(--surface)] p-6 shadow-[var(--card-shadow)]">
+      <div className="card-surface flex h-full flex-col">
         <p className="text-xs uppercase tracking-[0.08em] text-[var(--text-muted)]">
           Value vs cost
         </p>
@@ -57,7 +57,7 @@ export function ValueVsCostCard({ valueGbp, costGbp }: ValueVsCostCardProps) {
   const barWidthPct = Math.abs(fraction) * 50;
 
   return (
-    <div className="flex h-full flex-col rounded-[10px] border border-[var(--border-subtle)] bg-[var(--surface)] p-6 shadow-[var(--card-shadow)]">
+    <div className="card-surface flex h-full flex-col">
       <p className="text-xs uppercase tracking-[0.08em] text-[var(--text-muted)]">
         Value vs cost
       </p>
