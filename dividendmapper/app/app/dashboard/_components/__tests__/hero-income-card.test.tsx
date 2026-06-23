@@ -4,37 +4,32 @@ import { HeroIncomeCard } from "@/app/app/dashboard/_components/HeroIncomeCard";
 
 afterEach(cleanup);
 
-const sparkline = [
-  { at: new Date("2026-01-01"), value: 1000 },
-  { at: new Date("2026-06-01"), value: 1200 },
-];
-
 describe("HeroIncomeCard", () => {
   it("renders the GBP-formatted headline figure", () => {
-    render(<HeroIncomeCard incomeAnnualGbp={1234} sparkline={sparkline} />);
+    render(<HeroIncomeCard incomeAnnualGbp={1234} />);
     expect(screen.getByText("£1,234")).toBeTruthy();
   });
 
   it("renders thousands separators for large totals", () => {
-    render(<HeroIncomeCard incomeAnnualGbp={12345} sparkline={sparkline} />);
+    render(<HeroIncomeCard incomeAnnualGbp={12345} />);
     expect(screen.getByText("£12,345")).toBeTruthy();
   });
 
   it("renders the subtitle copy", () => {
-    render(<HeroIncomeCard incomeAnnualGbp={1000} sparkline={sparkline} />);
+    render(<HeroIncomeCard incomeAnnualGbp={1000} />);
     expect(screen.getByText(/Projected annual dividend income/i)).toBeTruthy();
   });
 
-  it("renders the embedded ridge sparkline svg", () => {
-    const { container } = render(
-      <HeroIncomeCard incomeAnnualGbp={1000} sparkline={sparkline} />,
-    );
-    expect(container.querySelector("svg")).toBeTruthy();
+  it("rounds fractional pence to the nearest pound", () => {
+    render(<HeroIncomeCard incomeAnnualGbp={999.51} />);
+    expect(screen.getByText("£1,000")).toBeTruthy();
   });
 
-  it("rounds fractional pence to the nearest pound", () => {
-    render(<HeroIncomeCard incomeAnnualGbp={999.51} sparkline={sparkline} />);
-    expect(screen.getByText("£1,000")).toBeTruthy();
+  it("uses the shared card-surface utility class", () => {
+    const { container } = render(
+      <HeroIncomeCard incomeAnnualGbp={482} totalCostGbp={13743} />,
+    );
+    expect(container.firstChild).toHaveClass("card-surface");
   });
 
   describe("stat strip", () => {
@@ -42,7 +37,6 @@ describe("HeroIncomeCard", () => {
       render(
         <HeroIncomeCard
           incomeAnnualGbp={1200}
-          sparkline={sparkline}
           totalCostGbp={40000}
         />,
       );
@@ -55,7 +49,6 @@ describe("HeroIncomeCard", () => {
       render(
         <HeroIncomeCard
           incomeAnnualGbp={1200}
-          sparkline={sparkline}
           totalCostGbp={40000}
         />,
       );
@@ -67,7 +60,6 @@ describe("HeroIncomeCard", () => {
       render(
         <HeroIncomeCard
           incomeAnnualGbp={2600}
-          sparkline={sparkline}
           totalCostGbp={40000}
         />,
       );
@@ -79,7 +71,6 @@ describe("HeroIncomeCard", () => {
       render(
         <HeroIncomeCard
           incomeAnnualGbp={1200}
-          sparkline={sparkline}
           totalCostGbp={40000}
         />,
       );
@@ -91,7 +82,6 @@ describe("HeroIncomeCard", () => {
       const { container } = render(
         <HeroIncomeCard
           incomeAnnualGbp={1200}
-          sparkline={sparkline}
           totalCostGbp={null}
         />,
       );
@@ -102,7 +92,7 @@ describe("HeroIncomeCard", () => {
 
     it("renders an em-dash for YoC when totalCostGbp is omitted", () => {
       const { container } = render(
-        <HeroIncomeCard incomeAnnualGbp={1200} sparkline={sparkline} />,
+        <HeroIncomeCard incomeAnnualGbp={1200} />,
       );
       const yocCell = container.querySelector("[data-testid='hero-yoc']");
       expect(yocCell?.textContent).toContain("—");

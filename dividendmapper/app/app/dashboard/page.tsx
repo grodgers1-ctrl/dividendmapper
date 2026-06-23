@@ -4,10 +4,6 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { loadPricedHoldings } from "@/lib/portfolio/load-priced-holdings";
 import { sumIncomeGbp } from "@/lib/portfolio/income";
 import { aggregatePortfolioCost, sumCostGbp } from "@/lib/portfolio/portfolio-cost";
-import {
-  rollupIncomeHistoryToGbp,
-  type IncomeHistoryRow,
-} from "@/lib/portfolio/income-history";
 import { loadPortfolioAnalytics } from "@/lib/scoring/load-portfolio-analytics";
 import { loadScore } from "@/lib/scoring/load-score";
 import { ratesToGbpFor } from "@/lib/scoring/currency";
@@ -26,7 +22,6 @@ import { SectorExposureCard } from "./_components/SectorExposureCard";
 import { BestWorstCard } from "./_components/BestWorstCard";
 import { rollupSectors } from "@/lib/portfolio/sector-exposure";
 import { computeHoldingsPnl } from "@/lib/portfolio/holding-pnl";
-import type { RidgePoint } from "./_components/RidgeSparkline";
 import type { SignalContributionRow } from "@/app/app/portfolio/[ticker]/_components/SignalContributionsList";
 
 export const metadata: Metadata = {
@@ -37,28 +32,6 @@ export const metadata: Metadata = {
 // Per [[reference_app_page_auth_guard]]: each protected page calls
 // requireUser() itself because layout guards don't re-run on soft navs.
 export const dynamic = "force-dynamic";
-
-// Deterministic 12-month ramp from 70% → 100% of the current run-rate.
-// Fallback only — used until the user has at least MIN_REAL_HISTORY_DAYS of
-// real portfolio_income_history rows accrued (the daily cron starts populating
-// from migration 0015 onward, so even existing users see synthetic for the
-// first ~month after deploy).
-function syntheticSparkline(now: Date, annualGbp: number): RidgePoint[] {
-  if (annualGbp <= 0) return [];
-  const points: RidgePoint[] = [];
-  const start = new Date(now.getFullYear(), now.getMonth() - 11, 1);
-  for (let i = 0; i < 12; i += 1) {
-    const at = new Date(start.getFullYear(), start.getMonth() + i, 1);
-    const ratio = 0.7 + (i / 11) * 0.3;
-    points.push({ at, value: annualGbp * ratio });
-  }
-  return points;
-}
-
-// Threshold under which we trust synthetic > real — a 5-point real sparkline
-// looks janky vs. the synthetic 12-month ramp. Matches the addendum spec.
-const MIN_REAL_HISTORY_DAYS = 30;
-const HISTORY_WINDOW_DAYS = 365;
 
 export default async function DashboardPage() {
   const user = await requireUser("/app/dashboard");
@@ -171,28 +144,6 @@ export default async function DashboardPage() {
     ? computeHoldingsPnl(allHoldings, priceByTicker, ratesToGbp)
     : [];
 
-  // Real income history from the snapshot cron — falls back to synthetic
-  // until ~30 days of data have accrued so the line doesn't look stubby.
-  // react-hooks/purity flags Date.now() during render. Server components
-  // legitimately re-execute per request.
-  // eslint-disable-next-line react-hooks/purity
-  const now = new Date(Date.now());
-  const historySince = new Date(now.getTime() - HISTORY_WINDOW_DAYS * 86_400_000)
-    .toISOString()
-    .slice(0, 10);
-  const supabaseForHistory = await createSupabaseServerClient();
-  const { data: historyRows } = await supabaseForHistory
-    .from("portfolio_income_history")
-    .select("snapshot_at, currency, total_annual_run_rate")
-    .gte("snapshot_at", historySince)
-    .order("snapshot_at", { ascending: true })
-    .returns<IncomeHistoryRow[]>();
-  const realSparkline = rollupIncomeHistoryToGbp(historyRows ?? [], ratesToGbp);
-  const sparkline =
-    realSparkline.length >= MIN_REAL_HISTORY_DAYS
-      ? realSparkline
-      : syntheticSparkline(now, incomeAnnualGbp);
-
   const beta = isBeta();
 
   return (
@@ -208,7 +159,6 @@ export default async function DashboardPage() {
         <div className="col-span-12 md:col-span-8">
           <HeroIncomeCard
             incomeAnnualGbp={incomeAnnualGbp}
-            sparkline={sparkline}
             totalCostGbp={totalCostGbp}
           />
         </div>
