@@ -5,10 +5,15 @@
 import type { VehiclePriceRow, VehicleFundamentalsRow } from "./vehicle-fmp";
 
 // Loose SupabaseClient surface — accepts any client with a .from(table).upsert(rows, opts)
-// chain. Keeps the persistence module decoupled from the supabase-js version
-// pin (existing fmp-client.ts uses the same loose typing approach).
+// chain. Keeps the persistence module decoupled from the supabase-js version pin.
+//
+// upsert returns PromiseLike (not Promise): supabase-js's PostgrestFilterBuilder
+// is thenable but lacks .catch / .finally / Symbol.toStringTag. We only need
+// `await + destructure error`, which PromiseLike covers. Using Promise here
+// breaks the prod build (caught 2026-06-23 — the test stub returns a real
+// Promise, so vitest passes but `next build`'s strict tsc rejects).
 interface UpsertChain {
-  upsert(rows: unknown[], opts?: { onConflict?: string }): Promise<{ error: unknown }>;
+  upsert(rows: unknown[], opts?: { onConflict?: string }): PromiseLike<{ error: unknown }>;
 }
 interface MinimalSupabaseClient {
   from(table: string): UpsertChain;
