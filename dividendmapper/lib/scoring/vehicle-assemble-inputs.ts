@@ -41,10 +41,13 @@ export interface FinancialRow {
   netIncome?: number | null;
   depreciationAndAmortization?: number | null;
   weightedAverageShsOut?: number | null;
+  netInvestmentIncome?: number | null;
+  totalInvestmentIncome?: number | null;
   totalInterestIncome?: number | null;
   interestIncome?: number | null;
   totalOperatingExpenses?: number | null;
   operatingExpenses?: number | null;
+  operatingIncome?: number | null;
   revenue?: number | null;
   totalAssets?: number | null;
   cashAndShortTermInvestments?: number | null;
@@ -221,16 +224,46 @@ function hasDividendCutInLast5Years(
   const source = excludeSpecials
     ? excludeSpecialsByYear(dividends)
     : dividends;
-  const totals = new Map<number, number>();
+  const byYear = new Map<number, number[]>();
   for (const d of source) {
     const y = parseInt(d.ex_date.slice(0, 4), 10);
     if (!Number.isFinite(y) || y < lookbackStart || y >= currentYear) continue;
-    totals.set(y, (totals.get(y) ?? 0) + d.dividend);
+    if (!byYear.has(y)) byYear.set(y, []);
+    byYear.get(y)!.push(d.dividend);
   }
-  const yearsAsc = Array.from(totals.keys()).sort((a, b) => a - b);
+  // Day 13 CAL-1: compare modal-amount per year × modal payment frequency
+  // rather than raw sums. This:
+  //   • neutralises stray 13th payments inflating one year's total
+  //   • drops one-off catch-up amounts that escape the 1.5× modal filter
+  //   • still flags genuine per-payment cuts (modal amount drops)
+  // The "annualised modal rate" for a year = mode(amount) × mode(count
+  // across the comparison window). When a year is structurally incomplete
+  // (semi-annual UK REIT, year-just-started), the trailing-year guard below
+  // drops it from the comparison.
+  const yearRates = new Map<number, { modalAmount: number; count: number }>();
+  for (const [year, amounts] of byYear) {
+    const modal = modalAmount(amounts);
+    if (modal === null) continue;
+    yearRates.set(year, { modalAmount: modal, count: amounts.length });
+  }
+  let yearsAsc = Array.from(yearRates.keys()).sort((a, b) => a - b);
+  if (yearsAsc.length >= 2) {
+    const last = yearsAsc[yearsAsc.length - 1];
+    const prev = yearsAsc[yearsAsc.length - 2];
+    if (
+      yearRates.get(prev)!.count > 0 &&
+      yearRates.get(last)!.count / yearRates.get(prev)!.count < 0.8
+    ) {
+      yearsAsc = yearsAsc.slice(0, -1);
+    }
+  }
+  // Reference frequency = modal count across the kept years.
+  const counts = yearsAsc.map((y) => yearRates.get(y)!.count);
+  const refCount = modalAmount(counts.map((c) => c));
+  if (refCount === null || refCount === 0) return false;
   for (let i = 1; i < yearsAsc.length; i++) {
-    const cur = totals.get(yearsAsc[i])!;
-    const prev = totals.get(yearsAsc[i - 1])!;
+    const cur = yearRates.get(yearsAsc[i])!.modalAmount * refCount;
+    const prev = yearRates.get(yearsAsc[i - 1])!.modalAmount * refCount;
     if (prev > 0 && cur / prev < 0.95) return true;
   }
   return false;
@@ -345,7 +378,9 @@ function assembleUsReitInputs(raw: RawVehicleData): VehicleSignalBundle {
   const ttmInterestExpense = sumFirstN(inc, 4, "interestExpense");
   const totalDebt = firstNumber(bal, ["totalDebt"]);
   const cash = firstNumber(bal, ["cashAndShortTermInvestments"]);
-  const cuts = hasDividendCutInLast5Years(raw.dividends, raw.asOf, false);
+  // Day 13 CAL-1: gate-input cut detection excludes specials so prior-year
+  // supplementals don't inflate the baseline and create false cuts.
+  const cuts = hasDividendCutInLast5Years(raw.dividends, raw.asOf, true);
 
   const productSeg = latestSegmentation(raw.productSegmentation);
   const geoSeg = latestSegmentation(raw.geoSegmentation);
@@ -395,22 +430,43 @@ function assembleUsBdcInputs(raw: RawVehicleData): VehicleSignalBundle {
   const inc = raw.rawIncomeStatements;
   const bal = raw.rawBalanceSheets;
 
-  const ttmInterestIncome = sumFirstN(inc, 4, "totalInterestIncome");
-  const ttmInterestIncomeFallback =
-    ttmInterestIncome === null ? sumFirstN(inc, 4, "interestIncome") : ttmInterestIncome;
+  // Day 13 CAL-2: BDC NII derivation. FMP's standard income-statement
+  // schema (probe-confirmed against ARCC 2026-06-23) labels BDC operating
+  // income as `operatingIncome` — that's the post-management-fee,
+  // post-interest-cost net investment income figure. Fall back to the
+  // explicit `netInvestmentIncome` field (FMP exposes it for some BDCs)
+  // and then to `revenue - costOfRevenue - operatingExpenses` as a final
+  // arithmetic derivation when neither labelled field is present.
+  const ttmOperatingIncome = sumFirstN(inc, 4, "operatingIncome");
+  const ttmNiiLabelled = sumFirstN(inc, 4, "netInvestmentIncome");
+  const ttmRevenueBdc = sumFirstN(inc, 4, "revenue");
+  const ttmCostOfRevenue = sumFirstN(inc, 4, "costOfRevenue");
   const ttmOperatingExpenses = sumFirstN(inc, 4, "totalOperatingExpenses");
   const ttmOpExpFallback =
     ttmOperatingExpenses === null
       ? sumFirstN(inc, 4, "operatingExpenses")
       : ttmOperatingExpenses;
   const wgtAvgShs = firstNumber(inc, ["weightedAverageShsOut"]);
+  const ttmInterestIncomeRaw = sumFirstN(inc, 4, "totalInterestIncome");
+  const ttmNii =
+    ttmOperatingIncome !== null
+      ? ttmOperatingIncome
+      : ttmNiiLabelled !== null
+        ? ttmNiiLabelled
+        : ttmRevenueBdc !== null && ttmCostOfRevenue !== null && ttmOpExpFallback !== null
+          ? ttmRevenueBdc - ttmCostOfRevenue - ttmOpExpFallback
+          : ttmInterestIncomeRaw !== null && ttmOpExpFallback !== null
+            ? ttmInterestIncomeRaw - ttmOpExpFallback
+            : null;
   const ttmNiiPerShare =
-    ttmInterestIncomeFallback !== null &&
-    ttmOpExpFallback !== null &&
-    wgtAvgShs !== null &&
-    wgtAvgShs > 0
-      ? (ttmInterestIncomeFallback - ttmOpExpFallback) / wgtAvgShs
-      : null;
+    ttmNii !== null && wgtAvgShs !== null && wgtAvgShs > 0 ? ttmNii / wgtAvgShs : null;
+  // For R_B1 yield drift we need an "interest income" anchor — use total
+  // investment income (revenue) when available, falling back to interest
+  // income proper.
+  const ttmInterestIncomeFallback =
+    ttmRevenueBdc !== null
+      ? ttmRevenueBdc
+      : sumFirstN(inc, 4, "totalInterestIncome") ?? sumFirstN(inc, 4, "interestIncome");
   const regDps = ttmRegularDps(raw.dividends, raw.asOf);
   const totalDebt = firstNumber(bal, ["totalDebt"]);
   const totalEquity = firstNumber(bal, ["totalEquity"]);
@@ -518,7 +574,9 @@ function assembleUkReitInputs(raw: RawVehicleData): VehicleSignalBundle {
   const totalAssets = firstNumber(bal, ["totalAssets"]);
   const ttmEbitda = sumFirstN(inc, 2, "ebitda");
   const ttmInterestExpense = sumFirstN(inc, 2, "interestExpense");
-  const cuts = hasDividendCutInLast5Years(raw.dividends, raw.asOf, false);
+  // Day 13 CAL-1: gate-input cut detection excludes specials so prior-year
+  // supplementals don't inflate the baseline and create false cuts.
+  const cuts = hasDividendCutInLast5Years(raw.dividends, raw.asOf, true);
 
   const propertyType = propertyTypeFor(raw.ticker);
   const geoScope = geographicScopeFor(raw.ticker);
