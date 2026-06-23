@@ -121,7 +121,24 @@ export async function fetchVehicleFundamentals(
   for (const inc of income) {
     const bal = balanceByDate.get(inc.date);
     const km = keyByDate.get(inc.date);
-    const navRaw = km ? num(km, "bookValuePerShare") : null;
+
+    // NAV per share: FMP's /key-metrics does not expose bookValuePerShare
+    // directly (confirmed against live API 2026-06-23). Compute it from
+    // balance-sheet equity ÷ income-statement shares. NB: only the
+    // BVPS-from-key-metrics value needs GBX→GBP normalisation (FMP reports
+    // per-share quantities in the listing currency, i.e. pence for LSE).
+    // The computed value is already in absolute currency (£) because
+    // totalEquity is reported in absolute £, not pence.
+    const bvpsRaw = km ? num(km, "bookValuePerShare") : null;
+    let navPerShare: number | null;
+    if (bvpsRaw != null) {
+      navPerShare = normaliseToGbp(bvpsRaw, currency);
+    } else {
+      const eq = bal ? num(bal, "totalEquity") : null;
+      const shs = num(inc, "weightedAverageShsOut");
+      navPerShare = eq != null && shs != null && shs > 0 ? round4(eq / shs) : null;
+    }
+
     rows.push({
       ticker,
       period_end: inc.date,
@@ -129,7 +146,7 @@ export async function fetchVehicleFundamentals(
       ffo_per_share: null,     // signal-time derivation (Sprint 2)
       affo_per_share: null,    // V1.1
       nii_per_share: null,     // signal-time derivation (Sprint 2)
-      nav_per_share: navRaw === null ? null : normaliseToGbp(navRaw, currency),
+      nav_per_share: navPerShare,
       debt_total: bal ? num(bal, "totalDebt") : null,
       equity_total: bal ? num(bal, "totalEquity") : null,
       ebitda: num(inc, "ebitda"),
