@@ -23,7 +23,9 @@ import { QuadrantSnapshotCard } from "./_components/QuadrantSnapshotCard";
 import { ReinvestStripCard } from "./_components/ReinvestStripCard";
 import { ValueVsCostCard } from "./_components/ValueVsCostCard";
 import { SectorExposureCard } from "./_components/SectorExposureCard";
+import { BestWorstCard } from "./_components/BestWorstCard";
 import { rollupSectors } from "@/lib/portfolio/sector-exposure";
+import { computeHoldingsPnl } from "@/lib/portfolio/holding-pnl";
 import type { RidgePoint } from "./_components/RidgeSparkline";
 import type { SignalContributionRow } from "@/app/app/portfolio/[ticker]/_components/SignalContributionsList";
 
@@ -162,6 +164,13 @@ export default async function DashboardPage() {
       })
     : null;
 
+  // Per-holding lifetime P/L in GBP — drives the BestWorstCard at the foot of
+  // the Pro grid. Pure pass over already-loaded holdings + prices + FX rates.
+  // Free path skips: cost data is often incomplete and the card is Pro-gated.
+  const holdingPnls = isPro
+    ? computeHoldingsPnl(allHoldings, priceByTicker, ratesToGbp)
+    : [];
+
   // Real income history from the snapshot cron — falls back to synthetic
   // until ~30 days of data have accrued so the line doesn't look stubby.
   // react-hooks/purity flags Date.now() during render. Server components
@@ -241,7 +250,10 @@ export default async function DashboardPage() {
               />
             </div>
             <div className="col-span-12 md:col-span-4">
-              <ReinvestStripCard reinvestCard={analytics?.reinvestCard ?? null} />
+              <ReinvestStripCard
+                reinvestCard={analytics?.reinvestCard ?? null}
+                nextDividend={analytics?.nextDividend ?? null}
+              />
             </div>
           </>
         )}
@@ -258,6 +270,14 @@ export default async function DashboardPage() {
             fundamentalsByTicker={analytics?.fundamentalsByTicker}
           />
         </div>
+
+        {/* Row 4 — Pro best/worst lifetime P/L. Sits under TopHoldingsStrip
+            because "look at these specifically" cues naturally land here. */}
+        {isPro && (
+          <div className="col-span-12">
+            <BestWorstCard pnls={holdingPnls} />
+          </div>
+        )}
       </div>
     </div>
   );

@@ -37,6 +37,13 @@ export interface TickerFundamentals {
   dividendYield: number | null; // decimal
 }
 
+export interface NextDividend {
+  ticker: string;
+  date: string; // YYYY-MM-DD ex-dividend date
+  amount: number | null;
+  payDate: string | null;
+}
+
 export interface PortfolioAnalytics {
   scoresByTicker: Record<string, HoldingScore>;
   flagged: { ticker: string; hint: string }[];
@@ -44,6 +51,28 @@ export interface PortfolioAnalytics {
   reinvestCard: ReinvestCard | null;
   weightByTicker: Record<string, number>;
   fundamentalsByTicker: Record<string, TickerFundamentals>;
+  nextDividend: NextDividend | null;
+}
+
+// Soonest upcoming ex-dividend across the user's held tickers. Ex-div rows in
+// the past (date < today) are discarded; null when no future date exists.
+function pickNextDividend(
+  exDivByTicker: Record<string, ExDiv>,
+  today: string,
+): NextDividend | null {
+  let soonest: NextDividend | null = null;
+  for (const [ticker, e] of Object.entries(exDivByTicker)) {
+    if (e.date < today) continue;
+    if (soonest === null || e.date < soonest.date) {
+      soonest = {
+        ticker,
+        date: e.date,
+        amount: e.amount,
+        payDate: e.payDate,
+      };
+    }
+  }
+  return soonest;
 }
 
 /**
@@ -220,6 +249,7 @@ export async function loadPortfolioAnalytics(args: {
     return sum + Number(h.quantity) * div * rate;
   }, 0);
 
+  const todayIso = now.toISOString().slice(0, 10);
   reinvestCard = buildReinvestCard({
     holdings: allHoldings.map((h) => ({
       id: h.id,
@@ -234,9 +264,11 @@ export async function loadPortfolioAnalytics(args: {
     weightByTicker,
     totalPortfolioIncomeGbp,
     sectorsToAvoid: prefs?.sectors_to_avoid ?? [],
-    today: now.toISOString().slice(0, 10),
+    today: todayIso,
     windowDays: 5,
   });
+
+  const nextDividend = pickNextDividend(exDivByTicker, todayIso);
 
   return {
     scoresByTicker,
@@ -245,5 +277,6 @@ export async function loadPortfolioAnalytics(args: {
     reinvestCard,
     weightByTicker,
     fundamentalsByTicker,
+    nextDividend,
   };
 }
