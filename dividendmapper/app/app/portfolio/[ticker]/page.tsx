@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/auth/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { loadPricedHoldings } from "@/lib/portfolio/load-priced-holdings";
 import { actualKey } from "@/lib/portfolio/income";
+import { computeYieldOnCost } from "@/lib/portfolio/yield-on-cost";
 import { deriveFrequency } from "@/lib/portfolio/derive-frequency";
 import { resolveRowValue } from "@/lib/portfolio/row-value";
 import { ratesToGbpFor } from "@/lib/scoring/currency";
@@ -156,12 +157,13 @@ export default async function HoldingDetailPage({
 
   const actual = priced.actualsByKey[actualKey(ticker, holding.wrapper)] ?? null;
 
-  const yieldOnCostPct =
-    forwardAnnual !== null &&
-    forwardCurrency === holding.cost_currency &&
-    holding.avg_cost > 0
-      ? (forwardAnnual / (Number(holding.quantity) * holding.avg_cost)) * 100
-      : null;
+  const yieldOnCostPct = computeYieldOnCost({
+    forwardAnnual,
+    forwardCurrency: forwardCurrency ?? null,
+    quantity: Number(holding.quantity),
+    avgCost: holding.avg_cost,
+    costCurrency: holding.cost_currency,
+  });
 
   // Derive fundamentals from the latest equity_score_history row.
   // FMP-derived columns are nightly. Anything we don't have yet renders as a
