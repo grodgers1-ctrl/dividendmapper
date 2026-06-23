@@ -23,6 +23,10 @@
     {
       "path": "/api/internal/refresh-vehicle-prices",
       "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/internal/refresh-vehicle-fundamentals",
+      "schedule": "0 2 * * 0"
     }
   ]
 }
