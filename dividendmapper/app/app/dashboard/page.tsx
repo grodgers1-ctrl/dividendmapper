@@ -6,10 +6,13 @@ import { sumIncomeGbp } from "@/lib/portfolio/income";
 import { aggregatePortfolioCost, sumCostGbp } from "@/lib/portfolio/portfolio-cost";
 import { loadPortfolioAnalytics } from "@/lib/scoring/load-portfolio-analytics";
 import { loadScore } from "@/lib/scoring/load-score";
+import { loadVehicleScoresByTickers, type VehicleType } from "@/lib/scoring/load-vehicle-score";
+import { aggregateIncomeByBand } from "@/lib/portfolio/anchors-exposures";
 import { ratesToGbpFor } from "@/lib/scoring/currency";
 import { buildQuadrant } from "@/lib/scoring/quadrant";
 import { isBeta } from "@/lib/scoring/config";
 import { pickFlaggedHolding, type FlaggableScore } from "@/lib/scoring/pick-flagged";
+import { AnchorsExposuresCard } from "./_components/AnchorsExposuresCard";
 import { PageHeader } from "../_components/page-header/page-header";
 import { HeroIncomeCard } from "./_components/HeroIncomeCard";
 import { TopHoldingsStrip } from "./_components/TopHoldingsStrip";
@@ -45,6 +48,7 @@ export default async function DashboardPage() {
     quotesByTicker,
     priceByTicker,
     nameByTicker,
+    actualsByKey,
     income,
   } = priced;
 
@@ -144,6 +148,42 @@ export default async function DashboardPage() {
     ? computeHoldingsPnl(allHoldings, priceByTicker, ratesToGbp)
     : [];
 
+  // Anchors vs Exposures — Pro-gated card under the hero. One round-trip for
+  // vehicle scores joined to the user's distinct ticker list, then a pure
+  // bucket-by-band aggregation against the forward-income figures already
+  // resolved per row on the holdings table.
+  const distinctTickers = [...new Set(allHoldings.map((h) => h.ticker))];
+  const vehicleScoresByTicker: Record<
+    string,
+    {
+      vehicleType: VehicleType;
+      resilienceScore: number | null;
+      qualityGatePassed: boolean;
+    }
+  > = {};
+  if (isPro && distinctTickers.length > 0) {
+    const supabase = await createSupabaseServerClient();
+    const vehicleMap = await loadVehicleScoresByTickers(supabase, distinctTickers);
+    for (const [ticker, v] of vehicleMap) {
+      vehicleScoresByTicker[ticker] = {
+        vehicleType: v.vehicleType,
+        resilienceScore: v.resilienceScore,
+        qualityGatePassed: v.qualityGatePassed,
+      };
+    }
+  }
+  const anchorsExposures =
+    isPro && analytics
+      ? aggregateIncomeByBand({
+          holdings: allHoldings,
+          quotes: quotesByTicker,
+          actualsByKey,
+          scoresByTicker: analytics.scoresByTicker,
+          vehicleScoresByTicker,
+          ratesToGbp,
+        })
+      : null;
+
   const beta = isBeta();
 
   return (
@@ -174,6 +214,18 @@ export default async function DashboardPage() {
             <UpgradeCard />
           )}
         </div>
+
+        {/* Row 1.5 — Anchors vs Exposures (Pro). Reads off forward annual
+            income with the same source-of-truth as the Ledger Income column.
+            Free users keep the UpgradeCard above; no second upsell here. */}
+        {isPro && anchorsExposures && (
+          <div className="col-span-12">
+            <AnchorsExposuresCard
+              totalsGbp={anchorsExposures.totalsGbp}
+              countsByBand={anchorsExposures.countsByBand}
+            />
+          </div>
+        )}
 
         {/* Row 2 — Value vs Cost (Free + Pro). Pro pairs it with Sector
             Exposure on the right; Free renders the full width. */}
