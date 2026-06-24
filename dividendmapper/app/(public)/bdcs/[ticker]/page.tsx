@@ -97,7 +97,7 @@ export default async function BdcTickerPage({
         score={score}
         family={family}
         navHistory={history}
-        proSlot={<VehicleProDetail ticker={ticker} />}
+        proSlot={<VehicleProDetail ticker={ticker} vehicleType="us_bdc" />}
       />
     </>
   );

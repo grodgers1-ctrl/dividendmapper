@@ -1,0 +1,15 @@
+[REDDIT / T212 FORUM DM TEMPLATE — do not post as a thread; per outreach memo, mods remove product posts. One-to-one DM only, after a real reply or thread interaction. Opener stays as placeholder; never pre-fill from search snippets.]
+
+Subject: Saw your thread about {{TOPIC}}
+
+[OPENER PLACEHOLDER — reference one specific thing they said. Veterans: respect + ask. Creators: specific reference. Gatekeepers: permission-asking. Referred: name-drop. Per memory entry on opener styles.]
+
+I'm building DividendMapper. It's a dividend portfolio tracker, like Sharesight, but with broker sync coming via Trading 212 and resilience scores on every holding.
+
+The new bit this week: REITs, BDCs, and UK REITs each get a Resilience score that judges how durable the dividend is. Payout headroom, leverage, tenant concentration, how the dividend has behaved through past stress. Pro members see the full per-signal breakdown.
+
+Here's what we're making: /reits ranks US names, /bdcs ranks BDCs, /uk-reits ranks LSE-listed names, and /methodology/income-vehicles explains how the score is built.
+
+If you fancy a look, I'd be glad to hear what reads off on names you actually hold. Tell me where the model gets a familiar ticker wrong and I'll fix it.
+
+— Glenn

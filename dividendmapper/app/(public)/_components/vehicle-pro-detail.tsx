@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { captureClientEvent } from "@/lib/analytics/posthog-capture";
 import {
   VehicleSignalBreakdown,
   type VehicleSignalRow,
@@ -19,9 +20,30 @@ type VehicleResponse = {
 
 type Viewer = "loading" | "anon" | "free" | "pro";
 
-export function VehicleProDetail({ ticker }: { ticker: string }) {
+export type VehicleProDetailType = "us_reit" | "us_bdc" | "uk_reit";
+
+export function VehicleProDetail({
+  ticker,
+  vehicleType,
+}: {
+  ticker: string;
+  vehicleType?: VehicleProDetailType;
+}) {
   const [viewer, setViewer] = useState<Viewer>("loading");
   const [data, setData] = useState<VehicleResponse | null>(null);
+
+  // PostHog: vehicle_pro_upsell_view fires once per mount, when the viewer
+  // has resolved to anon/free (the upsell variant). Pro viewers never trigger
+  // this; one event per page-view per upsell impression.
+  useEffect(() => {
+    if (viewer === "anon" || viewer === "free") {
+      captureClientEvent("vehicle_pro_upsell_view", {
+        ticker,
+        vehicleType: vehicleType ?? null,
+        viewer,
+      });
+    }
+  }, [viewer, ticker, vehicleType]);
 
   useEffect(() => {
     let cancelled = false;

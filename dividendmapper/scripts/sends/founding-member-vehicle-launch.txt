@@ -1,0 +1,17 @@
+Subject: New on DividendMapper: dividend resilience for REITs, BDCs, and UK REITs
+
+Hi {{first_name}},
+
+You backed DividendMapper as a founding member, so I want you to be the first to see the next big thing on the site.
+
+There are three new sections live: /reits, /bdcs, and /uk-reits. Each ticker gets a Resilience score from 0 to 100 that judges how durable the dividend is. It looks at payout headroom, leverage, tenant concentration, and how the dividend has behaved through past stress.
+
+Look up O, MAIN, and BLND.L if you want to see what the score does for names you already know. The per-ticker pages show the full per-signal breakdown for Pro members.
+
+Your portfolio's REIT and BDC holdings now carry Resilience chips on /app/portfolio alongside the regular Quality / Trim / Risk equity chips. Click a chip and the drawer opens with the same per-signal breakdown.
+
+How the score is calculated: https://dividendmapper.com/methodology/income-vehicles
+
+Please flag anything that reads wrong on your real holdings. The resilience model is calibrated against real names; bugs show up fastest when a founding member spots a mismatch with what they know.
+
+Glenn

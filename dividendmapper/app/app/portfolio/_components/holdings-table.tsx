@@ -22,6 +22,7 @@ import { ScoreDrawer } from "./score-drawer";
 import { UpgradePill } from "./upgrade-pill";
 import { VehicleChip } from "./vehicle-chip";
 import type { VehicleType } from "@/lib/scoring/load-vehicle-score";
+import { captureClientEvent } from "@/lib/analytics/posthog-capture";
 import { SortSelect } from "@/app/app/_components/SortSelect";
 
 type HoldingRow = {
@@ -370,8 +371,17 @@ export function HoldingsTable({
   const isFree = tier === "free";
   const handleOpenScore: OpenScore = (ticker, type) =>
     setOpenScore({ ticker, type });
-  const handleOpenVehicleScore = (ticker: string) =>
+  const handleOpenVehicleScore = (ticker: string) => {
+    const v = vehicleScoresByTicker?.[ticker];
+    if (v) {
+      captureClientEvent("vehicle_drawer_open", {
+        ticker,
+        vehicleType: v.vehicleType,
+        resilienceScore: v.resilienceScore,
+      });
+    }
     setOpenScore({ ticker, type: "buy" });
+  };
 
   // The Scores column also surfaces vehicle resilience chips. Show the column
   // header when either equity scores are configured (showScores) OR at least
