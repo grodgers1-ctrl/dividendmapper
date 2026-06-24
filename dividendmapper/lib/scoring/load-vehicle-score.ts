@@ -153,6 +153,57 @@ export async function loadVehicleScore(
 }
 
 /**
+ * Batch loader for the holdings table: returns one Map<ticker, result> in a
+ * single round-trip per table instead of N. Skips signals + history — the chip
+ * data is all the holdings row needs.
+ */
+export async function loadVehicleScoresByTickers(
+  client: SupabaseClient,
+  tickers: string[],
+): Promise<Map<string, VehicleScoreLoadResult>> {
+  const result = new Map<string, VehicleScoreLoadResult>();
+  if (tickers.length === 0) return result;
+
+  const { data: scoresRaw, error: scoresError } = await client
+    .from("vehicle_scores")
+    .select(
+      "ticker, vehicle_type, resilience_score, quality_gate_passed, failed_gates, data_quality, computed_at",
+    )
+    .in("ticker", tickers);
+  if (scoresError) throw new Error("vehicle_score_lookup_failed");
+  const scores = (scoresRaw ?? []) as ScoreRowDb[];
+  if (scores.length === 0) return result;
+
+  const matchedTickers = scores.map((s) => s.ticker);
+  const { data: universeRaw } = await client
+    .from("vehicle_universe")
+    .select("ticker, display_name, sub_sector")
+    .in("ticker", matchedTickers);
+  const universeByTicker = new Map<string, UniverseRowDb>();
+  for (const row of (universeRaw ?? []) as UniverseRowDb[]) {
+    universeByTicker.set(row.ticker, row);
+  }
+
+  for (const row of scores) {
+    const universeRow = universeByTicker.get(row.ticker);
+    result.set(row.ticker, {
+      ticker: row.ticker,
+      vehicleType: row.vehicle_type,
+      displayName: universeRow?.display_name ?? row.ticker,
+      subSector: universeRow?.sub_sector ?? null,
+      resilienceScore: toNumber(row.resilience_score),
+      qualityGatePassed: row.quality_gate_passed,
+      failedGates: row.failed_gates ?? [],
+      dataQuality: row.data_quality,
+      computedAt: row.computed_at,
+      priceNavRatio: null,
+      signals: [],
+    });
+  }
+  return result;
+}
+
+/**
  * Load the price/NAV history for the sparkline. Window is `days` calendar days
  * back from today.
  */
