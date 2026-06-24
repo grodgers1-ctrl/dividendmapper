@@ -1,0 +1,112 @@
+export const metadata = {
+  title: "How DividendMapper Resilience scores are calculated for income vehicles",
+  description:
+    "What the Resilience score measures for US REITs, US BDCs, and UK REITs. Signal definitions, quality gates, data sources, and the known limits we are honest about.",
+  alternates: { canonical: "/methodology/income-vehicles" },
+};
+
+# How Resilience scores are calculated for income vehicles
+
+_Last updated 24 June 2026 (V1)._
+
+DividendMapper scores three families of income vehicles: US REITs, US BDCs, and UK REITs. Each ticker gets one Resilience score from 0 to 100 that refreshes daily. This page explains what the score means, how it is built, where the data comes from, and what V1 does not yet capture.
+
+**The score is a resilience check on the dividend. It is informational only. Not financial advice, not a prediction of future returns, and not a recommendation to buy or sell.**
+
+## What Resilience tries to measure
+
+The score reflects how durable a vehicle's dividend looks today, based on the cash flow that funds it and the balance sheet that supports it. A high Resilience score (70+) means the vehicle screens well on the markers analysts watch for the family: quality of earnings cover, leverage discipline, diversification, and recent payment record. A low score (under 50) flags one or more of those markers as a concern.
+
+It is not a price prediction. It is not a buy or sell signal. Two ticker pages can have the same score and very different reasons behind it. That is why the per-signal breakdown is on the Pro page.
+
+## The four categories
+
+Every Resilience score is a weighted blend of four categories. Each category has a different shape per family because the signals that matter for a US REIT (FFO payout, property HHI) are different from the ones that matter for a BDC (NII coverage, statutory leverage) or a UK REIT (EPRA cover, loan-to-value).
+
+- **Quality (Q, weight 0.30).** Whether the dividend is earned by recurring cash flow. The single most important category.
+- **Discount (D, weight 0.20).** Where the price sits versus the vehicle's own NAV history. One signal per family, derived from a rolling z-score of price ÷ NAV per share.
+- **Concentration (C, weight 0.20).** How spread the income base is across properties, geographies, or borrowers. Concentration is not always bad, but it is always worth knowing.
+- **Risk (R, weight 0.30).** Flags of cut pressure: a recent dividend cut, interest coverage thinning, yield drift, or unsustainable special distributions.
+
+Signals within a category are equal-weighted by default. If one signal cascades to null because the data is missing, the remaining signals' weights are redistributed so the category stays honest.
+
+## The quality gates
+
+Before a vehicle gets a Resilience number at all, it must clear a family-specific set of hard checks. If any gate fails, the page shows "Did Not Qualify" instead of a score, and the failed gate codes are listed.
+
+- **G_S1** _(all families)_. No dividend cut in the last 5 years.
+- **G_S2** _(all families)_. Coverage is positive somewhere (earnings, FFO, or NII).
+- **G_R1** _(US REITs)_. TTM FFO payout ratio below 100%.
+- **G_B1** _(US BDCs)_. TTM NII covers the regular dividend (coverage ≥ 0.95).
+- **G_U1** _(UK REITs)_. Loan-to-value below the sector-aware cap (40% industrial, 50% most others, 60% healthcare and social housing).
+
+These gates are intentionally strict. They are not predictions of a cut, but they describe situations where a low number would be misleading. A vehicle that fails a gate still has its signals visible on the Pro page so you can see what tripped it.
+
+## US REITs <a id="us-reits"></a>
+
+Eight signals across the four categories, anchored on REIT-canonical metrics.
+
+- **Q_S1.** Dividend growth streak. Consecutive years of stable-or-rising annual dividend totals; a year-over-year drop of more than 5% resets it. Streaks of 10+ years score 100; under 3 years scores below 50.
+- **Q_R1.** FFO payout ratio (TTM DPS ÷ TTM FFO per share). Below 80% scores 100; 80 to 100% scores 50; above 100% trips the G_R1 gate.
+- **Q_R2.** Net debt to EBITDA (TTM). Under 6× scores 100; 6 to 10× scores 50; above 10× scores 0.
+- **D_S1.** Price-to-NAV z-score over 5 years. A negative z (price below the trailing average) scores high; positive z (premium to NAV) scores low.
+- **C_R1.** Property-type Herfindahl-Hirschman Index. Diversified portfolios (low HHI) score 100; single-segment monopolies (HHI 10000) score 0.
+- **C_R2.** Geographic Herfindahl-Hirschman Index. Same scoring shape as C_R1, applied to geography.
+- **R_S1.** Cut in the last 5 calendar years. Binary: 100 if clean, 0 if any year-over-year drop above 5%.
+- **R_R1.** Interest coverage (EBITDA ÷ interest expense). Above 4× scores 100; 2.5 to 4× scores 50; below 2.5× scores 0.
+
+**Worked example: Realty Income (O).** Quality gate passes. FFO payout 81% scores Q_R1 = 75. The Q_S1 streak displays 2 years because of a CAL-3 data quirk noted below (the real Dividend Aristocrat streak is around 30 years; this is a display issue, not a gate issue). Composite resilience drops to the moderate band as a result.
+
+## US BDCs <a id="us-bdcs"></a>
+
+BDCs have a different income mechanic, so the signal set swaps NAV-trend and statutory leverage in.
+
+- **Q_S1.** Dividend growth streak. Same shape as US REITs, but specials are excluded from the streak math.
+- **Q_B1.** NII coverage of the regular DPS. Net investment income per share TTM ÷ regular DPS TTM. Above 1.1× scores 100; 0.95 to 1.1× scores 50; below 0.95× trips the G_B1 gate.
+- **Q_B2.** NAV per share trend over 12 quarters. A least-squares fit of NAV per share over time; positive slope scores high, persistent erosion scores 0.
+- **D_S1.** Price-to-NAV z-score. Same as REITs.
+- **C_B1.** Statutory leverage versus the 2:1 SBCAA cap. Under 1.25× scores 100; 1.25 to 1.75× scores 50; above 1.75× scores 0.
+- **R_S1.** Cut in the last 5 years. Same shape.
+- **R_B1.** Portfolio yield drift over 3 years. Sharp moves either direction (over 3 percentage points) are flagged. PIK income and non-accrual loans typically push yield up artificially before a cut.
+- **R_B2.** Special-distribution mix over 2 years. Sum of specials ÷ sum of regulars. Above 1.0 is the classic pre-cut pattern.
+
+**Worked example: Main Street Capital (MAIN).** NII covers regular dividend at 1.33×, comfortably above the gate. Statutory leverage is well under the SBCAA cap (C_B1 = 100). Q (77) and C (100) lift the composite to the high-moderate band; Discount (19) drags because MAIN trades at a meaningful premium to NAV (1.71×).
+
+## UK REITs <a id="uk-reits"></a>
+
+UK REITs report semi-annually rather than quarterly, and the canonical leverage metric is loan-to-value rather than debt-to-EBITDA. The signal set adapts accordingly.
+
+- **Q_S1.** Dividend growth streak. Same shape.
+- **Q_U1.** EPRA dividend cover (V1 proxy). Net rental income TTM ÷ total dividends paid TTM. Above 1.3× scores 100; 1.0 to 1.3× scores 50; below 1.0× scores 0. _V1.1 will replace this with published EPRA EPS once we scrape it from annual reports._
+- **Q_U2.** Loan-to-value (total debt ÷ total assets). Under 35% scores 100; 35 to 50% scores 50; above 50% trips the G_U1 gate (sector-aware: industrial 40%, healthcare 60%, social housing 60%).
+- **D_S1.** Price-to-NAV z-score over 5 years. Same shape. UK REITs often trade at significant discounts to book NAV; this signal surfaces that.
+- **C_U1.** Property focus. Diversified scores 100; single-sector (industrial-only, office-only) scores 50. From a hand-classified JSON since FMP segmentation is empty for the LSE universe.
+- **C_U2.** Geographic scope. UK-only scores 50; overseas-exposed scores 75 (continental logistics has historically outperformed UK retail through cycles enough to outweigh the modest FX overlay).
+- **R_S1.** Cut in the last 5 years. Same shape.
+- **R_U1.** Interest coverage. Above 4× scores 100; 2.5 to 4× scores 50; below 2.5× scores 0. Tighter than the equivalent REIT thresholds because UK REIT convention runs lower leverage.
+
+**Worked example: British Land (BLND.L).** LTV 33.2% lands in the green band of Q_U2. Concentration scores 75 (diversified property mix, UK-only). Quality category aggregates to 65. The price trades at 0.65× NAV per share, a meaningful discount that lifts the Discount category. Composite Resilience: 60.
+
+## Data sources
+
+- **FMP (Financial Modeling Prep) Premium tier.** Income statements, balance sheets, dividend history, prices, and US REIT product and geographic segmentation. Refreshed daily for prices and weekly for fundamentals.
+- **SEC EDGAR.** Provides CIK numbers for the US universe (a small minority do not resolve via FMP and fall back to null; that affects only the data-freshness badge, not scoring).
+- **Hand-classified UK REIT JSON.** A 25-entry file at `lib/scoring/data/uk-reit-classification.json` holds the property type, sub-sector, and UK-only / overseas-exposed flag for each LSE-listed REIT. Verified against the most recent annual reports.
+
+All three sources flow into the same `vehicle_*` Postgres tables. Scoring runs once a day at 09:00 UTC, writing to `vehicle_scores`, `vehicle_score_signals`, and `vehicle_score_history`. The public page reads those tables cookielessly so the static render stays cacheable.
+
+## Known limits
+
+V1 is honest about where the model is weakest. These items will be addressed in V1.1 or are open methodology trade-offs you should weigh when reading a score.
+
+- **Q_S1 dividend-streak displays the wrong year count on monthly payers (CAL-3).** The streak code currently aggregates raw annual sums; a stray 13th payment in one calendar year (FMP data quirk) breaks the streak count. The score impact is small (Q_S1 is one of three Quality signals), but the displayed year count is wrong for monthly payers like O. Patch is queued for V1.1.
+- **C_R1 single-bucket cascade (CAL-4).** When FMP returns one bucket called "rental income" rather than property-type segmentation, the engine reads that as a single-segment monopoly and scores 0. The fix (treat single-bucket as no segmentation data, and cascade to null) lands in V1.1.
+- **D_S1 is misleading for tower and data-centre REITs (CAL-6).** Tower REITs trade on FFO multiples, not NAV. The Price/NAV signal for AMT, CCI, SBAC, EQIX, and DLR is technically computed but commercially meaningless. Methodology copy is the V1 fix; V1.1 may cascade D_S1 to null for these sub-sectors.
+- **UK REIT EPRA dividend cover is a proxy.** True EPRA cover is EPRA EPS ÷ DPS from each annual report. V1 uses net rental income ÷ dividends paid as a proxy because FMP does not expose EPRA earnings for UK names yet. We will scrape EPRA EPS into a per-ticker JSON for V1.1.
+- **UK REIT D_S1 uses book NAV per share.** Published EPRA NAV is materially different for some UK REITs. Same V1.1 fix as the EPS proxy.
+- **AFFO normalisation.** V1 trusts FMP's FFO as-reported. V1.1 will reconcile against XBRL companyfacts for an AFFO line (subtracts maintenance capex), which is the more conservative and more reader-trusted metric.
+- **Coverage is fixed at the V1 universe.** Around 50 US REITs, 25 US BDCs, and 25 UK REITs. New tickers do not get scored on demand; the universe is curated and the cron does not score outside it.
+
+## Disclaimer
+
+Resilience scores are informational tools to help you review a holding. They are not financial advice, not a prediction of future returns, not instructions to buy or sell, and not personalised guidance. Past dividend performance is not a reliable indicator of future dividend payments. Always do your own research and consult a qualified adviser before making investment decisions. See the [Terms of Service](/terms).

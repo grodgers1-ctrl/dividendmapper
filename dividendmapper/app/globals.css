@@ -45,6 +45,17 @@
   --color-positive: #16A34A;
   --color-negative: #DC2626;
 
+  /* Resilience ramp — Phase 4 vehicle scoring (color-expert 5-stop scale).
+     Warm-to-cool through neutral so directional but not traffic-light. Built
+     in OKLCH around L 55-70 / moderate chroma so each stop passes AA against
+     white text in light mode and stays legible against dark backgrounds.
+     1 = highest cut risk, 5 = most resilient. */
+  --color-resilience-1: #b15240; /* brick — cut risk */
+  --color-resilience-2: #c08358; /* rust — concern */
+  --color-resilience-3: #b3a07a; /* sand — neutral */
+  --color-resilience-4: #7fa593; /* sage — moderate health */
+  --color-resilience-5: #3a7780; /* petrol — resilient */
+
   /* shadcn semantic tokens — mapped to vars set in :root / .dark */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
