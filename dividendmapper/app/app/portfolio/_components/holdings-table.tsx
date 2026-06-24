@@ -370,6 +370,8 @@ export function HoldingsTable({
   const isFree = tier === "free";
   const handleOpenScore: OpenScore = (ticker, type) =>
     setOpenScore({ ticker, type });
+  const handleOpenVehicleScore = (ticker: string) =>
+    setOpenScore({ ticker, type: "buy" });
 
   // The Scores column also surfaces vehicle resilience chips. Show the column
   // header when either equity scores are configured (showScores) OR at least
@@ -528,6 +530,7 @@ export function HoldingsTable({
                             vehicleType={vehicle.vehicleType}
                             resilienceScore={vehicle.resilienceScore}
                             qualityGatePassed={vehicle.qualityGatePassed}
+                            onOpen={() => handleOpenVehicleScore(row.ticker)}
                           />
                         ) : isFree ? (
                           <UpgradePill pricingPublic={pricingPublic} />
@@ -618,6 +621,7 @@ export function HoldingsTable({
                       vehicleType={vehicle.vehicleType}
                       resilienceScore={vehicle.resilienceScore}
                       qualityGatePassed={vehicle.qualityGatePassed}
+                      onOpen={() => handleOpenVehicleScore(row.ticker)}
                     />
                   ) : (
                     showScores &&
@@ -700,7 +704,7 @@ export function HoldingsTable({
         })}
       </ul>
 
-      {showScores && openScore && (
+      {openScore && (showScores || vehicleScoresByTicker?.[openScore.ticker]) && (
         <ScoreDrawer
           ticker={openScore.ticker}
           scoreType={openScore.type}
@@ -709,6 +713,7 @@ export function HoldingsTable({
             if (!o) setOpenScore(null);
           }}
           isBeta={isBeta}
+          vehicleType={vehicleScoresByTicker?.[openScore.ticker]?.vehicleType}
         />
       )}
     </>
