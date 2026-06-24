@@ -272,6 +272,72 @@ describe("<HoldingsTable> sort control", () => {
   });
 });
 
+describe("<HoldingsTable> vehicle chip", () => {
+  it("renders a VehicleChip for a vehicle-typed ticker (Pro tier, no equity scores)", () => {
+    render(
+      <HoldingsTable
+        rows={[row("1", "O"), row("2", "AAPL")]}
+        quotes={{}}
+        tier="pro"
+        pricingPublic={true}
+        isBeta={true}
+        scoresByTicker={{}}
+        // On /app/portfolio, the equity Scores column is suppressed for Pro.
+        // Vehicle chips must still appear because resilience scores are public.
+        showScores={false}
+        vehicleScoresByTicker={{
+          O: { vehicleType: "us_reit", resilienceScore: 72, qualityGatePassed: true },
+        }}
+      />,
+    );
+    const table = screen.getByRole("table");
+    const chip = within(table).getByTestId("vehicle-chip");
+    expect(chip).toHaveAttribute("data-vehicle-type", "us_reit");
+    // "REIT" label + the score appear in the chip.
+    expect(within(chip).getByText("REIT")).toBeInTheDocument();
+    expect(within(chip).getByText("72")).toBeInTheDocument();
+    // AAPL has no vehicle entry — only one chip in the table.
+    expect(within(table).getAllByTestId("vehicle-chip")).toHaveLength(1);
+    // Mobile card also surfaces the chip — both views render it.
+    expect(screen.getAllByTestId("vehicle-chip")).toHaveLength(2);
+  });
+
+  it("opens the drawer against /api/vehicle-scoring/[ticker] when a vehicle chip is clicked", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        ticker: "O",
+        vehicleType: "us_reit",
+        displayName: "Realty Income",
+        resilienceScore: 72,
+        qualityGatePassed: true,
+        signals: [],
+      }),
+    }) as unknown as typeof fetch;
+    const user = userEvent.setup();
+    render(
+      <HoldingsTable
+        rows={[row("1", "O")]}
+        quotes={{}}
+        tier="pro"
+        pricingPublic={true}
+        isBeta={true}
+        scoresByTicker={{}}
+        showScores={false}
+        vehicleScoresByTicker={{
+          O: { vehicleType: "us_reit", resilienceScore: 72, qualityGatePassed: true },
+        }}
+      />,
+    );
+    const table = screen.getByRole("table");
+    await user.click(within(table).getByTestId("vehicle-chip"));
+    await waitFor(() => {
+      expect(globalThis.fetch).toHaveBeenCalledWith("/api/vehicle-scoring/O");
+    });
+  });
+});
+
 describe("<HoldingsTable> score column (Free)", () => {
   it("shows the upgrade pill instead of chips", () => {
     render(

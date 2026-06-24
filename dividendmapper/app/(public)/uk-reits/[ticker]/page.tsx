@@ -97,7 +97,7 @@ export default async function UkReitTickerPage({
         score={score}
         family={family}
         navHistory={history}
-        proSlot={<VehicleProDetail ticker={ticker} />}
+        proSlot={<VehicleProDetail ticker={ticker} vehicleType="uk_reit" />}
       />
     </>
   );

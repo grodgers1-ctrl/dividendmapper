@@ -1,0 +1,31 @@
+[X / TWITTER THREAD — 4 tweets. Lead with the visual, not the claim. No em-dashes. No AI vocab. Each tweet stands alone.]
+
+1/
+Built a thing.
+
+Every US REIT, BDC, and UK REIT on DividendMapper now carries a Resilience score from 0 to 100.
+
+Realty Income (O): 35. NextEra Energy Partners (NEP): 18. Main Street Capital (MAIN): 67.
+
+[ATTACH: screenshot of /reits ranked list]
+
+2/
+The score judges how durable the dividend is. Payout headroom, leverage, tenant concentration, how the payout behaved through past stress.
+
+For UK REITs it swaps in EPRA cover and loan-to-value, because that is how UK names actually report.
+
+3/
+Pro members get the per-signal breakdown: which factors pulled the score down, which propped it up, and the gates a name has to clear before it scores at all.
+
+A few names trip the gate and score nothing on purpose. That is the point.
+
+4/
+Free to browse, no signup required.
+
+dividendmapper.com/reits
+dividendmapper.com/bdcs
+dividendmapper.com/uk-reits
+
+How the score is built: dividendmapper.com/methodology/income-vehicles
+
+Tell me what reads wrong on a name you hold.

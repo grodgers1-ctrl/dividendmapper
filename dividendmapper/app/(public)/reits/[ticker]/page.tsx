@@ -99,7 +99,7 @@ export default async function ReitTickerPage({
         score={score}
         family={family}
         navHistory={history}
-        proSlot={<VehicleProDetail ticker={ticker} />}
+        proSlot={<VehicleProDetail ticker={ticker} vehicleType="us_reit" />}
       />
     </>
   );

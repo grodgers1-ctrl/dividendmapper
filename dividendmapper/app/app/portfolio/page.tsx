@@ -4,7 +4,10 @@ import { requireUser } from "@/lib/auth/server";
 import { isPricingPublic } from "@/lib/flags/pricing";
 import { isBeta } from "@/lib/scoring/config";
 import { loadPricedHoldings, loadArchivedHoldings } from "@/lib/portfolio/load-priced-holdings";
+import { loadVehicleScoresByTickers } from "@/lib/scoring/load-vehicle-score";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { formatMoney } from "@/lib/portfolio/format-money";
+import type { VehicleChipData } from "./_components/holdings-table";
 import { PageHeader } from "../_components/page-header/page-header";
 import { HoldingsTable } from "./_components/holdings-table";
 import { ArchivedHoldings } from "./_components/archived-holdings";
@@ -45,6 +48,27 @@ export default async function PortfolioPage() {
     income,
   } = await loadPricedHoldings(user.id);
   const archived = await loadArchivedHoldings();
+
+  // Vehicle (REIT/BDC/UK REIT) resilience chips. One round-trip across the
+  // distinct ticker list, then converted to the chip-display shape.
+  const distinctTickersForVehicles = [
+    ...new Set(visibleRows.map((h) => h.ticker)),
+  ];
+  const vehicleScoresByTicker: Record<string, VehicleChipData> = {};
+  if (distinctTickersForVehicles.length > 0) {
+    const supabase = await createSupabaseServerClient();
+    const vehicleMap = await loadVehicleScoresByTickers(
+      supabase,
+      distinctTickersForVehicles,
+    );
+    for (const [ticker, v] of vehicleMap) {
+      vehicleScoresByTicker[ticker] = {
+        vehicleType: v.vehicleType,
+        resilienceScore: v.resilienceScore,
+        qualityGatePassed: v.qualityGatePassed,
+      };
+    }
+  }
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-12 md:px-6 md:py-16">
@@ -129,6 +153,7 @@ export default async function PortfolioPage() {
               isBeta={isBeta()}
               scoresByTicker={{}}
               showScores={tier === "free"}
+              vehicleScoresByTicker={vehicleScoresByTicker}
             />
             {valueTotalsByCurrency.length > 0 && (
               <p className="text-sm text-muted-foreground">

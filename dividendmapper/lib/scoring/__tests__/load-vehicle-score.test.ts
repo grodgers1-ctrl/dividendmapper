@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import {
   loadVehicleScore,
   loadVehicleScoreHistory,
+  loadVehicleScoresByTickers,
   normalizeTicker,
 } from "../load-vehicle-score";
 
@@ -168,6 +169,114 @@ describe("loadVehicleScore", () => {
     const result = await loadVehicleScore(sb, "ORPH");
     expect(result!.displayName).toBe("ORPH");
     expect(result!.subSector).toBeNull();
+  });
+});
+
+describe("loadVehicleScoresByTickers", () => {
+  // Builder that captures the .in() filter so we can assert one round-trip.
+  function makeBatchStub(rows: {
+    vehicle_scores?: Row[];
+    vehicle_universe?: Row[];
+  }) {
+    const calls: { table: string; column: string; value: unknown }[] = [];
+    const fromMock = vi.fn((table: string) => {
+      const builder: {
+        select: () => typeof builder;
+        in: (col: string, val: unknown) => typeof builder;
+        then: (resolve: (v: { data: Row[]; error: unknown }) => void) => void;
+      } = {
+        select: () => builder,
+        in: (col, val) => {
+          calls.push({ table, column: col, value: val });
+          return builder;
+        },
+        then: (resolve) => {
+          const data =
+            table === "vehicle_scores"
+              ? (rows.vehicle_scores ?? [])
+              : table === "vehicle_universe"
+                ? (rows.vehicle_universe ?? [])
+                : [];
+          resolve({ data, error: null });
+        },
+      };
+      return builder;
+    });
+    return { sb: { from: fromMock }, fromMock, calls };
+  }
+
+  it("returns an empty map for empty input without hitting Supabase", async () => {
+    const { sb, fromMock } = makeBatchStub({});
+    const result = await loadVehicleScoresByTickers(sb, []);
+    expect(result.size).toBe(0);
+    expect(fromMock).not.toHaveBeenCalled();
+  });
+
+  it("returns only vehicle-typed rows, keyed by ticker, with universe display names", async () => {
+    const { sb, calls } = makeBatchStub({
+      vehicle_scores: [
+        {
+          ticker: "O",
+          vehicle_type: "us_reit",
+          resilience_score: 72,
+          quality_gate_passed: true,
+          failed_gates: [],
+          data_quality: "full",
+          computed_at: "2026-06-23T09:00:00Z",
+        },
+        {
+          ticker: "MAIN",
+          vehicle_type: "us_bdc",
+          resilience_score: 67,
+          quality_gate_passed: true,
+          failed_gates: [],
+          data_quality: "full",
+          computed_at: "2026-06-23T09:00:00Z",
+        },
+      ],
+      vehicle_universe: [
+        { ticker: "O", display_name: "Realty Income", sub_sector: "retail_net_lease" },
+        { ticker: "MAIN", display_name: "Main Street Capital", sub_sector: null },
+      ],
+    });
+    // Equity ticker AAPL must be passed through the filter but absent from output.
+    const result = await loadVehicleScoresByTickers(sb, ["O", "MAIN", "AAPL"]);
+    expect(result.size).toBe(2);
+    expect(result.get("O")?.vehicleType).toBe("us_reit");
+    expect(result.get("O")?.resilienceScore).toBe(72);
+    expect(result.get("O")?.displayName).toBe("Realty Income");
+    expect(result.get("MAIN")?.vehicleType).toBe("us_bdc");
+    expect(result.get("MAIN")?.displayName).toBe("Main Street Capital");
+    expect(result.has("AAPL")).toBe(false);
+    // Single round-trip per table — .in() called once each (no per-ticker fan-out).
+    const scoresCalls = calls.filter((c) => c.table === "vehicle_scores");
+    expect(scoresCalls).toHaveLength(1);
+    expect(scoresCalls[0].column).toBe("ticker");
+  });
+
+  it("includes gate-failed vehicles (null resilienceScore, failed_gates populated)", async () => {
+    const { sb } = makeBatchStub({
+      vehicle_scores: [
+        {
+          ticker: "BAD",
+          vehicle_type: "uk_reit",
+          resilience_score: null,
+          quality_gate_passed: false,
+          failed_gates: ["G_S2"],
+          data_quality: "sparse",
+          computed_at: "2026-06-23T09:00:00Z",
+        },
+      ],
+      vehicle_universe: [],
+    });
+    const result = await loadVehicleScoresByTickers(sb, ["BAD"]);
+    const row = result.get("BAD");
+    expect(row).toBeDefined();
+    expect(row!.resilienceScore).toBeNull();
+    expect(row!.qualityGatePassed).toBe(false);
+    expect(row!.failedGates).toEqual(["G_S2"]);
+    // displayName falls back to ticker when the universe row is missing.
+    expect(row!.displayName).toBe("BAD");
   });
 });
 

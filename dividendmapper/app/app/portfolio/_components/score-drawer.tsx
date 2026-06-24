@@ -6,7 +6,13 @@ import { useEffect, useState, useTransition } from "react";
 import { chipColor, type ScoreType } from "@/lib/scoring/chip-display";
 import { primaryGateReason } from "@/lib/scoring/gate-reasons";
 import type { GateCode } from "@/lib/scoring/quality-gates";
+import type { VehicleType } from "@/lib/scoring/load-vehicle-score";
+import { VEHICLE_FAMILIES } from "@/lib/scoring/data/vehicle-families";
 import { TopographyMotif } from "@/components/visual/topography-motif";
+import {
+  VehicleSignalBreakdown,
+  type VehicleSignalRow,
+} from "@/app/(public)/_components/vehicle-signal-breakdown";
 import { ScoreOrb } from "./score-orb";
 
 type SignalRow = {
@@ -29,6 +35,18 @@ type ScoringResponse = {
   signals: Record<ScoreType, SignalRow[]>;
 };
 
+// Shape returned by /api/vehicle-scoring/[ticker] — same as the loader's
+// VehicleScoreLoadResult but typed loosely here to avoid an import cycle on
+// the server-only Supabase client.
+type VehicleResponse = {
+  ticker: string;
+  vehicleType: VehicleType;
+  displayName: string;
+  resilienceScore: number | null;
+  qualityGatePassed: boolean;
+  signals: VehicleSignalRow[];
+};
+
 const TYPE_LABEL: Record<ScoreType, string> = { buy: "Quality", trim: "Trim", risk: "Risk" };
 
 // Score history started 2026-05-29; the sparkline needs ~30 days. Until then
@@ -45,6 +63,13 @@ export interface ScoreDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   isBeta?: boolean;
+  /**
+   * If set, the drawer routes to /api/vehicle-scoring/[ticker] and renders the
+   * Resilience + Q/D/C/R breakdown instead of the equity buy/trim/risk
+   * triplet. Caller (holdings table row click) passes this when the row is in
+   * the vehicleScoresByTicker map.
+   */
+  vehicleType?: VehicleType;
 }
 
 export function ScoreDrawer({
@@ -53,12 +78,19 @@ export function ScoreDrawer({
   open,
   onOpenChange,
   isBeta,
+  vehicleType,
 }: ScoreDrawerProps) {
+  const isVehicle = vehicleType !== undefined;
+
   // Result is keyed by ticker so loading/hidden derive from props instead of
   // synchronous setState in the effect (which the React lint rules forbid).
   const [result, setResult] = useState<{
     ticker: string;
     payload: ScoringResponse | null;
+  } | null>(null);
+  const [vehicleResult, setVehicleResult] = useState<{
+    ticker: string;
+    payload: VehicleResponse | null;
   } | null>(null);
   const [hiddenTicker, setHiddenTicker] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -66,21 +98,29 @@ export function ScoreDrawer({
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
-    fetch(`/api/scoring/${ticker}`)
+    const url = isVehicle ? `/api/vehicle-scoring/${ticker}` : `/api/scoring/${ticker}`;
+    fetch(url)
       .then((res) => (res.ok ? res.json() : null))
       .then((json) => {
-        if (!cancelled) setResult({ ticker, payload: json });
+        if (cancelled) return;
+        if (isVehicle) setVehicleResult({ ticker, payload: json });
+        else setResult({ ticker, payload: json });
       })
       .catch(() => {
-        if (!cancelled) setResult({ ticker, payload: null });
+        if (cancelled) return;
+        if (isVehicle) setVehicleResult({ ticker, payload: null });
+        else setResult({ ticker, payload: null });
       });
     return () => {
       cancelled = true;
     };
-  }, [open, ticker]);
+  }, [open, ticker, isVehicle]);
 
-  const isCurrent = result?.ticker === ticker;
-  const data = isCurrent ? result!.payload : null;
+  const isCurrent = isVehicle
+    ? vehicleResult?.ticker === ticker
+    : result?.ticker === ticker;
+  const data = !isVehicle && isCurrent ? result!.payload : null;
+  const vehicleData = isVehicle && isCurrent ? vehicleResult!.payload : null;
   const loading = open && !isCurrent;
   const hidden = hiddenTicker === ticker;
 
@@ -99,6 +139,9 @@ export function ScoreDrawer({
   const sparklineDays = daysUntilSparkline(new Date());
   const maxContribution = Math.max(1, ...signals.map((s) => s.contribution ?? 0));
   const accent = score === null ? "#27272a" : chipColor(scoreType, score).hex;
+
+  const vehicleFamily = vehicleType ? VEHICLE_FAMILIES[vehicleType] : null;
+  const vehicleSlug = vehicleFamily?.slug ?? null;
 
   function handleHide() {
     startTransition(async () => {
@@ -126,7 +169,7 @@ export function ScoreDrawer({
                 {ticker}
               </Dialog.Title>
               <Dialog.Description className="mt-0.5 text-sm text-muted-foreground">
-                {TYPE_LABEL[scoreType]} score breakdown
+                {isVehicle ? "Resilience breakdown" : `${TYPE_LABEL[scoreType]} score breakdown`}
               </Dialog.Description>
             </div>
             <Dialog.Close
@@ -141,7 +184,70 @@ export function ScoreDrawer({
             <p className="mt-6 text-sm text-muted-foreground">Loading scores…</p>
           )}
 
-          {!loading && data && (
+          {!loading && isVehicle && vehicleData && (
+            <>
+              <div className="relative isolate mt-6 overflow-hidden rounded-2xl border border-border bg-card/40 px-4 py-6 text-center">
+                <TopographyMotif
+                  intensity="subtle"
+                  className="absolute inset-0 -z-10 h-full w-full opacity-60"
+                />
+                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  Resilience
+                </p>
+                <p
+                  data-testid="drawer-vehicle-score"
+                  className="mt-2 font-mono text-4xl font-semibold tabular-nums text-foreground"
+                >
+                  {vehicleData.resilienceScore ?? "—"}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {vehicleData.displayName}
+                </p>
+              </div>
+              {!vehicleData.qualityGatePassed && (
+                <p className="mt-4 text-center text-sm font-medium text-foreground">
+                  Quality gate failed for this vehicle
+                </p>
+              )}
+              <div className="mt-6">
+                <VehicleSignalBreakdown signals={vehicleData.signals ?? []} />
+              </div>
+              <div className="mt-6 rounded-lg border border-dashed border-border bg-secondary/30 px-3 py-4 text-center">
+                <p className="text-xs text-muted-foreground/70">
+                  Score history (trend chart) unlocks as daily history accrues.
+                </p>
+              </div>
+              {vehicleSlug && (
+                <div className="mt-6">
+                  <Link
+                    href={`/${vehicleSlug}/${ticker}`}
+                    className="inline-flex items-center gap-1 text-sm font-medium text-foreground underline-offset-2 hover:underline"
+                  >
+                    View full resilience page
+                    <span aria-hidden>→</span>
+                  </Link>
+                </div>
+              )}
+              <div className="mt-auto pt-8">
+                {isBeta && (
+                  <p className="mb-2 text-xs text-muted-foreground">
+                    Resilience scores are in beta: methodology evolving, weights tuned monthly.
+                  </p>
+                )}
+                <p className="text-[0.7rem] leading-relaxed text-muted-foreground/70">
+                  Scores are informational, not financial advice.{" "}
+                  <Link
+                    href="/methodology/income-vehicles"
+                    className="underline underline-offset-2 hover:text-foreground"
+                  >
+                    How resilience is calculated (methodology)
+                  </Link>
+                </p>
+              </div>
+            </>
+          )}
+
+          {!loading && !isVehicle && data && (
             <>
               <div className="relative isolate mt-6 overflow-hidden rounded-2xl border border-border bg-card/40 px-4 py-6">
                 <TopographyMotif
