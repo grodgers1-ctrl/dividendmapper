@@ -77,7 +77,9 @@ function categoryAggregate(
 
 export function VehiclePageTemplate({ score, family, proSlot, navHistory }: Props) {
   const summary = vehiclePublicSummary(score);
-  const chipClass = CHIP_STYLES[summary.chipColor] ?? CHIP_STYLES.grey;
+  // The gate chip's colour reflects gate status (binary pass/fail), not the
+  // resilience score. The score's own colour is conveyed by the big number.
+  const gateChipClass = score.qualityGatePassed ? CHIP_STYLES.green : CHIP_STYLES.red;
   const scoreColor = SCORE_COLOR_HEX[summary.chipColor] ?? SCORE_COLOR_HEX.grey;
   const leverage = leverageValueFor(score, family.leverageMode);
   const categories: ("Q" | "D" | "C" | "R")[] = ["Q", "D", "C", "R"];
@@ -127,7 +129,7 @@ export function VehiclePageTemplate({ score, family, proSlot, navHistory }: Prop
           <div className="rounded-xl border border-border bg-card p-5 md:col-span-2">
             <div className="flex flex-wrap items-center gap-2">
               <span
-                className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${chipClass}`}
+                className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${gateChipClass}`}
               >
                 {score.qualityGatePassed ? "Quality gate passed" : "Quality gate failed"}
               </span>
