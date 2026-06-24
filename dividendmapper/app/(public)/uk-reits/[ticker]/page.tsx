@@ -12,6 +12,7 @@ import { vehiclePublicSummary } from "@/lib/scoring/vehicle-public-summary";
 import { VEHICLE_FAMILIES } from "@/lib/scoring/data/vehicle-families";
 import { VehiclePageTemplate } from "../../_components/vehicle-page-template";
 import { VehicleProDetail } from "../../_components/vehicle-pro-detail";
+import { JsonLdFinancialProduct } from "../../_components/jsonld-financial-product";
 
 export const revalidate = 3600;
 export const dynamicParams = true;
@@ -80,11 +81,24 @@ export default async function UkReitTickerPage({
   if (!score || score.vehicleType !== family.vehicleType) notFound();
 
   return (
-    <VehiclePageTemplate
-      score={score}
-      family={family}
-      navHistory={history}
-      proSlot={<VehicleProDetail ticker={ticker} />}
-    />
+    <>
+      <JsonLdFinancialProduct
+        ticker={ticker}
+        displayName={score.displayName}
+        category="REIT"
+        description={`${score.displayName} dividend Resilience score (informational).`}
+        url={`${SITE_URL}/uk-reits/${ticker}`}
+        breadcrumb={[
+          { name: "UK REITs", url: `${SITE_URL}/uk-reits` },
+          { name: ticker, url: `${SITE_URL}/uk-reits/${ticker}` },
+        ]}
+      />
+      <VehiclePageTemplate
+        score={score}
+        family={family}
+        navHistory={history}
+        proSlot={<VehicleProDetail ticker={ticker} />}
+      />
+    </>
   );
 }

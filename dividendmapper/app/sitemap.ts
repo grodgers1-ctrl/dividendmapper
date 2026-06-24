@@ -74,14 +74,40 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // uses each ticker's real computed_at (not `now`) so crawlers get a truthful
   // change signal; the index uses the most recent computed_at. A DB hiccup must
   // not break the whole sitemap, so the ticker fan-out is best-effort.
-  try {
-    const supabase = createSupabasePublicClient();
-    const { data } = await supabase
+  //
+  // The equity and vehicle universes share crawl shape: family list page (0.8)
+  // plus one per-ticker entry (0.6). Both run in parallel via Promise.all so a
+  // slow vehicle query doesn't block the equity fan-out (and vice versa).
+  const supabase = createSupabasePublicClient();
+
+  type ScoredRow = { ticker: string; computed_at: string };
+  type VehicleRow = ScoredRow & { vehicle_type: "us_reit" | "us_bdc" | "uk_reit" };
+
+  const [equityResult, vehicleResult] = await Promise.all([
+    supabase
       .from("equity_scores")
       .select("ticker, computed_at")
-      .order("ticker", { ascending: true });
-    const rows = (data ?? []) as { ticker: string; computed_at: string }[];
+      .order("ticker", { ascending: true })
+      .then((r) => (r.error ? null : ((r.data ?? []) as ScoredRow[])))
+      .catch(() => null),
+    supabase
+      .from("vehicle_scores")
+      .select("ticker, computed_at, vehicle_type")
+      .order("ticker", { ascending: true })
+      .then((r) => (r.error ? null : ((r.data ?? []) as VehicleRow[])))
+      .catch(() => null),
+  ]);
 
+  function pushFamily(indexUrl: string, rows: ScoredRow[] | null, perRowUrl: (r: ScoredRow) => string) {
+    if (rows === null) {
+      entries.push({
+        url: indexUrl,
+        lastModified: now,
+        changeFrequency: "daily",
+        priority: 0.8,
+      });
+      return;
+    }
     let newest: Date | null = null;
     for (const row of rows) {
       const computed = new Date(row.computed_at);
@@ -90,7 +116,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       }
     }
     entries.push({
-      url: `${SITE_URL}/scoring`,
+      url: indexUrl,
       lastModified: newest ?? now,
       changeFrequency: "daily",
       priority: 0.8,
@@ -98,21 +124,39 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     for (const row of rows) {
       const computed = new Date(row.computed_at);
       entries.push({
-        url: `${SITE_URL}/scoring/${row.ticker}`,
+        url: perRowUrl(row),
         lastModified: Number.isFinite(computed.getTime()) ? computed : now,
         changeFrequency: "daily",
         priority: 0.6,
       });
     }
-  } catch {
-    // Best-effort: still list the index even if the ticker lookup fails.
-    entries.push({
-      url: `${SITE_URL}/scoring`,
-      lastModified: now,
-      changeFrequency: "daily",
-      priority: 0.8,
-    });
   }
+
+  pushFamily(`${SITE_URL}/scoring`, equityResult, (r) => `${SITE_URL}/scoring/${r.ticker}`);
+
+  // Three vehicle families share one Supabase round-trip; split by vehicle_type
+  // after the fact rather than running three separate queries.
+  const byType: Record<"us_reit" | "us_bdc" | "uk_reit", VehicleRow[]> = {
+    us_reit: [],
+    us_bdc: [],
+    uk_reit: [],
+  };
+  if (vehicleResult) {
+    for (const row of vehicleResult) {
+      byType[row.vehicle_type]?.push(row);
+    }
+  }
+  pushFamily(`${SITE_URL}/reits`, vehicleResult ? byType.us_reit : null, (r) => `${SITE_URL}/reits/${r.ticker}`);
+  pushFamily(`${SITE_URL}/bdcs`, vehicleResult ? byType.us_bdc : null, (r) => `${SITE_URL}/bdcs/${r.ticker}`);
+  pushFamily(`${SITE_URL}/uk-reits`, vehicleResult ? byType.uk_reit : null, (r) => `${SITE_URL}/uk-reits/${r.ticker}`);
+
+  // Methodology page sits alongside the family routes — single static entry.
+  entries.push({
+    url: `${SITE_URL}/methodology/income-vehicles`,
+    lastModified: now,
+    changeFrequency: "monthly",
+    priority: 0.7,
+  });
 
   return entries;
 }

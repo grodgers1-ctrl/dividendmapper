@@ -12,6 +12,7 @@ import { vehiclePublicSummary } from "@/lib/scoring/vehicle-public-summary";
 import { VEHICLE_FAMILIES } from "@/lib/scoring/data/vehicle-families";
 import { VehiclePageTemplate } from "../../_components/vehicle-page-template";
 import { VehicleProDetail } from "../../_components/vehicle-pro-detail";
+import { JsonLdFinancialProduct } from "../../_components/jsonld-financial-product";
 
 export const revalidate = 3600;
 export const dynamicParams = true;
@@ -80,11 +81,24 @@ export default async function BdcTickerPage({
   if (!score || score.vehicleType !== family.vehicleType) notFound();
 
   return (
-    <VehiclePageTemplate
-      score={score}
-      family={family}
-      navHistory={history}
-      proSlot={<VehicleProDetail ticker={ticker} />}
-    />
+    <>
+      <JsonLdFinancialProduct
+        ticker={ticker}
+        displayName={score.displayName}
+        category="BDC"
+        description={`${score.displayName} dividend Resilience score (informational).`}
+        url={`${SITE_URL}/bdcs/${ticker}`}
+        breadcrumb={[
+          { name: "US BDCs", url: `${SITE_URL}/bdcs` },
+          { name: ticker, url: `${SITE_URL}/bdcs/${ticker}` },
+        ]}
+      />
+      <VehiclePageTemplate
+        score={score}
+        family={family}
+        navHistory={history}
+        proSlot={<VehicleProDetail ticker={ticker} />}
+      />
+    </>
   );
 }
