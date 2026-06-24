@@ -1,11 +1,20 @@
 // Q_S1 — Dividend growth streak (income vehicle, V1).
-// Counts consecutive years ending at the most recent complete year where total
-// annual dividend ≥ 95% of the prior year's total (a YoY decline > 5% resets
-// the streak). The most recent complete year is the latest calendar year
-// strictly before asOf — the in-progress year is excluded because partial-year
-// totals look like cuts to a naive aggregate.
+// Counts consecutive years ending at the most recent complete year where the
+// per-payment dividend was held or raised vs the prior year. A modal-amount
+// drop of more than 5% resets the streak. The most recent complete year is
+// the latest calendar year strictly before asOf — the in-progress year is
+// excluded because partial-year totals look like cuts to a naive aggregate.
+//
+// CAL-3 fix (2026-06-24): compare the modal payment amount per year rather
+// than the raw annual sum. FMP occasionally returns a stray 13th monthly
+// payment in one calendar year — that inflates the sum and breaks the streak
+// at the next year's "drop". The modal amount stays the same regardless of
+// stray payments because 12 of the 13 payments still cluster on the
+// canonical monthly rate. Same pattern as G_S1's modal-normalised cut
+// detector (vehicle-assemble-inputs.ts Day 13).
 
 import type { VehicleDividendRow } from "../vehicle-fmp";
+import { modalAmount } from "../utils/modal";
 
 export interface SignalResult {
   score: number | null;
@@ -25,14 +34,20 @@ const BANDS: Array<{ years: number; score: number }> = [
   { years: 25, score: 100 },
 ];
 
-function totalsByYear(dividends: VehicleDividendRow[]): Map<number, number> {
-  const totals = new Map<number, number>();
+function modalByYear(dividends: VehicleDividendRow[]): Map<number, number> {
+  const byYear = new Map<number, number[]>();
   for (const d of dividends) {
     const year = parseInt(d.ex_date.slice(0, 4), 10);
     if (!Number.isFinite(year)) continue;
-    totals.set(year, (totals.get(year) ?? 0) + d.dividend);
+    if (!byYear.has(year)) byYear.set(year, []);
+    byYear.get(year)!.push(d.dividend);
   }
-  return totals;
+  const modals = new Map<number, number>();
+  for (const [year, amounts] of byYear) {
+    const m = modalAmount(amounts);
+    if (m !== null && m > 0) modals.set(year, m);
+  }
+  return modals;
 }
 
 function streakToScore(years: number): number {
@@ -53,9 +68,9 @@ export function computeQS1Streak(inputs: QS1Inputs): SignalResult {
   if (inputs.dividends.length === 0) {
     return { score: null, humanLabel: "no dividend history" };
   }
-  const totals = totalsByYear(inputs.dividends);
+  const modals = modalByYear(inputs.dividends);
   const currentYear = (inputs.asOf ?? new Date()).getUTCFullYear();
-  const yearsDesc = Array.from(totals.keys())
+  const yearsDesc = Array.from(modals.keys())
     .filter((y) => y < currentYear)
     .sort((a, b) => b - a);
   if (yearsDesc.length === 0) {
@@ -64,8 +79,8 @@ export function computeQS1Streak(inputs: QS1Inputs): SignalResult {
   let streak = 1;
   for (let i = 0; i < yearsDesc.length - 1; i++) {
     if (yearsDesc[i] - yearsDesc[i + 1] !== 1) break;
-    const cur = totals.get(yearsDesc[i])!;
-    const prev = totals.get(yearsDesc[i + 1])!;
+    const cur = modals.get(yearsDesc[i])!;
+    const prev = modals.get(yearsDesc[i + 1])!;
     if (prev <= 0 || cur / prev < 0.95) break;
     streak++;
   }
