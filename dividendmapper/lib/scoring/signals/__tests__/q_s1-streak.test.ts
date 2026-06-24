@@ -74,4 +74,45 @@ describe("computeQS1Streak", () => {
     expect(result.score).toBe(0);
     expect(result.humanLabel).toMatch(/no complete-year/);
   });
+
+  it("CAL-3: stray 13th monthly payment in one year does NOT break the streak", () => {
+    // Realty Income pattern. FMP occasionally returns 13 monthly payments in
+    // one calendar year (Dec ex-date slipping to Jan 1 of the next year, or a
+    // bonus-style payment). With raw sums that year reads inflated, and the
+    // following year reads as a 7.7% cut. With modal-amount comparison the
+    // canonical monthly rate stays the same so the streak survives.
+    const dividends: VehicleDividendRow[] = [];
+    for (let year = 2015; year <= 2024; year++) {
+      const amount = 0.20 + (year - 2015) * 0.005;
+      for (let month = 1; month <= 12; month++) {
+        dividends.push(row(year, month, amount));
+      }
+    }
+    // Inject a stray 13th payment in 2020 at the canonical 2020 monthly rate.
+    dividends.push(row(2020, 12, 0.225));
+    const result = computeQS1Streak({ dividends, asOf: new Date("2025-01-15Z") });
+    // Full 10y streak intact — modal amount per year picks up the canonical
+    // rate, the 13th payment doesn't shift it.
+    expect(result.score).toBe(50);
+    expect(result.humanLabel).toMatch(/10y/);
+  });
+
+  it("genuine per-payment cut (modal amount drops) still breaks the streak", () => {
+    // Monthly payer that holds steady at $0.10/payment, then drops to $0.08
+    // for the most recent complete year. Modal amount falls 20% → streak resets.
+    const dividends: VehicleDividendRow[] = [];
+    for (let year = 2015; year <= 2023; year++) {
+      for (let month = 1; month <= 12; month++) {
+        dividends.push(row(year, month, 0.10));
+      }
+    }
+    // 2024: cut to $0.08/payment.
+    for (let month = 1; month <= 12; month++) {
+      dividends.push(row(2024, month, 0.08));
+    }
+    const result = computeQS1Streak({ dividends, asOf: new Date("2025-01-15Z") });
+    // Streak = 1 (only 2024 by itself, since the 2024 vs 2023 ratio fails).
+    expect(result.humanLabel).toMatch(/1y/);
+    expect(result.score).toBe(5);
+  });
 });

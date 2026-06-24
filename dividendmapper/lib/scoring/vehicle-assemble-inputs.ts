@@ -12,6 +12,7 @@
 // derives at scoring time.
 
 import type { VehicleType, VehicleDividendRow } from "./vehicle-fmp";
+import { modalAmount } from "./utils/modal";
 import { propertyTypeFor } from "./signals/c_u1-property-focus";
 import { geographicScopeFor } from "./signals/c_u2-geo-scope";
 import type { VehicleQualityGateInputs } from "./vehicle-quality-gates";
@@ -144,24 +145,6 @@ function firstNumber(
     }
   }
   return null;
-}
-
-function modalAmount(amounts: number[]): number | null {
-  if (amounts.length === 0) return null;
-  const counts = new Map<string, number>();
-  for (const a of amounts) {
-    const key = a.toFixed(4);
-    counts.set(key, (counts.get(key) ?? 0) + 1);
-  }
-  let modeKey = "";
-  let modeCount = 0;
-  for (const [k, c] of counts) {
-    if (c > modeCount) {
-      modeCount = c;
-      modeKey = k;
-    }
-  }
-  return parseFloat(modeKey);
 }
 
 function trailingDividendTotal(
