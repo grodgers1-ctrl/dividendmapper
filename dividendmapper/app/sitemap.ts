@@ -83,19 +83,34 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   type ScoredRow = { ticker: string; computed_at: string };
   type VehicleRow = ScoredRow & { vehicle_type: "us_reit" | "us_bdc" | "uk_reit" };
 
+  // Supabase-js returns PromiseLike (not Promise) so we can't chain .catch
+  // directly — wrap each query in a try/catch helper before handing it to
+  // Promise.all. A DB hiccup on either side still degrades gracefully.
+  async function safeQuery<T>(
+    run: () => PromiseLike<{ data: unknown; error: unknown }>,
+  ): Promise<T[] | null> {
+    try {
+      const { data, error } = await run();
+      if (error) return null;
+      return (data ?? []) as T[];
+    } catch {
+      return null;
+    }
+  }
+
   const [equityResult, vehicleResult] = await Promise.all([
-    supabase
-      .from("equity_scores")
-      .select("ticker, computed_at")
-      .order("ticker", { ascending: true })
-      .then((r) => (r.error ? null : ((r.data ?? []) as ScoredRow[])))
-      .catch(() => null),
-    supabase
-      .from("vehicle_scores")
-      .select("ticker, computed_at, vehicle_type")
-      .order("ticker", { ascending: true })
-      .then((r) => (r.error ? null : ((r.data ?? []) as VehicleRow[])))
-      .catch(() => null),
+    safeQuery<ScoredRow>(() =>
+      supabase
+        .from("equity_scores")
+        .select("ticker, computed_at")
+        .order("ticker", { ascending: true }),
+    ),
+    safeQuery<VehicleRow>(() =>
+      supabase
+        .from("vehicle_scores")
+        .select("ticker, computed_at, vehicle_type")
+        .order("ticker", { ascending: true }),
+    ),
   ]);
 
   function pushFamily(indexUrl: string, rows: ScoredRow[] | null, perRowUrl: (r: ScoredRow) => string) {
