@@ -8,6 +8,12 @@
     "source": "Latest annual report / investor factsheet per company IR page",
     "captured_at": "2026-06-23",
     "review_cadence": "quarterly",
+    "last_qa_pass": {
+      "at": "2026-06-24",
+      "scope": "7 overseas_exposed entries (SGRO, PHP, HMSO, SAFE, SUPR, CLI, SERE)",
+      "method": "agentic_research against FY 2025 annual reports + 2026 RNS announcements",
+      "summary": "All 7 stay overseas_exposed. SUPR notes corrected (Ireland was wrong — Northern Ireland is UK; France via Nov 2025 Carrefour deal is the actual overseas exposure). SGRO/PHP/HMSO/SAFE/CLI updated to current FY 2025 figures. PHP flagged for re-check after first post-Assura geographic rental-income disclosure — borderline at ~5-6% by value but may be higher by rental income."
+    },
     "_note_on_review": "Glenn to QA this list at Sprint 1 Day 1 close. The geographicScope column is the high-judgement piece — propertyType is largely derivable from FMP sub_sector. Disputed entries get a 'reviewed_by_glenn' flag once confirmed."
   },
   "BLND.L": {
@@ -26,8 +32,8 @@
     "name": "SEGRO Plc",
     "propertyType": "industrial",
     "geographicScope": "overseas_exposed",
-    "notes": "Material continental European exposure (~35-40% of portfolio value, primarily Germany, France, Italy, Spain).",
-    "source": "https://www.segro.com/investors"
+    "notes": "Material continental European exposure (~43-45% of portfolio value at FY 2025; Germany, France, Italy, Spain, Poland, Netherlands, Czech Republic via Northern/Central/Southern Europe segments).",
+    "source": "https://www.segro.com/investors/financial-results-centre/2025-full-year-results"
   },
   "UTG.L": {
     "name": "Unite Group Plc",
@@ -46,7 +52,7 @@
     "name": "Primary Health Properties PLC",
     "propertyType": "healthcare",
     "geographicScope": "overseas_exposed",
-    "notes": "UK + Ireland primary care facilities. Irish exposure ~10-15% of rental income.",
+    "notes": "UK + Ireland primary care facilities. Irish portfolio €391m at end-2025 (~5-6% of merged £6.0bn portfolio post-Assura combination). Borderline by NAV; may still exceed 10% by rental income — flag for re-check at first post-merger geographic rental disclosure.",
     "source": "https://www.phpgroup.co.uk/investors"
   },
   "LMP.L": {
@@ -74,8 +80,8 @@
     "name": "Hammerson plc",
     "propertyType": "retail",
     "geographicScope": "overseas_exposed",
-    "notes": "UK + France + Ireland shopping centres.",
-    "source": "https://www.hammerson.com/investors"
+    "notes": "UK + France + Ireland shopping centres. France + Ireland ~40% of FY 2025 portfolio value (£3.5bn total); UK weighting increased materially after 2025 JV consolidations of Westquay, Brent Cross, Bullring, Oracle.",
+    "source": "https://www.hammerson.com/news/press-releases/2025-full-year-results"
   },
   "BYG.L": {
     "name": "Big Yellow Group Plc",
@@ -94,15 +100,15 @@
     "name": "Safestore Holdings plc",
     "propertyType": "self_storage",
     "geographicScope": "overseas_exposed",
-    "notes": "UK + France + Netherlands + Belgium + Spain self-storage. Continental Europe ~20-25% of revenue.",
+    "notes": "UK (~73%) + Paris (~20%) + Expansion Markets (Spain/Netherlands/Belgium ~8%) of FY 2025 revenue. Germany + Italy are JVs (off-balance-sheet).",
     "source": "https://www.safestore.com/investor-relations"
   },
   "SUPR.L": {
     "name": "Supermarket Income REIT plc",
     "propertyType": "supermarket",
     "geographicScope": "overseas_exposed",
-    "notes": "UK + Ireland supermarkets (predominantly Sainsbury's, Tesco).",
-    "source": "https://www.supermarketincomereit.com/investors"
+    "notes": "UK supermarkets (Tesco, Sainsbury's, ~79% investment-grade covenant) plus French Carrefour portfolio (~€123m, acquired Nov 2025). No Republic of Ireland exposure; Northern Ireland holdings are UK.",
+    "source": "https://supermarketincomereit.com/our-portfolio/"
   },
   "THRL.L": {
     "name": "Target Healthcare REIT PLC",
@@ -154,8 +160,8 @@
     "name": "CLS Holdings plc",
     "propertyType": "office",
     "geographicScope": "overseas_exposed",
-    "notes": "UK + Germany + France offices. Germany ~45% of portfolio.",
-    "source": "https://www.clsholdings.com/investors"
+    "notes": "UK + Germany + France offices. Germany 48% of FY 2025 portfolio, UK 39%, France 13% (£1.67bn total).",
+    "source": "https://clsholdings.com/news-media/2026/03/13/cls-holdings-plc-2025-full-year-results-announcement/"
   },
   "AEWU.L": {
     "name": "AEW UK REIT plc",
@@ -175,7 +181,7 @@
     "name": "Schroder European Real Estate Investment Trust Plc",
     "propertyType": "diversified",
     "geographicScope": "overseas_exposed",
-    "notes": "Pan-European (France, Germany, Spain, Netherlands).",
-    "source": "https://www.schroders.com/en/uk/private-investor/strategic-capabilities/real-estate/schroder-european-real-estate-investment-trust"
+    "notes": "Pan-European real estate (France, Germany, Netherlands; Spain previously listed as focus market but no Spanish assets confirmed in 2025 disclosures). 100% overseas; €233m portfolio across ~15 properties.",
+    "source": "https://www.schroders.com/en-gb/uk/individual/funds-and-strategies/investment-trusts/schroder-european-real-estate-investment-trust/portfolio-strategy/"
   }
 }
