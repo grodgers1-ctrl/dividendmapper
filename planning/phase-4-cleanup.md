@@ -8,12 +8,9 @@ Central list of issues to revisit after the V1 launch. Each item is a self-conta
 
 ## Calibration — signal accuracy
 
-### CAL-3 — Q_S1 streak signal uses raw sums (vulnerable to FMP quirks)
-**Severity.** Medium — surfaces wrong streak length on display, doesn't affect the gate.
-**Symptom.** O (Realty Income, a Dividend Aristocrat with ~30y growth streak) shows "2y consecutive dividend streak" because FMP returned a stray 13th payment in one calendar year. Same vulnerability affects any monthly payer.
-**Fix.** Port the modal-normalisation pattern from Sprint 2 Day 13's `hasDividendCutInLast5Years` into `lib/scoring/signals/q_s1-streak.ts`. Compare `mode(amount) × mode(count)` rather than raw `sum(amount)`. Update the 5 tests in `__tests__/q_s1-streak.test.ts` to reflect modal-normalised behaviour.
-**Effort.** ~2 hours.
-**Files.** `dividendmapper/lib/scoring/signals/q_s1-streak.ts`, `__tests__/q_s1-streak.test.ts`.
+### ~~CAL-3 — Q_S1 streak signal uses raw sums~~ (SHIPPED 2026-06-24, PR #22)
+**Status.** Fixed. Q_S1 now compares modal payment amount per year rather than raw sum. O now reads "10y consecutive dividend streak" (capped by the 10y `fetchVehicleDividendHistory` window — widening that window to surface the full Aristocrat streak is a separate small follow-up). New shared helper at `lib/scoring/utils/modal.ts`; 7 tests including the 13th-payment-doesn't-break-streak and genuine-cut-still-breaks-streak cases.
+**Follow-up.** Widen `fetchVehicleDividendHistory` window from 10 to 30y so Aristocrat streaks (25y+ scoring 100) are detectable in the input. ~30 min.
 
 ### CAL-4 — C_R1 / C_R2 should cascade when FMP returns a single-bucket response
 **Severity.** Low — currently scores 0 for many US REITs that shouldn't be penalised.
@@ -100,7 +97,7 @@ So users see we're honest about what V1 doesn't capture yet. Each CAL- becomes a
 ## Triage — recommended order for V1.1 (post-launch)
 
 1. **CAL-7 BDC modal filter** — biggest user-visible impact (60% BDC blank-out).
-2. **CAL-3 Q_S1 streak** — high-visibility wrong number on every monthly payer.
+2. ~~**CAL-3 Q_S1 streak**~~ — DONE (PR #22, 2026-06-24).
 3. **CAL-4 C_R1 single-bucket cascade** — cosmetic but misleading scores.
 4. **EDGAR backfill** — small, mechanical.
 5. **CAL-5 R_B1 fundamentals window** — option (b) is cheap, do it with CAL-7.
