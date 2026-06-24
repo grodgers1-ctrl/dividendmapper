@@ -212,6 +212,17 @@ export const POSTS: BlogPost[] = [
     tags: ["UK", "REITs", "Tax"],
     locale: "uk",
   },
+  {
+    slug: "dividend-growth-vs-high-yield-uk-income-investors",
+    title:
+      "Dividend growth vs high-yield: which UK income strategy fits your plan",
+    description:
+      "A practical comparison of dividend growth (lower initial yield, compounding over time) vs high-yield (higher current income, more risk) for UK investors, with worked scenarios, the barbell approach, and wrapper-specific tax considerations.",
+    publishedAt: "2026-06-24",
+    readingTime: "11 min",
+    tags: ["UK", "Dividend", "Education"],
+    locale: "uk",
+  },
 ];
 
 /** Looks up a post by slug. Throws if not found — fail loudly during build. */
