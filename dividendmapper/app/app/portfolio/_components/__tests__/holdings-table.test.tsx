@@ -272,6 +272,37 @@ describe("<HoldingsTable> sort control", () => {
   });
 });
 
+describe("<HoldingsTable> vehicle chip", () => {
+  it("renders a VehicleChip for a vehicle-typed ticker (Pro tier, no equity scores)", () => {
+    render(
+      <HoldingsTable
+        rows={[row("1", "O"), row("2", "AAPL")]}
+        quotes={{}}
+        tier="pro"
+        pricingPublic={true}
+        isBeta={true}
+        scoresByTicker={{}}
+        // On /app/portfolio, the equity Scores column is suppressed for Pro.
+        // Vehicle chips must still appear because resilience scores are public.
+        showScores={false}
+        vehicleScoresByTicker={{
+          O: { vehicleType: "us_reit", resilienceScore: 72, qualityGatePassed: true },
+        }}
+      />,
+    );
+    const table = screen.getByRole("table");
+    const chip = within(table).getByTestId("vehicle-chip");
+    expect(chip).toHaveAttribute("data-vehicle-type", "us_reit");
+    // "REIT" label + the score appear in the chip.
+    expect(within(chip).getByText("REIT")).toBeInTheDocument();
+    expect(within(chip).getByText("72")).toBeInTheDocument();
+    // AAPL has no vehicle entry — only one chip in the table.
+    expect(within(table).getAllByTestId("vehicle-chip")).toHaveLength(1);
+    // Mobile card also surfaces the chip — both views render it.
+    expect(screen.getAllByTestId("vehicle-chip")).toHaveLength(2);
+  });
+});
+
 describe("<HoldingsTable> score column (Free)", () => {
   it("shows the upgrade pill instead of chips", () => {
     render(

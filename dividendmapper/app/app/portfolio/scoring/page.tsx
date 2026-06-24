@@ -7,6 +7,9 @@ import { loadPricedHoldings } from "@/lib/portfolio/load-priced-holdings";
 import { loadPortfolioAnalytics } from "@/lib/scoring/load-portfolio-analytics";
 import { loadUserPreferences } from "@/lib/scoring/preferences";
 import { buildQuadrant } from "@/lib/scoring/quadrant";
+import { loadVehicleScoresByTickers } from "@/lib/scoring/load-vehicle-score";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import type { VehicleChipData } from "../_components/holdings-table";
 import { PageHeader } from "../../_components/page-header/page-header";
 import { HoldingsTable } from "../_components/holdings-table";
 import { PortfolioInsights } from "../_components/portfolio-insights";
@@ -64,6 +67,21 @@ export default async function PortfolioManagerPage(props: {
     analytics?.weightByTicker ?? {},
   );
 
+  // Vehicle resilience chips run alongside the equity score fetch above.
+  // One round-trip; gate-failed and unscored tickers stay absent from the map.
+  const vehicleScoresByTicker: Record<string, VehicleChipData> = {};
+  if (distinctTickers.length > 0) {
+    const supabase = await createSupabaseServerClient();
+    const vehicleMap = await loadVehicleScoresByTickers(supabase, distinctTickers);
+    for (const [ticker, v] of vehicleMap) {
+      vehicleScoresByTicker[ticker] = {
+        vehicleType: v.vehicleType,
+        resilienceScore: v.resilienceScore,
+        qualityGatePassed: v.qualityGatePassed,
+      };
+    }
+  }
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-12 md:px-6 md:py-16">
       <FirstVisitWizard initial={prefs} autoOpen={!hasAnsweredWizard} />
@@ -116,6 +134,7 @@ export default async function PortfolioManagerPage(props: {
               isBeta={isBeta()}
               scoresByTicker={analytics?.scoresByTicker ?? {}}
               showScores={true}
+              vehicleScoresByTicker={vehicleScoresByTicker}
             />
             <QuadrantMap
               points={quadrant.points}

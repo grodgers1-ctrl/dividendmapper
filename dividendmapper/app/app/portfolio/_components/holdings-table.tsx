@@ -20,6 +20,8 @@ import {
 import { ScoreChip } from "./score-chip";
 import { ScoreDrawer } from "./score-drawer";
 import { UpgradePill } from "./upgrade-pill";
+import { VehicleChip } from "./vehicle-chip";
+import type { VehicleType } from "@/lib/scoring/load-vehicle-score";
 import { SortSelect } from "@/app/app/_components/SortSelect";
 
 type HoldingRow = {
@@ -288,6 +290,12 @@ function MobileScorePill({
   );
 }
 
+export type VehicleChipData = {
+  vehicleType: VehicleType;
+  resilienceScore: number | null;
+  qualityGatePassed: boolean;
+};
+
 interface HoldingsTableProps {
   rows: HoldingRow[];
   quotes: Record<string, QuoteResult>;
@@ -303,6 +311,13 @@ interface HoldingsTableProps {
   scoresByTicker: Record<string, HoldingScore>;
   /** Render the Scores column + drawer. False = clean ledger. */
   showScores: boolean;
+  /**
+   * Vehicle (REIT/BDC/UK REIT) chip data, keyed by ticker. When a row's ticker
+   * is here, the row renders a <VehicleChip> in the Scores column even when
+   * showScores is false (resilience scores are public, so Pro members see them
+   * on /app/portfolio without the equity score column being open).
+   */
+  vehicleScoresByTicker?: Record<string, VehicleChipData>;
 }
 
 export function HoldingsTable({
@@ -316,6 +331,7 @@ export function HoldingsTable({
   isBeta,
   scoresByTicker,
   showScores,
+  vehicleScoresByTicker,
 }: HoldingsTableProps) {
   const router = useRouter();
   const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
@@ -354,6 +370,15 @@ export function HoldingsTable({
   const isFree = tier === "free";
   const handleOpenScore: OpenScore = (ticker, type) =>
     setOpenScore({ ticker, type });
+
+  // The Scores column also surfaces vehicle resilience chips. Show the column
+  // header when either equity scores are configured (showScores) OR at least
+  // one visible row has a vehicle entry — so /app/portfolio surfaces vehicle
+  // chips for Pro even when equity scores are suppressed there.
+  const hasAnyVehicleChip =
+    vehicleScoresByTicker !== undefined &&
+    rows.some((r) => vehicleScoresByTicker[r.ticker] !== undefined);
+  const showScoresColumn = showScores || hasAnyVehicleChip;
 
   const markPending = (id: string, on: boolean) => {
     setPendingIds((prev) => {
@@ -435,7 +460,7 @@ export function HoldingsTable({
                 <th scope="col" className="w-px whitespace-nowrap px-3 py-3">
                   Wrapper
                 </th>
-                {showScores && (
+                {showScoresColumn && (
                   <th scope="col" className="px-4 py-3">
                     Scores
                   </th>
@@ -470,6 +495,7 @@ export function HoldingsTable({
                 const valueStatus = resolveRowValue(row, priceByTicker ?? {});
                 const received = actualsByKey?.[actualKey(row.ticker, row.wrapper)];
                 const score = scoresByTicker[row.ticker];
+                const vehicle = vehicleScoresByTicker?.[row.ticker];
                 return (
                   <tr
                     key={row.id}
@@ -495,9 +521,15 @@ export function HoldingsTable({
                         {WRAPPER_LABEL[row.wrapper] ?? row.wrapper}
                       </span>
                     </td>
-                    {showScores && (
+                    {showScoresColumn && (
                       <td className="whitespace-nowrap px-4 py-3 text-left">
-                        {isFree ? (
+                        {vehicle ? (
+                          <VehicleChip
+                            vehicleType={vehicle.vehicleType}
+                            resilienceScore={vehicle.resilienceScore}
+                            qualityGatePassed={vehicle.qualityGatePassed}
+                          />
+                        ) : isFree ? (
                           <UpgradePill pricingPublic={pricingPublic} />
                         ) : score ? (
                           <ScoreChipStack
@@ -505,9 +537,9 @@ export function HoldingsTable({
                             isBeta={isBeta}
                             onOpen={handleOpenScore}
                           />
-                        ) : (
+                        ) : showScores ? (
                           <PendingScorePill />
-                        )}
+                        ) : null}
                       </td>
                     )}
                     <td className="w-px whitespace-nowrap px-3 py-3 text-right font-mono text-foreground">
@@ -555,6 +587,7 @@ export function HoldingsTable({
           const valueStatus = resolveRowValue(row, priceByTicker ?? {});
           const received = actualsByKey?.[actualKey(row.ticker, row.wrapper)];
           const score = scoresByTicker[row.ticker];
+          const vehicle = vehicleScoresByTicker?.[row.ticker];
           return (
             <li
               key={row.id}
@@ -580,7 +613,14 @@ export function HoldingsTable({
                   </span>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
-                  {showScores &&
+                  {vehicle ? (
+                    <VehicleChip
+                      vehicleType={vehicle.vehicleType}
+                      resilienceScore={vehicle.resilienceScore}
+                      qualityGatePassed={vehicle.qualityGatePassed}
+                    />
+                  ) : (
+                    showScores &&
                     (isFree ? (
                       <UpgradePill pricingPublic={pricingPublic} />
                     ) : score ? (
@@ -591,7 +631,8 @@ export function HoldingsTable({
                       />
                     ) : (
                       <PendingScorePill />
-                    ))}
+                    ))
+                  )}
                   <button
                     type="button"
                     onClick={() => handleDelete(row)}

@@ -55,7 +55,7 @@ Eight signals across the four categories, anchored on REIT-canonical metrics.
 - **R_S1.** Cut in the last 5 calendar years. Binary: 100 if clean, 0 if any year-over-year drop above 5%.
 - **R_R1.** Interest coverage (EBITDA ÷ interest expense). Above 4× scores 100; 2.5 to 4× scores 50; below 2.5× scores 0.
 
-**Worked example: Realty Income (O).** Quality gate passes. FFO payout 81% scores Q_R1 = 75. The Q_S1 streak displays 2 years because of a CAL-3 data quirk noted below (the real Dividend Aristocrat streak is around 30 years; this is a display issue, not a gate issue). Composite resilience drops to the moderate band as a result.
+**Worked example: Realty Income (O).** Quality gate passes. FFO payout 81% scores Q_R1 = 75. The Q_S1 streak reports 10 consecutive years (the input fetch window is capped at 10 years in V1; the full Aristocrat streak is around 30 years and the cap-extension is a small follow-up). Composite resilience lands in the moderate band.
 
 ## US BDCs <a id="us-bdcs"></a>
 
@@ -99,7 +99,7 @@ All three sources flow into the same `vehicle_*` Postgres tables. Scoring runs o
 
 V1 is honest about where the model is weakest. These items will be addressed in V1.1 or are open methodology trade-offs you should weigh when reading a score.
 
-- **Q_S1 dividend-streak displays the wrong year count on monthly payers (CAL-3).** The streak code currently aggregates raw annual sums; a stray 13th payment in one calendar year (FMP data quirk) breaks the streak count. The score impact is small (Q_S1 is one of three Quality signals), but the displayed year count is wrong for monthly payers like O. Patch is queued for V1.1.
+- **Q_S1 dividend-streak — calibration shipped (2026-06-24).** Streak now compares the modal payment amount per year, so a stray 13th payment in one calendar year (FMP data quirk) no longer breaks the count. Reported streak is capped at 10 years by the input fetch window; widening to 30 years to surface the full Aristocrat streak is queued for a small follow-up.
 - **C_R1 single-bucket cascade (CAL-4).** When FMP returns one bucket called "rental income" rather than property-type segmentation, the engine reads that as a single-segment monopoly and scores 0. The fix (treat single-bucket as no segmentation data, and cascade to null) lands in V1.1.
 - **D_S1 is misleading for tower and data-centre REITs (CAL-6).** Tower REITs trade on FFO multiples, not NAV. The Price/NAV signal for AMT, CCI, SBAC, EQIX, and DLR is technically computed but commercially meaningless. Methodology copy is the V1 fix; V1.1 may cascade D_S1 to null for these sub-sectors.
 - **UK REIT EPRA dividend cover is a proxy.** True EPRA cover is EPRA EPS ÷ DPS from each annual report. V1 uses net rental income ÷ dividends paid as a proxy because FMP does not expose EPRA earnings for UK names yet. We will scrape EPRA EPS into a per-ticker JSON for V1.1.
