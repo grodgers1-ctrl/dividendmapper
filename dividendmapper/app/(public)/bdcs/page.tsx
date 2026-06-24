@@ -150,7 +150,7 @@ export default async function BdcsListPage({
                 <th scope="col" className="hidden px-4 py-3 text-left font-semibold sm:table-cell">
                   Sub-sector
                 </th>
-                <th scope="col" className="px-4 py-3 text-right font-semibold">
+                <th scope="col" className="hidden px-4 py-3 text-right font-semibold sm:table-cell">
                   TTM yield
                 </th>
                 <th scope="col" className="px-4 py-3 text-right font-semibold">
@@ -173,7 +173,7 @@ export default async function BdcsListPage({
                   <td className="hidden px-4 py-3 text-muted-foreground sm:table-cell">
                     {r.subSector ? humanizeSubSector(r.subSector) : "—"}
                   </td>
-                  <td className="px-4 py-3 text-right font-mono tabular-nums text-foreground">
+                  <td className="hidden px-4 py-3 text-right font-mono tabular-nums text-foreground sm:table-cell">
                     {formatYieldPct(r.currentYield)}
                   </td>
                   <td className="px-4 py-3 text-right font-mono font-semibold tabular-nums text-foreground">
