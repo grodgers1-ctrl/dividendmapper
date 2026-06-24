@@ -78,14 +78,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // The equity and vehicle universes share crawl shape: family list page (0.8)
   // plus one per-ticker entry (0.6). Both run in parallel via Promise.all so a
   // slow vehicle query doesn't block the equity fan-out (and vice versa).
-  const supabase = createSupabasePublicClient();
+  //
+  // Supabase-js returns PromiseLike (not Promise) so we can't chain .catch
+  // directly — wrap each query in a try/catch helper before handing it to
+  // Promise.all. The client construction itself can also throw at build time
+  // if env vars aren't exposed to the prerender step, so we wrap that too.
+  // A DB hiccup or missing env still degrades gracefully to "just the index
+  // entries" rather than failing the sitemap prerender.
 
   type ScoredRow = { ticker: string; computed_at: string };
   type VehicleRow = ScoredRow & { vehicle_type: "us_reit" | "us_bdc" | "uk_reit" };
 
-  // Supabase-js returns PromiseLike (not Promise) so we can't chain .catch
-  // directly — wrap each query in a try/catch helper before handing it to
-  // Promise.all. A DB hiccup on either side still degrades gracefully.
   async function safeQuery<T>(
     run: () => PromiseLike<{ data: unknown; error: unknown }>,
   ): Promise<T[] | null> {
@@ -98,20 +101,28 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   }
 
-  const [equityResult, vehicleResult] = await Promise.all([
-    safeQuery<ScoredRow>(() =>
-      supabase
-        .from("equity_scores")
-        .select("ticker, computed_at")
-        .order("ticker", { ascending: true }),
-    ),
-    safeQuery<VehicleRow>(() =>
-      supabase
-        .from("vehicle_scores")
-        .select("ticker, computed_at, vehicle_type")
-        .order("ticker", { ascending: true }),
-    ),
-  ]);
+  let equityResult: ScoredRow[] | null = null;
+  let vehicleResult: VehicleRow[] | null = null;
+  try {
+    const supabase = createSupabasePublicClient();
+    [equityResult, vehicleResult] = await Promise.all([
+      safeQuery<ScoredRow>(() =>
+        supabase
+          .from("equity_scores")
+          .select("ticker, computed_at")
+          .order("ticker", { ascending: true }),
+      ),
+      safeQuery<VehicleRow>(() =>
+        supabase
+          .from("vehicle_scores")
+          .select("ticker, computed_at, vehicle_type")
+          .order("ticker", { ascending: true }),
+      ),
+    ]);
+  } catch {
+    // createSupabasePublicClient threw (missing env at build) — leave both
+    // null so pushFamily emits just the index entries below.
+  }
 
   function pushFamily(indexUrl: string, rows: ScoredRow[] | null, perRowUrl: (r: ScoredRow) => string) {
     if (rows === null) {
