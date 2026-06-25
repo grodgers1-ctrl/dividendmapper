@@ -5,6 +5,7 @@ import { loadPricedHoldings } from "@/lib/portfolio/load-priced-holdings";
 import { loadCalendarData } from "@/lib/portfolio/load-calendar-data";
 import { buildIncomeCalendar } from "@/lib/portfolio/income-calendar";
 import { aggregatePortfolioValue } from "@/lib/portfolio/portfolio-value";
+import { TopographyMotif } from "@/components/visual/topography-motif";
 import { CalendarShell } from "./_components/calendar-shell";
 
 export const metadata: Metadata = {
@@ -80,15 +81,24 @@ export default async function CalendarPage() {
   const pastUserDividendsCount = userDividends.filter((d) => d.paid_on >= sixMoAgoIso).length;
 
   // No PageHeader: the drawer topbar already labels the route. The StatSidebar
-  // serves as the page's own visual anchor.
+  // serves as the page's own visual anchor. Topography motif is a subtle echo
+  // of the public landing hero for visual identity.
   return (
-    <CalendarShell
-      locale={locale}
-      calendar={calendar}
-      userDividends={userDividends}
-      ratesToPrimary={ratesToPrimary}
-      showEmptyStateCta={pastUserDividendsCount === 0}
-      portfolioValuePrimary={portfolioValuePrimary}
-    />
+    <div className="relative isolate">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 -top-8 -z-10 h-[420px] overflow-hidden opacity-60"
+      >
+        <TopographyMotif intensity="subtle" className="h-full w-full" />
+      </div>
+      <CalendarShell
+        locale={locale}
+        calendar={calendar}
+        userDividends={userDividends}
+        ratesToPrimary={ratesToPrimary}
+        showEmptyStateCta={pastUserDividendsCount === 0}
+        portfolioValuePrimary={portfolioValuePrimary}
+      />
+    </div>
   );
 }

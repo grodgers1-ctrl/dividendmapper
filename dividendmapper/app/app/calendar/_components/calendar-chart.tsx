@@ -102,7 +102,7 @@ export function CalendarChart({
           aria-label="Income calendar 18-month chart"
           className="relative h-[220px] flex flex-1 items-end gap-1.5 border-b border-[var(--border-subtle)]"
         >
-          {months.map((m) => {
+          {months.map((m, idx) => {
             const heightPct = max > 0 ? Math.max(4, (m.gbp / max) * 100) : 4;
             return (
               <button
@@ -116,8 +116,13 @@ export function CalendarChart({
                 onBlur={() => setHoveredYm((cur) => (cur === m.ym ? null : cur))}
                 aria-pressed={selectedYm === m.ym}
                 aria-label={`${monthName(m.ym)} ${m.ym}: ${formatAxis(m.gbp, primaryCurrency)}`}
-                className="relative flex-1 flex flex-col-reverse"
-                style={{ height: `${heightPct}%` }}
+                className="calendar-bar-anim relative flex-1 flex flex-col-reverse"
+                style={
+                  {
+                    height: `${heightPct}%`,
+                    "--calendar-bar-delay": `${idx * 20}ms`,
+                  } as React.CSSProperties
+                }
               >
                 {m.gbp > 0 && (
                   <span
