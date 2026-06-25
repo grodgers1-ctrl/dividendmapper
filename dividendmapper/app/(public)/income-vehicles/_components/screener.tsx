@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import { Search, Lock, ArrowUp, ArrowDown } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Search, Lock, ArrowUp, ArrowDown, Star, Plus, Check, AlertCircle } from "lucide-react";
+import { SaveScreenModal } from "@/app/app/income-vehicles/_components/save-screen-modal";
+import { captureClientEvent } from "@/lib/analytics/posthog-capture";
 import type { VehicleUniverseRow } from "@/lib/scoring/load-vehicle-universe";
 import type { VehicleType } from "@/lib/scoring/load-vehicle-score";
 import { VEHICLE_FAMILIES } from "@/lib/scoring/data/vehicle-families";
@@ -65,6 +67,20 @@ export interface ScreenerProps {
   onCriteriaChange?: (next: ScreenerCriteria) => void;
   /** Fires after a successful POST /api/screens — the rail uses it to refetch. */
   onSaved?: () => void;
+  /**
+   * When provided, the "Only my holdings" toggle is rendered in the filter
+   * strip. When the toggle is on, the universe is narrowed to these tickers
+   * before filter + search + sort run. Pro-only surface (passed by /app/...).
+   */
+  ownedTickers?: ReadonlyArray<string>;
+  /**
+   * Pro-only: per-row "add to watchlist" + "add to portfolio" icons appear
+   * when this is true. Wired through to the existing tracked-tickers POST
+   * endpoint (star — instant) and the Ledger add-holding modal (plus —
+   * needs quantity + cost, not solvable from one click). No-op on the
+   * public surface.
+   */
+  showRowActions?: boolean;
 }
 
 const INITIAL_CRITERIA: ScreenerCriteria = {
@@ -79,8 +95,37 @@ export function Screener({
   showSaveScreenAction = false,
   criteria: controlledCriteria,
   onCriteriaChange,
+  ownedTickers,
+  showRowActions = false,
+  onSaved,
 }: ScreenerProps) {
   const [query, setQuery] = useState("");
+  const [restrictToOwned, setRestrictToOwned] = useState(false);
+  const [saveOpen, setSaveOpen] = useState(false);
+  // Per-ticker action status — undefined = idle, then "saving" | "saved" | "error".
+  const [rowState, setRowState] = useState<Record<string, "saving" | "saved" | "error">>({});
+
+  async function addToWatchlist(ticker: string) {
+    setRowState((s) => ({ ...s, [ticker]: "saving" }));
+    const res = await fetch("/api/portfolio/tracked-tickers", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ticker }),
+    });
+    // 201 = added, 409 = already watching (still a success from the user's POV).
+    setRowState((s) => ({
+      ...s,
+      [ticker]: res.ok || res.status === 409 ? "saved" : "error",
+    }));
+    // Auto-clear after 2.5s so the row returns to its resting state.
+    setTimeout(() => {
+      setRowState((s) => {
+        const next = { ...s };
+        delete next[ticker];
+        return next;
+      });
+    }, 2500);
+  }
   const [internalCriteria, setInternalCriteria] = useState<ScreenerCriteria>(INITIAL_CRITERIA);
   const isControlled = controlledCriteria !== undefined && onCriteriaChange !== undefined;
   const criteria = isControlled ? controlledCriteria! : internalCriteria;
@@ -111,7 +156,14 @@ export function Screener({
   }, [universe, criteria.family]);
 
   const filtered = useMemo(() => {
-    const byCriteria = filterVehicles(universe, criteria);
+    // Owned-only narrowing runs BEFORE the criteria/search/sort chain so the
+    // count and downstream filters reflect the restricted set.
+    const ownedSet =
+      ownedTickers && restrictToOwned ? new Set(ownedTickers) : null;
+    const visible = ownedSet
+      ? universe.filter((r) => ownedSet.has(r.ticker))
+      : universe;
+    const byCriteria = filterVehicles(visible, criteria);
     const hasQuery = query.trim().length > 0;
     if (hasQuery) {
       // Search owns the row order — exact ticker first, then prefix, then
@@ -119,7 +171,20 @@ export function Screener({
       return searchVehicles(byCriteria, query);
     }
     return sortVehicles(byCriteria, sortKey, sortDir);
-  }, [universe, criteria, query, sortKey, sortDir]);
+  }, [universe, criteria, query, sortKey, sortDir, ownedTickers, restrictToOwned]);
+
+  // Debounced search-event — fire once the user has stopped typing for 500ms.
+  // captureClientEvent no-ops in tests (jsdom + no PostHog init).
+  useEffect(() => {
+    if (query.trim().length === 0) return;
+    const id = setTimeout(() => {
+      captureClientEvent("income_vehicle_hub_search", {
+        query: query.trim(),
+        resultCount: filtered.length,
+      });
+    }, 500);
+    return () => clearTimeout(id);
+  }, [query, filtered.length]);
 
   // Reset sub-sector when switching family if the current value is no longer
   // a valid option in the new family's set.
@@ -130,6 +195,12 @@ export function Screener({
       const stillValid =
         c.subSector !== null && familyRows.some((r) => r.subSector === c.subSector);
       return { ...c, family: next, subSector: stillValid ? c.subSector : null };
+    });
+    captureClientEvent("income_vehicle_hub_filter", {
+      family: next,
+      minResilience: criteria.minResilience,
+      subSector: criteria.subSector,
+      gatePassed: criteria.gatePassedOnly,
     });
   }
 
@@ -229,6 +300,17 @@ export function Screener({
             />
             <span>Gate passed</span>
           </label>
+          {ownedTickers && (
+            <label className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1">
+              <input
+                type="checkbox"
+                checked={restrictToOwned}
+                onChange={(e) => setRestrictToOwned(e.target.checked)}
+                aria-label="Only my holdings"
+              />
+              <span>Only my holdings</span>
+            </label>
+          )}
         </div>
       </div>
 
@@ -241,6 +323,7 @@ export function Screener({
           {showSaveScreenAction ? (
             <button
               type="button"
+              onClick={() => setSaveOpen(true)}
               className="rounded-md border border-border px-3 py-1 text-xs font-medium text-foreground hover:bg-secondary"
             >
               Save this screen
@@ -286,14 +369,37 @@ export function Screener({
                     align="right"
                   />
                 </th>
+                {showRowActions && (
+                  <th scope="col" className="w-px px-3 py-2 text-right">
+                    <span className="sr-only">Actions</span>
+                  </th>
+                )}
               </tr>
             </thead>
             <tbody>
+              {filtered.length === 0 && restrictToOwned && ownedTickers && (
+                <tr>
+                  <td
+                    colSpan={showRowActions ? 6 : 5}
+                    className="px-3 py-6 text-center text-sm text-muted-foreground"
+                  >
+                    {ownedTickers.length === 0
+                      ? "You haven't added any income vehicles to your holdings or watchlist yet."
+                      : "None of your holdings or watchlist tickers are in the scored universe yet."}
+                  </td>
+                </tr>
+              )}
               {filtered.map((r) => (
                 <tr key={r.ticker} className="border-b border-border last:border-b-0">
                   <td className="px-3 py-2 font-mono font-medium">
                     <Link
                       href={`/${familySlug(r.vehicleType)}/${r.ticker}`}
+                      onClick={() => {
+                        captureClientEvent("income_vehicle_hub_row_click", {
+                          ticker: r.ticker,
+                          vehicleType: r.vehicleType,
+                        });
+                      }}
                       className="hover:underline"
                     >
                       {r.ticker}
@@ -318,12 +424,85 @@ export function Screener({
                   <td className="px-3 py-2 text-right font-mono tabular-nums">
                     {formatYield(r.dividendYield)}
                   </td>
+                  {showRowActions && (
+                    <td className="w-px whitespace-nowrap px-3 py-2 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        {(() => {
+                          const state = rowState[r.ticker];
+                          const Icon =
+                            state === "saved"
+                              ? Check
+                              : state === "error"
+                                ? AlertCircle
+                                : Star;
+                          const label =
+                            state === "saved"
+                              ? `${r.ticker} added to watchlist`
+                              : state === "error"
+                                ? `Could not add ${r.ticker} — try again`
+                                : `Add ${r.ticker} to watchlist`;
+                          const tone =
+                            state === "saved"
+                              ? "text-[color:var(--color-resilience-5)]"
+                              : state === "error"
+                                ? "text-destructive"
+                                : "text-muted-foreground hover:text-foreground";
+                          return (
+                            <button
+                              type="button"
+                              aria-label={label}
+                              title={label}
+                              disabled={state === "saving"}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                void addToWatchlist(r.ticker);
+                              }}
+                              className={`rounded-md p-1 hover:bg-secondary disabled:opacity-50 ${tone}`}
+                            >
+                              <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+                            </button>
+                          );
+                        })()}
+                        <button
+                          type="button"
+                          aria-label={`Add ${r.ticker} to portfolio`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            window.location.href = `/app/portfolio?addTicker=${encodeURIComponent(r.ticker)}`;
+                          }}
+                          className="rounded-md p-1 text-muted-foreground hover:bg-secondary hover:text-foreground"
+                        >
+                          <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+                        </button>
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       </div>
+
+      {showSaveScreenAction && (
+        <SaveScreenModal
+          open={saveOpen}
+          onClose={() => setSaveOpen(false)}
+          onSave={async (name) => {
+            const res = await fetch("/api/screens", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ name, filterState: criteria }),
+            });
+            if (!res.ok) throw new Error("save_failed");
+            captureClientEvent("income_vehicle_hub_save_screen", {
+              filterState: criteria,
+              name,
+            });
+            onSaved?.();
+          }}
+        />
+      )}
     </div>
   );
 }

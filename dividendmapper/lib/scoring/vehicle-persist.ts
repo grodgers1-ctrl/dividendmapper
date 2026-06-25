@@ -120,3 +120,21 @@ export async function appendVehicleScoreHistory(
   });
   if (error) throw error;
 }
+
+// -------- Income vehicles hub: display fields on vehicle_universe --------
+
+export interface VehicleUniverseDisplayPayload {
+  ticker: string;
+  dividend_yield: number | null;
+  leverage_headline: string | null;
+}
+
+export async function upsertVehicleUniverseDisplay(
+  sb: MinimalSupabaseClient,
+  row: VehicleUniverseDisplayPayload,
+): Promise<void> {
+  const { error } = await sb.from("vehicle_universe").upsert([row], {
+    onConflict: "ticker",
+  });
+  if (error) throw error;
+}

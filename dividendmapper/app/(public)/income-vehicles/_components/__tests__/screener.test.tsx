@@ -90,4 +90,38 @@ describe("<Screener>", () => {
     expect(screen.getByText("O")).toBeInTheDocument();
     expect((screen.getByRole("combobox") as HTMLSelectElement).value).toBe("");
   });
+
+  it("when ownedTickers is set, the holdings toggle narrows the universe to those tickers", async () => {
+    const user = userEvent.setup();
+    render(
+      <Screener
+        universe={UNIVERSE}
+        showSaveScreenAction
+        ownedTickers={["MAIN"]}
+      />,
+    );
+    // Toggle is off by default — full universe shows.
+    expect(screen.getByText("O")).toBeInTheDocument();
+    expect(screen.getByText("MAIN")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("checkbox", { name: /Only my holdings/ }));
+    expect(screen.getByText("MAIN")).toBeInTheDocument();
+    expect(screen.queryByText("O")).not.toBeInTheDocument();
+    expect(screen.queryByText("BLND.L")).not.toBeInTheDocument();
+  });
+
+  it("empty-state hint renders when 'Only my holdings' toggle yields zero rows", async () => {
+    const user = userEvent.setup();
+    render(
+      <Screener
+        universe={UNIVERSE}
+        showSaveScreenAction
+        ownedTickers={[]}
+      />,
+    );
+    await user.click(screen.getByRole("checkbox", { name: /Only my holdings/ }));
+    expect(
+      screen.getByText(/haven't added any income vehicles/i),
+    ).toBeInTheDocument();
+  });
 });

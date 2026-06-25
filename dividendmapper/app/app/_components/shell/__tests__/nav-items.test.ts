@@ -6,11 +6,12 @@ import {
 } from "../nav-items";
 
 describe("DEFAULT_NAV_ITEMS", () => {
-  it("declares the six v1 drawer items in display order", () => {
+  it("declares the seven v1 drawer items in display order", () => {
     expect(DEFAULT_NAV_ITEMS.map((i) => i.href)).toEqual([
       "/app/dashboard",
       "/app/portfolio",
       "/app/portfolio/scoring",
+      "/app/income-vehicles",
       "/app/portfolio/watchlist",
       "/app/account",
       "/app/admin/scoring/audit",
@@ -22,6 +23,7 @@ describe("DEFAULT_NAV_ITEMS", () => {
       DEFAULT_NAV_ITEMS.map((i) => [i.href, i] as const),
     );
     expect(byHref["/app/portfolio/scoring"].requiresPro).toBe(true);
+    expect(byHref["/app/income-vehicles"].requiresPro).toBe(true);
     expect(byHref["/app/portfolio/watchlist"].requiresPro).toBe(true);
     expect(byHref["/app/dashboard"].requiresPro).toBeFalsy();
     expect(byHref["/app/portfolio"].requiresPro).toBeFalsy();
@@ -57,16 +59,17 @@ describe("filterNavItems", () => {
     ]);
   });
 
-  it("pro non-admin → 5 items (adds Portfolio Manager + Watchlist)", () => {
+  it("pro non-admin → 6 items (adds Portfolio Manager + Income vehicles + Watchlist)", () => {
     const items = filterNavItems(DEFAULT_NAV_ITEMS, {
       tier: "pro",
       isAdmin: false,
     });
-    expect(items).toHaveLength(5);
+    expect(items).toHaveLength(6);
     expect(items.map((i) => i.href)).toEqual([
       "/app/dashboard",
       "/app/portfolio",
       "/app/portfolio/scoring",
+      "/app/income-vehicles",
       "/app/portfolio/watchlist",
       "/app/account",
     ]);
@@ -77,16 +80,16 @@ describe("filterNavItems", () => {
       tier: "premium",
       isAdmin: false,
     });
-    expect(items).toHaveLength(5);
-    expect(items.map((i) => i.href)).toContain("/app/portfolio/scoring");
+    expect(items).toHaveLength(6);
+    expect(items.map((i) => i.href)).toContain("/app/income-vehicles");
   });
 
-  it("admin pro → 6 items (adds Admin)", () => {
+  it("admin pro → 7 items (adds Admin)", () => {
     const items = filterNavItems(DEFAULT_NAV_ITEMS, {
       tier: "pro",
       isAdmin: true,
     });
-    expect(items).toHaveLength(6);
+    expect(items).toHaveLength(7);
     expect(items.map((i) => i.href)).toContain("/app/admin/scoring/audit");
   });
 

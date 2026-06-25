@@ -8,10 +8,17 @@ vi.mock("@/lib/scoring/compute-vehicle-score", () => ({
 const upsertScoreMock = vi.fn().mockResolvedValue(undefined);
 const appendSignalsMock = vi.fn().mockResolvedValue(undefined);
 const appendHistoryMock = vi.fn().mockResolvedValue(undefined);
+const upsertDisplayMock = vi.fn().mockResolvedValue(undefined);
 vi.mock("@/lib/scoring/vehicle-persist", () => ({
   upsertVehicleScore: upsertScoreMock,
   appendVehicleScoreSignals: appendSignalsMock,
   appendVehicleScoreHistory: appendHistoryMock,
+  upsertVehicleUniverseDisplay: upsertDisplayMock,
+}));
+
+const fetchYieldMock = vi.fn();
+vi.mock("@/lib/scoring/fmp-client", () => ({
+  getRatiosTtm: fetchYieldMock,
 }));
 
 vi.mock("@sentry/nextjs", () => ({ captureException: vi.fn() }));
@@ -60,16 +67,22 @@ beforeEach(() => {
     error: null,
   };
   computeScoreMock.mockReset();
-  computeScoreMock.mockResolvedValue({
-    ticker: "_",
-    vehicleType: "us_reit",
-    resilienceScore: 72,
-    qualityGatePassed: true,
-    failedGates: [],
-    signals: [],
-    dataQuality: "full",
-    priceNavRatio: 1.05,
-  });
+  computeScoreMock.mockImplementation(
+    async (_sb: unknown, ticker: string, vehicle_type: string) => ({
+      ticker,
+      vehicleType: vehicle_type,
+      resilienceScore: 72,
+      qualityGatePassed: true,
+      failedGates: [],
+      signals: [
+        { code: "Q_R1", humanLabel: "FFO payout 81%", rawScore: 60, weight: 1, contribution: 60 },
+      ],
+      dataQuality: "full",
+      priceNavRatio: 1.05,
+    }),
+  );
+  fetchYieldMock.mockReset();
+  fetchYieldMock.mockResolvedValue([{ dividendYieldTTM: 0.056 }]);
 });
 
 describe("refresh-vehicle-scores route", () => {
@@ -103,6 +116,31 @@ describe("refresh-vehicle-scores route", () => {
     expect(upsertScoreMock).toHaveBeenCalledTimes(3);
     expect(appendSignalsMock).toHaveBeenCalledTimes(3);
     expect(appendHistoryMock).toHaveBeenCalledTimes(3);
+    // Display upsert runs after scoring per ticker — three calls, each
+    // composed from the score result's signals + the FMP yield.
+    expect(upsertDisplayMock).toHaveBeenCalledTimes(3);
+    expect(upsertDisplayMock).toHaveBeenCalledWith(expect.anything(), {
+      ticker: "O",
+      dividend_yield: 0.056,
+      leverage_headline: "FFO payout 81%",
+    });
+  });
+
+  it("display upsert survives FMP yield failures (stores null yield, keeps headline)", async () => {
+    fetchYieldMock.mockRejectedValueOnce(new Error("FMP 500"));
+    fetchYieldMock.mockResolvedValue([{ dividendYieldTTM: 0.04 }]);
+    const { GET } = await import("../route");
+    await GET(
+      new Request("http://localhost/api/internal/refresh-vehicle-scores", {
+        headers: { authorization: "Bearer test-cron-secret" },
+      }),
+    );
+    expect(upsertDisplayMock).toHaveBeenCalledTimes(3);
+    expect(upsertDisplayMock).toHaveBeenNthCalledWith(1, expect.anything(), {
+      ticker: "O",
+      dividend_yield: null,
+      leverage_headline: "FFO payout 81%",
+    });
   });
 
   it("counts gate-failed scores separately from successful", async () => {
