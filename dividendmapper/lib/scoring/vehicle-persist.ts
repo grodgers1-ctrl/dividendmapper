@@ -15,6 +15,9 @@ import type { VehicleScoreResult } from "./compute-vehicle-score";
 // Promise, so vitest passes but `next build`'s strict tsc rejects).
 interface UpsertChain {
   upsert(rows: unknown[], opts?: { onConflict?: string }): PromiseLike<{ error: unknown }>;
+  update(patch: Record<string, unknown>): {
+    eq(col: string, value: string): PromiseLike<{ error: unknown }>;
+  };
 }
 interface MinimalSupabaseClient {
   from(table: string): UpsertChain;
@@ -129,12 +132,21 @@ export interface VehicleUniverseDisplayPayload {
   leverage_headline: string | null;
 }
 
+// UPDATE-only (not upsert): vehicle_universe rows always exist for any ticker
+// in vehicle_scores (FK ties them). An upsert would try INSERT first, which
+// fails NOT NULL on display_name / exchange / currency / vehicle_type before
+// the ON CONFLICT path ever fires — caught in prod 2026-06-25 when the first
+// post-deploy cron returned 100/100 ticker failures.
 export async function upsertVehicleUniverseDisplay(
   sb: MinimalSupabaseClient,
   row: VehicleUniverseDisplayPayload,
 ): Promise<void> {
-  const { error } = await sb.from("vehicle_universe").upsert([row], {
-    onConflict: "ticker",
-  });
+  const { error } = await sb
+    .from("vehicle_universe")
+    .update({
+      dividend_yield: row.dividend_yield,
+      leverage_headline: row.leverage_headline,
+    })
+    .eq("ticker", row.ticker);
   if (error) throw error;
 }
