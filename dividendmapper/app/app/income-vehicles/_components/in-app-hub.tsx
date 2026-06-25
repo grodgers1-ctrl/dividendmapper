@@ -42,6 +42,9 @@ export function InAppHub({
         criteria={criteria}
         onCriteriaChange={setCriteria}
         onSaved={() => setSavedRefreshKey((k) => k + 1)}
+        tickerHrefBuilder={(ticker) =>
+          `/app/income-vehicles/${encodeURIComponent(ticker)}`
+        }
       />
     </div>
   );

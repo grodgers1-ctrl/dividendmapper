@@ -81,6 +81,13 @@ export interface ScreenerProps {
    * public surface.
    */
   showRowActions?: boolean;
+  /**
+   * Customise the per-row ticker click target. Defaults to the public
+   * family route `/{slug}/{ticker}` (used by the public hub). The in-app
+   * hub overrides this to `/app/income-vehicles/{ticker}` so Pro users
+   * stay inside the /app drawer shell.
+   */
+  tickerHrefBuilder?: (ticker: string, vehicleType: VehicleType) => string;
 }
 
 const INITIAL_CRITERIA: ScreenerCriteria = {
@@ -98,7 +105,10 @@ export function Screener({
   ownedTickers,
   showRowActions = false,
   onSaved,
+  tickerHrefBuilder,
 }: ScreenerProps) {
+  const buildTickerHref = tickerHrefBuilder ??
+    ((ticker: string, vt: VehicleType) => `/${familySlug(vt)}/${ticker}`);
   const [query, setQuery] = useState("");
   const [restrictToOwned, setRestrictToOwned] = useState(false);
   const [saveOpen, setSaveOpen] = useState(false);
@@ -393,7 +403,7 @@ export function Screener({
                 <tr key={r.ticker} className="border-b border-border last:border-b-0">
                   <td className="px-3 py-2 font-mono font-medium">
                     <Link
-                      href={`/${familySlug(r.vehicleType)}/${r.ticker}`}
+                      href={buildTickerHref(r.ticker, r.vehicleType)}
                       onClick={() => {
                         captureClientEvent("income_vehicle_hub_row_click", {
                           ticker: r.ticker,
