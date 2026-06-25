@@ -33,6 +33,14 @@ import { computeRiskScore } from "@/lib/scoring/compute-risk-score";
 import type { SignalRecord } from "@/lib/scoring/compute-buy-score";
 import { runWithConcurrency } from "@/lib/concurrency";
 import { nextUpcomingDividend } from "@/lib/scoring/next-dividend";
+import {
+  detectCadence,
+  computeGrowthRate,
+  projectDividends,
+  type HistoricalPayment,
+  type ProjectedPayment,
+} from "@/lib/scoring/project-dividends";
+import { inferExDivNativeCurrency } from "@/lib/portfolio/ex-div-currency";
 
 // FMP's per-minute quota is generous (~750/min on Premium) but it enforces a
 // burst/concurrency guard. We never fan out more than FMP_CONCURRENCY requests
@@ -41,6 +49,24 @@ const FMP_CONCURRENCY = Number(process.env.FMP_CONCURRENCY) || 5;
 
 export function isoDateOffset(days: number): string {
   return new Date(Date.now() + days * 86400000).toISOString().slice(0, 10);
+}
+
+// JSONB consumer (page layer) reads snake_case keys. The lib uses camelCase
+// internally; this transformer is the only place the two meet.
+export function toProjectionJsonbRow(p: ProjectedPayment): {
+  ex_date: string;
+  pay_date: string;
+  per_share_amount: number;
+  currency: string;
+  confidence: string;
+} {
+  return {
+    ex_date: p.exDate,
+    pay_date: p.payDate,
+    per_share_amount: p.perShareAmount,
+    currency: p.currency,
+    confidence: p.confidence,
+  };
 }
 
 export async function fetchTickerBundle(
@@ -250,6 +276,36 @@ export async function scoreTicker(
   const dividendCagr5y = computeDividendCagr5y(bundle.dividends, new Date(today));
   const sector = assembled.meta.sector ?? null;
 
+  // Calendar v2 / Slice B: per-ticker projection cache. Forward = next 12mo
+  // of expected payments at the detected cadence (growth-adjusted); backward
+  // = the past 12mo of same-cadence anchors that the page layer will gate
+  // against each user's holdings.created_at floor. quantity=1 here so the
+  // cache is per-share; the page multiplies by the user's actual holding.
+  const projectionTodayDate = new Date(`${today}T00:00:00Z`);
+  const historicalPayments: HistoricalPayment[] = bundle.dividends.map((d) => ({
+    exDate: d.date,
+    amount: d.dividend,
+  }));
+  const projectedCadence = detectCadence(historicalPayments);
+  const projectedGrowthRate = computeGrowthRate(historicalPayments);
+  const projectionCurrency = inferExDivNativeCurrency(ticker);
+  const forwardProj = projectDividends({
+    ticker,
+    historicalPayments,
+    holding: { quantity: 1, createdAt: null },
+    today: projectionTodayDate,
+    direction: "forward",
+    currency: projectionCurrency,
+  });
+  const historicalProj = projectDividends({
+    ticker,
+    historicalPayments,
+    holding: { quantity: 1, createdAt: null },
+    today: projectionTodayDate,
+    direction: "backward",
+    currency: projectionCurrency,
+  });
+
   const { error: scoresErr } = await admin.from("equity_scores").upsert(
     {
       ticker,
@@ -273,6 +329,11 @@ export async function scoreTicker(
         typeof nextDiv?.paymentDate === "string" && nextDiv.paymentDate !== ""
           ? nextDiv.paymentDate
           : null,
+      projected_next_12m_payments: forwardProj.map(toProjectionJsonbRow),
+      projected_historical_12m_payments: historicalProj.map(toProjectionJsonbRow),
+      projected_cadence: projectedCadence,
+      projected_growth_rate: projectedGrowthRate,
+      projected_at: new Date().toISOString(),
       computed_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     },

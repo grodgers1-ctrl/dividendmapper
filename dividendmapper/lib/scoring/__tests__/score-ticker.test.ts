@@ -96,6 +96,48 @@ describe("scoreTicker", () => {
     expect(row.trailing_pe).toBeNull();
   });
 
+  it("populates the projection columns from FMP dividend history", async () => {
+    // Override getDividends with 4 quarterly payments at a steady amount so
+    // detectCadence returns 'quarterly' and growth = 0 (1 complete year).
+    const { getDividends } = await import("@/lib/scoring/fmp-client");
+    vi.mocked(getDividends).mockResolvedValueOnce([
+      { date: "2025-06-15", adjDividend: 0.25, dividend: 0.25 },
+      { date: "2025-09-15", adjDividend: 0.25, dividend: 0.25 },
+      { date: "2025-12-15", adjDividend: 0.25, dividend: 0.25 },
+      { date: "2026-03-15", adjDividend: 0.25, dividend: 0.25 },
+    ]);
+    const { client, upserts } = makeAdmin();
+    await scoreTicker(client, "TEST", [], "2026-06-12");
+    const row = upserts["equity_scores"][0] as Record<string, unknown>;
+    expect(row.projected_cadence).toBe("quarterly");
+    expect(row.projected_growth_rate).toBe(0);
+    expect(typeof row.projected_at).toBe("string");
+    expect(Array.isArray(row.projected_next_12m_payments)).toBe(true);
+    const forward = row.projected_next_12m_payments as Array<Record<string, unknown>>;
+    expect(forward.length).toBeGreaterThan(0);
+    // Snake_case JSONB shape — confirms toProjectionJsonbRow ran.
+    expect(forward[0]).toHaveProperty("ex_date");
+    expect(forward[0]).toHaveProperty("per_share_amount");
+    expect(forward[0]).toHaveProperty("currency");
+    expect(forward[0]).toHaveProperty("confidence");
+    expect(forward[0].currency).toBe("USD"); // TEST has no .L suffix
+  });
+
+  it("infers GBp currency for the projection cache when ticker is a .L symbol", async () => {
+    const { getDividends } = await import("@/lib/scoring/fmp-client");
+    vi.mocked(getDividends).mockResolvedValueOnce([
+      { date: "2025-06-15", adjDividend: 1.98, dividend: 1.98 },
+      { date: "2025-09-15", adjDividend: 1.98, dividend: 1.98 },
+      { date: "2025-12-15", adjDividend: 1.98, dividend: 1.98 },
+      { date: "2026-03-15", adjDividend: 1.98, dividend: 1.98 },
+    ]);
+    const { client, upserts } = makeAdmin();
+    await scoreTicker(client, "PHP.L", [], "2026-06-12");
+    const row = upserts["equity_scores"][0] as Record<string, unknown>;
+    const forward = row.projected_next_12m_payments as Array<Record<string, unknown>>;
+    expect(forward[0].currency).toBe("GBp");
+  });
+
   it("throws when an upsert returns an error (so the caller can count it)", async () => {
     // Reads (loadPriorHistory) succeed; every upsert errors. The first upsert is
     // equity_scores, so scoreTicker should reject before finishing.
