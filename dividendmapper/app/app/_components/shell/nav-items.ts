@@ -3,6 +3,7 @@ import {
   Briefcase,
   TrendingUp,
   Star,
+  ListFilter,
   User,
   ShieldCheck,
   type LucideIcon,
@@ -31,6 +32,12 @@ export const DEFAULT_NAV_ITEMS: readonly NavItem[] = [
     href: "/app/portfolio/scoring",
     label: "Portfolio Manager",
     icon: TrendingUp,
+    requiresPro: true,
+  },
+  {
+    href: "/app/income-vehicles",
+    label: "Income vehicles",
+    icon: ListFilter,
     requiresPro: true,
   },
   {
