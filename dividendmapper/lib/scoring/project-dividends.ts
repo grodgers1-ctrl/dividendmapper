@@ -7,7 +7,9 @@
 //   2. 3yr CAGR growth rate over COMPLETE calendar years only (partial-year
 //      tails are dropped so YTD payments don't skew the rate). Capped ±20%.
 //   3. Cut/freeze dominance: latest payment < 95% of trailing-12m-avg → 0 growth.
-//   4. Sub-history fallback (<4 payments) → cadence='unknown' → return [].
+//   4. Sub-history fallback (<2 payments) → cadence='unknown' → return [].
+//      Histories of 2-3 records use median-gap detection with growth-unknown
+//      confidence (year-count requires 2+ complete years).
 //   5. Backward direction: floor = max(holding.createdAt, today - 6mo).
 
 export type Cadence = "monthly" | "quarterly" | "semi" | "annual" | "irregular" | "unknown";
