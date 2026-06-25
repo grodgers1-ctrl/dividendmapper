@@ -50,6 +50,9 @@ export interface IncomeCalendarUserDividend {
   amount: number;
   currency: string;
   wrapper: Wrapper;
+  /** Optional ticker scoring symbol — used to dedupe back-projected segments
+   * for the same ticker in the same month. Older rows may not have it. */
+  ticker?: string;
 }
 
 export interface IncomeCalendarSegment {
@@ -79,10 +82,32 @@ export interface IncomeCalendarNextEx {
   quantity: number;           // holding quantity
 }
 
+// Per-payment row consumed by the drilldown panel. One entry per
+// (holding × payment); a month may have many. Status drives the colored pill
+// (Received / Declared / Estimated). Frequency comes from the cron's
+// projected_cadence cache. quantity is omitted for actuals (we only know the
+// cash total, not the per-share × N decomposition).
+export interface IncomeCalendarPayment {
+  ticker: string;
+  name?: string;
+  exDate: string;
+  payDate: string | null;
+  perShareNative: number;
+  nativeCurrency: string;
+  quantity?: number;
+  primaryAmount: number;
+  wrapper: Wrapper;
+  status: "received" | "declared" | "estimated";
+  frequency?: string;
+}
+
 export interface IncomeCalendarResult {
   months: IncomeCalendarMonth[];
   nextThree: IncomeCalendarNextEx[];
   primaryCurrency: "GBP" | "USD";
+  /** Drilldown lookup keyed by YYYY-MM. All known payments (received / declared
+   * / estimated) bucketed by paid_on (actuals) or pay_date (forecasts). */
+  paymentsByMonth: Record<string, IncomeCalendarPayment[]>;
 }
 
 export type WrapperFilter = "all" | Wrapper;
@@ -103,6 +128,9 @@ interface BuildArgs {
   now: Date;
   locale: Locale;
   wrapperFilter?: WrapperFilter;
+  /** Optional per-ticker metadata for the drilldown panel. */
+  nameByTicker?: Record<string, string>;
+  cadenceByTicker?: Record<string, string>;
   // Slice B projection caches. Forward fills empty future buckets that don't
   // already carry a confirmed-forecast segment; backward back-fills past
   // buckets gated on holdings.created_at + a 6mo floor, deduped vs any
@@ -189,6 +217,8 @@ export function buildIncomeCalendar(args: BuildArgs): IncomeCalendarResult {
     now,
     locale,
     wrapperFilter = "all",
+    nameByTicker = {},
+    cadenceByTicker = {},
   } = args;
 
   const primaryCurrency: "GBP" | "USD" = locale === "us" ? "USD" : "GBP";
@@ -207,6 +237,13 @@ export function buildIncomeCalendar(args: BuildArgs): IncomeCalendarResult {
     });
   }
 
+  const paymentsByMonth: Record<string, IncomeCalendarPayment[]> = {};
+  const actualTickerMonths = new Set<string>(); // dedupe key for back-projection
+  function pushPayment(p: IncomeCalendarPayment, ym: string) {
+    if (!paymentsByMonth[ym]) paymentsByMonth[ym] = [];
+    paymentsByMonth[ym].push(p);
+  }
+
   for (const d of userDividends) {
     if (!passesWrapperFilter(d.wrapper, wrapperFilter)) continue;
     const key = ymFromIso(d.paid_on);
@@ -216,6 +253,23 @@ export function buildIncomeCalendar(args: BuildArgs): IncomeCalendarResult {
     const primary = convertToPrimary(d.amount, d.currency, ratesToGbp);
     if (primary === null) continue;
     pushSegment(bucket, bucket.kind === "partial" ? "partial" : "actual", primary);
+    const dedupeTicker = d.ticker ?? "*";
+    actualTickerMonths.add(`${dedupeTicker}:${key}`);
+    pushPayment(
+      {
+        ticker: d.ticker ?? "",
+        name: d.ticker ? nameByTicker[d.ticker] : undefined,
+        exDate: d.paid_on,
+        payDate: d.paid_on,
+        perShareNative: d.amount,
+        nativeCurrency: d.currency,
+        primaryAmount: primary,
+        wrapper: d.wrapper,
+        status: "received",
+        frequency: d.ticker ? cadenceByTicker[d.ticker] : undefined,
+      },
+      key,
+    );
   }
 
   for (const h of holdings) {
@@ -231,6 +285,22 @@ export function buildIncomeCalendar(args: BuildArgs): IncomeCalendarResult {
     const total = perShare * h.quantity;
     if (!Number.isFinite(total) || total <= 0) continue;
     pushSegment(bucket, "confirmed-forecast", total);
+    pushPayment(
+      {
+        ticker: h.ticker,
+        name: nameByTicker[h.ticker],
+        exDate: ex.ex_date,
+        payDate: ex.pay_date,
+        perShareNative: ex.amount,
+        nativeCurrency: ex.currency,
+        quantity: h.quantity,
+        primaryAmount: total,
+        wrapper: h.wrapper,
+        status: "declared",
+        frequency: cadenceByTicker[h.ticker],
+      },
+      key,
+    );
   }
 
   // Slice B: forward projection — only fills future buckets that don't already
@@ -258,6 +328,22 @@ export function buildIncomeCalendar(args: BuildArgs): IncomeCalendarResult {
         const total = perShare * h.quantity;
         if (!Number.isFinite(total) || total <= 0) continue;
         pushSegment(bucket, confidenceToSegmentKind(r.confidence), total);
+        pushPayment(
+          {
+            ticker: h.ticker,
+            name: nameByTicker[h.ticker],
+            exDate: r.ex_date,
+            payDate: r.pay_date,
+            perShareNative: r.per_share_amount,
+            nativeCurrency: r.currency,
+            quantity: h.quantity,
+            primaryAmount: total,
+            wrapper: h.wrapper,
+            status: "estimated",
+            frequency: cadenceByTicker[h.ticker],
+          },
+          key,
+        );
       }
     }
   }
@@ -279,12 +365,35 @@ export function buildIncomeCalendar(args: BuildArgs): IncomeCalendarResult {
         const bucket = buckets.get(key);
         if (!bucket) continue;
         if (bucket.kind !== "actual") continue;
-        if (bucket.segments.some((s) => s.kind === "actual")) continue;
+        // Per-ticker dedupe vs received actuals: if this ticker has an actual
+        // user_dividends row in the same month, skip the projection. Untickered
+        // actuals (legacy CSV without ticker_scoring) still block the whole
+        // month — matches Slice B behavior for that case.
+        if (
+          actualTickerMonths.has(`${h.ticker}:${key}`) ||
+          actualTickerMonths.has(`*:${key}`)
+        ) continue;
         const perShare = convertToPrimary(r.per_share_amount, r.currency, ratesToGbp);
         if (perShare === null) continue;
         const total = perShare * h.quantity;
         if (!Number.isFinite(total) || total <= 0) continue;
         pushSegment(bucket, confidenceToSegmentKind(r.confidence), total);
+        pushPayment(
+          {
+            ticker: h.ticker,
+            name: nameByTicker[h.ticker],
+            exDate: r.ex_date,
+            payDate: r.pay_date,
+            perShareNative: r.per_share_amount,
+            nativeCurrency: r.currency,
+            quantity: h.quantity,
+            primaryAmount: total,
+            wrapper: h.wrapper,
+            status: "estimated",
+            frequency: cadenceByTicker[h.ticker],
+          },
+          key,
+        );
       }
     }
   }
@@ -315,9 +424,17 @@ export function buildIncomeCalendar(args: BuildArgs): IncomeCalendarResult {
   }
   candidates.sort((a, b) => (a.exDate < b.exDate ? -1 : a.exDate > b.exDate ? 1 : 0));
 
+  // Sort each month's payments by ex-date so drilldown rows read chronologically.
+  for (const ym of Object.keys(paymentsByMonth)) {
+    paymentsByMonth[ym].sort((a, b) =>
+      a.exDate < b.exDate ? -1 : a.exDate > b.exDate ? 1 : 0,
+    );
+  }
+
   return {
     months: Array.from(buckets.values()),
     nextThree: candidates.slice(0, 3),
     primaryCurrency,
+    paymentsByMonth,
   };
 }

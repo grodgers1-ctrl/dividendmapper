@@ -29,6 +29,10 @@ export interface CalendarData {
   ratesToPrimary: Record<string, number>;
   projectedNext12mByTicker: Record<string, ProjectedPaymentRow[]>;
   projectedHistorical12mByTicker: Record<string, ProjectedPaymentRow[]>;
+  /** Display name per ticker (e.g. "Realty Income Corporation") for drilldown rows. */
+  nameByTicker: Record<string, string>;
+  /** Cron-detected pay cadence per ticker (monthly | quarterly | semi | annual | irregular | unknown). */
+  cadenceByTicker: Record<string, string>;
 }
 
 export async function loadCalendarData(
@@ -48,41 +52,47 @@ export async function loadCalendarData(
       ? Promise.resolve({
           data: [] as Array<{
             ticker: string;
+            name: string | null;
             next_ex_div_date: string | null;
             next_ex_div_amount: number | null;
             next_ex_div_pay_date: string | null;
             projected_next_12m_payments: ProjectedPaymentRow[] | null;
             projected_historical_12m_payments: ProjectedPaymentRow[] | null;
+            projected_cadence: string | null;
           }>,
         })
       : supabase
           .from("equity_scores")
           .select(
-            "ticker, next_ex_div_date, next_ex_div_amount, next_ex_div_pay_date, projected_next_12m_payments, projected_historical_12m_payments",
+            "ticker, name, next_ex_div_date, next_ex_div_amount, next_ex_div_pay_date, projected_next_12m_payments, projected_historical_12m_payments, projected_cadence",
           )
           .in("ticker", tickers)
           .returns<
             {
               ticker: string;
+              name: string | null;
               next_ex_div_date: string | null;
               next_ex_div_amount: number | null;
               next_ex_div_pay_date: string | null;
               projected_next_12m_payments: ProjectedPaymentRow[] | null;
               projected_historical_12m_payments: ProjectedPaymentRow[] | null;
+              projected_cadence: string | null;
             }[]
           >(),
     supabase
       .from("user_dividends")
-      .select("paid_on, amount, currency, wrapper")
+      .select("paid_on, amount, currency, wrapper, ticker_scoring")
       .eq("user_id", userId)
       .gte("paid_on", since)
       .order("paid_on", { ascending: true })
-      .returns<{ paid_on: string; amount: number; currency: string; wrapper: string }[]>(),
+      .returns<{ paid_on: string; amount: number; currency: string; wrapper: string; ticker_scoring: string | null }[]>(),
   ]);
 
   const exDivByTicker: Record<string, IncomeCalendarExDiv> = {};
   const projectedNext12mByTicker: Record<string, ProjectedPaymentRow[]> = {};
   const projectedHistorical12mByTicker: Record<string, ProjectedPaymentRow[]> = {};
+  const nameByTicker: Record<string, string> = {};
+  const cadenceByTicker: Record<string, string> = {};
   for (const row of exDivRes.data ?? []) {
     const ticker = row.ticker;
     if (row.next_ex_div_date && row.next_ex_div_amount != null) {
@@ -100,6 +110,8 @@ export async function loadCalendarData(
     if (Array.isArray(row.projected_historical_12m_payments)) {
       projectedHistorical12mByTicker[ticker] = row.projected_historical_12m_payments;
     }
+    if (row.name) nameByTicker[ticker] = row.name;
+    if (row.projected_cadence) cadenceByTicker[ticker] = row.projected_cadence;
   }
 
   const userDividends: IncomeCalendarUserDividend[] = (dividendsRes.data ?? []).map((d) => ({
@@ -107,6 +119,7 @@ export async function loadCalendarData(
     amount: Number(d.amount),
     currency: d.currency,
     wrapper: d.wrapper as never,
+    ticker: d.ticker_scoring ?? undefined,
   }));
 
   // Collect every currency we might need to convert. Start with holdings'
@@ -141,5 +154,7 @@ export async function loadCalendarData(
     ratesToPrimary,
     projectedNext12mByTicker,
     projectedHistorical12mByTicker,
+    nameByTicker,
+    cadenceByTicker,
   };
 }
