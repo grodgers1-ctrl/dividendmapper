@@ -238,8 +238,11 @@ function buildDrilldownPayments(
       ticker: p.ticker,
       exDate: p.exDate,
       payDate: p.payDate,
-      nativeAmount: p.gbp, // TODO Slice B: native amount via richer next-3 shape
-      nativeCurrency: calendar.primaryCurrency,
+      // DrilldownPanel renders nativeAmount as the per-share figure, e.g.
+      // "1.98 GBp" alongside the total primary "× 50 = £0.99".
+      nativeAmount: p.perShareNative,
+      nativeCurrency: p.nativeCurrency,
+      quantity: p.quantity,
       primaryAmount: p.gbp,
       wrapper: p.wrapper,
       confidence: "confirmed" as const,

@@ -10,7 +10,7 @@ const stubCalendar: IncomeCalendarResult = {
     { ym: "2026-07", segments: [{ kind: "confirmed-forecast", primary: 95 }], gbp: 95, kind: "confirmed-forecast" },
   ],
   nextThree: [
-    { ticker: "PHP.L", exDate: "2026-07-02", payDate: "2026-07-09", gbp: 42, wrapper: "isa" },
+    { ticker: "PHP.L", exDate: "2026-07-02", payDate: "2026-07-09", gbp: 42, wrapper: "isa", perShareNative: 4.2, nativeCurrency: "GBp", quantity: 1000 },
   ],
 };
 

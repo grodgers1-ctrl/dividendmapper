@@ -70,8 +70,13 @@ export interface IncomeCalendarNextEx {
   ticker: string;
   exDate: string;
   payDate: string | null;
-  gbp: number;
+  gbp: number;                // total in primary currency
   wrapper: Wrapper;
+  // Slice A polish: drilldown read these to render "1.98 GBp × 50 = £0.99"
+  // instead of "99 GBP £99" (same number twice with wrong native unit).
+  perShareNative: number;     // per-share amount in its native currency
+  nativeCurrency: string;     // e.g. "GBp", "USD"
+  quantity: number;           // holding quantity
 }
 
 export interface IncomeCalendarResult {
@@ -218,6 +223,9 @@ export function buildIncomeCalendar(args: BuildArgs): IncomeCalendarResult {
       payDate: ex.pay_date,
       gbp: total,
       wrapper: h.wrapper,
+      perShareNative: ex.amount,
+      nativeCurrency: ex.currency,
+      quantity: h.quantity,
     });
   }
   candidates.sort((a, b) => (a.exDate < b.exDate ? -1 : a.exDate > b.exDate ? 1 : 0));
