@@ -240,7 +240,7 @@ export function Screener({
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by ticker or name — e.g. O, MAIN, British Land"
+            placeholder="Search by ticker or name (e.g. O, MAIN, British Land)"
             className="h-10 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground/70"
             autoComplete="off"
           />
@@ -328,7 +328,7 @@ export function Screener({
       <div className="rounded-xl border border-border bg-card">
         <div className="flex items-baseline justify-between gap-3 border-b border-border p-3">
           <p className="text-sm font-medium text-foreground">
-            Filtered results — {countLabel}
+            Filtered results: {countLabel}
           </p>
           {showSaveScreenAction ? (
             <button
@@ -449,7 +449,7 @@ export function Screener({
                             state === "saved"
                               ? `${r.ticker} added to watchlist`
                               : state === "error"
-                                ? `Could not add ${r.ticker} — try again`
+                                ? `Could not add ${r.ticker}. Try again.`
                                 : `Add ${r.ticker} to watchlist`;
                           const tone =
                             state === "saved"

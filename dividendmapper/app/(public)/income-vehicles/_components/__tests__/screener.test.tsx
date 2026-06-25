@@ -37,7 +37,7 @@ describe("<Screener>", () => {
     expect(screen.getByText("O")).toBeInTheDocument();
     expect(screen.getByText("MAIN")).toBeInTheDocument();
     expect(screen.getByText("BLND.L")).toBeInTheDocument();
-    expect(screen.getByText(/Filtered results — 3 vehicles/)).toBeInTheDocument();
+    expect(screen.getByText(/Filtered results: 3 vehicles/)).toBeInTheDocument();
   });
 
   it("narrows by family chip", async () => {
@@ -47,7 +47,7 @@ describe("<Screener>", () => {
     expect(screen.getByText("MAIN")).toBeInTheDocument();
     expect(screen.queryByText("O")).not.toBeInTheDocument();
     expect(screen.queryByText("BLND.L")).not.toBeInTheDocument();
-    expect(screen.getByText(/Filtered results — 1 vehicle/)).toBeInTheDocument();
+    expect(screen.getByText(/Filtered results: 1 vehicle/)).toBeInTheDocument();
   });
 
   it("narrows the table when typing in the search box", async () => {
