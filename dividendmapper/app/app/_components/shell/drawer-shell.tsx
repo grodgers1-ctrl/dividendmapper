@@ -2,6 +2,7 @@ import { DrawerCollapsedProvider } from "./drawer-collapsed-context";
 import { Drawer } from "./drawer";
 import { MobileDrawer } from "./mobile-drawer";
 import { TopBar } from "./top-bar";
+import { LocaleToggle } from "@/components/locale-toggle";
 import type { TierLike } from "./nav-items";
 
 // Server component. Owns the full-viewport shell layout:
@@ -33,6 +34,7 @@ export function DrawerShell({
             leftAdornment={
               <MobileDrawer email={email} tier={tier} isAdmin={isAdmin} />
             }
+            actionsSlot={<LocaleToggle />}
           />
           <div className="flex-1 overflow-y-auto px-4 py-6 md:px-8">
             {children}
