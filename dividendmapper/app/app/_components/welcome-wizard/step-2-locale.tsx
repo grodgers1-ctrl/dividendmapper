@@ -1,6 +1,7 @@
 "use client";
 
 import { useLocale } from "@/lib/locale/context";
+import { LocaleToggle } from "@/components/locale-toggle";
 
 export interface Step2LocaleProps {
   onAdvance: () => void;
@@ -21,12 +22,14 @@ export function Step2Locale({ onAdvance, onBack }: Step2LocaleProps) {
           Heads up. This toggle controls the wrappers and currency we show.
         </h2>
         <p className="mt-2 text-sm text-[var(--text-muted)]">
-          Set to {label} based on your browser. Switch any time from the header.
-        </p>
-        <p className="mt-3 text-xs text-[var(--text-muted)]">
-          Look for the 🇬🇧 / 🇺🇸 toggle in the top-right of the page.
+          Set to {label} based on your browser. Switch any time from the header, or right here.
         </p>
       </div>
+
+      <div className="flex justify-center">
+        <LocaleToggle />
+      </div>
+
       <div className="mt-auto flex items-center justify-between">
         <button
           type="button"
