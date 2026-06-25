@@ -192,5 +192,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   });
 
+  // Dividend calendar public landing — flagship marketing surface.
+  entries.push({
+    url: `${SITE_URL}/dividend-calendar`,
+    lastModified: now,
+    changeFrequency: "weekly",
+    priority: 0.9,
+  });
+
   return entries;
 }
