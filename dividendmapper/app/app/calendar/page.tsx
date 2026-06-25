@@ -84,21 +84,23 @@ export default async function CalendarPage() {
   // serves as the page's own visual anchor. Topography motif is a subtle echo
   // of the public landing hero for visual identity.
   return (
-    <div className="relative isolate">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 -top-8 -z-10 h-[420px] overflow-hidden opacity-60"
-      >
-        <TopographyMotif intensity="subtle" className="h-full w-full" />
+    <div className="mx-auto max-w-7xl px-4 py-8 md:px-6 md:py-12">
+      <div className="relative isolate">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 -top-8 -z-10 h-[420px] overflow-hidden opacity-60"
+        >
+          <TopographyMotif intensity="subtle" className="h-full w-full" />
+        </div>
+        <CalendarShell
+          locale={locale}
+          calendar={calendar}
+          userDividends={userDividends}
+          ratesToPrimary={ratesToPrimary}
+          showEmptyStateCta={pastUserDividendsCount === 0}
+          portfolioValuePrimary={portfolioValuePrimary}
+        />
       </div>
-      <CalendarShell
-        locale={locale}
-        calendar={calendar}
-        userDividends={userDividends}
-        ratesToPrimary={ratesToPrimary}
-        showEmptyStateCta={pastUserDividendsCount === 0}
-        portfolioValuePrimary={portfolioValuePrimary}
-      />
     </div>
   );
 }
