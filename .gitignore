@@ -64,3 +64,5 @@ next-env.d.ts
 # Buy Score backtest — large cache & output, never committed
 .backtest-cache/
 backtest-out/
+
+.superpowers/
