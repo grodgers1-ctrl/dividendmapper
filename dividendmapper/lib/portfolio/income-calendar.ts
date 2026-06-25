@@ -303,10 +303,11 @@ export function buildIncomeCalendar(args: BuildArgs): IncomeCalendarResult {
     );
   }
 
-  // Slice B: forward projection — only fills future buckets that don't already
-  // carry a confirmed-forecast segment (so the confirmed always wins). Also
-  // skips months matching a confirmed next_ex_div pay_date so a projected
-  // segment doesn't double-count the same payment.
+  // Slice B: forward projection. Fills future buckets with this ticker's
+  // projected payments. Per-ticker `confirmedPayKey` check above blocks the
+  // same ticker from contributing both confirmed and projected for the same
+  // month. Other tickers' confirmed-forecast segments DO NOT block this
+  // ticker's projection (Bug A 2026-06-25 fix).
   if (args.projectedNext12mByTicker) {
     for (const h of holdings) {
       if (!passesWrapperFilter(h.wrapper, wrapperFilter)) continue;
@@ -322,7 +323,6 @@ export function buildIncomeCalendar(args: BuildArgs): IncomeCalendarResult {
         const bucket = buckets.get(key);
         if (!bucket) continue;
         if (bucket.kind !== "confirmed-forecast") continue;
-        if (bucket.segments.some((s) => s.kind === "confirmed-forecast")) continue;
         const perShare = convertToPrimary(r.per_share_amount, r.currency, ratesToGbp);
         if (perShare === null) continue;
         const total = perShare * h.quantity;
