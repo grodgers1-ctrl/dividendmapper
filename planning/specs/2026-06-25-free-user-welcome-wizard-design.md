@@ -125,7 +125,7 @@ All user-facing copy below has cleared the humaniser pass. Em dashes ✓ none. A
 - Sub-head: *"Nothing on this page is locked behind a paywall. Just so you know what's there."*
 - Four mini-tiles in a 2×2 grid (1-col stack on mobile):
   1. *"Resilience scores"* · *"Every holding, every night."*
-  2. *"Quality, Trim, Reinvest"* · *"Recommendations on each holding."*
+  2. *"Quality, Trim, Risk"* · *"Scores on every equity holding."*
   3. *"Dividend calendar"* · *"18 months out, projected."*
   4. *"Unlimited holdings and watchlist"* · *"With threshold alerts."*
 - Bottom row:
@@ -346,7 +346,7 @@ Hand-verified at apply time rather than unit-tested:
 ## Memory cross-refs
 
 - [feedback_humaniser_mandatory]: all user-facing copy in this spec has cleared the humaniser pass.
-- [project_buy_renamed_to_quality]: step 5 tile copy uses "Quality, Trim, Reinvest" not "Buy".
+- [project_buy_renamed_to_quality]: step 5 tile copy uses "Quality, Trim, Risk" (the equity score triad) not "Buy".
 - [reference_app_page_auth_guard]: layout-level guard pattern preserved.
 - [reference_app_marketing_chrome_split]: the wizard renders under `/app/*` so it inherits the drawer shell, not marketing chrome.
 - [feedback_supabase_promiselike_chain]: `next build` locally before any push touching new tables.
