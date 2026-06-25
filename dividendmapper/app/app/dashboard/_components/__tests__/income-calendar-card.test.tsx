@@ -39,14 +39,17 @@ describe("IncomeCalendarCard", () => {
     expect(getByText("TW.L")).toBeInTheDocument();
   });
 
-  it("omits the reinvest section when reinvestCard is null", () => {
-    const { queryByTestId } = render(
+  it("links to the full /app/calendar surface (Slice A lite-mode)", () => {
+    const { getByRole } = render(
       <IncomeCalendarCard calendar={calendarFixture()} reinvestCard={null} />,
     );
-    expect(queryByTestId("inline-reinvest")).toBeNull();
+    expect(getByRole("link", { name: /open full calendar/i })).toHaveAttribute(
+      "href",
+      "/app/calendar",
+    );
   });
 
-  it("renders the inline reinvest section when reinvestCard is provided", () => {
+  it("does not render an inline reinvest section in lite-mode, even when reinvestCard is provided", () => {
     const reinvestCard = {
       trigger: {
         holdingId: "h1",
@@ -56,23 +59,15 @@ describe("IncomeCalendarCard", () => {
         estPaymentGbp: 3.02,
         currentWeight: 0.07,
       },
-      candidates: [
-        {
-          holdingId: "h2",
-          ticker: "ARCC",
-          buyScore: 75,
-          currentWeight: 0.02,
-          diversificationNote: null,
-        },
-      ],
+      candidates: [],
     };
-    const { getByTestId } = render(
+    const { queryByTestId } = render(
       <IncomeCalendarCard
         calendar={calendarFixture()}
         reinvestCard={reinvestCard as never}
       />,
     );
-    expect(getByTestId("inline-reinvest")).toBeInTheDocument();
+    expect(queryByTestId("inline-reinvest")).toBeNull();
   });
 
   it("uses the shared card-surface utility class", () => {

@@ -1,5 +1,6 @@
 import {
   LayoutDashboard,
+  Calendar as CalendarIcon,
   Briefcase,
   TrendingUp,
   Star,
@@ -22,10 +23,15 @@ export type NavItem = {
 
 // Single source of truth for the drawer's nav list. `exact: true` on Ledger
 // prevents it from also highlighting under /app/portfolio/scoring etc.
-// Phase 4 will add `group` to split Portfolio / Research without touching
-// consumers; v1 ships flat.
+// Calendar (Pro) sits between Dashboard and Ledger.
 export const DEFAULT_NAV_ITEMS: readonly NavItem[] = [
   { href: "/app/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  {
+    href: "/app/calendar",
+    label: "Calendar",
+    icon: CalendarIcon,
+    requiresPro: true,
+  },
   { href: "/app/portfolio", label: "Ledger", icon: Briefcase, exact: true },
   {
     href: "/app/portfolio/scoring",
