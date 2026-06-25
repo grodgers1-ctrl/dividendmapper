@@ -10,6 +10,7 @@
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { ratesToGbpFor } from "@/lib/scoring/currency";
+import { inferExDivNativeCurrency } from "@/lib/portfolio/ex-div-currency";
 import type { HoldingRow } from "@/lib/portfolio/load-priced-holdings";
 import type {
   IncomeCalendarExDiv,
@@ -68,12 +69,7 @@ export async function loadCalendarData(
   for (const row of exDivRes.data ?? []) {
     if (row.next_ex_div_date && row.next_ex_div_amount != null) {
       const ticker = row.ticker;
-      // equity_scores stores ex_date/pay_date but no per-share currency — the
-      // holdings query is the source of truth for the symbol's native cost
-      // currency. For ex-div forecasts we trust the holding's cost_currency
-      // since FMP returns amounts in the symbol's reporting currency.
-      const h = holdings.find((x) => x.ticker === ticker);
-      const currency = h?.cost_currency ?? "USD";
+      const currency = inferExDivNativeCurrency(ticker);
       exDivByTicker[ticker] = {
         ex_date: row.next_ex_div_date,
         pay_date: row.next_ex_div_pay_date,

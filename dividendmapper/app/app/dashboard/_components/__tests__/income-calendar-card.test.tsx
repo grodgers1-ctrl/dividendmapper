@@ -21,9 +21,9 @@ function calendarFixture(): IncomeCalendarResult {
       { ym: "2026-11", gbp: 20, kind: "confirmed-forecast", segments: [{ kind: "confirmed-forecast", primary: 20 }] },
     ],
     nextThree: [
-      { ticker: "PHP.L", exDate: "2026-07-02", payDate: "2026-08-14", gbp: 3.02, wrapper: "isa" },
-      { ticker: "ARCC",  exDate: "2026-07-28", payDate: "2026-09-30", gbp: 8.15, wrapper: "gia" },
-      { ticker: "TW.L",  exDate: "2026-08-14", payDate: "2026-11-07", gbp: 15.4, wrapper: "isa" },
+      { ticker: "PHP.L", exDate: "2026-07-02", payDate: "2026-08-14", gbp: 3.02, wrapper: "isa", perShareNative: 1.68, nativeCurrency: "GBp", quantity: 180 },
+      { ticker: "ARCC",  exDate: "2026-07-28", payDate: "2026-09-30", gbp: 8.15, wrapper: "gia", perShareNative: 0.48, nativeCurrency: "USD", quantity: 21 },
+      { ticker: "TW.L",  exDate: "2026-08-14", payDate: "2026-11-07", gbp: 15.4, wrapper: "isa", perShareNative: 4.62, nativeCurrency: "GBp", quantity: 333 },
     ],
   };
 }

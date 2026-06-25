@@ -24,8 +24,13 @@ export interface DrilldownPayment {
   ticker: string;
   exDate: string;
   payDate: string | null;
+  /** Per-share figure in its native currency (e.g. 1.98 for 1.98p). */
   nativeAmount: number;
+  /** e.g. "GBp", "USD". */
   nativeCurrency: string;
+  /** Holding quantity; rendered as "× N" between per-share and total. */
+  quantity?: number;
+  /** Total payment in the user's primary currency. */
   primaryAmount: number;
   wrapper: Wrapper;
   confidence: ProjectedConfidence;
@@ -55,6 +60,13 @@ function formatPrimary(n: number, currency: "GBP" | "USD"): string {
     maximumFractionDigits: 2,
   });
   return fmt.format(n);
+}
+
+function formatNativePerShare(amount: number, currency: string): string {
+  // GBp (pence) reads better with 2-3 dp (1.98p, 0.265 USD). USD uses 2 dp
+  // for forecast amounts; everything else gets 2 dp as a sensible default.
+  const dp = currency === "GBp" || currency === "GBX" ? 2 : currency === "USD" ? 3 : 2;
+  return `${amount.toFixed(dp)} ${currency}`;
 }
 
 function emptyMessage(reason: DrilldownPanelProps["emptyReason"]): string {
@@ -92,8 +104,11 @@ export function DrilldownPanel({ primaryCurrency, payments, emptyReason }: Drill
               <span className="text-[var(--text-muted)]">
                 ex {formatDate(p.exDate)} · pay {formatDate(p.payDate)}
               </span>
-              <span className="text-[var(--text-muted)]">
-                {p.nativeAmount.toFixed(2)} {p.nativeCurrency}
+              <span className="text-[var(--text-muted)] tabular-nums">
+                {formatNativePerShare(p.nativeAmount, p.nativeCurrency)}
+                {p.quantity !== undefined && (
+                  <span className="text-[var(--text-muted)]"> × {p.quantity}</span>
+                )}
               </span>
               <span className="font-mono tabular-nums text-[var(--text)]">
                 {formatPrimary(p.primaryAmount, primaryCurrency)}

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { CalendarChart } from "../calendar-chart";
 import type { IncomeCalendarMonth } from "@/lib/portfolio/income-calendar";
 
@@ -66,5 +66,52 @@ describe("CalendarChart (Slice A)", () => {
   it("supports prefers-reduced-motion via a data-attribute the CSS keys on", () => {
     render(<CalendarChart months={months} onSelectMonth={() => {}} />);
     expect(screen.getByTestId("calendar-chart-root")).toHaveAttribute("data-respect-reduced-motion", "true");
+  });
+
+  it("renders three y-axis ticks at 0, max/2 and max in the primary currency", () => {
+    render(<CalendarChart months={months} onSelectMonth={() => {}} primaryCurrency="GBP" />);
+    // Max is 130 (Apr); ticks render at £130, £65, £0.
+    expect(screen.getByTestId("calendar-y-tick-max")).toHaveTextContent("£130");
+    expect(screen.getByTestId("calendar-y-tick-mid")).toHaveTextContent("£65");
+    expect(screen.getByTestId("calendar-y-tick-zero")).toHaveTextContent("£0");
+  });
+
+  it("uses $ for the y-axis when primaryCurrency is USD", () => {
+    render(<CalendarChart months={months} onSelectMonth={() => {}} primaryCurrency="USD" />);
+    expect(screen.getByTestId("calendar-y-tick-max")).toHaveTextContent("$130");
+  });
+
+  it("shows a tooltip with month + total on hover", () => {
+    render(<CalendarChart months={months} onSelectMonth={() => {}} primaryCurrency="GBP" />);
+    expect(screen.queryByTestId("calendar-tooltip")).toBeNull();
+    fireEvent.mouseEnter(screen.getByTestId("calendar-bar-2026-04"));
+    const tooltip = screen.getByTestId("calendar-tooltip");
+    expect(tooltip).toHaveTextContent(/Apr/);
+    expect(screen.getByTestId("calendar-tooltip-total")).toHaveTextContent("£130");
+    fireEvent.mouseLeave(screen.getByTestId("calendar-bar-2026-04"));
+    expect(screen.queryByTestId("calendar-tooltip")).toBeNull();
+  });
+
+  it("tooltip lists per-segment breakdown when a month has multiple segments", () => {
+    const mixedMonth: IncomeCalendarMonth = {
+      ym: "2026-04",
+      gbp: 150,
+      kind: "actual",
+      segments: [
+        { kind: "actual", primary: 100 },
+        { kind: "partial", primary: 50 },
+      ],
+    };
+    render(
+      <CalendarChart
+        months={[mixedMonth]}
+        onSelectMonth={() => {}}
+        primaryCurrency="GBP"
+      />,
+    );
+    fireEvent.mouseEnter(screen.getByTestId("calendar-bar-2026-04"));
+    const tooltip = screen.getByTestId("calendar-tooltip");
+    expect(tooltip).toHaveTextContent(/Received/);
+    expect(tooltip).toHaveTextContent(/Received MTD/);
   });
 });
