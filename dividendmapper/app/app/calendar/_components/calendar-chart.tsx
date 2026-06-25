@@ -118,18 +118,36 @@ export function CalendarChart({
               >
                 {m.segments.map((seg, i) => {
                   const segHeight = max > 0 && m.gbp > 0 ? (seg.primary / m.gbp) * 100 : 0;
+                  const isProjected =
+                    seg.kind === "projected-cadence" ||
+                    seg.kind === "projected-growth" ||
+                    seg.kind === "growth-clipped";
                   return (
                     <span
                       key={`${m.ym}-${seg.kind}-${i}`}
                       data-testid="calendar-bar-segment"
                       data-kind={seg.kind}
-                      className="block w-full first:rounded-t-sm"
+                      className="relative block w-full first:rounded-t-sm"
                       style={{
                         height: `${segHeight}%`,
                         backgroundColor: "var(--brand)",
+                        backgroundImage: isProjected
+                          ? "repeating-linear-gradient(45deg, rgba(255,255,255,0.15) 0, rgba(255,255,255,0.15) 2px, transparent 2px, transparent 5px)"
+                          : undefined,
                         opacity: OPACITY[seg.kind],
                       }}
-                    />
+                    >
+                      {seg.kind === "growth-clipped" && (
+                        <span
+                          data-testid="growth-clipped-glyph"
+                          aria-hidden
+                          title="Growth rate capped at ±20%/yr"
+                          className="absolute right-0 top-0 -translate-y-1/2 text-[10px] leading-none text-[var(--text)]"
+                        >
+                          ⚠
+                        </span>
+                      )}
+                    </span>
                   );
                 })}
               </button>

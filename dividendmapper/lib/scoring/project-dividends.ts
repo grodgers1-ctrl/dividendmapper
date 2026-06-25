@@ -1,0 +1,202 @@
+// Bidirectional dividend projection engine. Pure — no DB, no rendering.
+// Inputs: per-ticker FMP historical payments + a single holding row.
+// Outputs: ProjectedPayment[] for the requested direction.
+//
+// Algorithm:
+//   1. Cadence detection from median inter-payment gap.
+//   2. 3yr CAGR growth rate over COMPLETE calendar years only (partial-year
+//      tails are dropped so YTD payments don't skew the rate). Capped ±20%.
+//   3. Cut/freeze dominance: latest payment < 95% of trailing-12m-avg → 0 growth.
+//   4. Sub-history fallback (<4 payments) → cadence='unknown' → return [].
+//   5. Backward direction: floor = max(holding.createdAt, today - 6mo).
+
+export type Cadence = "monthly" | "quarterly" | "semi" | "annual" | "irregular" | "unknown";
+
+export type ProjectionConfidence =
+  | "cadence"
+  | "cadence+growth"
+  | "growth-clipped"
+  | "growth-unknown";
+
+export interface HistoricalPayment {
+  exDate: string;       // YYYY-MM-DD
+  amount: number;       // per-share native
+}
+
+export interface ProjectedPayment {
+  exDate: string;
+  payDate: string;
+  perShareAmount: number;
+  currency: string;
+  confidence: ProjectionConfidence;
+}
+
+export interface ProjectDividendsArgs {
+  ticker: string;
+  historicalPayments: ReadonlyArray<HistoricalPayment>;
+  holding: { quantity: number; createdAt: string | null };
+  today: Date;
+  direction: "forward" | "backward";
+  currency: string;
+}
+
+const GROWTH_CAP = 0.20;
+
+const CADENCE_BUCKETS: ReadonlyArray<{
+  cadence: Cadence;
+  min: number;
+  max: number;
+  payOffsetDays: number;
+}> = [
+  { cadence: "monthly",   min: 28,  max: 35,  payOffsetDays: 7 },
+  { cadence: "quarterly", min: 85,  max: 95,  payOffsetDays: 14 },
+  { cadence: "semi",      min: 175, max: 190, payOffsetDays: 28 },
+  { cadence: "annual",    min: 355, max: 370, payOffsetDays: 28 },
+];
+
+export function detectCadence(history: ReadonlyArray<HistoricalPayment>): Cadence {
+  if (history.length < 4) return "unknown";
+  const sorted = [...history].sort((a, b) => (a.exDate < b.exDate ? -1 : 1));
+  const gaps: number[] = [];
+  for (let i = 1; i < sorted.length; i++) {
+    const ms = new Date(sorted[i].exDate).getTime() - new Date(sorted[i - 1].exDate).getTime();
+    gaps.push(ms / 86_400_000);
+  }
+  gaps.sort((a, b) => a - b);
+  const median = gaps[Math.floor(gaps.length / 2)];
+  const bucket = CADENCE_BUCKETS.find((b) => median >= b.min && median <= b.max);
+  return bucket?.cadence ?? "irregular";
+}
+
+export function computeGrowthRate(history: ReadonlyArray<HistoricalPayment>): number {
+  // Aggregate payments per calendar year and count.
+  const sumByYear = new Map<number, number>();
+  const countByYear = new Map<number, number>();
+  for (const h of history) {
+    const y = Number(h.exDate.slice(0, 4));
+    sumByYear.set(y, (sumByYear.get(y) ?? 0) + h.amount);
+    countByYear.set(y, (countByYear.get(y) ?? 0) + 1);
+  }
+  // "Complete" year = one with the modal payment count (drops partial-year
+  // tails like a YTD 2 vs the historical 4).
+  const counts = [...countByYear.values()];
+  if (counts.length === 0) return 0;
+  const maxCount = counts.reduce((m, c) => (c > m ? c : m), 0);
+  const completeYears = [...sumByYear.entries()]
+    .filter(([y]) => (countByYear.get(y) ?? 0) === maxCount)
+    .sort((a, b) => a[0] - b[0]);
+  if (completeYears.length < 2) return 0;
+  const start = completeYears[0][1];
+  const end = completeYears[completeYears.length - 1][1];
+  const n = completeYears.length - 1;
+  if (start <= 0) return 0;
+  const cagr = Math.pow(end / start, 1 / n) - 1;
+  if (cagr > GROWTH_CAP) return GROWTH_CAP;
+  if (cagr < -GROWTH_CAP) return -GROWTH_CAP;
+  return cagr;
+}
+
+function trailingTwelveMonthAvg(
+  history: ReadonlyArray<HistoricalPayment>,
+  today: Date,
+): number {
+  const cutoff = new Date(today.getTime() - 365 * 86_400_000).toISOString().slice(0, 10);
+  const recent = history.filter((h) => h.exDate >= cutoff);
+  if (recent.length === 0) return 0;
+  return recent.reduce((s, h) => s + h.amount, 0) / recent.length;
+}
+
+function addDays(iso: string, days: number): string {
+  return new Date(new Date(iso).getTime() + days * 86_400_000)
+    .toISOString()
+    .slice(0, 10);
+}
+
+function payOffsetDaysFor(cadence: Cadence): number {
+  return CADENCE_BUCKETS.find((b) => b.cadence === cadence)?.payOffsetDays ?? 14;
+}
+
+function gapDaysFor(cadence: Cadence): number {
+  // Midpoint of the bucket — close enough for projection.
+  const b = CADENCE_BUCKETS.find((c) => c.cadence === cadence);
+  return b ? (b.min + b.max) / 2 : 0;
+}
+
+function round4(n: number): number {
+  return Math.round(n * 10_000) / 10_000;
+}
+
+export function projectDividends(args: ProjectDividendsArgs): ProjectedPayment[] {
+  const { historicalPayments: history, holding, today, direction, currency } = args;
+
+  const cadence = detectCadence(history);
+  if (cadence === "unknown" || cadence === "irregular") return [];
+
+  const sorted = [...history].sort((a, b) => (a.exDate < b.exDate ? -1 : 1));
+  const latest = sorted[sorted.length - 1];
+  const ttmAvg = trailingTwelveMonthAvg(history, today);
+
+  const isCutOrFreeze = ttmAvg > 0 && latest.amount < 0.95 * ttmAvg;
+  const growthRate = isCutOrFreeze ? 0 : computeGrowthRate(history);
+  const hadEnoughHistory = history.length >= 4;
+  const baseAmount = latest.amount;
+
+  const confidence: ProjectionConfidence = isCutOrFreeze
+    ? "cadence"
+    : !hadEnoughHistory
+      ? "growth-unknown"
+      : growthRate === GROWTH_CAP || growthRate === -GROWTH_CAP
+        ? "growth-clipped"
+        : growthRate !== 0
+          ? "cadence+growth"
+          : "cadence";
+
+  const gapDays = gapDaysFor(cadence);
+  const payOffsetDays = payOffsetDaysFor(cadence);
+
+  const todayIso = today.toISOString().slice(0, 10);
+  const sixMoAgoIso = addDays(todayIso, -180);
+
+  const out: ProjectedPayment[] = [];
+
+  if (direction === "forward") {
+    const endIso = addDays(todayIso, 365);
+    let cursor = latest.exDate;
+    while (true) {
+      cursor = addDays(cursor, gapDays);
+      if (cursor > endIso) break;
+      if (cursor <= todayIso) continue; // past slot — caller has user_dividends or backward proj
+      const yearsFromNow =
+        (new Date(cursor).getTime() - today.getTime()) / (365 * 86_400_000);
+      const amount = baseAmount * Math.pow(1 + growthRate, Math.max(0, yearsFromNow));
+      out.push({
+        exDate: cursor,
+        payDate: addDays(cursor, payOffsetDays),
+        perShareAmount: round4(amount),
+        currency,
+        confidence,
+      });
+    }
+  } else {
+    // Backward: walk forward in cadence from the earliest historical payment,
+    // emit only those between max(holding.createdAt, today - 6mo) and today.
+    const createdAt = holding.createdAt ? holding.createdAt.slice(0, 10) : sixMoAgoIso;
+    const floor = createdAt > sixMoAgoIso ? createdAt : sixMoAgoIso;
+
+    let cursor = sorted[0].exDate;
+    while (cursor < todayIso) {
+      cursor = addDays(cursor, gapDays);
+      if (cursor < floor) continue;
+      if (cursor > todayIso) break;
+      out.push({
+        exDate: cursor,
+        payDate: addDays(cursor, payOffsetDays),
+        perShareAmount: round4(baseAmount),
+        currency,
+        confidence,
+      });
+    }
+  }
+
+  return out;
+}

@@ -27,11 +27,13 @@ export default async function CalendarPage() {
   // TODO Slice B: read locale from user settings. UK default for now.
   const locale = "uk" as const;
 
-  const { userDividends, exDivByTicker, ratesToPrimary } = await loadCalendarData(
-    user.id,
-    priced.allHoldings,
-    locale,
-  );
+  const {
+    userDividends,
+    exDivByTicker,
+    ratesToPrimary,
+    projectedNext12mByTicker,
+    projectedHistorical12mByTicker,
+  } = await loadCalendarData(user.id, priced.allHoldings, locale);
 
   const holdings = priced.allHoldings.map((h) => ({
     ticker: h.ticker,
@@ -48,6 +50,8 @@ export default async function CalendarPage() {
     now: new Date(),
     locale,
     wrapperFilter: "all",
+    projectedNext12mByTicker,
+    projectedHistorical12mByTicker,
   });
 
   const sixMoAgo = new Date();

@@ -11,6 +11,7 @@ const BASE_NAV = [
   { href: "/tools/dcf-calculator", label: "DCF" },
   { href: "/scoring", label: "Resilience" },
   { href: "/income-vehicles", label: "Income vehicles" },
+  { href: "/dividend-calendar", label: "Dividend calendar" },
   { href: "/blog", label: "Research" },
 ];
 

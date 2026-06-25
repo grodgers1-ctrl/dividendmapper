@@ -16,17 +16,19 @@ import type {
   IncomeCalendarExDiv,
   IncomeCalendarUserDividend,
   Locale,
+  ProjectedPaymentRow,
 } from "@/lib/portfolio/income-calendar";
 
 // 200 days back covers the 6-past-month chart slots + most of the YTD KPIs.
-// Slice B will widen to ~13 months for the last-12-months KPI; for Slice A
-// the metric implicitly truncates at this window.
-const PAST_DAYS = 200;
+// Slice B widened to ~13 months so last-12-months KPIs aren't truncated.
+const PAST_DAYS = 400;
 
 export interface CalendarData {
   userDividends: IncomeCalendarUserDividend[];
   exDivByTicker: Record<string, IncomeCalendarExDiv>;
   ratesToPrimary: Record<string, number>;
+  projectedNext12mByTicker: Record<string, ProjectedPaymentRow[]>;
+  projectedHistorical12mByTicker: Record<string, ProjectedPaymentRow[]>;
 }
 
 export async function loadCalendarData(
@@ -43,10 +45,21 @@ export async function loadCalendarData(
 
   const [exDivRes, dividendsRes] = await Promise.all([
     tickers.length === 0
-      ? Promise.resolve({ data: [] as Array<{ ticker: string; next_ex_div_date: string | null; next_ex_div_amount: number | null; next_ex_div_pay_date: string | null }> })
+      ? Promise.resolve({
+          data: [] as Array<{
+            ticker: string;
+            next_ex_div_date: string | null;
+            next_ex_div_amount: number | null;
+            next_ex_div_pay_date: string | null;
+            projected_next_12m_payments: ProjectedPaymentRow[] | null;
+            projected_historical_12m_payments: ProjectedPaymentRow[] | null;
+          }>,
+        })
       : supabase
           .from("equity_scores")
-          .select("ticker, next_ex_div_date, next_ex_div_amount, next_ex_div_pay_date")
+          .select(
+            "ticker, next_ex_div_date, next_ex_div_amount, next_ex_div_pay_date, projected_next_12m_payments, projected_historical_12m_payments",
+          )
           .in("ticker", tickers)
           .returns<
             {
@@ -54,6 +67,8 @@ export async function loadCalendarData(
               next_ex_div_date: string | null;
               next_ex_div_amount: number | null;
               next_ex_div_pay_date: string | null;
+              projected_next_12m_payments: ProjectedPaymentRow[] | null;
+              projected_historical_12m_payments: ProjectedPaymentRow[] | null;
             }[]
           >(),
     supabase
@@ -66,9 +81,11 @@ export async function loadCalendarData(
   ]);
 
   const exDivByTicker: Record<string, IncomeCalendarExDiv> = {};
+  const projectedNext12mByTicker: Record<string, ProjectedPaymentRow[]> = {};
+  const projectedHistorical12mByTicker: Record<string, ProjectedPaymentRow[]> = {};
   for (const row of exDivRes.data ?? []) {
+    const ticker = row.ticker;
     if (row.next_ex_div_date && row.next_ex_div_amount != null) {
-      const ticker = row.ticker;
       const currency = inferExDivNativeCurrency(ticker);
       exDivByTicker[ticker] = {
         ex_date: row.next_ex_div_date,
@@ -76,6 +93,12 @@ export async function loadCalendarData(
         amount: Number(row.next_ex_div_amount),
         currency,
       };
+    }
+    if (Array.isArray(row.projected_next_12m_payments)) {
+      projectedNext12mByTicker[ticker] = row.projected_next_12m_payments;
+    }
+    if (Array.isArray(row.projected_historical_12m_payments)) {
+      projectedHistorical12mByTicker[ticker] = row.projected_historical_12m_payments;
     }
   }
 
@@ -112,5 +135,11 @@ export async function loadCalendarData(
     ratesToPrimary = { ...ratesToGbp, GBP: 1 };
   }
 
-  return { userDividends, exDivByTicker, ratesToPrimary };
+  return {
+    userDividends,
+    exDivByTicker,
+    ratesToPrimary,
+    projectedNext12mByTicker,
+    projectedHistorical12mByTicker,
+  };
 }

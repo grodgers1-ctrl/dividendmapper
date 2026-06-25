@@ -87,6 +87,14 @@ export interface IncomeCalendarResult {
 
 export type WrapperFilter = "all" | Wrapper;
 
+export interface ProjectedPaymentRow {
+  ex_date: string;
+  pay_date: string;
+  per_share_amount: number;
+  currency: string;
+  confidence: "cadence" | "cadence+growth" | "growth-clipped" | "growth-unknown";
+}
+
 interface BuildArgs {
   userDividends: IncomeCalendarUserDividend[];
   holdings: IncomeCalendarHolding[];
@@ -95,6 +103,12 @@ interface BuildArgs {
   now: Date;
   locale: Locale;
   wrapperFilter?: WrapperFilter;
+  // Slice B projection caches. Forward fills empty future buckets that don't
+  // already carry a confirmed-forecast segment; backward back-fills past
+  // buckets gated on holdings.created_at + a 6mo floor, deduped vs any
+  // user_dividends in the same month.
+  projectedNext12mByTicker?: Record<string, ProjectedPaymentRow[]>;
+  projectedHistorical12mByTicker?: Record<string, ProjectedPaymentRow[]>;
 }
 
 const PAST_MONTHS = 6;
@@ -131,6 +145,21 @@ function pushSegment(month: IncomeCalendarMonth, kind: SegmentKind, primary: num
   const existing = month.segments.find((s) => s.kind === kind);
   if (existing) existing.primary += primary;
   else month.segments.push({ kind, primary });
+}
+
+function confidenceToSegmentKind(c: ProjectedPaymentRow["confidence"]): SegmentKind {
+  switch (c) {
+    case "cadence":         return "projected-cadence";
+    case "cadence+growth":  return "projected-growth";
+    case "growth-clipped":  return "growth-clipped";
+    case "growth-unknown":  return "projected-cadence";
+  }
+}
+
+function dateMinusMonths(d: Date, m: number): string {
+  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() - m, d.getUTCDate()))
+    .toISOString()
+    .slice(0, 10);
 }
 
 function deriveDominant(month: IncomeCalendarMonth): void {
@@ -202,6 +231,62 @@ export function buildIncomeCalendar(args: BuildArgs): IncomeCalendarResult {
     const total = perShare * h.quantity;
     if (!Number.isFinite(total) || total <= 0) continue;
     pushSegment(bucket, "confirmed-forecast", total);
+  }
+
+  // Slice B: forward projection — only fills future buckets that don't already
+  // carry a confirmed-forecast segment (so the confirmed always wins). Also
+  // skips months matching a confirmed next_ex_div pay_date so a projected
+  // segment doesn't double-count the same payment.
+  if (args.projectedNext12mByTicker) {
+    for (const h of holdings) {
+      if (!passesWrapperFilter(h.wrapper, wrapperFilter)) continue;
+      const confirmedPayKey = (() => {
+        const ex = exDivByTicker[h.ticker];
+        return ex?.pay_date ? ymFromIso(ex.pay_date) : null;
+      })();
+      const rows = args.projectedNext12mByTicker[h.ticker] ?? [];
+      for (const r of rows) {
+        if (!r.pay_date) continue;
+        const key = ymFromIso(r.pay_date);
+        if (confirmedPayKey && key === confirmedPayKey) continue;
+        const bucket = buckets.get(key);
+        if (!bucket) continue;
+        if (bucket.kind !== "confirmed-forecast") continue;
+        if (bucket.segments.some((s) => s.kind === "confirmed-forecast")) continue;
+        const perShare = convertToPrimary(r.per_share_amount, r.currency, ratesToGbp);
+        if (perShare === null) continue;
+        const total = perShare * h.quantity;
+        if (!Number.isFinite(total) || total <= 0) continue;
+        pushSegment(bucket, confidenceToSegmentKind(r.confidence), total);
+      }
+    }
+  }
+
+  // Slice B: backward projection — per-user gated on holdings.created_at,
+  // with a 6mo floor so we don't fabricate ancient history for a brand-new
+  // holding. Dedupe vs user_dividends by skipping months that already have
+  // an 'actual' segment.
+  if (args.projectedHistorical12mByTicker) {
+    const sixMoFloorIso = dateMinusMonths(now, 6);
+    for (const h of holdings) {
+      if (!passesWrapperFilter(h.wrapper, wrapperFilter)) continue;
+      const createdAtIso = (h.created_at ?? sixMoFloorIso).slice(0, 10);
+      const floorIso = createdAtIso > sixMoFloorIso ? createdAtIso : sixMoFloorIso;
+      const rows = args.projectedHistorical12mByTicker[h.ticker] ?? [];
+      for (const r of rows) {
+        if (r.ex_date < floorIso) continue;
+        const key = ymFromIso(r.ex_date);
+        const bucket = buckets.get(key);
+        if (!bucket) continue;
+        if (bucket.kind !== "actual") continue;
+        if (bucket.segments.some((s) => s.kind === "actual")) continue;
+        const perShare = convertToPrimary(r.per_share_amount, r.currency, ratesToGbp);
+        if (perShare === null) continue;
+        const total = perShare * h.quantity;
+        if (!Number.isFinite(total) || total <= 0) continue;
+        pushSegment(bucket, confidenceToSegmentKind(r.confidence), total);
+      }
+    }
   }
 
   for (const bucket of buckets.values()) deriveDominant(bucket);

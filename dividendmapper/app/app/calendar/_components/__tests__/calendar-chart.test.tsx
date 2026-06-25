@@ -92,6 +92,33 @@ describe("CalendarChart (Slice A)", () => {
     expect(screen.queryByTestId("calendar-tooltip")).toBeNull();
   });
 
+  it("renders projected-cadence + projected-growth segments with their kind on data-kind", () => {
+    const projectedMonths: IncomeCalendarMonth[] = [
+      { ym: "2026-08", gbp: 50, kind: "projected-cadence", segments: [{ kind: "projected-cadence", primary: 50 }] },
+      { ym: "2026-09", gbp: 60, kind: "projected-growth",  segments: [{ kind: "projected-growth", primary: 60 }] },
+    ];
+    render(<CalendarChart months={projectedMonths} onSelectMonth={() => {}} primaryCurrency="GBP" />);
+    const bars = screen.getAllByTestId("calendar-bar-segment");
+    expect(bars.find((b) => b.getAttribute("data-kind") === "projected-cadence")).toBeTruthy();
+    expect(bars.find((b) => b.getAttribute("data-kind") === "projected-growth")).toBeTruthy();
+  });
+
+  it("renders a ⚠ glyph on growth-clipped segments only", () => {
+    const clippedMonths: IncomeCalendarMonth[] = [
+      { ym: "2026-09", gbp: 60, kind: "growth-clipped", segments: [{ kind: "growth-clipped", primary: 60 }] },
+    ];
+    render(<CalendarChart months={clippedMonths} onSelectMonth={() => {}} primaryCurrency="GBP" />);
+    expect(screen.getByTestId("growth-clipped-glyph")).toBeInTheDocument();
+  });
+
+  it("does NOT render the ⚠ glyph on non-clipped segment kinds", () => {
+    const cleanMonths: IncomeCalendarMonth[] = [
+      { ym: "2026-08", gbp: 60, kind: "confirmed-forecast", segments: [{ kind: "confirmed-forecast", primary: 60 }] },
+    ];
+    render(<CalendarChart months={cleanMonths} onSelectMonth={() => {}} primaryCurrency="GBP" />);
+    expect(screen.queryByTestId("growth-clipped-glyph")).toBeNull();
+  });
+
   it("tooltip lists per-segment breakdown when a month has multiple segments", () => {
     const mixedMonth: IncomeCalendarMonth = {
       ym: "2026-04",

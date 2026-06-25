@@ -297,6 +297,117 @@ describe("buildIncomeCalendar — v2 segments + wrapper aggregation", () => {
     expect(mar?.gbp).toBe(0);
   });
 
+  it("uses projectedNext12mByTicker to fill future buckets that don't have a confirmed forecast", () => {
+    const holdings = [
+      { ticker: "AAPL", quantity: 100, wrapper: "isa" as const, created_at: "2025-01-01" },
+    ];
+    const projectedNext12mByTicker = {
+      AAPL: [
+        {
+          ex_date: "2026-08-15",
+          pay_date: "2026-08-29",
+          per_share_amount: 0.30,
+          currency: "USD",
+          confidence: "cadence+growth" as const,
+        },
+      ],
+    };
+    const result = buildIncomeCalendar({
+      userDividends: [],
+      holdings,
+      exDivByTicker: {},
+      ratesToGbp,
+      now,
+      locale: "uk",
+      projectedNext12mByTicker,
+    });
+    const aug = result.months.find((m) => m.ym === "2026-08");
+    expect(aug?.segments.some((s) => s.kind === "projected-growth")).toBe(true);
+    expect(aug?.gbp).toBeCloseTo(100 * 0.30 * 0.79, 2);
+  });
+
+  it("forward projection does NOT overwrite a confirmed-forecast in the same month", () => {
+    const holdings = [
+      { ticker: "AAPL", quantity: 100, wrapper: "isa" as const, created_at: "2025-01-01" },
+    ];
+    const exDivByTicker = {
+      AAPL: { ex_date: "2026-08-15", pay_date: "2026-08-29", amount: 0.25, currency: "USD" },
+    };
+    const projectedNext12mByTicker = {
+      AAPL: [
+        {
+          ex_date: "2026-08-15",
+          pay_date: "2026-08-29",
+          per_share_amount: 0.30,
+          currency: "USD",
+          confidence: "cadence" as const,
+        },
+      ],
+    };
+    const result = buildIncomeCalendar({
+      userDividends: [],
+      holdings,
+      exDivByTicker,
+      ratesToGbp,
+      now,
+      locale: "uk",
+      projectedNext12mByTicker,
+    });
+    const aug = result.months.find((m) => m.ym === "2026-08");
+    expect(aug?.segments).toHaveLength(1);
+    expect(aug?.segments[0].kind).toBe("confirmed-forecast");
+  });
+
+  it("backward projection respects holdings.created_at floor", () => {
+    const holdings = [
+      { ticker: "MSFT", quantity: 50, wrapper: "gia" as const, created_at: "2026-04-01" },
+    ];
+    const projectedHistorical12mByTicker = {
+      MSFT: [
+        { ex_date: "2025-12-15", pay_date: "2025-12-22", per_share_amount: 0.80, currency: "USD", confidence: "cadence" as const },
+        { ex_date: "2026-05-15", pay_date: "2026-05-22", per_share_amount: 0.80, currency: "USD", confidence: "cadence" as const },
+      ],
+    };
+    const result = buildIncomeCalendar({
+      userDividends: [],
+      holdings,
+      exDivByTicker: {},
+      ratesToGbp,
+      now,
+      locale: "uk",
+      projectedHistorical12mByTicker,
+    });
+    expect(result.months.find((m) => m.ym === "2025-12")?.gbp).toBe(0);
+    expect(result.months.find((m) => m.ym === "2026-05")?.gbp).toBeCloseTo(50 * 0.80 * 0.79, 2);
+  });
+
+  it("backward projection skips months that already have actuals from user_dividends", () => {
+    const holdings = [
+      { ticker: "MSFT", quantity: 50, wrapper: "gia" as const, created_at: "2024-01-01" },
+    ];
+    const userDividends = [
+      { paid_on: "2026-05-12", amount: 50, currency: "GBP", wrapper: "gia" as const },
+    ];
+    const projectedHistorical12mByTicker = {
+      MSFT: [
+        { ex_date: "2026-05-15", pay_date: "2026-05-22", per_share_amount: 0.80, currency: "USD", confidence: "cadence" as const },
+      ],
+    };
+    const result = buildIncomeCalendar({
+      userDividends,
+      holdings,
+      exDivByTicker: {},
+      ratesToGbp,
+      now,
+      locale: "uk",
+      projectedHistorical12mByTicker,
+    });
+    const may = result.months.find((m) => m.ym === "2026-05");
+    expect(may?.segments).toHaveLength(1);
+    expect(may?.segments[0].kind).toBe("actual");
+    expect(may?.gbp).toBe(50);
+  });
+
   it("nextThree GBP rounds correctly with multiple holdings of the same wrapper", () => {
     const holdings = [
       { ticker: "PHP.L", quantity: 100, wrapper: "isa" as const, created_at: "2024-01-01" },
