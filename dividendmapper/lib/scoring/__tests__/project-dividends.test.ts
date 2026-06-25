@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   detectCadence,
+  detectCadenceByYearCount,
   computeGrowthRate,
   projectDividends,
   type HistoricalPayment,
@@ -281,5 +282,105 @@ describe("projectDividends — backward (holdings.createdAt floor)", () => {
     });
     expect(result.every((p) => p.exDate <= "2026-06-23")).toBe(true);
     expect(result.length).toBeGreaterThan(0);
+  });
+});
+
+describe("detectCadenceByYearCount", () => {
+  it("returns 'quarterly' when the mode of payments-per-year is 4", () => {
+    const history = [
+      { exDate: "2026-03-15", amount: 0.25 },
+      { exDate: "2025-12-15", amount: 0.25 },
+      { exDate: "2025-09-15", amount: 0.25 },
+      { exDate: "2025-06-15", amount: 0.25 },
+      { exDate: "2025-03-15", amount: 0.25 },
+      { exDate: "2024-12-15", amount: 0.24 },
+      { exDate: "2024-09-15", amount: 0.24 },
+      { exDate: "2024-06-15", amount: 0.24 },
+      { exDate: "2024-03-15", amount: 0.24 },
+    ];
+    expect(detectCadenceByYearCount(history)).toBe("quarterly");
+  });
+
+  it("returns 'semi' for a UK-style payer paying twice a year", () => {
+    const history = [
+      { exDate: "2026-03-19", amount: 7.3 },
+      { exDate: "2025-08-14", amount: 7.3 },
+      { exDate: "2025-03-27", amount: 7.3 },
+      { exDate: "2024-08-15", amount: 7.3 },
+      { exDate: "2024-03-15", amount: 7.0 },
+      { exDate: "2023-08-15", amount: 7.0 },
+      { exDate: "2023-03-15", amount: 7.0 },
+    ];
+    expect(detectCadenceByYearCount(history)).toBe("semi");
+  });
+
+  it("returns 'monthly' when the mode is 12", () => {
+    const history: { exDate: string; amount: number }[] = [];
+    for (let m = 1; m <= 12; m++) {
+      history.push({ exDate: `2025-${String(m).padStart(2, "0")}-15`, amount: 0.26 });
+      history.push({ exDate: `2024-${String(m).padStart(2, "0")}-15`, amount: 0.25 });
+    }
+    history.push({ exDate: "2026-01-15", amount: 0.27 });
+    expect(detectCadenceByYearCount(history)).toBe("monthly");
+  });
+
+  it("returns 'annual' when the mode is 1", () => {
+    const history = [
+      { exDate: "2026-04-10", amount: 1.2 },
+      { exDate: "2025-04-10", amount: 1.1 },
+      { exDate: "2024-04-10", amount: 1.0 },
+      { exDate: "2023-04-10", amount: 0.9 },
+    ];
+    expect(detectCadenceByYearCount(history)).toBe("annual");
+  });
+
+  it("returns null when there are fewer than 2 complete years", () => {
+    const history = [
+      { exDate: "2026-03-15", amount: 0.25 },
+      { exDate: "2025-12-15", amount: 0.25 },
+      { exDate: "2025-09-15", amount: 0.25 },
+      { exDate: "2025-06-15", amount: 0.25 },
+    ];
+    expect(detectCadenceByYearCount(history)).toBeNull();
+  });
+
+  it("returns null when no count appears in 2 or more years (no mode)", () => {
+    const history = [
+      { exDate: "2026-06-01", amount: 10 },
+      { exDate: "2025-09-15", amount: 1 },
+      { exDate: "2024-12-15", amount: 1 },
+      { exDate: "2024-08-15", amount: 1 },
+      { exDate: "2024-03-15", amount: 1 },
+      { exDate: "2023-06-15", amount: 1 },
+      { exDate: "2023-03-15", amount: 1 },
+    ];
+    expect(detectCadenceByYearCount(history)).toBeNull();
+  });
+
+  it("returns null when the mode count maps to none of {1, 2, 4, 12}", () => {
+    const history = [
+      { exDate: "2026-06-15", amount: 1 },
+      { exDate: "2025-09-15", amount: 1 },
+      { exDate: "2025-06-15", amount: 1 },
+      { exDate: "2025-03-15", amount: 1 },
+      { exDate: "2024-09-15", amount: 1 },
+      { exDate: "2024-06-15", amount: 1 },
+      { exDate: "2024-03-15", amount: 1 },
+    ];
+    expect(detectCadenceByYearCount(history)).toBeNull();
+  });
+
+  it("tolerates one outlier year in the mode window (semi with one bonus year)", () => {
+    const history = [
+      { exDate: "2026-03-19", amount: 7.3 },
+      { exDate: "2025-08-14", amount: 7.3 },
+      { exDate: "2025-03-27", amount: 7.3 },
+      { exDate: "2024-11-28", amount: 4 },
+      { exDate: "2024-08-15", amount: 7.3 },
+      { exDate: "2024-03-15", amount: 7.0 },
+      { exDate: "2023-08-15", amount: 7.0 },
+      { exDate: "2023-03-15", amount: 7.0 },
+    ];
+    expect(detectCadenceByYearCount(history)).toBe("semi");
   });
 });
