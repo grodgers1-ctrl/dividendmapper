@@ -109,7 +109,7 @@ export function detectCadenceByYearCount(
 }
 
 export function detectCadence(history: ReadonlyArray<HistoricalPayment>): Cadence {
-  if (history.length < 4) return "unknown";
+  if (history.length < 2) return "unknown";
 
   // Primary signal: payments-per-calendar-year mode. Robust to interim/final
   // timing drift that breaks the median-gap detector for UK semi-annual

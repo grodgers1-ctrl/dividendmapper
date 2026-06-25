@@ -55,17 +55,6 @@ describe("detectCadence", () => {
     ).toBe("annual");
   });
 
-  it("returns 'unknown' when fewer than 4 payments", () => {
-    expect(detectCadence([{ exDate: "2026-04-10", amount: 1 }])).toBe("unknown");
-    expect(
-      detectCadence([
-        { exDate: "2026-04-10", amount: 1 },
-        { exDate: "2026-01-10", amount: 1 },
-        { exDate: "2025-10-10", amount: 1 },
-      ]),
-    ).toBe("unknown");
-  });
-
   it("returns 'irregular' for special-divvy-shaped history", () => {
     expect(
       detectCadence([
@@ -150,6 +139,45 @@ describe("detectCadence", () => {
       { exDate: "2025-05-22", amount: 1.915 },
       { exDate: "2025-03-13", amount: 2.185 },
       { exDate: "2024-08-15", amount: 1.85 },
+    ];
+    expect(detectCadence(history)).toBe("irregular");
+  });
+
+  // Bug B β: low-record histories should still produce a cadence guess when
+  // the median gap clearly maps to a known bucket. Year-count requires 2+
+  // complete years, so 2-3 record histories fall through to median-gap. The
+  // `growth-unknown` confidence flag in projectDividends keeps these dimmed
+  // in the UI.
+
+  it("returns 'quarterly' for a 3-payment PYPL-style history with quarterly gaps", () => {
+    const history = [
+      { exDate: "2026-06-04", amount: 0.4 },
+      { exDate: "2026-03-04", amount: 0.4 },
+      { exDate: "2025-12-04", amount: 0.4 },
+    ];
+    expect(detectCadence(history)).toBe("quarterly");
+  });
+
+  it("returns 'semi' for a 2-payment history with a ~180d gap", () => {
+    const history = [
+      { exDate: "2026-04-01", amount: 1.0 },
+      { exDate: "2025-10-01", amount: 1.0 },
+    ];
+    expect(detectCadence(history)).toBe("semi");
+  });
+
+  it("still returns 'unknown' for a 1-payment history", () => {
+    expect(detectCadence([{ exDate: "2026-04-10", amount: 1 }])).toBe("unknown");
+  });
+
+  it("still returns 'unknown' for an empty history", () => {
+    expect(detectCadence([])).toBe("unknown");
+  });
+
+  it("returns 'irregular' for a 2-payment history with a gap outside every bucket", () => {
+    const history = [
+      { exDate: "2026-04-01", amount: 1.0 },
+      { exDate: "2026-02-01", amount: 1.0 },
     ];
     expect(detectCadence(history)).toBe("irregular");
   });
@@ -273,11 +301,9 @@ describe("projectDividends — forward", () => {
     expect(result.every((r) => r.confidence === "cadence")).toBe(true);
   });
 
-  it("returns [] when fewer than 4 payments (cadence unknown)", () => {
+  it("returns [] when only 1 payment (cadence unknown)", () => {
     const history: HistoricalPayment[] = [
       { exDate: "2026-03-15", amount: 0.50 },
-      { exDate: "2025-12-15", amount: 0.50 },
-      { exDate: "2025-09-15", amount: 0.50 },
     ];
     const result = projectDividends({
       ticker: "NEW",
@@ -306,6 +332,25 @@ describe("projectDividends — forward", () => {
       currency: "USD",
     });
     expect(result).toHaveLength(0);
+  });
+
+  it("low-record histories (n=3) produce projections with 'growth-unknown' confidence", () => {
+    const projections = projectDividends({
+      ticker: "PYPL",
+      historicalPayments: [
+        { exDate: "2026-06-04", amount: 0.4 },
+        { exDate: "2026-03-04", amount: 0.4 },
+        { exDate: "2025-12-04", amount: 0.4 },
+      ],
+      holding: { quantity: 1, createdAt: null },
+      today: new Date("2026-06-25T00:00:00Z"),
+      direction: "forward",
+      currency: "USD",
+    });
+    expect(projections.length).toBeGreaterThan(0);
+    for (const p of projections) {
+      expect(p.confidence).toBe("growth-unknown");
+    }
   });
 });
 
