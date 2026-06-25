@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { Search, Lock, ArrowUp, ArrowDown } from "lucide-react";
+import { Search, Lock, ArrowUp, ArrowDown, Star, Plus, Check, AlertCircle } from "lucide-react";
 import type { VehicleUniverseRow } from "@/lib/scoring/load-vehicle-universe";
 import type { VehicleType } from "@/lib/scoring/load-vehicle-score";
 import { VEHICLE_FAMILIES } from "@/lib/scoring/data/vehicle-families";
@@ -71,6 +71,14 @@ export interface ScreenerProps {
    * before filter + search + sort run. Pro-only surface (passed by /app/...).
    */
   ownedTickers?: ReadonlyArray<string>;
+  /**
+   * Pro-only: per-row "add to watchlist" + "add to portfolio" icons appear
+   * when this is true. Wired through to the existing tracked-tickers POST
+   * endpoint (star — instant) and the Ledger add-holding modal (plus —
+   * needs quantity + cost, not solvable from one click). No-op on the
+   * public surface.
+   */
+  showRowActions?: boolean;
 }
 
 const INITIAL_CRITERIA: ScreenerCriteria = {
@@ -86,9 +94,34 @@ export function Screener({
   criteria: controlledCriteria,
   onCriteriaChange,
   ownedTickers,
+  showRowActions = false,
 }: ScreenerProps) {
   const [query, setQuery] = useState("");
   const [restrictToOwned, setRestrictToOwned] = useState(false);
+  // Per-ticker action status — undefined = idle, then "saving" | "saved" | "error".
+  const [rowState, setRowState] = useState<Record<string, "saving" | "saved" | "error">>({});
+
+  async function addToWatchlist(ticker: string) {
+    setRowState((s) => ({ ...s, [ticker]: "saving" }));
+    const res = await fetch("/api/portfolio/tracked-tickers", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ticker }),
+    });
+    // 201 = added, 409 = already watching (still a success from the user's POV).
+    setRowState((s) => ({
+      ...s,
+      [ticker]: res.ok || res.status === 409 ? "saved" : "error",
+    }));
+    // Auto-clear after 2.5s so the row returns to its resting state.
+    setTimeout(() => {
+      setRowState((s) => {
+        const next = { ...s };
+        delete next[ticker];
+        return next;
+      });
+    }, 2500);
+  }
   const [internalCriteria, setInternalCriteria] = useState<ScreenerCriteria>(INITIAL_CRITERIA);
   const isControlled = controlledCriteria !== undefined && onCriteriaChange !== undefined;
   const criteria = isControlled ? controlledCriteria! : internalCriteria;
@@ -312,13 +345,18 @@ export function Screener({
                     align="right"
                   />
                 </th>
+                {showRowActions && (
+                  <th scope="col" className="w-px px-3 py-2 text-right">
+                    <span className="sr-only">Actions</span>
+                  </th>
+                )}
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 && restrictToOwned && ownedTickers && (
                 <tr>
                   <td
-                    colSpan={5}
+                    colSpan={showRowActions ? 6 : 5}
                     className="px-3 py-6 text-center text-sm text-muted-foreground"
                   >
                     {ownedTickers.length === 0
@@ -356,6 +394,59 @@ export function Screener({
                   <td className="px-3 py-2 text-right font-mono tabular-nums">
                     {formatYield(r.dividendYield)}
                   </td>
+                  {showRowActions && (
+                    <td className="w-px whitespace-nowrap px-3 py-2 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        {(() => {
+                          const state = rowState[r.ticker];
+                          const Icon =
+                            state === "saved"
+                              ? Check
+                              : state === "error"
+                                ? AlertCircle
+                                : Star;
+                          const label =
+                            state === "saved"
+                              ? `${r.ticker} added to watchlist`
+                              : state === "error"
+                                ? `Could not add ${r.ticker} — try again`
+                                : `Add ${r.ticker} to watchlist`;
+                          const tone =
+                            state === "saved"
+                              ? "text-[color:var(--color-resilience-5)]"
+                              : state === "error"
+                                ? "text-destructive"
+                                : "text-muted-foreground hover:text-foreground";
+                          return (
+                            <button
+                              type="button"
+                              aria-label={label}
+                              title={label}
+                              disabled={state === "saving"}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                void addToWatchlist(r.ticker);
+                              }}
+                              className={`rounded-md p-1 hover:bg-secondary disabled:opacity-50 ${tone}`}
+                            >
+                              <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+                            </button>
+                          );
+                        })()}
+                        <button
+                          type="button"
+                          aria-label={`Add ${r.ticker} to portfolio`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            window.location.href = `/app/portfolio?addTicker=${encodeURIComponent(r.ticker)}`;
+                          }}
+                          className="rounded-md p-1 text-muted-foreground hover:bg-secondary hover:text-foreground"
+                        >
+                          <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+                        </button>
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

@@ -57,6 +57,7 @@ export default async function AppIncomeVehiclesHubPage() {
         universe={universe}
         showSaveScreenAction
         ownedTickers={ownedTickers}
+        showRowActions
       />
     </div>
   );
