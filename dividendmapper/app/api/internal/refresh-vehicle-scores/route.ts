@@ -13,7 +13,10 @@ import {
   upsertVehicleScore,
   appendVehicleScoreSignals,
   appendVehicleScoreHistory,
+  upsertVehicleUniverseDisplay,
 } from "@/lib/scoring/vehicle-persist";
+import { buildVehicleUniverseDisplayRow } from "@/lib/scoring/vehicle-universe-display";
+import { getRatiosTtm } from "@/lib/scoring/fmp-client";
 import type { VehicleType } from "@/lib/scoring/vehicle-fmp";
 
 export const runtime = "nodejs";
@@ -74,6 +77,18 @@ async function handle(req: Request): Promise<Response> {
       await upsertVehicleScore(supabase, result);
       await appendVehicleScoreSignals(supabase, result);
       await appendVehicleScoreHistory(supabase, result);
+      // Income vehicles hub display fields. Yield comes from FMP ratios-ttm
+      // (one extra request per ticker); leverage headline is sourced from the
+      // family's headline signal inside the score result. Yield failures
+      // degrade gracefully (null) — they don't fail the ticker.
+      const displayRow = await buildVehicleUniverseDisplayRow(
+        result,
+        async (t) => {
+          const rows = await getRatiosTtm(t);
+          return rows?.[0]?.dividendYieldTTM ?? null;
+        },
+      );
+      await upsertVehicleUniverseDisplay(supabase, displayRow);
       if (result.resilienceScore !== null) scoredCount += 1;
       else gateFailedCount += 1;
       successfulTickerCount += 1;
