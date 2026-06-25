@@ -184,5 +184,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   });
 
+  // Income vehicles hub — peer of /scoring at the same priority band.
+  entries.push({
+    url: `${SITE_URL}/income-vehicles`,
+    lastModified: now,
+    changeFrequency: "daily",
+    priority: 0.8,
+  });
+
   return entries;
 }

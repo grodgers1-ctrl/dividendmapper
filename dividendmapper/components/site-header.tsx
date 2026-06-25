@@ -10,6 +10,7 @@ const BASE_NAV = [
   { href: "/tools/retirement-calculator", label: "Retirement" },
   { href: "/tools/dcf-calculator", label: "DCF" },
   { href: "/scoring", label: "Resilience" },
+  { href: "/income-vehicles", label: "Income vehicles" },
   { href: "/blog", label: "Research" },
 ];
 
