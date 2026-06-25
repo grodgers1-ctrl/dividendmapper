@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { requireUser } from "@/lib/auth/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { loadWelcomeWizardState } from "@/lib/onboarding/load-welcome-state";
 import { PostHogIdentify } from "@/components/posthog-identify";
 import { isAdmin } from "@/lib/scoring/config";
 import { DrawerShell } from "./_components/shell/drawer-shell";
+import { WelcomeWizardIsland } from "./_components/welcome-wizard/welcome-wizard-island";
 
 export const metadata: Metadata = {
   // Authenticated routes should never appear in search engines.
@@ -39,6 +41,8 @@ export default async function AppLayout({
     .maybeSingle<{ tier: "free" | "pro" | "premium" }>();
   const tier = profile?.tier ?? "free";
 
+  const welcomeState = await loadWelcomeWizardState(supabase, user.id, tier);
+
   return (
     <>
       <PostHogIdentify userId={user.id} email={user.email} />
@@ -49,6 +53,10 @@ export default async function AppLayout({
       >
         {children}
       </DrawerShell>
+      <WelcomeWizardIsland
+        shouldShow={welcomeState.shouldShow}
+        initialHoldingsCount={welcomeState.existingHoldingsCount}
+      />
     </>
   );
 }
