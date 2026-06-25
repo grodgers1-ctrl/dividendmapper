@@ -65,6 +65,12 @@ export interface ScreenerProps {
   onCriteriaChange?: (next: ScreenerCriteria) => void;
   /** Fires after a successful POST /api/screens — the rail uses it to refetch. */
   onSaved?: () => void;
+  /**
+   * When provided, the "Only my holdings" toggle is rendered in the filter
+   * strip. When the toggle is on, the universe is narrowed to these tickers
+   * before filter + search + sort run. Pro-only surface (passed by /app/...).
+   */
+  ownedTickers?: ReadonlyArray<string>;
 }
 
 const INITIAL_CRITERIA: ScreenerCriteria = {
@@ -79,8 +85,10 @@ export function Screener({
   showSaveScreenAction = false,
   criteria: controlledCriteria,
   onCriteriaChange,
+  ownedTickers,
 }: ScreenerProps) {
   const [query, setQuery] = useState("");
+  const [restrictToOwned, setRestrictToOwned] = useState(false);
   const [internalCriteria, setInternalCriteria] = useState<ScreenerCriteria>(INITIAL_CRITERIA);
   const isControlled = controlledCriteria !== undefined && onCriteriaChange !== undefined;
   const criteria = isControlled ? controlledCriteria! : internalCriteria;
@@ -111,7 +119,14 @@ export function Screener({
   }, [universe, criteria.family]);
 
   const filtered = useMemo(() => {
-    const byCriteria = filterVehicles(universe, criteria);
+    // Owned-only narrowing runs BEFORE the criteria/search/sort chain so the
+    // count and downstream filters reflect the restricted set.
+    const ownedSet =
+      ownedTickers && restrictToOwned ? new Set(ownedTickers) : null;
+    const visible = ownedSet
+      ? universe.filter((r) => ownedSet.has(r.ticker))
+      : universe;
+    const byCriteria = filterVehicles(visible, criteria);
     const hasQuery = query.trim().length > 0;
     if (hasQuery) {
       // Search owns the row order — exact ticker first, then prefix, then
@@ -119,7 +134,7 @@ export function Screener({
       return searchVehicles(byCriteria, query);
     }
     return sortVehicles(byCriteria, sortKey, sortDir);
-  }, [universe, criteria, query, sortKey, sortDir]);
+  }, [universe, criteria, query, sortKey, sortDir, ownedTickers, restrictToOwned]);
 
   // Reset sub-sector when switching family if the current value is no longer
   // a valid option in the new family's set.
@@ -229,6 +244,17 @@ export function Screener({
             />
             <span>Gate passed</span>
           </label>
+          {ownedTickers && (
+            <label className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1">
+              <input
+                type="checkbox"
+                checked={restrictToOwned}
+                onChange={(e) => setRestrictToOwned(e.target.checked)}
+                aria-label="Only my holdings"
+              />
+              <span>Only my holdings</span>
+            </label>
+          )}
         </div>
       </div>
 
@@ -289,6 +315,18 @@ export function Screener({
               </tr>
             </thead>
             <tbody>
+              {filtered.length === 0 && restrictToOwned && ownedTickers && (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="px-3 py-6 text-center text-sm text-muted-foreground"
+                  >
+                    {ownedTickers.length === 0
+                      ? "You haven't added any income vehicles to your holdings or watchlist yet."
+                      : "None of your holdings or watchlist tickers are in the scored universe yet."}
+                  </td>
+                </tr>
+              )}
               {filtered.map((r) => (
                 <tr key={r.ticker} className="border-b border-border last:border-b-0">
                   <td className="px-3 py-2 font-mono font-medium">

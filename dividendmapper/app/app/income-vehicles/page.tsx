@@ -29,7 +29,22 @@ export default async function AppIncomeVehiclesHubPage() {
   const tier = (profile?.tier ?? "free") as "free" | "pro" | "premium";
   if (tier === "free") redirect("/pricing");
 
-  const universe = await loadVehicleUniverse(supabase);
+  const [universe, holdingsResult, trackedResult] = await Promise.all([
+    loadVehicleUniverse(supabase),
+    supabase
+      .from("holdings")
+      .select("ticker")
+      .is("archived_at", null),
+    supabase.from("tracked_tickers").select("ticker"),
+  ]);
+  const ownedSet = new Set<string>();
+  for (const row of (holdingsResult.data ?? []) as { ticker: string }[]) {
+    ownedSet.add(row.ticker);
+  }
+  for (const row of (trackedResult.data ?? []) as { ticker: string }[]) {
+    ownedSet.add(row.ticker);
+  }
+  const ownedTickers = [...ownedSet];
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 md:px-6 md:py-12">
@@ -38,7 +53,11 @@ export default async function AppIncomeVehiclesHubPage() {
         subtitle={`${universe.length} scored vehicles across REITs, BDCs and UK REITs. Filter, search, and pick names that fit your portfolio.`}
         betaPill
       />
-      <Screener universe={universe} showSaveScreenAction />
+      <Screener
+        universe={universe}
+        showSaveScreenAction
+        ownedTickers={ownedTickers}
+      />
     </div>
   );
 }
