@@ -1,6 +1,13 @@
 "use client";
 
-import type { Wrapper } from "@/lib/portfolio/income-calendar";
+// Per-payment list for the selected month. Reads from
+// IncomeCalendarResult.paymentsByMonth so the table includes ALL holdings'
+// activity in the month, not just the global next-3 ex-divs.
+
+import type {
+  IncomeCalendarPayment,
+  Wrapper,
+} from "@/lib/portfolio/income-calendar";
 
 const SHELTERED = new Set<Wrapper>(["isa", "sipp", "401k", "ira", "roth_ira"]);
 
@@ -14,33 +21,20 @@ const WRAPPER_LABEL: Record<Wrapper, string> = {
   brokerage: "Brokerage",
 };
 
-export type ProjectedConfidence =
-  | "confirmed"
-  | "projected-cadence"
-  | "projected-growth"
-  | "growth-clipped";
+const FREQUENCY_LABEL: Record<string, string> = {
+  monthly: "Monthly",
+  quarterly: "Quarterly",
+  semi: "Semi-annual",
+  annual: "Annual",
+  irregular: "Irregular",
+  unknown: "",
+};
 
-export interface DrilldownPayment {
-  ticker: string;
-  exDate: string;
-  payDate: string | null;
-  /** Per-share figure in its native currency (e.g. 1.98 for 1.98p). */
-  nativeAmount: number;
-  /** e.g. "GBp", "USD". */
-  nativeCurrency: string;
-  /** Holding quantity; rendered as "× N" between per-share and total. */
-  quantity?: number;
-  /** Total payment in the user's primary currency. */
-  primaryAmount: number;
-  wrapper: Wrapper;
-  confidence: ProjectedConfidence;
-}
-
-export interface DrilldownPanelProps {
-  primaryCurrency: "GBP" | "USD";
-  payments: ReadonlyArray<DrilldownPayment>;
-  emptyReason?: "no-announcement" | "non-paying" | "no-holdings";
-}
+const STATUS_LABEL: Record<IncomeCalendarPayment["status"], string> = {
+  received: "Received",
+  declared: "Declared",
+  estimated: "Estimated",
+};
 
 const SHORT_DATE = new Intl.DateTimeFormat("en-GB", {
   day: "numeric",
@@ -63,16 +57,20 @@ function formatPrimary(n: number, currency: "GBP" | "USD"): string {
 }
 
 function formatNativePerShare(amount: number, currency: string): string {
-  // GBp (pence) reads better with 2-3 dp (1.98p, 0.265 USD). USD uses 2 dp
-  // for forecast amounts; everything else gets 2 dp as a sensible default.
   const dp = currency === "GBp" || currency === "GBX" ? 2 : currency === "USD" ? 3 : 2;
   return `${amount.toFixed(dp)} ${currency}`;
+}
+
+export interface DrilldownPanelProps {
+  primaryCurrency: "GBP" | "USD";
+  payments: ReadonlyArray<IncomeCalendarPayment>;
+  emptyReason?: "no-announcement" | "non-paying" | "no-holdings";
 }
 
 function emptyMessage(reason: DrilldownPanelProps["emptyReason"]): string {
   switch (reason) {
     case "no-announcement":
-      return "No announcement yet — we'll fill this in when the next ex-dividend is published.";
+      return "No payments in this month yet — we'll fill it in when the next ex-dividend is announced.";
     case "non-paying":
       return "This stock doesn't pay a dividend.";
     case "no-holdings":
@@ -91,33 +89,78 @@ export function DrilldownPanel({ primaryCurrency, payments, emptyReason }: Drill
   }
 
   return (
-    <div className="card-surface p-4">
+    <div className="card-surface overflow-hidden">
+      <div
+        role="row"
+        className="hidden grid-cols-[2fr_1.4fr_1.6fr_0.8fr_0.9fr_0.7fr] gap-3 border-b border-[var(--border-subtle)] px-4 py-2 text-[10px] uppercase tracking-[0.06em] text-[var(--text-muted)] md:grid"
+      >
+        <span>Ticker</span>
+        <span>Ex · Pay</span>
+        <span>Per share × Qty</span>
+        <span>Total</span>
+        <span>Frequency · Status</span>
+        <span>Wrapper</span>
+      </div>
       <ul className="divide-y divide-[var(--border-subtle)]">
         {payments.map((p, i) => {
           const wrapperClass = SHELTERED.has(p.wrapper) ? "sheltered" : "taxable";
+          const showMath = typeof p.quantity === "number" && p.quantity > 0;
+          const freqLabel = p.frequency ? FREQUENCY_LABEL[p.frequency] ?? "" : "";
           return (
             <li
               key={`${p.ticker}-${p.exDate}-${i}`}
-              className="grid grid-cols-[80px_1fr_auto_auto_auto] items-baseline gap-3 py-2 text-xs"
+              className="grid grid-cols-[1fr_auto] gap-y-1 px-4 py-3 text-xs md:grid-cols-[2fr_1.4fr_1.6fr_0.8fr_0.9fr_0.7fr] md:items-baseline md:gap-3"
             >
-              <span className="font-mono text-[var(--text)]">{p.ticker}</span>
-              <span className="text-[var(--text-muted)]">
-                ex {formatDate(p.exDate)} · pay {formatDate(p.payDate)}
-              </span>
-              <span className="text-[var(--text-muted)] tabular-nums">
-                {formatNativePerShare(p.nativeAmount, p.nativeCurrency)}
-                {p.quantity !== undefined && (
-                  <span className="text-[var(--text-muted)]"> × {p.quantity}</span>
+              <span className="flex flex-col">
+                <span className="font-mono text-sm font-medium text-[var(--text)]">{p.ticker || "—"}</span>
+                {p.name && (
+                  <span className="text-[10px] text-[var(--text-muted)] truncate">{p.name}</span>
                 )}
               </span>
-              <span className="font-mono tabular-nums text-[var(--text)]">
+              <span className="hidden text-[var(--text-muted)] md:block">
+                {formatDate(p.exDate)} · {formatDate(p.payDate)}
+              </span>
+              <span className="text-[var(--text-muted)] tabular-nums">
+                {showMath ? (
+                  <>
+                    {formatNativePerShare(p.perShareNative, p.nativeCurrency)}
+                    <span> × {p.quantity}</span>
+                  </>
+                ) : (
+                  formatNativePerShare(p.perShareNative, p.nativeCurrency)
+                )}
+              </span>
+              <span className="font-mono tabular-nums font-semibold text-[var(--text)] md:font-normal">
                 {formatPrimary(p.primaryAmount, primaryCurrency)}
+              </span>
+              <span className="flex flex-wrap items-center gap-1">
+                {freqLabel && (
+                  <span
+                    data-testid="drilldown-frequency"
+                    className="rounded-sm border border-[var(--border-subtle)] px-1.5 py-0.5 text-[9px] uppercase tracking-[0.06em] text-[var(--text-muted)]"
+                  >
+                    {freqLabel}
+                  </span>
+                )}
+                <span
+                  data-status={p.status}
+                  data-testid="drilldown-status"
+                  className={`rounded-sm px-1.5 py-0.5 text-[9px] uppercase tracking-[0.06em] ${
+                    p.status === "received"
+                      ? "bg-[var(--brand)] text-white"
+                      : p.status === "declared"
+                        ? "border border-[var(--brand)] text-[var(--brand)]"
+                        : "border border-dashed border-[var(--border-subtle)] text-[var(--text-muted)]"
+                  }`}
+                >
+                  {STATUS_LABEL[p.status]}
+                </span>
               </span>
               <span
                 data-wrapper-class={wrapperClass}
-                className={`rounded px-1.5 py-0.5 text-[10px] uppercase tracking-[0.06em] ${
+                className={`rounded-sm px-1.5 py-0.5 text-[9px] uppercase tracking-[0.06em] ${
                   wrapperClass === "sheltered"
-                    ? "bg-[var(--brand)] text-white"
+                    ? "bg-[var(--surface-elevated)] text-[var(--text)]"
                     : "border border-[var(--border-subtle)] text-[var(--text-muted)]"
                 }`}
               >

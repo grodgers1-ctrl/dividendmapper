@@ -4,7 +4,7 @@ import { requireUser } from "@/lib/auth/server";
 import { loadPricedHoldings } from "@/lib/portfolio/load-priced-holdings";
 import { loadCalendarData } from "@/lib/portfolio/load-calendar-data";
 import { buildIncomeCalendar } from "@/lib/portfolio/income-calendar";
-import { PageHeader } from "../_components/page-header/page-header";
+import { aggregatePortfolioValue } from "@/lib/portfolio/portfolio-value";
 import { CalendarShell } from "./_components/calendar-shell";
 
 export const metadata: Metadata = {
@@ -33,6 +33,8 @@ export default async function CalendarPage() {
     ratesToPrimary,
     projectedNext12mByTicker,
     projectedHistorical12mByTicker,
+    nameByTicker,
+    cadenceByTicker,
   } = await loadCalendarData(user.id, priced.allHoldings, locale);
 
   const holdings = priced.allHoldings.map((h) => ({
@@ -52,23 +54,41 @@ export default async function CalendarPage() {
     wrapperFilter: "all",
     projectedNext12mByTicker,
     projectedHistorical12mByTicker,
+    nameByTicker,
+    cadenceByTicker,
   });
+
+  // Portfolio value in the user's primary currency, used for the Yield KPI.
+  // Pulls per-currency totals from priced.allHoldings × priceByTicker, then
+  // converts each currency via ratesToPrimary. null when value can't be
+  // computed (e.g. all quotes unavailable).
+  const valueTotals = aggregatePortfolioValue(priced.allHoldings, priced.priceByTicker);
+  let portfolioValuePrimary: number | null = 0;
+  let anyConverted = false;
+  for (const { currency, total } of valueTotals.totalsByCurrency) {
+    const rate = ratesToPrimary[currency];
+    if (typeof rate === "number" && Number.isFinite(rate) && rate > 0) {
+      portfolioValuePrimary += total * rate;
+      anyConverted = true;
+    }
+  }
+  if (!anyConverted) portfolioValuePrimary = null;
 
   const sixMoAgo = new Date();
   sixMoAgo.setMonth(sixMoAgo.getMonth() - 6);
   const sixMoAgoIso = sixMoAgo.toISOString().slice(0, 10);
   const pastUserDividendsCount = userDividends.filter((d) => d.paid_on >= sixMoAgoIso).length;
 
+  // No PageHeader: the drawer topbar already labels the route. The StatSidebar
+  // serves as the page's own visual anchor.
   return (
-    <>
-      <PageHeader title="Calendar" />
-      <CalendarShell
-        locale={locale}
-        calendar={calendar}
-        userDividends={userDividends}
-        ratesToPrimary={ratesToPrimary}
-        showEmptyStateCta={pastUserDividendsCount === 0}
-      />
-    </>
+    <CalendarShell
+      locale={locale}
+      calendar={calendar}
+      userDividends={userDividends}
+      ratesToPrimary={ratesToPrimary}
+      showEmptyStateCta={pastUserDividendsCount === 0}
+      portfolioValuePrimary={portfolioValuePrimary}
+    />
   );
 }

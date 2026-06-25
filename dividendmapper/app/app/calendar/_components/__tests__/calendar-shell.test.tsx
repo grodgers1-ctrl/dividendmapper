@@ -7,15 +7,41 @@ const stubCalendar: IncomeCalendarResult = {
   primaryCurrency: "GBP",
   months: [
     { ym: "2026-06", segments: [{ kind: "partial", primary: 40 }], gbp: 40, kind: "partial" },
-    { ym: "2026-07", segments: [{ kind: "confirmed-forecast", primary: 95 }], gbp: 95, kind: "confirmed-forecast" },
+    { ym: "2026-07", segments: [{ kind: "confirmed-forecast", primary: 42 }], gbp: 42, kind: "confirmed-forecast" },
   ],
   nextThree: [
-    { ticker: "PHP.L", exDate: "2026-07-02", payDate: "2026-07-09", gbp: 42, wrapper: "isa", perShareNative: 4.2, nativeCurrency: "GBp", quantity: 1000 },
+    {
+      ticker: "PHP.L",
+      exDate: "2026-07-02",
+      payDate: "2026-07-09",
+      gbp: 42,
+      wrapper: "isa",
+      perShareNative: 4.2,
+      nativeCurrency: "GBp",
+      quantity: 1000,
+    },
   ],
+  paymentsByMonth: {
+    "2026-07": [
+      {
+        ticker: "PHP.L",
+        name: "Primary Health Properties",
+        exDate: "2026-07-02",
+        payDate: "2026-07-09",
+        perShareNative: 4.2,
+        nativeCurrency: "GBp",
+        quantity: 1000,
+        primaryAmount: 42,
+        wrapper: "isa",
+        status: "declared",
+        frequency: "quarterly",
+      },
+    ],
+  },
 };
 
 describe("CalendarShell wiring", () => {
-  it("clicking a wrapper chip filters the drill-down", () => {
+  it("clicking a wrapper chip filters the drilldown", () => {
     render(
       <CalendarShell
         locale="uk"
@@ -25,8 +51,6 @@ describe("CalendarShell wiring", () => {
         showEmptyStateCta={false}
       />,
     );
-    // Default selected month is the partial bucket (2026-06); switch to 2026-07
-    // by clicking that bar, then assert PHP.L is in the drill-down.
     fireEvent.click(screen.getByTestId("calendar-bar-2026-07"));
     expect(screen.getByText("PHP.L")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "GIA" }));
@@ -44,5 +68,34 @@ describe("CalendarShell wiring", () => {
       />,
     );
     expect(screen.getByText(/past dividends not showing up/i)).toBeInTheDocument();
+  });
+
+  it("renders the StatSidebar component", () => {
+    render(
+      <CalendarShell
+        locale="uk"
+        calendar={stubCalendar}
+        userDividends={[]}
+        ratesToPrimary={{ GBP: 1, USD: 0.79 }}
+        showEmptyStateCta={false}
+      />,
+    );
+    expect(screen.getByTestId("calendar-stat-sidebar")).toBeInTheDocument();
+    // Annual income should equal the sum of future paymentsByMonth (only July
+    // here): £42.
+    expect(screen.getByTestId("calendar-stat-annual")).toHaveTextContent("£42");
+  });
+
+  it("does NOT render the dropped CadenceTimeline anywhere", () => {
+    render(
+      <CalendarShell
+        locale="uk"
+        calendar={stubCalendar}
+        userDividends={[]}
+        ratesToPrimary={{ GBP: 1, USD: 0.79 }}
+        showEmptyStateCta={false}
+      />,
+    );
+    expect(screen.queryByTestId("cadence-marker")).toBeNull();
   });
 });

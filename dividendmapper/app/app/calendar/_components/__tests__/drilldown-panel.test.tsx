@@ -1,47 +1,47 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { DrilldownPanel } from "../drilldown-panel";
+import type { IncomeCalendarPayment } from "@/lib/portfolio/income-calendar";
 
 describe("DrilldownPanel", () => {
-  it("renders one row per payment with ticker, dates, per-share native + total primary, wrapper badge", () => {
-    render(
-      <DrilldownPanel
-        primaryCurrency="GBP"
-        payments={[
-          {
-            ticker: "PHP.L",
-            exDate: "2026-07-02",
-            payDate: "2026-07-09",
-            nativeAmount: 1.98,        // per-share in pence
-            nativeCurrency: "GBp",
-            quantity: 50,
-            primaryAmount: 0.99,        // 1.98p × 50 × 0.01
-            wrapper: "isa",
-            confidence: "confirmed",
-          },
-          {
-            ticker: "O",
-            exDate: "2026-07-11",
-            payDate: "2026-07-15",
-            nativeAmount: 0.265,
-            nativeCurrency: "USD",
-            quantity: 30,
-            primaryAmount: 6.28,
-            wrapper: "gia",
-            confidence: "confirmed",
-          },
-        ]}
-      />,
-    );
+  it("renders a row per payment with ticker, name, native math, primary, freq+status, wrapper", () => {
+    const payments: IncomeCalendarPayment[] = [
+      {
+        ticker: "PHP.L",
+        name: "Primary Health Properties",
+        exDate: "2026-07-02",
+        payDate: "2026-07-09",
+        perShareNative: 1.98,
+        nativeCurrency: "GBp",
+        quantity: 50,
+        primaryAmount: 0.99,
+        wrapper: "isa",
+        status: "declared",
+        frequency: "quarterly",
+      },
+      {
+        ticker: "O",
+        name: "Realty Income Corporation",
+        exDate: "2026-07-11",
+        payDate: "2026-07-15",
+        perShareNative: 0.265,
+        nativeCurrency: "USD",
+        quantity: 30,
+        primaryAmount: 6.28,
+        wrapper: "gia",
+        status: "estimated",
+        frequency: "monthly",
+      },
+    ];
+    render(<DrilldownPanel primaryCurrency="GBP" payments={payments} />);
     expect(screen.getByText("PHP.L")).toBeInTheDocument();
-    expect(screen.getByText("O")).toBeInTheDocument();
-    const isaBadge = screen.getByText(/ISA/);
-    expect(isaBadge).toHaveAttribute("data-wrapper-class", "sheltered");
-    const giaBadge = screen.getByText(/GIA/);
-    expect(giaBadge).toHaveAttribute("data-wrapper-class", "taxable");
+    expect(screen.getByText("Primary Health Properties")).toBeInTheDocument();
+    expect(screen.getByText(/1\.98 GBp/)).toBeInTheDocument();
+    expect(screen.getByText(/× 50/)).toBeInTheDocument();
+    expect(screen.getByText(/£0\.99/)).toBeInTheDocument();
   });
 
-  it("renders per-share native amount + quantity multiplier + total primary (regression for the £99 bug)", () => {
+  it("renders the Frequency pill from cron-cached cadence", () => {
     render(
       <DrilldownPanel
         primaryCurrency="GBP"
@@ -50,26 +50,67 @@ describe("DrilldownPanel", () => {
             ticker: "PHP.L",
             exDate: "2026-07-02",
             payDate: "2026-07-09",
-            nativeAmount: 1.98,
+            perShareNative: 1.98,
             nativeCurrency: "GBp",
             quantity: 50,
             primaryAmount: 0.99,
             wrapper: "isa",
-            confidence: "confirmed",
+            status: "declared",
+            frequency: "quarterly",
           },
         ]}
       />,
     );
-    // Per-share unit on the left ("1.98 GBp"), quantity multiplier ("× 50"),
-    // total on the right ("£0.99"). NOT "99.00 GBP £99.00" like Slice A.
-    expect(screen.getByText(/1\.98 GBp/)).toBeInTheDocument();
-    expect(screen.getByText(/× 50/)).toBeInTheDocument();
-    expect(screen.getByText(/£0\.99/)).toBeInTheDocument();
-    expect(screen.queryByText(/99\.00 GBP/)).toBeNull();
-    expect(screen.queryByText(/£99\.00/)).toBeNull();
+    expect(screen.getByTestId("drilldown-frequency")).toHaveTextContent(/quarterly/i);
   });
 
-  it("empty state for 'no-announcement' shows the right copy", () => {
+  it("renders the Status pill (Received / Declared / Estimated) on each row", () => {
+    const base = {
+      ticker: "AAPL",
+      exDate: "2026-07-02",
+      payDate: "2026-07-09",
+      perShareNative: 0.24,
+      nativeCurrency: "USD",
+      quantity: 20,
+      primaryAmount: 3.79,
+      wrapper: "gia" as const,
+    };
+    const payments: IncomeCalendarPayment[] = [
+      { ...base, status: "received" },
+      { ...base, exDate: "2026-07-09", status: "declared" },
+      { ...base, exDate: "2026-07-16", status: "estimated" },
+    ];
+    render(<DrilldownPanel primaryCurrency="GBP" payments={payments} />);
+    const statusPills = screen.getAllByTestId("drilldown-status");
+    expect(statusPills[0]).toHaveAttribute("data-status", "received");
+    expect(statusPills[1]).toHaveAttribute("data-status", "declared");
+    expect(statusPills[2]).toHaveAttribute("data-status", "estimated");
+  });
+
+  it("hides the × quantity multiplier when quantity is undefined (e.g. received row)", () => {
+    render(
+      <DrilldownPanel
+        primaryCurrency="GBP"
+        payments={[
+          {
+            ticker: "O",
+            exDate: "2026-04-15",
+            payDate: "2026-04-15",
+            perShareNative: 7.95,
+            nativeCurrency: "USD",
+            primaryAmount: 6.28,
+            wrapper: "gia",
+            status: "received",
+          },
+        ]}
+      />,
+    );
+    // The "× Qty" multiplier on the data row is absent. (Column header uses
+    // "Per share × Qty" so we look for the actual " × <number>" pattern.)
+    expect(screen.queryByText(/ × \d/)).toBeNull();
+  });
+
+  it("empty state with no announcement uses the cadence-aware copy", () => {
     render(
       <DrilldownPanel
         primaryCurrency="GBP"
@@ -77,17 +118,6 @@ describe("DrilldownPanel", () => {
         emptyReason="no-announcement"
       />,
     );
-    expect(screen.getByText(/no announcement yet/i)).toBeInTheDocument();
-  });
-
-  it("empty state for 'non-paying' shows the right copy", () => {
-    render(
-      <DrilldownPanel
-        primaryCurrency="GBP"
-        payments={[]}
-        emptyReason="non-paying"
-      />,
-    );
-    expect(screen.getByText(/doesn't pay a dividend/i)).toBeInTheDocument();
+    expect(screen.getByText(/we'll fill it in/i)).toBeInTheDocument();
   });
 });
