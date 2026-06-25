@@ -6,6 +6,7 @@ import { loadCalendarData } from "@/lib/portfolio/load-calendar-data";
 import { buildIncomeCalendar } from "@/lib/portfolio/income-calendar";
 import { aggregatePortfolioValue } from "@/lib/portfolio/portfolio-value";
 import { TopographyMotif } from "@/components/visual/topography-motif";
+import { PageHeader } from "../_components/page-header/page-header";
 import { CalendarShell } from "./_components/calendar-shell";
 
 export const metadata: Metadata = {
@@ -90,11 +91,13 @@ export default async function CalendarPage() {
   const sixMoAgoIso = sixMoAgo.toISOString().slice(0, 10);
   const pastUserDividendsCount = userDividends.filter((d) => d.paid_on >= sixMoAgoIso).length;
 
-  // No PageHeader: the drawer topbar already labels the route. The StatSidebar
-  // serves as the page's own visual anchor. Topography motif is a subtle echo
-  // of the public landing hero for visual identity.
+  // Width + padding match the dashboard so the two pages feel like siblings,
+  // then ~25% more vertical padding to give the chart's hover tooltip room to
+  // land above the top bar. PageHeader gives the StatSidebar a visual anchor
+  // and pushes the sidebar card down so it doesn't squash against the top.
+  // Topography motif is a subtle echo of the public landing hero.
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 md:px-6 md:py-12">
+    <div className="mx-auto max-w-5xl px-4 py-16 md:px-6 md:py-20">
       <div className="relative isolate">
         <div
           aria-hidden
@@ -102,6 +105,10 @@ export default async function CalendarPage() {
         >
           <TopographyMotif intensity="subtle" className="h-full w-full" />
         </div>
+        <PageHeader
+          title="Calendar"
+          subtitle="Past payments and the year ahead"
+        />
         <CalendarShell
           locale={locale}
           calendar={calendar}
