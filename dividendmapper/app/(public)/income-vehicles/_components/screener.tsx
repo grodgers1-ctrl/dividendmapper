@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Search, Lock, ArrowUp, ArrowDown, Star, Plus, Check, AlertCircle } from "lucide-react";
 import { SaveScreenModal } from "@/app/app/income-vehicles/_components/save-screen-modal";
+import { captureClientEvent } from "@/lib/analytics/posthog-capture";
 import type { VehicleUniverseRow } from "@/lib/scoring/load-vehicle-universe";
 import type { VehicleType } from "@/lib/scoring/load-vehicle-score";
 import { VEHICLE_FAMILIES } from "@/lib/scoring/data/vehicle-families";
@@ -172,6 +173,19 @@ export function Screener({
     return sortVehicles(byCriteria, sortKey, sortDir);
   }, [universe, criteria, query, sortKey, sortDir, ownedTickers, restrictToOwned]);
 
+  // Debounced search-event — fire once the user has stopped typing for 500ms.
+  // captureClientEvent no-ops in tests (jsdom + no PostHog init).
+  useEffect(() => {
+    if (query.trim().length === 0) return;
+    const id = setTimeout(() => {
+      captureClientEvent("income_vehicle_hub_search", {
+        query: query.trim(),
+        resultCount: filtered.length,
+      });
+    }, 500);
+    return () => clearTimeout(id);
+  }, [query, filtered.length]);
+
   // Reset sub-sector when switching family if the current value is no longer
   // a valid option in the new family's set.
   function setFamily(next: FamilyChoice) {
@@ -181,6 +195,12 @@ export function Screener({
       const stillValid =
         c.subSector !== null && familyRows.some((r) => r.subSector === c.subSector);
       return { ...c, family: next, subSector: stillValid ? c.subSector : null };
+    });
+    captureClientEvent("income_vehicle_hub_filter", {
+      family: next,
+      minResilience: criteria.minResilience,
+      subSector: criteria.subSector,
+      gatePassed: criteria.gatePassedOnly,
     });
   }
 
@@ -374,6 +394,12 @@ export function Screener({
                   <td className="px-3 py-2 font-mono font-medium">
                     <Link
                       href={`/${familySlug(r.vehicleType)}/${r.ticker}`}
+                      onClick={() => {
+                        captureClientEvent("income_vehicle_hub_row_click", {
+                          ticker: r.ticker,
+                          vehicleType: r.vehicleType,
+                        });
+                      }}
                       className="hover:underline"
                     >
                       {r.ticker}
@@ -469,6 +495,10 @@ export function Screener({
               body: JSON.stringify({ name, filterState: criteria }),
             });
             if (!res.ok) throw new Error("save_failed");
+            captureClientEvent("income_vehicle_hub_save_screen", {
+              filterState: criteria,
+              name,
+            });
             onSaved?.();
           }}
         />
