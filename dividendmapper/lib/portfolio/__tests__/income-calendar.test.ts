@@ -358,6 +358,48 @@ describe("buildIncomeCalendar — v2 segments + wrapper aggregation", () => {
     expect(aug?.segments[0].kind).toBe("confirmed-forecast");
   });
 
+  it("forward projection: confirmed-forecast on holding A does NOT block projected on holding B in the same month", () => {
+    // Bug A regression: prior to fix, ANY confirmed-forecast in a bucket
+    // suppressed every other ticker's projection. Two distinct .L holdings
+    // both paying in 2026-09. A is confirmed via next_ex_div; B is projected
+    // via the cache. Both must appear.
+    const now = new Date("2026-06-25T00:00:00Z");
+    const result = buildIncomeCalendar({
+      userDividends: [],
+      holdings: [
+        { ticker: "A.L", quantity: 100, wrapper: "isa", created_at: "2025-01-01" },
+        { ticker: "B.L", quantity: 200, wrapper: "isa", created_at: "2025-01-01" },
+      ],
+      exDivByTicker: {
+        // A.L confirmed for September 2026 — fills bucket with confirmed-forecast.
+        "A.L": { ex_date: "2026-09-01", pay_date: "2026-09-15", amount: 5, currency: "GBp" },
+      },
+      ratesToGbp: { GBP: 1, GBp: 0.01 },
+      now,
+      locale: "uk",
+      projectedNext12mByTicker: {
+        // B.L projected for September 2026 — must NOT be suppressed.
+        "B.L": [
+          {
+            ex_date: "2026-09-10",
+            pay_date: "2026-09-20",
+            per_share_amount: 3,
+            currency: "GBp",
+            confidence: "cadence",
+          },
+        ],
+      },
+      projectedHistorical12mByTicker: {},
+    });
+    const sept = result.months.find((m) => m.ym === "2026-09");
+    expect(sept).toBeDefined();
+    const kinds = sept!.segments.map((s) => s.kind).sort();
+    expect(kinds).toContain("confirmed-forecast");
+    expect(kinds).toContain("projected-cadence");
+    // A: 100 × 5 GBp × 0.01 = £5; B: 200 × 3 GBp × 0.01 = £6 ⇒ total £11.
+    expect(sept!.gbp).toBeCloseTo(11, 5);
+  });
+
   it("backward projection respects holdings.created_at floor", () => {
     const holdings = [
       { ticker: "MSFT", quantity: 50, wrapper: "gia" as const, created_at: "2026-04-01" },

@@ -131,10 +131,10 @@ interface BuildArgs {
   /** Optional per-ticker metadata for the drilldown panel. */
   nameByTicker?: Record<string, string>;
   cadenceByTicker?: Record<string, string>;
-  // Slice B projection caches. Forward fills empty future buckets that don't
-  // already carry a confirmed-forecast segment; backward back-fills past
-  // buckets gated on holdings.created_at + a 6mo floor, deduped vs any
-  // user_dividends in the same month.
+  // Slice B projection caches. Forward fills future buckets per-ticker
+  // (confirmed next_ex_div blocks the same ticker's projection for the same
+  // month only); backward back-fills past buckets gated on holdings.created_at
+  // + a 6mo floor, deduped vs any user_dividends in the same month.
   projectedNext12mByTicker?: Record<string, ProjectedPaymentRow[]>;
   projectedHistorical12mByTicker?: Record<string, ProjectedPaymentRow[]>;
 }
@@ -303,10 +303,11 @@ export function buildIncomeCalendar(args: BuildArgs): IncomeCalendarResult {
     );
   }
 
-  // Slice B: forward projection — only fills future buckets that don't already
-  // carry a confirmed-forecast segment (so the confirmed always wins). Also
-  // skips months matching a confirmed next_ex_div pay_date so a projected
-  // segment doesn't double-count the same payment.
+  // Slice B: forward projection. Fills future buckets with this ticker's
+  // projected payments. Per-ticker `confirmedPayKey` check above blocks the
+  // same ticker from contributing both confirmed and projected for the same
+  // month. Other tickers' confirmed-forecast segments do NOT block this
+  // ticker's projection — they coexist as separate segments in the bucket.
   if (args.projectedNext12mByTicker) {
     for (const h of holdings) {
       if (!passesWrapperFilter(h.wrapper, wrapperFilter)) continue;
@@ -322,7 +323,6 @@ export function buildIncomeCalendar(args: BuildArgs): IncomeCalendarResult {
         const bucket = buckets.get(key);
         if (!bucket) continue;
         if (bucket.kind !== "confirmed-forecast") continue;
-        if (bucket.segments.some((s) => s.kind === "confirmed-forecast")) continue;
         const perShare = convertToPrimary(r.per_share_amount, r.currency, ratesToGbp);
         if (perShare === null) continue;
         const total = perShare * h.quantity;
