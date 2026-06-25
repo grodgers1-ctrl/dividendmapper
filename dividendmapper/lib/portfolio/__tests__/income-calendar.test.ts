@@ -605,3 +605,65 @@ describe("buildIncomeCalendar — paymentsByMonth assembly", () => {
     expect(jul.map((p) => p.ticker)).toEqual(["B", "C", "A"]);
   });
 });
+
+describe("buildIncomeCalendar — FMP forward-DPS fallback", () => {
+  it("FMP fallback: holdings without a projection cache get DPS/12 spread across the next 12 future months", () => {
+    // Bug B α regression: a ticker with no projected_next_12m_payments must
+    // still contribute to annual income via FMP forward DPS × quantity / 12.
+    const now = new Date("2026-06-25T00:00:00Z");
+    const result = buildIncomeCalendar({
+      userDividends: [],
+      holdings: [
+        { ticker: "NU", quantity: 100, wrapper: "isa", created_at: "2025-01-01" },
+      ],
+      exDivByTicker: {},
+      ratesToGbp: { GBP: 1, USD: 0.79 },
+      now,
+      locale: "uk",
+      projectedNext12mByTicker: {},
+      projectedHistorical12mByTicker: {},
+      forwardDpsByTicker: { NU: { dps: 0.12, currency: "USD" } },
+    });
+    // 100 × 0.12 USD × 0.79 = £9.48 annual; / 12 = £0.79/month across 12 buckets.
+    const futureMonths = result.months.filter((m) => m.kind === "confirmed-forecast");
+    expect(futureMonths.length).toBe(12);
+    let sum = 0;
+    for (const m of futureMonths) {
+      const fmpSeg = m.segments.find((s) => s.kind === "fmp-estimate");
+      expect(fmpSeg).toBeDefined();
+      sum += fmpSeg!.primary;
+    }
+    expect(sum).toBeCloseTo(9.48, 2);
+    expect(result.unprojectedTickers).not.toContain("NU");
+  });
+
+  it("FMP fallback: does NOT overwrite a holding that already has a projection cache", () => {
+    const now = new Date("2026-06-25T00:00:00Z");
+    const result = buildIncomeCalendar({
+      userDividends: [],
+      holdings: [
+        { ticker: "PHP.L", quantity: 100, wrapper: "isa", created_at: "2025-01-01" },
+      ],
+      exDivByTicker: {},
+      ratesToGbp: { GBP: 1, GBp: 0.01 },
+      now,
+      locale: "uk",
+      projectedNext12mByTicker: {
+        "PHP.L": [
+          {
+            ex_date: "2026-09-10",
+            pay_date: "2026-09-15",
+            per_share_amount: 1.68,
+            currency: "GBp",
+            confidence: "cadence",
+          },
+        ],
+      },
+      projectedHistorical12mByTicker: {},
+      forwardDpsByTicker: { "PHP.L": { dps: 7, currency: "GBp" } },
+    });
+    for (const m of result.months) {
+      expect(m.segments.find((s) => s.kind === "fmp-estimate")).toBeUndefined();
+    }
+  });
+});

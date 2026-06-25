@@ -22,6 +22,7 @@ const OPACITY: Record<SegmentKind, number> = {
   "projected-cadence": 0.45,
   "projected-growth": 0.5,
   "growth-clipped": 0.5,
+  "fmp-estimate": 0.35,
 };
 
 const SEGMENT_LABEL: Record<SegmentKind, string> = {
@@ -31,6 +32,7 @@ const SEGMENT_LABEL: Record<SegmentKind, string> = {
   "projected-cadence": "Projected",
   "projected-growth": "Projected (growth)",
   "growth-clipped": "Projected (capped)",
+  "fmp-estimate": "Estimate",
 };
 
 const NUMBER_FMT_GBP = new Intl.NumberFormat("en-GB", {
