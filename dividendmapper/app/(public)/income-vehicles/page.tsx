@@ -35,7 +35,7 @@ export default async function IncomeVehiclesHubPage() {
           Income vehicles, ranked by dividend resilience
         </h1>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-          REITs, BDCs and UK REITs — scored daily on payout cover, leverage,
+          REITs, BDCs and UK REITs, scored daily on payout cover, leverage,
           concentration and recent dividend behaviour. Informational only, not
           financial advice.
         </p>

@@ -126,8 +126,8 @@ export default async function BdcsListPage({
         </h1>
         <p className="mt-3 max-w-prose text-base text-foreground">{family.indexCopy}</p>
         <p className="mt-2 max-w-prose text-sm text-muted-foreground">
-          The Resilience score (0–100) emphasises NII coverage and statutory leverage —
-          the two biggest drivers of BDC dividend cuts. Informational only, not a
+          The Resilience score (0–100) emphasises NII coverage and statutory leverage.
+          These are the two biggest drivers of BDC dividend cuts. Informational only, not a
           recommendation.{" "}
           <Link
             href="/methodology/income-vehicles#us-bdcs"
