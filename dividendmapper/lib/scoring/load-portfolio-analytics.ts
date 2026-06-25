@@ -171,10 +171,10 @@ export async function loadPortfolioAnalytics(args: {
     // "actual" + "partial" buckets on the dashboard card.
     supabase
       .from("user_dividends")
-      .select("paid_on, amount, currency")
+      .select("paid_on, amount, currency, wrapper")
       .gte("paid_on", calendarSince)
       .order("paid_on", { ascending: true })
-      .returns<{ paid_on: string; amount: number; currency: string }[]>(),
+      .returns<{ paid_on: string; amount: number; currency: string; wrapper: string }[]>(),
   ]);
 
   const overridesByTicker = new Map<string, OverrideRow[]>();
@@ -307,14 +307,18 @@ export async function loadPortfolioAnalytics(args: {
       paid_on: d.paid_on,
       amount: Number(d.amount),
       currency: d.currency,
+      wrapper: d.wrapper as never,
     })),
     holdings: allHoldings.map((h) => ({
       ticker: h.ticker,
       quantity: Number(h.quantity),
+      wrapper: h.wrapper as never,
+      created_at: h.created_at,
     })),
     exDivByTicker: calendarExDivByTicker,
     ratesToGbp,
     now,
+    locale: "uk",
   });
 
   return {
