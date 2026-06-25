@@ -172,17 +172,15 @@ export default async function DashboardPage() {
       };
     }
   }
-  const anchorsExposures =
-    isPro && analytics
-      ? aggregateIncomeByBand({
-          holdings: allHoldings,
-          quotes: quotesByTicker,
-          actualsByKey,
-          scoresByTicker: analytics.scoresByTicker,
-          vehicleScoresByTicker,
-          ratesToGbp,
-        })
-      : null;
+  const anchorsExposures = isPro
+    ? aggregateIncomeByBand({
+        holdings: allHoldings,
+        quotes: quotesByTicker,
+        actualsByKey,
+        vehicleScoresByTicker,
+        ratesToGbp,
+      })
+    : null;
 
   const beta = isBeta();
 
@@ -215,14 +213,17 @@ export default async function DashboardPage() {
           )}
         </div>
 
-        {/* Row 1.5 — Anchors vs Exposures (Pro). Reads off forward annual
-            income with the same source-of-truth as the Ledger Income column.
-            Free users keep the UpgradeCard above; no second upsell here. */}
-        {isPro && anchorsExposures && (
+        {/* Row 1.5 — Anchors vs Exposures (Pro). Vehicle-universe scope only
+            (REITs + BDCs). Hidden when the user has no qualifying holdings so
+            equity-only portfolios don't see an empty card. */}
+        {isPro && anchorsExposures && anchorsExposures.inScopeCount > 0 && (
           <div className="col-span-12">
             <AnchorsExposuresCard
               totalsGbp={anchorsExposures.totalsGbp}
               countsByBand={anchorsExposures.countsByBand}
+              totalGbp={anchorsExposures.totalGbp}
+              inScopeCount={anchorsExposures.inScopeCount}
+              excludedCount={anchorsExposures.excludedCount}
             />
           </div>
         )}
