@@ -112,6 +112,15 @@ export default async function BdcsListPage({
   return (
     <div className="bg-background">
       <div className="mx-auto max-w-4xl px-4 py-10 md:px-6 md:py-12">
+        <nav aria-label="Breadcrumb" className="mb-3 text-sm text-muted-foreground">
+          <Link
+            href="/income-vehicles"
+            className="inline-flex items-center gap-1 hover:text-foreground"
+          >
+            <span aria-hidden>←</span>
+            Income vehicles
+          </Link>
+        </nav>
         <h1 className="text-3xl font-bold tracking-tight text-foreground">
           {family.heading}
         </h1>
