@@ -101,6 +101,7 @@ export function CalendarShell({
         months={calendar.months}
         onSelectMonth={setSelectedYm}
         selectedYm={selectedYm}
+        primaryCurrency={calendar.primaryCurrency}
       />
       <DrilldownPanel
         primaryCurrency={calendar.primaryCurrency}
