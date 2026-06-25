@@ -46,6 +46,8 @@ export function Step3AddHolding({ existingHoldingsCount, onAdvance, onBack }: St
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const costPrefix = costCurrency === "GBP" ? "£" : "$";
+
   // Compute canSubmit before any early return so the hooks order stays
   // consistent across renders.
   const canSubmit = useMemo(
@@ -178,15 +180,24 @@ export function Step3AddHolding({ existingHoldingsCount, onAdvance, onBack }: St
           </div>
           <div>
             <label htmlFor="ww-avg-cost" className="block text-xs text-[var(--text-muted)]">Avg cost</label>
-            <input
-              id="ww-avg-cost"
-              type="number"
-              min="0"
-              step="0.0001"
-              value={avgCost}
-              onChange={(e) => setAvgCost(e.target.value)}
-              className="w-full rounded-md border border-[var(--border-subtle)] bg-transparent px-2 py-1 text-sm"
-            />
+            <div className="relative">
+              <span
+                data-testid="avg-cost-prefix"
+                aria-hidden="true"
+                className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-sm text-[var(--text-muted)]"
+              >
+                {costPrefix}
+              </span>
+              <input
+                id="ww-avg-cost"
+                type="number"
+                min="0"
+                step="0.0001"
+                value={avgCost}
+                onChange={(e) => setAvgCost(e.target.value)}
+                className="w-full rounded-md border border-[var(--border-subtle)] bg-transparent py-1 pl-6 pr-2 text-sm"
+              />
+            </div>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-3">
@@ -196,7 +207,8 @@ export function Step3AddHolding({ existingHoldingsCount, onAdvance, onBack }: St
               id="ww-currency"
               value={costCurrency}
               onChange={(e) => setCostCurrency(e.target.value as "GBP" | "USD")}
-              className="w-full rounded-md border border-[var(--border-subtle)] bg-transparent px-2 py-1 text-sm"
+              style={{ colorScheme: "dark light" }}
+              className="w-full rounded-md border border-[var(--border-subtle)] bg-[var(--surface)] px-2 py-1 text-sm text-[var(--text)]"
             >
               <option value="GBP">GBP</option>
               <option value="USD">USD</option>
@@ -208,7 +220,8 @@ export function Step3AddHolding({ existingHoldingsCount, onAdvance, onBack }: St
               id="ww-wrapper"
               value={wrapper}
               onChange={(e) => setWrapper(e.target.value)}
-              className="w-full rounded-md border border-[var(--border-subtle)] bg-transparent px-2 py-1 text-sm"
+              style={{ colorScheme: "dark light" }}
+              className="w-full rounded-md border border-[var(--border-subtle)] bg-[var(--surface)] px-2 py-1 text-sm text-[var(--text)]"
             >
               <option value="">Pick one</option>
               {wrappers.map((w) => (

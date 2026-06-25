@@ -46,6 +46,15 @@ describe("Step3AddHolding", () => {
     expect(screen.queryByRole("option", { name: /401/ })).toBeNull();
   });
 
+  it("shows the £ prefix on Avg cost while currency is GBP, and $ after the ticker auto-syncs to USD", () => {
+    render(<Step3AddHolding existingHoldingsCount={0} onAdvance={() => {}} onBack={() => {}} />);
+    // Initial UK locale → GBP default → £ prefix
+    expect(screen.getByTestId("avg-cost-prefix")).toHaveTextContent("£");
+    // Pick AAPL (USD) → currency auto-syncs → $ prefix
+    fireEvent.click(screen.getByTestId("ticker-stub"));
+    expect(screen.getByTestId("avg-cost-prefix")).toHaveTextContent("$");
+  });
+
   it("blocks the primary until ticker, quantity, avg cost, and wrapper are set", () => {
     render(<Step3AddHolding existingHoldingsCount={0} onAdvance={() => {}} onBack={() => {}} />);
     const primary = screen.getByRole("button", { name: /add holding/i });
