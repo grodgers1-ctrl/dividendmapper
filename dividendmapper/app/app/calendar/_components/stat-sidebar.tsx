@@ -44,6 +44,10 @@ export interface StatSidebarProps {
   yetToReceive: number;
   /** When true, surface the cadence-based caveat under Annual income. */
   includesProjected: boolean;
+  /** Distinct ticker count whose forward contributions are zero (no projection
+   * cache, no FMP forward DPS). Rendered as a caveat under the Annual income
+   * figure to keep the number honest. Omit or set 0 to hide. */
+  unprojectedCount?: number;
 }
 
 export function StatSidebar(props: StatSidebarProps) {
@@ -55,6 +59,7 @@ export function StatSidebar(props: StatSidebarProps) {
     yieldOnValue,
     yetToReceive,
     includesProjected,
+    unprojectedCount,
   } = props;
 
   const rows: ReadonlyArray<{ label: string; value: string }> = [
@@ -91,6 +96,16 @@ export function StatSidebar(props: StatSidebarProps) {
             className="mt-1 text-[10px] text-[var(--text-muted)]"
           >
             incl. projected
+          </p>
+        )}
+        {typeof unprojectedCount === "number" && unprojectedCount > 0 && (
+          <p
+            data-testid="calendar-stat-unprojected"
+            className="mt-1 text-[10px] text-[var(--text-muted)]"
+          >
+            {unprojectedCount === 1
+              ? "1 holding not yet projected"
+              : `${unprojectedCount} holdings not yet projected`}
           </p>
         )}
       </div>

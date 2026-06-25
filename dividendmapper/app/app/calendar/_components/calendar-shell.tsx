@@ -115,6 +115,7 @@ export function CalendarShell({
           yieldOnValue={stats.yieldOnValue}
           yetToReceive={stats.yetToReceive}
           includesProjected={includesProjected}
+          unprojectedCount={calendar.unprojectedTickers.length}
         />
         {showEmptyStateCta && <EmptyStateCta />}
       </div>
