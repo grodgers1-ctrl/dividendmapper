@@ -6,9 +6,10 @@ import {
 } from "../nav-items";
 
 describe("DEFAULT_NAV_ITEMS", () => {
-  it("declares the seven v1 drawer items in display order", () => {
+  it("declares the eight drawer items in display order (Calendar and Income vehicles included)", () => {
     expect(DEFAULT_NAV_ITEMS.map((i) => i.href)).toEqual([
       "/app/dashboard",
+      "/app/calendar",
       "/app/portfolio",
       "/app/portfolio/scoring",
       "/app/income-vehicles",
@@ -22,6 +23,7 @@ describe("DEFAULT_NAV_ITEMS", () => {
     const byHref = Object.fromEntries(
       DEFAULT_NAV_ITEMS.map((i) => [i.href, i] as const),
     );
+    expect(byHref["/app/calendar"].requiresPro).toBe(true);
     expect(byHref["/app/portfolio/scoring"].requiresPro).toBe(true);
     expect(byHref["/app/income-vehicles"].requiresPro).toBe(true);
     expect(byHref["/app/portfolio/watchlist"].requiresPro).toBe(true);
@@ -59,14 +61,15 @@ describe("filterNavItems", () => {
     ]);
   });
 
-  it("pro non-admin → 6 items (adds Portfolio Manager + Income vehicles + Watchlist)", () => {
+  it("pro non-admin → 7 items (adds Calendar + Portfolio Manager + Income vehicles + Watchlist)", () => {
     const items = filterNavItems(DEFAULT_NAV_ITEMS, {
       tier: "pro",
       isAdmin: false,
     });
-    expect(items).toHaveLength(6);
+    expect(items).toHaveLength(7);
     expect(items.map((i) => i.href)).toEqual([
       "/app/dashboard",
+      "/app/calendar",
       "/app/portfolio",
       "/app/portfolio/scoring",
       "/app/income-vehicles",
@@ -80,16 +83,17 @@ describe("filterNavItems", () => {
       tier: "premium",
       isAdmin: false,
     });
-    expect(items).toHaveLength(6);
+    expect(items).toHaveLength(7);
+    expect(items.map((i) => i.href)).toContain("/app/calendar");
     expect(items.map((i) => i.href)).toContain("/app/income-vehicles");
   });
 
-  it("admin pro → 7 items (adds Admin)", () => {
+  it("admin pro → 8 items (adds Admin)", () => {
     const items = filterNavItems(DEFAULT_NAV_ITEMS, {
       tier: "pro",
       isAdmin: true,
     });
-    expect(items).toHaveLength(7);
+    expect(items).toHaveLength(8);
     expect(items.map((i) => i.href)).toContain("/app/admin/scoring/audit");
   });
 
@@ -117,5 +121,23 @@ describe("filterNavItems", () => {
       isAdmin: false,
     });
     expect(filtered.map((i) => i.href)).toEqual(["/c", "/a", "/b"]);
+  });
+});
+
+describe("nav-items v2 — Calendar", () => {
+  it("includes a Calendar entry between Dashboard and Ledger", () => {
+    const labels = DEFAULT_NAV_ITEMS.map((i) => i.label);
+    const dashboardIdx = labels.indexOf("Dashboard");
+    const calendarIdx = labels.indexOf("Calendar");
+    const portfolioMgrIdx = labels.indexOf("Portfolio Manager");
+    expect(calendarIdx).toBeGreaterThan(dashboardIdx);
+    expect(calendarIdx).toBeLessThan(portfolioMgrIdx);
+  });
+
+  it("Calendar requires Pro", () => {
+    const filteredFree = filterNavItems(DEFAULT_NAV_ITEMS, { tier: "free", isAdmin: false });
+    expect(filteredFree.find((i) => i.label === "Calendar")).toBeUndefined();
+    const filteredPro = filterNavItems(DEFAULT_NAV_ITEMS, { tier: "pro", isAdmin: false });
+    expect(filteredPro.find((i) => i.label === "Calendar")).toBeDefined();
   });
 });

@@ -1,12 +1,11 @@
 "use client";
 
-// Dashboard "Income calendar" card. Always-on chart of past + forecast
-// dividend income; always-on next-3 ex-divs list; inline reinvest
-// suggestions appear only when an ex-div is within the 5-day trigger window.
-// No empty state — the chart + list fill the card on quiet weeks too.
+// Dashboard "Income calendar" lite-preview card. Slice A drops it from a
+// full surface to a chart + next-3 list with an "Open full calendar →" link
+// to /app/calendar. The inline ReinvestCard moves to the calendar drill-down
+// in Slice B.
 
-import { ReinvestCard } from "@/app/app/portfolio/_components/reinvest-card";
-import type { ReinvestCard as ReinvestCardData } from "@/lib/reinvest/build-card";
+import Link from "next/link";
 import type { IncomeCalendarResult } from "@/lib/portfolio/income-calendar";
 import { IncomeCalendarChart } from "./IncomeCalendarChart";
 
@@ -27,22 +26,24 @@ function formatGbpRounded(gbp: number): string {
 
 export interface IncomeCalendarCardProps {
   calendar: IncomeCalendarResult;
-  reinvestCard: ReinvestCardData | null;
+  // Retained for API back-compat with the dashboard page caller. The inline
+  // reinvest surface moves to /app/calendar's drill-down in Slice B.
+  reinvestCard?: unknown;
 }
 
-export function IncomeCalendarCard({
-  calendar,
-  reinvestCard,
-}: IncomeCalendarCardProps) {
+export function IncomeCalendarCard({ calendar }: IncomeCalendarCardProps) {
   return (
     <div className="card-surface flex h-full flex-col">
       <div className="flex items-baseline justify-between">
         <p className="text-xs uppercase tracking-[0.08em] text-[var(--text-muted)]">
           Income calendar
         </p>
-        <span className="text-[10px] text-[var(--text-muted)]">
-          past 6 mo · next 6 mo
-        </span>
+        <Link
+          href="/app/calendar"
+          className="text-[10px] text-[var(--brand)] hover:underline"
+        >
+          Open full calendar →
+        </Link>
       </div>
 
       <div className="mt-3">
@@ -82,15 +83,6 @@ export function IncomeCalendarCard({
           )}
         </ul>
       </div>
-
-      {reinvestCard && (
-        <div className="mt-4" data-testid="inline-reinvest">
-          <ReinvestCard
-            trigger={reinvestCard.trigger}
-            candidates={reinvestCard.candidates}
-          />
-        </div>
-      )}
     </div>
   );
 }

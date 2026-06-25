@@ -5,18 +5,18 @@ import type { IncomeCalendarMonth } from "@/lib/portfolio/income-calendar";
 
 function fixture(): IncomeCalendarMonth[] {
   return [
-    { ym: "2025-12", gbp: 8,  kind: "actual" },
-    { ym: "2026-01", gbp: 42, kind: "actual" },
-    { ym: "2026-02", gbp: 18, kind: "actual" },
-    { ym: "2026-03", gbp: 35, kind: "actual" },
-    { ym: "2026-04", gbp: 15, kind: "actual" },
-    { ym: "2026-05", gbp: 28, kind: "actual" },
-    { ym: "2026-06", gbp: 12, kind: "partial" },
-    { ym: "2026-07", gbp: 55, kind: "forecast" },
-    { ym: "2026-08", gbp: 18, kind: "forecast" },
-    { ym: "2026-09", gbp: 45, kind: "forecast" },
-    { ym: "2026-10", gbp: 42, kind: "forecast" },
-    { ym: "2026-11", gbp: 20, kind: "forecast" },
+    { ym: "2025-12", gbp: 8,  kind: "actual",             segments: [{ kind: "actual", primary: 8 }] },
+    { ym: "2026-01", gbp: 42, kind: "actual",             segments: [{ kind: "actual", primary: 42 }] },
+    { ym: "2026-02", gbp: 18, kind: "actual",             segments: [{ kind: "actual", primary: 18 }] },
+    { ym: "2026-03", gbp: 35, kind: "actual",             segments: [{ kind: "actual", primary: 35 }] },
+    { ym: "2026-04", gbp: 15, kind: "actual",             segments: [{ kind: "actual", primary: 15 }] },
+    { ym: "2026-05", gbp: 28, kind: "actual",             segments: [{ kind: "actual", primary: 28 }] },
+    { ym: "2026-06", gbp: 12, kind: "partial",            segments: [{ kind: "partial", primary: 12 }] },
+    { ym: "2026-07", gbp: 55, kind: "confirmed-forecast", segments: [{ kind: "confirmed-forecast", primary: 55 }] },
+    { ym: "2026-08", gbp: 18, kind: "confirmed-forecast", segments: [{ kind: "confirmed-forecast", primary: 18 }] },
+    { ym: "2026-09", gbp: 45, kind: "confirmed-forecast", segments: [{ kind: "confirmed-forecast", primary: 45 }] },
+    { ym: "2026-10", gbp: 42, kind: "confirmed-forecast", segments: [{ kind: "confirmed-forecast", primary: 42 }] },
+    { ym: "2026-11", gbp: 20, kind: "confirmed-forecast", segments: [{ kind: "confirmed-forecast", primary: 20 }] },
   ];
 }
 
@@ -35,7 +35,7 @@ describe("IncomeCalendarChart", () => {
     expect(kinds).toEqual([
       "actual","actual","actual","actual","actual","actual",
       "partial",
-      "forecast","forecast","forecast","forecast","forecast",
+      "confirmed-forecast","confirmed-forecast","confirmed-forecast","confirmed-forecast","confirmed-forecast",
     ]);
   });
 
@@ -58,7 +58,7 @@ describe("IncomeCalendarChart", () => {
   });
 
   it("does not crash when every month is zero", () => {
-    const flat: IncomeCalendarMonth[] = fixture().map((m) => ({ ...m, gbp: 0 }));
+    const flat: IncomeCalendarMonth[] = fixture().map((m) => ({ ...m, gbp: 0, segments: [] }));
     const { container } = render(<IncomeCalendarChart months={flat} />);
     expect(container.querySelectorAll('[data-testid="calendar-bar"]')).toHaveLength(12);
   });
