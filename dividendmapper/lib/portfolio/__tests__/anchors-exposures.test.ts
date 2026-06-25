@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { aggregateIncomeByBand } from "../anchors-exposures";
 import type { HoldingScore } from "@/lib/scoring/portfolio-scores";
+import type { QuoteResult } from "@/lib/market/quote";
 
 function score(buy: number | null, gates: string[] = []): HoldingScore {
   return {
@@ -19,6 +20,25 @@ function score(buy: number | null, gates: string[] = []): HoldingScore {
 
 const usd = { GBP: 1, USD: 0.8 };
 
+function quote(dividend: number, currency: string): QuoteResult {
+  return {
+    ok: true,
+    cached: false,
+    data: {
+      ticker: "TEST",
+      source: "FMP",
+      price: null,
+      dividend,
+      dividendYield: null,
+      dividendGrowth3yr: null,
+      currency,
+      exchange: null,
+      name: null,
+      fetchedAt: "2026-06-25T00:00:00.000Z",
+    },
+  };
+}
+
 describe("aggregateIncomeByBand", () => {
   it("buckets vehicle income by Resilience band, equity income by Quality", () => {
     const holdings = [
@@ -27,13 +47,13 @@ describe("aggregateIncomeByBand", () => {
       { ticker: "BLND.L", quantity: 200, wrapper: "isa" }, // vehicle, R=40 → risk
       { ticker: "PEP", quantity: 25, wrapper: "isa" }, // equity, Q=80 → anchor
     ];
-    const quotes = {
-      O: { ok: true, data: { dividend: 3, currency: "USD" } },
-      MAIN: { ok: true, data: { dividend: 2.4, currency: "USD" } },
-      "BLND.L": { ok: true, data: { dividend: 0.2, currency: "GBP" } },
-      PEP: { ok: true, data: { dividend: 5, currency: "USD" } },
+    const quotes: Record<string, QuoteResult> = {
+      O: quote(3, "USD"),
+      MAIN: quote(2.4, "USD"),
+      "BLND.L": quote(0.2, "GBP"),
+      PEP: quote(5, "USD"),
       // deliberately no rate for actuals fallback case below
-    } as any;
+    };
     const vehicleScoresByTicker = {
       O: { vehicleType: "us_reit" as const, resilienceScore: 82, qualityGatePassed: true },
       MAIN: { vehicleType: "us_bdc" as const, resilienceScore: 60, qualityGatePassed: true },
@@ -73,8 +93,8 @@ describe("aggregateIncomeByBand", () => {
     const result = aggregateIncomeByBand({
       holdings: [{ ticker: "BAD", quantity: 100, wrapper: "isa" }],
       quotes: {
-        BAD: { ok: true, data: { dividend: 1, currency: "GBP" } },
-      } as any,
+        BAD: quote(1, "GBP"),
+      },
       scoresByTicker: {},
       vehicleScoresByTicker: {
         BAD: {
@@ -93,8 +113,8 @@ describe("aggregateIncomeByBand", () => {
     const result = aggregateIncomeByBand({
       holdings: [{ ticker: "UNKNOWN", quantity: 10, wrapper: "isa" }],
       quotes: {
-        UNKNOWN: { ok: true, data: { dividend: 1, currency: "USD" } },
-      } as any,
+        UNKNOWN: quote(1, "USD"),
+      },
       scoresByTicker: {},
       vehicleScoresByTicker: {},
       ratesToGbp: usd,

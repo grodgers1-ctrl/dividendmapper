@@ -11,29 +11,30 @@ export function SaveScreenModal({
   onClose: () => void;
   onSave: (name: string) => Promise<void>;
 }) {
+  if (!open) return null;
+
+  return <SaveScreenModalContent onClose={onClose} onSave={onSave} />;
+}
+
+function SaveScreenModalContent({
+  onClose,
+  onSave,
+}: {
+  onClose: () => void;
+  onSave: (name: string) => Promise<void>;
+}) {
   const [name, setName] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!open) {
-      setName("");
-      setError(null);
-      setSaving(false);
-    }
-  }, [open]);
-
   // Close on Escape.
   useEffect(() => {
-    if (!open) return;
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [open, onClose]);
-
-  if (!open) return null;
+  }, [onClose]);
 
   return (
     <div
