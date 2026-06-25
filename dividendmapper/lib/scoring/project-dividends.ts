@@ -3,7 +3,7 @@
 // Outputs: ProjectedPayment[] for the requested direction.
 //
 // Algorithm:
-//   1. Cadence detection from median inter-payment gap.
+//   1. Cadence detection by year-count mode, with median inter-payment gap as fallback.
 //   2. 3yr CAGR growth rate over COMPLETE calendar years only (partial-year
 //      tails are dropped so YTD payments don't skew the rate). Capped ±20%.
 //   3. Cut/freeze dominance: latest payment < 95% of trailing-12m-avg → 0 growth.
@@ -54,8 +54,72 @@ const CADENCE_BUCKETS: ReadonlyArray<{
   { cadence: "annual",    min: 355, max: 370, payOffsetDays: 28 },
 ];
 
+/**
+ * Cadence detection by per-calendar-year payment count.
+ *
+ * UK semi-annual payers often have asymmetric interim/final timing (e.g.
+ * ABDN.L gaps = [224, 140, 217] days), which puts the median outside the
+ * narrow median-gap bucket [175, 190] and gets them mis-tagged as
+ * 'irregular'. Counting payments per calendar year sidesteps timing drift
+ * entirely.
+ *
+ * Returns the cadence when the mode payment count appears in 2 or more of
+ * the most recent 3 complete calendar years, and the mode maps to a known
+ * cadence ({1, 2, 4, 12}). Otherwise returns null, letting the caller fall
+ * back to median-gap bucket detection.
+ */
+export function detectCadenceByYearCount(
+  history: ReadonlyArray<HistoricalPayment>,
+): Cadence | null {
+  const countByYear = new Map<number, number>();
+  for (const h of history) {
+    const y = Number(h.exDate.slice(0, 4));
+    countByYear.set(y, (countByYear.get(y) ?? 0) + 1);
+  }
+  if (countByYear.size === 0) return null;
+
+  // Drop the most recent year as it is partial (this runs from a daily cron
+  // on currently-trading securities, so the latest year always has more
+  // payments still to come).
+  const maxYear = Math.max(...countByYear.keys());
+  countByYear.delete(maxYear);
+  if (countByYear.size < 2) return null;
+
+  // Take up to the 3 most recent complete years.
+  const recent = [...countByYear.entries()]
+    .sort((a, b) => b[0] - a[0])
+    .slice(0, 3)
+    .map(([, c]) => c);
+
+  // Mode = the count that appears most often. If no count repeats, return
+  // null so the caller falls back to the gap-based detector.
+  const freq = new Map<number, number>();
+  for (const c of recent) freq.set(c, (freq.get(c) ?? 0) + 1);
+  const sorted = [...freq.entries()].sort((a, b) => b[1] - a[1]);
+  const [modeCount, modeFreq] = sorted[0];
+  if (modeFreq < 2) return null;
+
+  switch (modeCount) {
+    case 12: return "monthly";
+    case 4:  return "quarterly";
+    case 2:  return "semi";
+    case 1:  return "annual";
+    default: return null;
+  }
+}
+
 export function detectCadence(history: ReadonlyArray<HistoricalPayment>): Cadence {
   if (history.length < 4) return "unknown";
+
+  // Primary signal: payments-per-calendar-year mode. Robust to interim/final
+  // timing drift that breaks the median-gap detector for UK semi-annual
+  // payers. Returns null when ambiguous; we fall through to median-gap below.
+  const byYear = detectCadenceByYearCount(history);
+  if (byYear) return byYear;
+
+  // Fallback: median inter-payment gap matched against narrow buckets. Catches
+  // payers with a clean rhythm but fewer than 2 complete calendar years of
+  // history (e.g. recently initiated payers).
   const sorted = [...history].sort((a, b) => (a.exDate < b.exDate ? -1 : 1));
   const gaps: number[] = [];
   for (let i = 1; i < sorted.length; i++) {

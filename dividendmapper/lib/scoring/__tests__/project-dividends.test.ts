@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   detectCadence,
+  detectCadenceByYearCount,
   computeGrowthRate,
   projectDividends,
   type HistoricalPayment,
@@ -74,6 +75,83 @@ describe("detectCadence", () => {
         { exDate: "2023-05-10", amount: 1 },
       ]),
     ).toBe("irregular");
+  });
+
+  // Regression tests from the 2026-06-25 calendar v2 audit. Each ticker was
+  // previously tagged 'irregular' by the median-gap path even though FMP
+  // shows a reliable cadence over multiple complete years.
+
+  it("ABDN.L: semi-annual with asymmetric gaps (audit regression)", () => {
+    const history = [
+      { exDate: "2026-03-19", amount: 7.3 },
+      { exDate: "2025-08-14", amount: 7.3 },
+      { exDate: "2025-03-27", amount: 7.3 },
+      { exDate: "2024-08-15", amount: 7.3 },
+      { exDate: "2024-03-15", amount: 7.0 },
+      { exDate: "2023-08-15", amount: 7.0 },
+      { exDate: "2023-03-15", amount: 7.0 },
+      { exDate: "2022-08-15", amount: 6.6 },
+      { exDate: "2022-03-15", amount: 6.6 },
+    ];
+    expect(detectCadence(history)).toBe("semi");
+  });
+
+  it("LGEN.L: semi-annual with ~245d median gap (audit regression)", () => {
+    const history = [
+      { exDate: "2026-04-23", amount: 15.67 },
+      { exDate: "2025-08-21", amount: 6.12 },
+      { exDate: "2025-04-24", amount: 15.36 },
+      { exDate: "2024-08-22", amount: 6.0 },
+      { exDate: "2024-04-23", amount: 14.9 },
+      { exDate: "2023-08-22", amount: 5.71 },
+      { exDate: "2023-04-23", amount: 14.37 },
+      { exDate: "2022-08-22", amount: 5.44 },
+      { exDate: "2022-04-23", amount: 13.27 },
+    ];
+    expect(detectCadence(history)).toBe("semi");
+  });
+
+  it("RIO.L: semi-annual with ~203d median gap (audit regression)", () => {
+    const history = [
+      { exDate: "2026-03-05", amount: 191.77 },
+      { exDate: "2025-08-14", amount: 108.58 },
+      { exDate: "2025-03-06", amount: 175.99 },
+      { exDate: "2024-08-15", amount: 134.22 },
+      { exDate: "2024-03-05", amount: 165.0 },
+      { exDate: "2023-08-15", amount: 144.4 },
+      { exDate: "2023-03-05", amount: 225.0 },
+    ];
+    expect(detectCadence(history)).toBe("semi");
+  });
+
+  it("PHP.L: quarterly hidden behind median-gap 98 (audit regression)", () => {
+    const history = [
+      { exDate: "2026-07-02", amount: 1.68 },
+      { exDate: "2026-03-26", amount: 1.825 },
+      { exDate: "2026-01-29", amount: 1.825 },
+      { exDate: "2025-10-09", amount: 1.775 },
+      { exDate: "2025-07-03", amount: 1.775 },
+      { exDate: "2025-03-27", amount: 1.775 },
+      { exDate: "2025-01-30", amount: 1.775 },
+      { exDate: "2024-10-09", amount: 1.7 },
+      { exDate: "2024-07-04", amount: 1.7 },
+      { exDate: "2024-03-28", amount: 1.7 },
+      { exDate: "2024-01-30", amount: 1.7 },
+    ];
+    expect(detectCadence(history)).toBe("quarterly");
+  });
+
+  it("BBOX.L: genuinely irregular falls through to median-gap and stays irregular", () => {
+    const history = [
+      { exDate: "2026-05-21", amount: 2.0 },
+      { exDate: "2026-03-12", amount: 2.255 },
+      { exDate: "2025-11-06", amount: 1.915 },
+      { exDate: "2025-08-14", amount: 1.915 },
+      { exDate: "2025-05-22", amount: 1.915 },
+      { exDate: "2025-03-13", amount: 2.185 },
+      { exDate: "2024-08-15", amount: 1.85 },
+    ];
+    expect(detectCadence(history)).toBe("irregular");
   });
 });
 
@@ -281,5 +359,105 @@ describe("projectDividends — backward (holdings.createdAt floor)", () => {
     });
     expect(result.every((p) => p.exDate <= "2026-06-23")).toBe(true);
     expect(result.length).toBeGreaterThan(0);
+  });
+});
+
+describe("detectCadenceByYearCount", () => {
+  it("returns 'quarterly' when the mode of payments-per-year is 4", () => {
+    const history = [
+      { exDate: "2026-03-15", amount: 0.25 },
+      { exDate: "2025-12-15", amount: 0.25 },
+      { exDate: "2025-09-15", amount: 0.25 },
+      { exDate: "2025-06-15", amount: 0.25 },
+      { exDate: "2025-03-15", amount: 0.25 },
+      { exDate: "2024-12-15", amount: 0.24 },
+      { exDate: "2024-09-15", amount: 0.24 },
+      { exDate: "2024-06-15", amount: 0.24 },
+      { exDate: "2024-03-15", amount: 0.24 },
+    ];
+    expect(detectCadenceByYearCount(history)).toBe("quarterly");
+  });
+
+  it("returns 'semi' for a UK-style payer paying twice a year", () => {
+    const history = [
+      { exDate: "2026-03-19", amount: 7.3 },
+      { exDate: "2025-08-14", amount: 7.3 },
+      { exDate: "2025-03-27", amount: 7.3 },
+      { exDate: "2024-08-15", amount: 7.3 },
+      { exDate: "2024-03-15", amount: 7.0 },
+      { exDate: "2023-08-15", amount: 7.0 },
+      { exDate: "2023-03-15", amount: 7.0 },
+    ];
+    expect(detectCadenceByYearCount(history)).toBe("semi");
+  });
+
+  it("returns 'monthly' when the mode is 12", () => {
+    const history: { exDate: string; amount: number }[] = [];
+    for (let m = 1; m <= 12; m++) {
+      history.push({ exDate: `2025-${String(m).padStart(2, "0")}-15`, amount: 0.26 });
+      history.push({ exDate: `2024-${String(m).padStart(2, "0")}-15`, amount: 0.25 });
+    }
+    history.push({ exDate: "2026-01-15", amount: 0.27 });
+    expect(detectCadenceByYearCount(history)).toBe("monthly");
+  });
+
+  it("returns 'annual' when the mode is 1", () => {
+    const history = [
+      { exDate: "2026-04-10", amount: 1.2 },
+      { exDate: "2025-04-10", amount: 1.1 },
+      { exDate: "2024-04-10", amount: 1.0 },
+      { exDate: "2023-04-10", amount: 0.9 },
+    ];
+    expect(detectCadenceByYearCount(history)).toBe("annual");
+  });
+
+  it("returns null when there are fewer than 2 complete years", () => {
+    const history = [
+      { exDate: "2026-03-15", amount: 0.25 },
+      { exDate: "2025-12-15", amount: 0.25 },
+      { exDate: "2025-09-15", amount: 0.25 },
+      { exDate: "2025-06-15", amount: 0.25 },
+    ];
+    expect(detectCadenceByYearCount(history)).toBeNull();
+  });
+
+  it("returns null when no count appears in 2 or more years (no mode)", () => {
+    const history = [
+      { exDate: "2026-06-01", amount: 10 },
+      { exDate: "2025-09-15", amount: 1 },
+      { exDate: "2024-12-15", amount: 1 },
+      { exDate: "2024-08-15", amount: 1 },
+      { exDate: "2024-03-15", amount: 1 },
+      { exDate: "2023-06-15", amount: 1 },
+      { exDate: "2023-03-15", amount: 1 },
+    ];
+    expect(detectCadenceByYearCount(history)).toBeNull();
+  });
+
+  it("returns null when the mode count maps to none of {1, 2, 4, 12}", () => {
+    const history = [
+      { exDate: "2026-06-15", amount: 1 },
+      { exDate: "2025-09-15", amount: 1 },
+      { exDate: "2025-06-15", amount: 1 },
+      { exDate: "2025-03-15", amount: 1 },
+      { exDate: "2024-09-15", amount: 1 },
+      { exDate: "2024-06-15", amount: 1 },
+      { exDate: "2024-03-15", amount: 1 },
+    ];
+    expect(detectCadenceByYearCount(history)).toBeNull();
+  });
+
+  it("tolerates one outlier year in the mode window (semi with one bonus year)", () => {
+    const history = [
+      { exDate: "2026-03-19", amount: 7.3 },
+      { exDate: "2025-08-14", amount: 7.3 },
+      { exDate: "2025-03-27", amount: 7.3 },
+      { exDate: "2024-11-28", amount: 4 },
+      { exDate: "2024-08-15", amount: 7.3 },
+      { exDate: "2024-03-15", amount: 7.0 },
+      { exDate: "2023-08-15", amount: 7.0 },
+      { exDate: "2023-03-15", amount: 7.0 },
+    ];
+    expect(detectCadenceByYearCount(history)).toBe("semi");
   });
 });
