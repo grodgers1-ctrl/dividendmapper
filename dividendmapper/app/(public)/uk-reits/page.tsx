@@ -75,13 +75,22 @@ export default async function UkReitsListPage({
   return (
     <div className="bg-background">
       <div className="mx-auto max-w-4xl px-4 py-10 md:px-6 md:py-12">
+        <nav aria-label="Breadcrumb" className="mb-3 text-sm text-muted-foreground">
+          <Link
+            href="/income-vehicles"
+            className="inline-flex items-center gap-1 hover:text-foreground"
+          >
+            <span aria-hidden>←</span>
+            Income vehicles
+          </Link>
+        </nav>
         <h1 className="text-3xl font-bold tracking-tight text-foreground">
           {family.heading}
         </h1>
         <p className="mt-3 max-w-prose text-base text-foreground">{family.indexCopy}</p>
         <p className="mt-2 max-w-prose text-sm text-muted-foreground">
           The Resilience score (0–100) factors in EPRA-style earnings cover, loan-to-value
-          and property mix — the markers UK REIT analysts watch. Informational only, not a
+          and property mix. These are the markers UK REIT analysts watch. Informational only, not a
           recommendation.{" "}
           <Link
             href="/methodology/income-vehicles#uk-reits"

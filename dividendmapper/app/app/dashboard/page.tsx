@@ -172,17 +172,15 @@ export default async function DashboardPage() {
       };
     }
   }
-  const anchorsExposures =
-    isPro && analytics
-      ? aggregateIncomeByBand({
-          holdings: allHoldings,
-          quotes: quotesByTicker,
-          actualsByKey,
-          scoresByTicker: analytics.scoresByTicker,
-          vehicleScoresByTicker,
-          ratesToGbp,
-        })
-      : null;
+  const anchorsExposures = isPro
+    ? aggregateIncomeByBand({
+        holdings: allHoldings,
+        quotes: quotesByTicker,
+        actualsByKey,
+        vehicleScoresByTicker,
+        ratesToGbp,
+      })
+    : null;
 
   const beta = isBeta();
 
@@ -215,15 +213,29 @@ export default async function DashboardPage() {
           )}
         </div>
 
-        {/* Row 1.5 — Anchors vs Exposures (Pro). Reads off forward annual
-            income with the same source-of-truth as the Ledger Income column.
-            Free users keep the UpgradeCard above; no second upsell here. */}
-        {isPro && anchorsExposures && (
-          <div className="col-span-12">
+        {/* Row 1.5 — Investment vehicle income (left, 2/3, Pro + qualifying
+            holdings) paired with Position performance (right, 1/3, Pro). When
+            Anchors is hidden, Position performance takes the full row. */}
+        {isPro && anchorsExposures && anchorsExposures.inScopeCount > 0 && (
+          <div className="col-span-12 md:col-span-8">
             <AnchorsExposuresCard
               totalsGbp={anchorsExposures.totalsGbp}
               countsByBand={anchorsExposures.countsByBand}
+              totalGbp={anchorsExposures.totalGbp}
+              inScopeCount={anchorsExposures.inScopeCount}
+              excludedCount={anchorsExposures.excludedCount}
             />
+          </div>
+        )}
+        {isPro && (
+          <div
+            className={
+              anchorsExposures && anchorsExposures.inScopeCount > 0
+                ? "col-span-12 md:col-span-4"
+                : "col-span-12"
+            }
+          >
+            <BestWorstCard pnls={holdingPnls} />
           </div>
         )}
 
@@ -275,13 +287,6 @@ export default async function DashboardPage() {
           />
         </div>
 
-        {/* Row 4 — Pro best/worst lifetime P/L. Sits under TopHoldingsStrip
-            because "look at these specifically" cues naturally land here. */}
-        {isPro && (
-          <div className="col-span-12">
-            <BestWorstCard pnls={holdingPnls} />
-          </div>
-        )}
       </div>
     </div>
   );

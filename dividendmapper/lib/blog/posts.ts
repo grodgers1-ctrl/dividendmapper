@@ -26,6 +26,17 @@ export interface BlogPost {
 
 export const POSTS: BlogPost[] = [
   {
+    slug: "dividend-tax-efficiency-isa-sipp-gia-uk-comparison",
+    title:
+      "Dividend tax efficiency across ISA, SIPP, and GIA: the complete UK comparison",
+    description:
+      "A practical UK comparison showing what £10,000 of annual dividends looks like in an ISA, a SIPP, and a GIA, including the 2026/27 tax arithmetic, wrapper trade-offs, and retirement spending-order implications.",
+    publishedAt: "2026-06-23",
+    readingTime: "10 min",
+    tags: ["UK", "Tax", "ISA", "SIPP"],
+    locale: "uk",
+  },
+  {
     slug: "build-dividend-portfolio-uk-step-by-step",
     title: "Build a UK dividend portfolio from scratch: a step-by-step beginner guide",
     description:
@@ -210,6 +221,17 @@ export const POSTS: BlogPost[] = [
     publishedAt: "2026-06-22",
     readingTime: "9 min",
     tags: ["UK", "REITs", "Tax"],
+    locale: "uk",
+  },
+  {
+    slug: "dividend-growth-vs-high-yield-uk-income-investors",
+    title:
+      "Dividend growth vs high-yield: which UK income strategy fits your plan",
+    description:
+      "A practical comparison of dividend growth (lower initial yield, compounding over time) vs high-yield (higher current income, more risk) for UK investors, with worked scenarios, the barbell approach, and wrapper-specific tax considerations.",
+    publishedAt: "2026-06-24",
+    readingTime: "11 min",
+    tags: ["UK", "Dividend", "Education"],
     locale: "uk",
   },
 ];

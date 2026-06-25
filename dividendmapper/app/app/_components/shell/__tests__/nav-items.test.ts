@@ -6,12 +6,13 @@ import {
 } from "../nav-items";
 
 describe("DEFAULT_NAV_ITEMS", () => {
-  it("declares the seven drawer items in display order (Calendar between Dashboard and Ledger)", () => {
+  it("declares the eight drawer items in display order (Calendar and Income vehicles included)", () => {
     expect(DEFAULT_NAV_ITEMS.map((i) => i.href)).toEqual([
       "/app/dashboard",
       "/app/calendar",
       "/app/portfolio",
       "/app/portfolio/scoring",
+      "/app/income-vehicles",
       "/app/portfolio/watchlist",
       "/app/account",
       "/app/admin/scoring/audit",
@@ -24,6 +25,7 @@ describe("DEFAULT_NAV_ITEMS", () => {
     );
     expect(byHref["/app/calendar"].requiresPro).toBe(true);
     expect(byHref["/app/portfolio/scoring"].requiresPro).toBe(true);
+    expect(byHref["/app/income-vehicles"].requiresPro).toBe(true);
     expect(byHref["/app/portfolio/watchlist"].requiresPro).toBe(true);
     expect(byHref["/app/dashboard"].requiresPro).toBeFalsy();
     expect(byHref["/app/portfolio"].requiresPro).toBeFalsy();
@@ -59,17 +61,18 @@ describe("filterNavItems", () => {
     ]);
   });
 
-  it("pro non-admin → 6 items (adds Calendar + Portfolio Manager + Watchlist)", () => {
+  it("pro non-admin → 7 items (adds Calendar + Portfolio Manager + Income vehicles + Watchlist)", () => {
     const items = filterNavItems(DEFAULT_NAV_ITEMS, {
       tier: "pro",
       isAdmin: false,
     });
-    expect(items).toHaveLength(6);
+    expect(items).toHaveLength(7);
     expect(items.map((i) => i.href)).toEqual([
       "/app/dashboard",
       "/app/calendar",
       "/app/portfolio",
       "/app/portfolio/scoring",
+      "/app/income-vehicles",
       "/app/portfolio/watchlist",
       "/app/account",
     ]);
@@ -80,16 +83,17 @@ describe("filterNavItems", () => {
       tier: "premium",
       isAdmin: false,
     });
-    expect(items).toHaveLength(6);
+    expect(items).toHaveLength(7);
     expect(items.map((i) => i.href)).toContain("/app/calendar");
+    expect(items.map((i) => i.href)).toContain("/app/income-vehicles");
   });
 
-  it("admin pro → 7 items (adds Admin)", () => {
+  it("admin pro → 8 items (adds Admin)", () => {
     const items = filterNavItems(DEFAULT_NAV_ITEMS, {
       tier: "pro",
       isAdmin: true,
     });
-    expect(items).toHaveLength(7);
+    expect(items).toHaveLength(8);
     expect(items.map((i) => i.href)).toContain("/app/admin/scoring/audit");
   });
 

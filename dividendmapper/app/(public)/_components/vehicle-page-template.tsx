@@ -16,6 +16,13 @@ interface Props {
   family: VehicleFamily;
   proSlot: ReactNode;
   navHistory: { observed_at: string; price_nav_ratio: number | null }[];
+  /**
+   * Optional breadcrumb override. Defaults to back-to-family
+   * (e.g. "← US REITs" → `/reits`). The in-app /app/income-vehicles/[ticker]
+   * route overrides this to point back to the hub.
+   */
+  backHref?: string;
+  backLabel?: string;
 }
 
 const CHIP_STYLES: Record<string, string> = {
@@ -75,7 +82,16 @@ function categoryAggregate(
   return Math.round(weighted / weightSum);
 }
 
-export function VehiclePageTemplate({ score, family, proSlot, navHistory }: Props) {
+export function VehiclePageTemplate({
+  score,
+  family,
+  proSlot,
+  navHistory,
+  backHref,
+  backLabel,
+}: Props) {
+  const breadcrumbHref = backHref ?? `/${family.slug}`;
+  const breadcrumbLabel = backLabel ?? family.heading;
   const summary = vehiclePublicSummary(score);
   // The gate chip's colour reflects gate status (binary pass/fail), not the
   // resilience score. The score's own colour is conveyed by the big number.
@@ -89,11 +105,11 @@ export function VehiclePageTemplate({ score, family, proSlot, navHistory }: Prop
       <div className="mx-auto max-w-3xl px-4 py-10 md:px-6 md:py-12">
         <nav aria-label="Breadcrumb" className="text-sm text-muted-foreground">
           <Link
-            href={`/${family.slug}`}
+            href={breadcrumbHref}
             className="inline-flex items-center gap-1 hover:text-foreground"
           >
             <span aria-hidden>←</span>
-            {family.heading}
+            {breadcrumbLabel}
           </Link>
         </nav>
 

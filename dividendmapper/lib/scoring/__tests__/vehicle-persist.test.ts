@@ -1,5 +1,24 @@
 import { describe, it, expect, vi } from "vitest";
-import { upsertVehiclePrices, upsertVehicleFundamentals } from "../vehicle-persist";
+import {
+  upsertVehiclePrices,
+  upsertVehicleFundamentals,
+  upsertVehicleUniverseDisplay,
+} from "../vehicle-persist";
+
+// Mirrors the private `MinimalSupabaseClient` shape used by the production
+// functions in this module. Tests can stay type-safe without depending on
+// internal types.
+interface SupabaseClientStub {
+  from(table: string): {
+    upsert(rows: unknown[], opts?: { onConflict?: string }): Promise<{ error: unknown }>;
+    update(values: {
+      dividend_yield: number | null;
+      leverage_headline: string | null;
+    }): {
+      eq(column: string, value: string): Promise<{ error: unknown }>;
+    };
+  };
+}
 
 // Minimal Supabase-shape stub — records the table name + upsert args so we
 // can assert the onConflict key matches the unique constraint declared in
@@ -11,11 +30,14 @@ function stubSupabase() {
     calls[calls.length - 1].onConflict = opts?.onConflict;
     return { error: null };
   });
+  const update = vi.fn(() => ({
+    eq: vi.fn(async () => ({ error: null })),
+  }));
   const from = vi.fn((table: string) => {
     calls.push({ table, rows: [], onConflict: undefined });
-    return { upsert };
+    return { upsert, update };
   });
-  return { sb: { from } as any, calls };
+  return { sb: { from } satisfies SupabaseClientStub, calls };
 }
 
 describe("vehicle-persist / upsertVehiclePrices", () => {
@@ -65,5 +87,50 @@ describe("vehicle-persist / upsertVehicleFundamentals", () => {
     const { sb, calls } = stubSupabase();
     await upsertVehicleFundamentals(sb, []);
     expect(calls).toHaveLength(0);
+  });
+});
+
+describe("vehicle-persist / upsertVehicleUniverseDisplay", () => {
+  // Regression — prior implementation used .upsert() which tried INSERT first
+  // and failed NOT NULL on display_name/exchange/currency/vehicle_type before
+  // the ON CONFLICT path ever fired. Fix: UPDATE only (rows always exist via
+  // FK from vehicle_scores).
+  it("updates vehicle_universe by ticker, NOT upsert (avoids NOT NULL violation)", async () => {
+    const eq = vi.fn(async () => ({ error: null }));
+    const update = vi.fn(() => ({ eq }));
+    const upsert = vi.fn(async () => ({ error: null }));
+    const from = vi.fn(() => ({ update, upsert }));
+    const sb = { from } satisfies SupabaseClientStub;
+
+    await upsertVehicleUniverseDisplay(sb, {
+      ticker: "O",
+      dividend_yield: 0.056,
+      leverage_headline: "FFO payout 81%",
+    });
+
+    expect(from).toHaveBeenCalledWith("vehicle_universe");
+    expect(update).toHaveBeenCalledWith({
+      dividend_yield: 0.056,
+      leverage_headline: "FFO payout 81%",
+    });
+    expect(eq).toHaveBeenCalledWith("ticker", "O");
+    // Confirm we do NOT touch upsert — that would re-introduce the NOT NULL bug.
+    expect(upsert).not.toHaveBeenCalled();
+  });
+
+  it("propagates errors from the update", async () => {
+    const eq = vi.fn(async () => ({ error: { message: "boom" } }));
+    const update = vi.fn(() => ({ eq }));
+    const upsert = vi.fn(async () => ({ error: null }));
+    const from = vi.fn(() => ({ update, upsert }));
+    const sb = { from } satisfies SupabaseClientStub;
+
+    await expect(
+      upsertVehicleUniverseDisplay(sb, {
+        ticker: "X",
+        dividend_yield: null,
+        leverage_headline: null,
+      }),
+    ).rejects.toMatchObject({ message: "boom" });
   });
 });

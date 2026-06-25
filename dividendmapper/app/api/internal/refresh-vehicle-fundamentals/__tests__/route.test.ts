@@ -12,7 +12,7 @@ vi.mock("@/lib/scoring/vehicle-persist", () => ({
 
 vi.mock("@sentry/nextjs", () => ({ captureException: vi.fn() }));
 
-let universeResult: { data: Array<{ ticker: string; vehicle_type: string; currency: string }> | null; error: unknown } = {
+const universeResult: { data: Array<{ ticker: string; vehicle_type: string; currency: string }> | null; error: unknown } = {
   data: [
     { ticker: "O", vehicle_type: "us_reit", currency: "USD" },
     { ticker: "ARCC", vehicle_type: "us_bdc", currency: "USD" },
