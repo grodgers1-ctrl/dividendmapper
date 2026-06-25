@@ -3,7 +3,7 @@
 // Outputs: ProjectedPayment[] for the requested direction.
 //
 // Algorithm:
-//   1. Cadence detection from median inter-payment gap.
+//   1. Cadence detection by year-count mode, with median inter-payment gap as fallback.
 //   2. 3yr CAGR growth rate over COMPLETE calendar years only (partial-year
 //      tails are dropped so YTD payments don't skew the rate). Capped ±20%.
 //   3. Cut/freeze dominance: latest payment < 95% of trailing-12m-avg → 0 growth.
