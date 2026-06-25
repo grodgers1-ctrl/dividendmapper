@@ -4,7 +4,7 @@ import { requireUser } from "@/lib/auth/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { loadVehicleUniverse } from "@/lib/scoring/load-vehicle-universe";
 import { PageHeader } from "../_components/page-header/page-header";
-import { Screener } from "@/app/(public)/income-vehicles/_components/screener";
+import { InAppHub } from "./_components/in-app-hub";
 
 export const metadata: Metadata = {
   title: "Income vehicles",
@@ -53,12 +53,7 @@ export default async function AppIncomeVehiclesHubPage() {
         subtitle={`${universe.length} scored vehicles across REITs, BDCs and UK REITs. Filter, search, and pick names that fit your portfolio.`}
         betaPill
       />
-      <Screener
-        universe={universe}
-        showSaveScreenAction
-        ownedTickers={ownedTickers}
-        showRowActions
-      />
+      <InAppHub universe={universe} ownedTickers={ownedTickers} />
     </div>
   );
 }

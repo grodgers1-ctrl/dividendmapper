@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Search, Lock, ArrowUp, ArrowDown, Star, Plus, Check, AlertCircle } from "lucide-react";
+import { SaveScreenModal } from "@/app/app/income-vehicles/_components/save-screen-modal";
 import type { VehicleUniverseRow } from "@/lib/scoring/load-vehicle-universe";
 import type { VehicleType } from "@/lib/scoring/load-vehicle-score";
 import { VEHICLE_FAMILIES } from "@/lib/scoring/data/vehicle-families";
@@ -95,9 +96,11 @@ export function Screener({
   onCriteriaChange,
   ownedTickers,
   showRowActions = false,
+  onSaved,
 }: ScreenerProps) {
   const [query, setQuery] = useState("");
   const [restrictToOwned, setRestrictToOwned] = useState(false);
+  const [saveOpen, setSaveOpen] = useState(false);
   // Per-ticker action status — undefined = idle, then "saving" | "saved" | "error".
   const [rowState, setRowState] = useState<Record<string, "saving" | "saved" | "error">>({});
 
@@ -300,6 +303,7 @@ export function Screener({
           {showSaveScreenAction ? (
             <button
               type="button"
+              onClick={() => setSaveOpen(true)}
               className="rounded-md border border-border px-3 py-1 text-xs font-medium text-foreground hover:bg-secondary"
             >
               Save this screen
@@ -453,6 +457,22 @@ export function Screener({
           </table>
         </div>
       </div>
+
+      {showSaveScreenAction && (
+        <SaveScreenModal
+          open={saveOpen}
+          onClose={() => setSaveOpen(false)}
+          onSave={async (name) => {
+            const res = await fetch("/api/screens", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ name, filterState: criteria }),
+            });
+            if (!res.ok) throw new Error("save_failed");
+            onSaved?.();
+          }}
+        />
+      )}
     </div>
   );
 }
