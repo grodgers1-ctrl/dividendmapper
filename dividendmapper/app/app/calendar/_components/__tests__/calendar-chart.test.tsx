@@ -119,6 +119,38 @@ describe("CalendarChart (Slice A)", () => {
     expect(screen.queryByTestId("growth-clipped-glyph")).toBeNull();
   });
 
+  it("renders a per-bar value label on top of each non-zero bar", () => {
+    render(<CalendarChart months={months} onSelectMonth={() => {}} primaryCurrency="GBP" />);
+    // Non-zero months get a label; zero months don't.
+    expect(screen.getByTestId("calendar-bar-value-2026-04")).toHaveTextContent("£130");
+    expect(screen.queryByTestId("calendar-bar-value-2026-08")).toBeNull();
+  });
+
+  it("renders the 3-item legend below the chart", () => {
+    render(<CalendarChart months={months} onSelectMonth={() => {}} primaryCurrency="GBP" />);
+    const legend = screen.getByTestId("calendar-legend");
+    expect(legend).toHaveTextContent(/Received/);
+    expect(legend).toHaveTextContent(/Confirmed/);
+    expect(legend).toHaveTextContent(/Projected/);
+  });
+
+  it("renders the 'incl. projected' caveat pill in the legend when flagged", () => {
+    render(
+      <CalendarChart
+        months={months}
+        onSelectMonth={() => {}}
+        primaryCurrency="GBP"
+        includesProjected
+      />,
+    );
+    expect(screen.getByTestId("calendar-incl-projected-pill")).toBeInTheDocument();
+  });
+
+  it("hides the 'incl. projected' caveat pill when not flagged", () => {
+    render(<CalendarChart months={months} onSelectMonth={() => {}} primaryCurrency="GBP" />);
+    expect(screen.queryByTestId("calendar-incl-projected-pill")).toBeNull();
+  });
+
   it("tooltip lists per-segment breakdown when a month has multiple segments", () => {
     const mixedMonth: IncomeCalendarMonth = {
       ym: "2026-04",

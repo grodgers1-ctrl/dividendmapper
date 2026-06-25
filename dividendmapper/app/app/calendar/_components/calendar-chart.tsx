@@ -18,10 +18,10 @@ function monthName(ym: string): string {
 const OPACITY: Record<SegmentKind, number> = {
   "actual": 1,
   "partial": 0.7,
-  "confirmed-forecast": 0.4,
-  "projected-cadence": 0.3,
-  "projected-growth": 0.35,
-  "growth-clipped": 0.35,
+  "confirmed-forecast": 0.55,
+  "projected-cadence": 0.45,
+  "projected-growth": 0.5,
+  "growth-clipped": 0.5,
 };
 
 const SEGMENT_LABEL: Record<SegmentKind, string> = {
@@ -56,6 +56,8 @@ export interface CalendarChartProps {
   /** Used to format y-axis ticks + tooltip totals. Defaults to GBP for the
    * legacy dashboard caller that doesn't pass it. */
   primaryCurrency?: "GBP" | "USD";
+  /** Renders the "incl. projected" caveat pill below the chart legend. */
+  includesProjected?: boolean;
 }
 
 export function CalendarChart({
@@ -63,6 +65,7 @@ export function CalendarChart({
   onSelectMonth,
   selectedYm,
   primaryCurrency = "GBP",
+  includesProjected = false,
 }: CalendarChartProps) {
   const [hoveredYm, setHoveredYm] = useState<string | null>(null);
   const max = months.reduce((m, b) => (b.gbp > m ? b.gbp : m), 0);
@@ -99,7 +102,7 @@ export function CalendarChart({
           aria-label="Income calendar 18-month chart"
           className="relative h-[220px] flex flex-1 items-end gap-1.5 border-b border-[var(--border-subtle)]"
         >
-          {months.map((m) => {
+          {months.map((m, idx) => {
             const heightPct = max > 0 ? Math.max(4, (m.gbp / max) * 100) : 4;
             return (
               <button
@@ -113,9 +116,23 @@ export function CalendarChart({
                 onBlur={() => setHoveredYm((cur) => (cur === m.ym ? null : cur))}
                 aria-pressed={selectedYm === m.ym}
                 aria-label={`${monthName(m.ym)} ${m.ym}: ${formatAxis(m.gbp, primaryCurrency)}`}
-                className="flex-1 flex flex-col-reverse"
-                style={{ height: `${heightPct}%` }}
+                className="calendar-bar-anim relative flex-1 flex flex-col-reverse"
+                style={
+                  {
+                    height: `${heightPct}%`,
+                    "--calendar-bar-delay": `${idx * 20}ms`,
+                  } as React.CSSProperties
+                }
               >
+                {m.gbp > 0 && (
+                  <span
+                    data-testid={`calendar-bar-value-${m.ym}`}
+                    aria-hidden
+                    className="absolute -top-4 left-1/2 -translate-x-1/2 text-[9px] font-medium tabular-nums text-[var(--text-muted)]"
+                  >
+                    {formatAxis(m.gbp, primaryCurrency)}
+                  </span>
+                )}
                 {m.segments.map((seg, i) => {
                   const segHeight = max > 0 && m.gbp > 0 ? (seg.primary / m.gbp) * 100 : 0;
                   const isProjected =
@@ -132,7 +149,7 @@ export function CalendarChart({
                         height: `${segHeight}%`,
                         backgroundColor: "var(--brand)",
                         backgroundImage: isProjected
-                          ? "repeating-linear-gradient(45deg, rgba(255,255,255,0.15) 0, rgba(255,255,255,0.15) 2px, transparent 2px, transparent 5px)"
+                          ? "repeating-linear-gradient(45deg, rgba(255,255,255,0.4) 0, rgba(255,255,255,0.4) 3px, transparent 3px, transparent 8px)"
                           : undefined,
                         opacity: OPACITY[seg.kind],
                       }}
@@ -211,6 +228,48 @@ export function CalendarChart({
           </span>
         ))}
       </div>
+      <div
+        data-testid="calendar-legend"
+        className="ml-12 mt-3 flex flex-wrap items-center gap-3 text-[10px] text-[var(--text-muted)]"
+      >
+        <LegendSwatch label="Received" variant="solid" />
+        <LegendSwatch label="Confirmed" variant="muted" />
+        <LegendSwatch label="Projected" variant="striped" />
+        {includesProjected && (
+          <span
+            data-testid="calendar-incl-projected-pill"
+            className="ml-auto rounded-full border border-dashed border-[var(--border-subtle)] px-2 py-0.5 text-[10px] uppercase tracking-[0.06em] text-[var(--text-muted)]"
+          >
+            incl. projected
+          </span>
+        )}
+      </div>
     </div>
+  );
+}
+
+function LegendSwatch({
+  label,
+  variant,
+}: {
+  label: string;
+  variant: "solid" | "muted" | "striped";
+}) {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span
+        aria-hidden
+        className="inline-block h-2.5 w-3 rounded-sm"
+        style={{
+          backgroundColor: "var(--brand)",
+          opacity: variant === "solid" ? 1 : variant === "muted" ? 0.55 : 0.5,
+          backgroundImage:
+            variant === "striped"
+              ? "repeating-linear-gradient(45deg, rgba(255,255,255,0.4) 0, rgba(255,255,255,0.4) 3px, transparent 3px, transparent 8px)"
+              : undefined,
+        }}
+      />
+      {label}
+    </span>
   );
 }

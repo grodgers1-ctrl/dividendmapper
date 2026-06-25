@@ -340,4 +340,27 @@
       transform: none;
     }
   }
+
+  /* /app/calendar bar reveal — bars rise from 0% to their target height with
+   * a per-bar stagger via --calendar-bar-delay. Honors prefers-reduced-motion. */
+  @keyframes calendar-bar-rise {
+    from {
+      transform: scaleY(0);
+      opacity: 0;
+    }
+    to {
+      transform: scaleY(1);
+      opacity: 1;
+    }
+  }
+  .calendar-bar-anim {
+    transform-origin: bottom center;
+    animation: calendar-bar-rise 420ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+    animation-delay: var(--calendar-bar-delay, 0ms);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .calendar-bar-anim {
+      animation: none;
+    }
+  }
 }

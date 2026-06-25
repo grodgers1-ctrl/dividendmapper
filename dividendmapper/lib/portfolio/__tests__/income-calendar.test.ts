@@ -430,3 +430,136 @@ describe("buildIncomeCalendar — v2 segments + wrapper aggregation", () => {
     expect(result.nextThree[0].gbp).toBeCloseTo(100 * 0.42 * 0.01, 4);
   });
 });
+
+describe("buildIncomeCalendar — paymentsByMonth assembly", () => {
+  const ratesToGbp = { GBP: 1, USD: 0.79, GBp: 0.01, GBX: 0.01 };
+  const now = new Date("2026-06-23T12:00:00Z");
+
+  it("emits one 'received' payment per user_dividend, with company name + cadence when ticker known", () => {
+    const result = buildIncomeCalendar({
+      userDividends: [
+        { paid_on: "2026-04-15", amount: 7.95, currency: "USD", wrapper: "gia" as const, ticker: "O" },
+      ],
+      holdings: [],
+      exDivByTicker: {},
+      ratesToGbp,
+      now,
+      locale: "uk",
+      nameByTicker: { O: "Realty Income Corporation" },
+      cadenceByTicker: { O: "monthly" },
+    });
+    const apr = result.paymentsByMonth["2026-04"];
+    expect(apr).toHaveLength(1);
+    expect(apr[0]).toMatchObject({
+      ticker: "O",
+      name: "Realty Income Corporation",
+      status: "received",
+      frequency: "monthly",
+    });
+    expect(apr[0].primaryAmount).toBeCloseTo(7.95 * 0.79, 4);
+  });
+
+  it("emits a 'declared' payment for each confirmed ex-div with the per-share × quantity math", () => {
+    const result = buildIncomeCalendar({
+      userDividends: [],
+      holdings: [
+        { ticker: "PHP.L", quantity: 50, wrapper: "isa" as const, created_at: "2024-01-01" },
+      ],
+      exDivByTicker: {
+        "PHP.L": { ex_date: "2026-07-02", pay_date: "2026-07-09", amount: 1.98, currency: "GBp" },
+      },
+      ratesToGbp,
+      now,
+      locale: "uk",
+      nameByTicker: { "PHP.L": "Primary Health Properties" },
+      cadenceByTicker: { "PHP.L": "quarterly" },
+    });
+    const jul = result.paymentsByMonth["2026-07"];
+    expect(jul).toHaveLength(1);
+    expect(jul[0]).toMatchObject({
+      ticker: "PHP.L",
+      name: "Primary Health Properties",
+      status: "declared",
+      frequency: "quarterly",
+      quantity: 50,
+      perShareNative: 1.98,
+      nativeCurrency: "GBp",
+    });
+    expect(jul[0].primaryAmount).toBeCloseTo(50 * 1.98 * 0.01, 4);
+  });
+
+  it("emits an 'estimated' payment for projected-forward entries that fall past the confirmed ex-date", () => {
+    const result = buildIncomeCalendar({
+      userDividends: [],
+      holdings: [
+        { ticker: "AAPL", quantity: 20, wrapper: "gia" as const, created_at: "2024-01-01" },
+      ],
+      exDivByTicker: {
+        AAPL: { ex_date: "2026-08-08", pay_date: "2026-08-15", amount: 0.24, currency: "USD" },
+      },
+      projectedNext12mByTicker: {
+        AAPL: [
+          // Skipped (same month as confirmed).
+          { ex_date: "2026-08-08", pay_date: "2026-08-15", per_share_amount: 0.25, currency: "USD", confidence: "cadence" as const },
+          // Emitted.
+          { ex_date: "2026-11-08", pay_date: "2026-11-15", per_share_amount: 0.26, currency: "USD", confidence: "cadence" as const },
+        ],
+      },
+      ratesToGbp,
+      now,
+      locale: "uk",
+    });
+    expect(result.paymentsByMonth["2026-08"]).toHaveLength(1);
+    expect(result.paymentsByMonth["2026-08"][0].status).toBe("declared");
+    expect(result.paymentsByMonth["2026-11"]).toHaveLength(1);
+    expect(result.paymentsByMonth["2026-11"][0].status).toBe("estimated");
+  });
+
+  it("backward dedupe is per-ticker: an actual for AAPL doesn't suppress a MSFT projection in the same month", () => {
+    const result = buildIncomeCalendar({
+      userDividends: [
+        // AAPL actual in May
+        { paid_on: "2026-05-15", amount: 4.8, currency: "USD", wrapper: "gia" as const, ticker: "AAPL" },
+      ],
+      holdings: [
+        { ticker: "AAPL", quantity: 20, wrapper: "gia" as const, created_at: "2024-01-01" },
+        { ticker: "MSFT", quantity: 15, wrapper: "gia" as const, created_at: "2024-01-01" },
+      ],
+      exDivByTicker: {},
+      projectedHistorical12mByTicker: {
+        MSFT: [
+          { ex_date: "2026-05-21", pay_date: "2026-05-28", per_share_amount: 0.75, currency: "USD", confidence: "cadence" as const },
+        ],
+      },
+      ratesToGbp,
+      now,
+      locale: "uk",
+    });
+    const may = result.paymentsByMonth["2026-05"];
+    // Both: AAPL actual + MSFT estimated
+    expect(may).toHaveLength(2);
+    expect(may.find((p) => p.ticker === "AAPL")?.status).toBe("received");
+    expect(may.find((p) => p.ticker === "MSFT")?.status).toBe("estimated");
+  });
+
+  it("payments are sorted by ex-date within each month", () => {
+    const result = buildIncomeCalendar({
+      userDividends: [],
+      holdings: [
+        { ticker: "A", quantity: 10, wrapper: "isa" as const, created_at: "2024-01-01" },
+        { ticker: "B", quantity: 10, wrapper: "isa" as const, created_at: "2024-01-01" },
+        { ticker: "C", quantity: 10, wrapper: "isa" as const, created_at: "2024-01-01" },
+      ],
+      exDivByTicker: {
+        A: { ex_date: "2026-07-22", pay_date: "2026-07-30", amount: 1, currency: "USD" },
+        B: { ex_date: "2026-07-02", pay_date: "2026-07-09", amount: 1, currency: "USD" },
+        C: { ex_date: "2026-07-15", pay_date: "2026-07-22", amount: 1, currency: "USD" },
+      },
+      ratesToGbp,
+      now,
+      locale: "uk",
+    });
+    const jul = result.paymentsByMonth["2026-07"];
+    expect(jul.map((p) => p.ticker)).toEqual(["B", "C", "A"]);
+  });
+});
