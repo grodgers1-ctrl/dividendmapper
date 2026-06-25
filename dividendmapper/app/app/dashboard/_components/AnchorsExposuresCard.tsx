@@ -40,7 +40,7 @@ export function AnchorsExposuresCard({
     <div className="rounded-[10px] border border-border bg-card p-6 shadow-[var(--card-shadow)]">
       <div className="flex items-baseline justify-between gap-3">
         <h3 className="font-display text-base font-semibold text-foreground">
-          Anchors vs Exposures
+          Investment vehicle income
         </h3>
         {totalGbp > 0 ? (
           <p className="font-mono text-sm tabular-nums text-muted-foreground">

@@ -213,11 +213,11 @@ export default async function DashboardPage() {
           )}
         </div>
 
-        {/* Row 1.5 — Anchors vs Exposures (Pro). Vehicle-universe scope only
-            (REITs + BDCs). Hidden when the user has no qualifying holdings so
-            equity-only portfolios don't see an empty card. */}
+        {/* Row 1.5 — Investment vehicle income (left, 2/3, Pro + qualifying
+            holdings) paired with Position performance (right, 1/3, Pro). When
+            Anchors is hidden, Position performance takes the full row. */}
         {isPro && anchorsExposures && anchorsExposures.inScopeCount > 0 && (
-          <div className="col-span-12">
+          <div className="col-span-12 md:col-span-8">
             <AnchorsExposuresCard
               totalsGbp={anchorsExposures.totalsGbp}
               countsByBand={anchorsExposures.countsByBand}
@@ -225,6 +225,17 @@ export default async function DashboardPage() {
               inScopeCount={anchorsExposures.inScopeCount}
               excludedCount={anchorsExposures.excludedCount}
             />
+          </div>
+        )}
+        {isPro && (
+          <div
+            className={
+              anchorsExposures && anchorsExposures.inScopeCount > 0
+                ? "col-span-12 md:col-span-4"
+                : "col-span-12"
+            }
+          >
+            <BestWorstCard pnls={holdingPnls} />
           </div>
         )}
 
@@ -276,13 +287,6 @@ export default async function DashboardPage() {
           />
         </div>
 
-        {/* Row 4 — Pro best/worst lifetime P/L. Sits under TopHoldingsStrip
-            because "look at these specifically" cues naturally land here. */}
-        {isPro && (
-          <div className="col-span-12">
-            <BestWorstCard pnls={holdingPnls} />
-          </div>
-        )}
       </div>
     </div>
   );
