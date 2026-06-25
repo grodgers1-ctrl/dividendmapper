@@ -76,6 +76,83 @@ describe("detectCadence", () => {
       ]),
     ).toBe("irregular");
   });
+
+  // Regression tests from the 2026-06-25 calendar v2 audit. Each ticker was
+  // previously tagged 'irregular' by the median-gap path even though FMP
+  // shows a reliable cadence over multiple complete years.
+
+  it("ABDN.L: semi-annual with asymmetric gaps (audit regression)", () => {
+    const history = [
+      { exDate: "2026-03-19", amount: 7.3 },
+      { exDate: "2025-08-14", amount: 7.3 },
+      { exDate: "2025-03-27", amount: 7.3 },
+      { exDate: "2024-08-15", amount: 7.3 },
+      { exDate: "2024-03-15", amount: 7.0 },
+      { exDate: "2023-08-15", amount: 7.0 },
+      { exDate: "2023-03-15", amount: 7.0 },
+      { exDate: "2022-08-15", amount: 6.6 },
+      { exDate: "2022-03-15", amount: 6.6 },
+    ];
+    expect(detectCadence(history)).toBe("semi");
+  });
+
+  it("LGEN.L: semi-annual with ~245d median gap (audit regression)", () => {
+    const history = [
+      { exDate: "2026-04-23", amount: 15.67 },
+      { exDate: "2025-08-21", amount: 6.12 },
+      { exDate: "2025-04-24", amount: 15.36 },
+      { exDate: "2024-08-22", amount: 6.0 },
+      { exDate: "2024-04-23", amount: 14.9 },
+      { exDate: "2023-08-22", amount: 5.71 },
+      { exDate: "2023-04-23", amount: 14.37 },
+      { exDate: "2022-08-22", amount: 5.44 },
+      { exDate: "2022-04-23", amount: 13.27 },
+    ];
+    expect(detectCadence(history)).toBe("semi");
+  });
+
+  it("RIO.L: semi-annual with ~203d median gap (audit regression)", () => {
+    const history = [
+      { exDate: "2026-03-05", amount: 191.77 },
+      { exDate: "2025-08-14", amount: 108.58 },
+      { exDate: "2025-03-06", amount: 175.99 },
+      { exDate: "2024-08-15", amount: 134.22 },
+      { exDate: "2024-03-05", amount: 165.0 },
+      { exDate: "2023-08-15", amount: 144.4 },
+      { exDate: "2023-03-05", amount: 225.0 },
+    ];
+    expect(detectCadence(history)).toBe("semi");
+  });
+
+  it("PHP.L: quarterly hidden behind median-gap 98 (audit regression)", () => {
+    const history = [
+      { exDate: "2026-07-02", amount: 1.68 },
+      { exDate: "2026-03-26", amount: 1.825 },
+      { exDate: "2026-01-29", amount: 1.825 },
+      { exDate: "2025-10-09", amount: 1.775 },
+      { exDate: "2025-07-03", amount: 1.775 },
+      { exDate: "2025-03-27", amount: 1.775 },
+      { exDate: "2025-01-30", amount: 1.775 },
+      { exDate: "2024-10-09", amount: 1.7 },
+      { exDate: "2024-07-04", amount: 1.7 },
+      { exDate: "2024-03-28", amount: 1.7 },
+      { exDate: "2024-01-30", amount: 1.7 },
+    ];
+    expect(detectCadence(history)).toBe("quarterly");
+  });
+
+  it("BBOX.L: genuinely irregular falls through to median-gap and stays irregular", () => {
+    const history = [
+      { exDate: "2026-05-21", amount: 2.0 },
+      { exDate: "2026-03-12", amount: 2.255 },
+      { exDate: "2025-11-06", amount: 1.915 },
+      { exDate: "2025-08-14", amount: 1.915 },
+      { exDate: "2025-05-22", amount: 1.915 },
+      { exDate: "2025-03-13", amount: 2.185 },
+      { exDate: "2024-08-15", amount: 1.85 },
+    ];
+    expect(detectCadence(history)).toBe("irregular");
+  });
 });
 
 describe("computeGrowthRate", () => {
