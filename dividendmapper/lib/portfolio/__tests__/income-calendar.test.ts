@@ -471,6 +471,27 @@ describe("buildIncomeCalendar — v2 segments + wrapper aggregation", () => {
     expect(result.nextThree[0].ticker).toBe("PHP.L");
     expect(result.nextThree[0].gbp).toBeCloseTo(100 * 0.42 * 0.01, 4);
   });
+
+  it("FMP fallback: a holding with neither cache nor FMP DPS lands in unprojectedTickers", () => {
+    const now = new Date("2026-06-25T00:00:00Z");
+    const result = buildIncomeCalendar({
+      userDividends: [],
+      holdings: [
+        { ticker: "NU", quantity: 100, wrapper: "isa", created_at: "2025-01-01" },
+        { ticker: "MNDY", quantity: 50, wrapper: "isa", created_at: "2025-01-01" },
+      ],
+      exDivByTicker: {},
+      ratesToGbp: { GBP: 1, USD: 0.79 },
+      now,
+      locale: "uk",
+      projectedNext12mByTicker: {},
+      projectedHistorical12mByTicker: {},
+      forwardDpsByTicker: { NU: { dps: 0.12, currency: "USD" } },
+      // MNDY has neither cache nor FMP DPS
+    });
+    expect(result.unprojectedTickers).toContain("MNDY");
+    expect(result.unprojectedTickers).not.toContain("NU");
+  });
 });
 
 describe("buildIncomeCalendar — paymentsByMonth assembly", () => {

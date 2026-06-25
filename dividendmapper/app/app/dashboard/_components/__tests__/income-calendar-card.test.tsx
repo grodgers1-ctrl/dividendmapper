@@ -25,6 +25,8 @@ function calendarFixture(): IncomeCalendarResult {
       { ticker: "ARCC",  exDate: "2026-07-28", payDate: "2026-09-30", gbp: 8.15, wrapper: "gia", perShareNative: 0.48, nativeCurrency: "USD", quantity: 21 },
       { ticker: "TW.L",  exDate: "2026-08-14", payDate: "2026-11-07", gbp: 15.4, wrapper: "isa", perShareNative: 4.62, nativeCurrency: "GBp", quantity: 333 },
     ],
+    paymentsByMonth: {},
+    unprojectedTickers: [],
   };
 }
 

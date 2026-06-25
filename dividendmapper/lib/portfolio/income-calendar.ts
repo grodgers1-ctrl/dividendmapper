@@ -499,9 +499,18 @@ export function buildIncomeCalendar(args: BuildArgs): IncomeCalendarResult {
     if (ex && ex.pay_date) {
       const k = ymFromIso(ex.pay_date);
       const b = buckets.get(k);
-      if (b && b.segments.some((s) => s.kind === "confirmed-forecast")) {
-        contributed.add(h.ticker);
-        continue;
+      if (b && b.kind === "confirmed-forecast") {
+        // Mirror the validation from the main ex-div forward loop: only count
+        // this ticker as contributed if its own conversion would have produced
+        // a positive amount (currency in ratesToGbp + quantity > 0).
+        const perShare = convertToPrimary(ex.amount, ex.currency, ratesToGbp);
+        if (perShare !== null && perShare > 0) {
+          const total = perShare * h.quantity;
+          if (Number.isFinite(total) && total > 0) {
+            contributed.add(h.ticker);
+            continue;
+          }
+        }
       }
     }
     const rows = args.projectedNext12mByTicker?.[h.ticker] ?? [];
