@@ -95,7 +95,14 @@ export function CalendarShell({
         next30Days={kpis.next30Days}
         ytdReceived={kpis.ytdReceived}
         last12mReceived={kpis.last12mReceived}
-        includesProjected={false}
+        includesProjected={calendar.months.some((m) =>
+          m.segments.some(
+            (s) =>
+              s.kind === "projected-cadence" ||
+              s.kind === "projected-growth" ||
+              s.kind === "growth-clipped",
+          ),
+        )}
       />
       <CalendarChart
         months={calendar.months}
