@@ -32,7 +32,7 @@ export function Step5ProTaster({ onFinish, onDismissPermanent, onBack }: Step5Pr
           When you&apos;re ready, here&apos;s what Pro adds.
         </h2>
         <p className="mt-2 text-sm text-[var(--text-muted)]">
-          Nothing on this page is locked behind a paywall. Just so you know what&apos;s there.
+          No rush. Free has plenty until you need these.
         </p>
       </div>
 

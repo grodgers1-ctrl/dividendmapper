@@ -19,6 +19,14 @@ describe("Step5ProTaster", () => {
     expect(screen.getByText(/this is separate from your email preferences/i)).toBeInTheDocument();
   });
 
+  it("uses the honest subline (free has plenty), no contradiction", () => {
+    render(
+      <Step5ProTaster onFinish={() => {}} onDismissPermanent={() => {}} onBack={() => {}} />,
+    );
+    expect(screen.getByText(/no rush\. free has plenty until you need these/i)).toBeInTheDocument();
+    expect(screen.queryByText(/nothing on this page is locked behind a paywall/i)).toBeNull();
+  });
+
   it("Don't show this again calls onDismissPermanent", () => {
     const onDismiss = vi.fn();
     render(<Step5ProTaster onFinish={() => {}} onDismissPermanent={onDismiss} onBack={() => {}} />);
