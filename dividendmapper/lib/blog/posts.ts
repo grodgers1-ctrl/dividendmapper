@@ -245,6 +245,18 @@ export const POSTS: BlogPost[] = [
     tags: ["UK", "Dividend", "Calculator"],
     locale: "uk",
   },
+  {
+    slug: "best-uk-dividend-stocks-income-investors",
+    title:
+      "Best UK dividend stocks for income: a practical screening framework for 2026/27",
+    description:
+      "A UK dividend stock screening framework for income investors, covering yield-range sanity checks, payout and dividend-cover sustainability filters, dividend-growth record, valuation, sector concentration, and a worked 12-name example that ends in a balanced shortlist rather than a tip sheet.",
+    publishedAt: "2026-06-26",
+    readingTime: "11 min",
+    tags: ["UK", "Dividend", "Education"],
+    locale: "uk",
+  },
+
 ];
 
 /** Looks up a post by slug. Throws if not found — fail loudly during build. */
