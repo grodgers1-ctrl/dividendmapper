@@ -47,3 +47,36 @@ describe("StatSidebar", () => {
     expect(screen.getByTestId("calendar-stat-annual")).toHaveTextContent("$5,420");
   });
 });
+
+describe("StatSidebar — unprojected caveat", () => {
+  const base = {
+    primaryCurrency: "GBP" as const,
+    annualIncome: 250,
+    monthlyAverage: 20.83,
+    dailyAverage: 0.68,
+    yieldOnValue: 0.025,
+    yetToReceive: 150,
+    includesProjected: true,
+  };
+
+  it("renders the unprojected count when > 0", () => {
+    render(<StatSidebar {...base} unprojectedCount={3} />);
+    expect(screen.getByTestId("calendar-stat-unprojected")).toHaveTextContent(
+      "3 holdings not projected",
+    );
+  });
+
+  it("uses 'holding' (singular) when count is 1", () => {
+    render(<StatSidebar {...base} unprojectedCount={1} />);
+    expect(screen.getByTestId("calendar-stat-unprojected")).toHaveTextContent(
+      "1 holding not projected",
+    );
+  });
+
+  it("does not render the caveat when count is 0 or undefined", () => {
+    const { rerender } = render(<StatSidebar {...base} unprojectedCount={0} />);
+    expect(screen.queryByTestId("calendar-stat-unprojected")).toBeNull();
+    rerender(<StatSidebar {...base} />);
+    expect(screen.queryByTestId("calendar-stat-unprojected")).toBeNull();
+  });
+});

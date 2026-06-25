@@ -38,6 +38,7 @@ const stubCalendar: IncomeCalendarResult = {
       },
     ],
   },
+  unprojectedTickers: [],
 };
 
 describe("CalendarShell wiring", () => {

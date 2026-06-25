@@ -29,7 +29,8 @@ export type SegmentKind =
   | "confirmed-forecast"
   | "projected-cadence"   // Slice B
   | "projected-growth"    // Slice B
-  | "growth-clipped";     // Slice B
+  | "growth-clipped"      // Slice B
+  | "fmp-estimate";       // Slice B+: 1/12 spread of FMP forward DPS for holdings without a projection cache.
 
 export interface IncomeCalendarHolding {
   ticker: string;
@@ -108,6 +109,10 @@ export interface IncomeCalendarResult {
   /** Drilldown lookup keyed by YYYY-MM. All known payments (received / declared
    * / estimated) bucketed by paid_on (actuals) or pay_date (forecasts). */
   paymentsByMonth: Record<string, IncomeCalendarPayment[]>;
+  /** Tickers whose forward projections produced no entries in any bucket. The
+   * StatSidebar surfaces this as "N holdings not yet projected" to keep the
+   * Annual income figure honest. */
+  unprojectedTickers: string[];
 }
 
 export type WrapperFilter = "all" | Wrapper;
@@ -137,6 +142,12 @@ interface BuildArgs {
   // + a 6mo floor, deduped vs any user_dividends in the same month.
   projectedNext12mByTicker?: Record<string, ProjectedPaymentRow[]>;
   projectedHistorical12mByTicker?: Record<string, ProjectedPaymentRow[]>;
+  /** Per-ticker FMP forward annual dividend per share + its currency.
+   * Used as a fallback for holdings whose projected_next_12m_payments cache
+   * is empty (newly-initiated payers, low-record histories). Each value is
+   * spread evenly across the next 12 future months. Tagged `fmp-estimate`
+   * so the UI can dim it. */
+  forwardDpsByTicker?: Record<string, { dps: number; currency: string }>;
 }
 
 const PAST_MONTHS = 6;
@@ -193,19 +204,22 @@ function dateMinusMonths(d: Date, m: number): string {
 function deriveDominant(month: IncomeCalendarMonth): void {
   // Sum primary → gbp; pick dominant kind (largest segment) for back-compat
   // consumers. Default kind (set at bucket creation) is retained when there
-  // are no segments.
+  // are no segments. 'fmp-estimate' is excluded from the dominant-kind race
+  // because it's an estimate overlay, not a temporal classification — buckets
+  // that only have fmp-estimate segments keep their creation kind
+  // (confirmed-forecast) so callers can still bucket them by time window.
   let total = 0;
   let dominant: SegmentKind = month.kind;
   let dominantPrimary = -1;
   for (const seg of month.segments) {
     total += seg.primary;
-    if (seg.primary > dominantPrimary) {
+    if (seg.kind !== "fmp-estimate" && seg.primary > dominantPrimary) {
       dominant = seg.kind;
       dominantPrimary = seg.primary;
     }
   }
   month.gbp = total;
-  if (month.segments.length > 0) month.kind = dominant;
+  if (month.segments.some((s) => s.kind !== "fmp-estimate")) month.kind = dominant;
 }
 
 export function buildIncomeCalendar(args: BuildArgs): IncomeCalendarResult {
@@ -348,6 +362,51 @@ export function buildIncomeCalendar(args: BuildArgs): IncomeCalendarResult {
     }
   }
 
+  // Slice B α: FMP forward-DPS fallback. For holdings the projection cache
+  // couldn't service (cadence='unknown' or zero matching rows), spread
+  // dps×quantity evenly across the 12 future confirmed-forecast buckets so
+  // they still contribute to annual income. Lossy on timing but right on
+  // total. The new SegmentKind 'fmp-estimate' lets the chart dim them.
+  const tickersWithProjection = new Set<string>();
+  for (const h of holdings) {
+    if (!passesWrapperFilter(h.wrapper, wrapperFilter)) continue;
+    const rows = args.projectedNext12mByTicker?.[h.ticker] ?? [];
+    if (rows.length > 0) tickersWithProjection.add(h.ticker);
+  }
+  if (args.forwardDpsByTicker) {
+    const futureBuckets = Array.from(buckets.values()).filter(
+      (b) => b.kind === "confirmed-forecast",
+    );
+    for (const h of holdings) {
+      if (!passesWrapperFilter(h.wrapper, wrapperFilter)) continue;
+      if (tickersWithProjection.has(h.ticker)) continue;
+      const fmp = args.forwardDpsByTicker[h.ticker];
+      if (!fmp || !fmp.dps || fmp.dps <= 0) continue;
+      const perMonthNative = (fmp.dps * h.quantity) / 12;
+      const perMonth = convertToPrimary(perMonthNative, fmp.currency, ratesToGbp);
+      if (perMonth === null || !Number.isFinite(perMonth) || perMonth <= 0) continue;
+      for (const b of futureBuckets) {
+        pushSegment(b, "fmp-estimate", perMonth);
+        pushPayment(
+          {
+            ticker: h.ticker,
+            name: nameByTicker[h.ticker],
+            exDate: b.ym + "-01",
+            payDate: b.ym + "-01",
+            perShareNative: fmp.dps / 12,
+            nativeCurrency: fmp.currency,
+            quantity: h.quantity,
+            primaryAmount: perMonth,
+            wrapper: h.wrapper,
+            status: "estimated",
+            frequency: cadenceByTicker[h.ticker],
+          },
+          b.ym,
+        );
+      }
+    }
+  }
+
   // Slice B: backward projection — per-user gated on holdings.created_at,
   // with a 6mo floor so we don't fabricate ancient history for a brand-new
   // holding. Dedupe vs user_dividends by skipping months that already have
@@ -431,10 +490,48 @@ export function buildIncomeCalendar(args: BuildArgs): IncomeCalendarResult {
     );
   }
 
+  // Tickers whose forward contributions are still zero after both the
+  // cache and the FMP fallback ran. Surfaced by StatSidebar (γ).
+  const contributed = new Set<string>();
+  for (const h of holdings) {
+    if (!passesWrapperFilter(h.wrapper, wrapperFilter)) continue;
+    const ex = exDivByTicker[h.ticker];
+    if (ex && ex.pay_date) {
+      const k = ymFromIso(ex.pay_date);
+      const b = buckets.get(k);
+      if (b && b.kind === "confirmed-forecast") {
+        // Mirror the validation from the main ex-div forward loop: only count
+        // this ticker as contributed if its own conversion would have produced
+        // a positive amount (currency in ratesToGbp + quantity > 0).
+        const perShare = convertToPrimary(ex.amount, ex.currency, ratesToGbp);
+        if (perShare !== null && perShare > 0) {
+          const total = perShare * h.quantity;
+          if (Number.isFinite(total) && total > 0) {
+            contributed.add(h.ticker);
+            continue;
+          }
+        }
+      }
+    }
+    const rows = args.projectedNext12mByTicker?.[h.ticker] ?? [];
+    if (rows.length > 0) {
+      contributed.add(h.ticker);
+      continue;
+    }
+    const fmp = args.forwardDpsByTicker?.[h.ticker];
+    if (fmp && fmp.dps > 0) {
+      contributed.add(h.ticker);
+      continue;
+    }
+  }
+  const distinctTickers = [...new Set(holdings.map((h) => h.ticker))];
+  const unprojectedTickers = distinctTickers.filter((t) => !contributed.has(t));
+
   return {
     months: Array.from(buckets.values()),
     nextThree: candidates.slice(0, 3),
     primaryCurrency,
     paymentsByMonth,
+    unprojectedTickers,
   };
 }

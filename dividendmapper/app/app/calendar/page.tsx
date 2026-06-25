@@ -45,6 +45,15 @@ export default async function CalendarPage() {
     created_at: h.created_at,
   }));
 
+  const forwardDpsByTicker: Record<string, { dps: number; currency: string }> = {};
+  for (const [ticker, quote] of Object.entries(priced.quotesByTicker)) {
+    if (!quote.ok) continue;
+    const { dividend, currency } = quote.data;
+    if (typeof dividend === "number" && dividend > 0 && currency) {
+      forwardDpsByTicker[ticker] = { dps: dividend, currency };
+    }
+  }
+
   const calendar = buildIncomeCalendar({
     userDividends,
     holdings,
@@ -57,6 +66,7 @@ export default async function CalendarPage() {
     projectedHistorical12mByTicker,
     nameByTicker,
     cadenceByTicker,
+    forwardDpsByTicker,
   });
 
   // Portfolio value in the user's primary currency, used for the Yield KPI.
