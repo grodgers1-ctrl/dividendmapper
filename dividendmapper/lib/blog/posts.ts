@@ -234,6 +234,17 @@ export const POSTS: BlogPost[] = [
     tags: ["UK", "Dividend", "Education"],
     locale: "uk",
   },
+  {
+    slug: "dividend-income-calculator-uk-income-tax",
+    title:
+      "Dividend income calculator UK: how much do you need for your target passive income?",
+    description:
+      "A practical UK dividend income calculator walk-through showing the required-portfolio formula across 3% to 6% yields, a worked 1,000-a-month example, and the ISA, SIPP, GIA wrapper and platform-fee friction that changes the real answer.",
+    publishedAt: "2026-06-25",
+    readingTime: "10 min",
+    tags: ["UK", "Dividend", "Calculator"],
+    locale: "uk",
+  },
 ];
 
 /** Looks up a post by slug. Throws if not found — fail loudly during build. */

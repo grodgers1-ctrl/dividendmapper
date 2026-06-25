@@ -1,0 +1,350 @@
+import { postMetadata } from "@/lib/blog/posts";
+import { PostHeader, PostFooter } from "@/components/blog/post-header";
+import { FaqJsonLd } from "@/components/blog/faq-json-ld";
+
+export const metadata = postMetadata("dividend-income-calculator-uk-income-tax");
+
+<PostHeader slug="dividend-income-calculator-uk-income-tax" />
+
+<FaqJsonLd
+  items={[
+    {
+      question: "How much do I need to invest to make 1000 a month in dividends in the UK?",
+      answer:
+        "It depends on the dividend yield you assume. At a 3% portfolio yield, 1,000 a month (12,000 a year) requires about 400,000. At 4% it requires about 300,000. At 5% it requires about 240,000. At 6% it requires about 200,000. The capital required halves between a 3% and a 6% assumption, so the yield you feed into the calculation matters more than people often realise.",
+    },
+    {
+      question: "What dividend yield should I use in a UK dividend income calculator?",
+      answer:
+        "Use a range rather than a single number. For mainstream UK equity income planning, a 3% to 6% band is usually a sensible first-pass. Below 3% tends to assume unrealistically low current income. Above 6% tends to assume yields that are not safely sustainable across a diversified portfolio. The right number depends on your yield-versus-growth mix and the dividend safety of the underlying holdings.",
+    },
+    {
+      question: "Does DividendMapper have a dividend income calculator?",
+      answer:
+        "DividendMapper does not currently offer a dedicated dividend income calculator. The closest live planning tool is the retirement income calculator at /tools/retirement-calculator, which is better suited for scenario testing once you have moved past the rough capital-required arithmetic in this article. The retirement calculator handles Bear, Base, and Bull scenarios across ISA, SIPP, and GIA wrappers.",
+    },
+    {
+      question: "How do ISA, SIPP, and GIA wrappers change the dividend income target?",
+      answer:
+        "The wrapper decides how much of the gross dividend survives tax. Inside an ISA, dividends are tax-free, so 12,000 gross is 12,000 spendable. Inside a SIPP, dividends are sheltered while the money stays in the pension, but pension-withdrawal tax applies later. Inside a GIA, dividends are taxable above the 500 dividend allowance, so the same gross 12,000 produces less spendable income depending on your tax band. The right wrapper mix is often a bigger lever than the yield assumption itself.",
+    },
+    {
+      question: "What mistakes do people make when estimating dividend income targets?",
+      answer:
+        "The most common mistakes are: chasing the highest yield because it shrinks the required portfolio (often at the cost of dividend quality), forgetting that wrapper choice changes the real spendable income, ignoring platform fees because they look small in isolation, using a single static yield assumption forever, and confusing a planning estimate with a promise. A useful calculator makes those failure modes visible instead of hiding them behind one neat number.",
+    },
+  ]}
+/>
+
+> **Educational disclaimer:** This article is for educational purposes only. It is not financial, tax, or regulated investment advice, and it is not a recommendation to buy, sell, or hold any specific investment. The examples below are simple planning illustrations, not predictions. Dividend tax rules, allowances, and rates can change. If you need advice about your own situation, speak to a qualified financial adviser or tax professional.
+
+Most people searching for a dividend income calculator want one simple answer: **how much money do I need to invest to produce 500, 1,000, or 2,000 a month in dividends?**
+
+That is a fair question. It is also the point where a lot of content goes wrong.
+
+The lazy version gives you one formula, one yield assumption, and a false sense of precision:
+
+**Required portfolio = target income / dividend yield**
+
+That formula is useful. You should know it. But if you stop there, you will underestimate how much the real answer changes once you account for tax wrappers, platform fees, and the difference between a healthy 4% yield and a stretched 7% yield.
+
+A good dividend income calculator should help you answer three separate questions:
+
+- what portfolio size might produce your target income on paper
+- how sensitive that answer is to the yield you assume
+- what the income still looks like after the real-world friction starts showing up
+
+That is the real job.
+
+DividendMapper does **not** currently have a dedicated dividend-income calculator. The closest live planning tool is the [retirement calculator](/tools/retirement-calculator), which is better for scenario testing once you move past the rough first-pass arithmetic in this article.
+
+## The core formula: target income divided by target yield
+
+Start with the rule everyone expects.
+
+If you want a target annual income, divide it by the dividend yield you think is realistic.
+
+**Required portfolio = annual target income / target yield**
+
+If your target is monthly, multiply it by 12 first.
+
+A few quick examples make the point:
+
+| Target annual income | 3% yield | 4% yield | 5% yield | 6% yield |
+|---:|---:|---:|---:|---:|
+| 6,000 | 200,000 | 150,000 | 120,000 | 100,000 |
+| 12,000 | 400,000 | 300,000 | 240,000 | 200,000 |
+| 24,000 | 800,000 | 600,000 | 480,000 | 400,000 |
+
+That table is useful because it immediately shows why the phrase "living off dividends" gets thrown around so casually online.
+
+At 6%, 1,000 a month looks like a 200,000 problem.
+
+At 3%, the same target is a 400,000 problem.
+
+That is not a small difference. It is the difference between a target that feels within reach and one that needs a much longer accumulation period.
+
+This is why yield assumptions matter so much. A calculator is only as honest as the yield you feed into it.
+
+## Why the same income target can require very different portfolio sizes
+
+A lot of people treat yield like a fixed fact. It is not.
+
+The portfolio size you need changes sharply depending on whether you are building around:
+
+- a lower-yield, higher-growth mix
+- a middle-of-the-road income portfolio
+- a higher-yield portfolio that may carry more risk
+
+Here is the same 12,000 annual target looked at another way:
+
+| Target monthly income | Annual target | Yield assumption | Required portfolio |
+|---|---:|---:|---:|
+| 500 | 6,000 | 3% | 200,000 |
+| 500 | 6,000 | 4% | 150,000 |
+| 500 | 6,000 | 5% | 120,000 |
+| 1,000 | 12,000 | 3% | 400,000 |
+| 1,000 | 12,000 | 4% | 300,000 |
+| 1,000 | 12,000 | 5% | 240,000 |
+| 2,000 | 24,000 | 3% | 800,000 |
+| 2,000 | 24,000 | 4% | 600,000 |
+| 2,000 | 24,000 | 5% | 480,000 |
+
+The temptation is obvious. Higher yield means lower capital required.
+
+The problem is that high yield is not a free upgrade. Sometimes it reflects a genuinely income-heavy asset. Sometimes it reflects a business under pressure, a stretched payout, or a share price that has already fallen hard.
+
+That is why the [headline-yield explainer](/blog/why-headline-yield-can-be-misleading) matters here. If you plug an unrealistic yield into the formula, the output looks neat but the plan gets worse.
+
+The better question is not "what yield gives me the smallest required portfolio?"
+
+It is "what yield range can I justify without pretending risk disappeared?"
+
+For many mainstream UK income-planning examples, a 3% to 6% range is a sensible place to test first.
+
+## Taxes change the real answer: ISA, SIPP, and GIA are not interchangeable
+
+The simple formula gives you gross income.
+
+Your actual spendable income depends on **where the assets sit**.
+
+That wrapper decision can matter more than people think.
+
+### ISA
+
+Inside an ISA, dividends are tax-free.
+
+If your portfolio produces 12,000 of dividends in an ISA, the whole 12,000 is yours from a dividend-tax perspective.
+
+### SIPP
+
+Inside a SIPP, dividends are also sheltered while the money remains in the pension.
+
+The complication comes later, when you withdraw. At that point the tax question becomes pension-withdrawal tax, not dividend tax.
+
+### GIA
+
+Inside a GIA, dividends count as taxable income once you move beyond the current dividend allowance.
+
+That means the exact same portfolio can produce very different usable income depending on which wrapper holds it.
+
+A simple illustration:
+
+| Wrapper | Gross dividends | Dividend tax in-year | Spendable income before other costs |
+|---|---:|---:|---:|
+| ISA | 12,000 | 0 | 12,000 |
+| SIPP | 12,000 | 0 while sheltered | depends on withdrawal timing |
+| GIA | 12,000 | depends on your tax band after the allowance | less than 12,000 |
+
+For a basic-rate taxpayer in a GIA, the tax drag might be manageable.
+
+For a higher-rate taxpayer, the difference gets much larger very quickly.
+
+That is why [the UK dividend tax guide](/blog/uk-dividend-tax-guide) and the retirement-specific follow-on, [dividend income in retirement](/blog/dividend-income-retirement-tax-planning-uk-investors), belong in the same cluster as this article. The portfolio target is only part of the story. The wrapper decides how much of the income survives.
+
+## Fees and friction: why platform costs still matter at income scale
+
+People usually remember tax before they remember platform cost.
+
+That is backwards for smaller and medium-sized income targets.
+
+If your goal is modest, fees can quietly eat a meaningful share of the income.
+
+Take a basic example:
+
+- portfolio value: 150,000
+- target yield: 4%
+- gross annual dividend income: 6,000
+
+If your platform and related costs total 150 a year, that is 2.5% of the income stream gone before you think about tax.
+
+If the annual cost is 300, it is 5% gone.
+
+That does not sound dramatic until you realise some investors are stretching hard for their first 500 a month target. At that level, every layer of friction matters.
+
+A rough comparison looks like this:
+
+| Portfolio size | Gross yield | Gross dividend income | Annual platform cost | Income left before tax |
+|---:|---:|---:|---:|---:|
+| 120,000 | 4% | 4,800 | 100 | 4,700 |
+| 120,000 | 4% | 4,800 | 250 | 4,550 |
+| 300,000 | 4% | 12,000 | 100 | 11,900 |
+| 300,000 | 4% | 12,000 | 250 | 11,750 |
+
+The lower the income target, the more annoying this drag becomes as a share of the income.
+
+That is why the [platform-fees comparison](/blog/uk-platform-fees-comparison) belongs in the planning chain. A calculator that ignores cost is not wrong in a mathematical sense. It is wrong in a practical one.
+
+## Worked example: what portfolio size might you need for 1,000 a month?
+
+Claire is 42 and wants a realistic planning number for **1,000 a month**, or **12,000 a year**, in future dividend income.
+
+She wants three passes:
+
+1. a naive gross-income estimate
+2. a fee-aware estimate
+3. a wrapper-aware estimate
+
+### Pass 1: naive formula
+
+Start with the obvious arithmetic.
+
+| Yield assumption | Required portfolio for 12,000/year |
+|---|---:|
+| 3% | 400,000 |
+| 4% | 300,000 |
+| 5% | 240,000 |
+| 6% | 200,000 |
+
+That is the clean version. It is useful, but incomplete.
+
+### Pass 2: fee-aware estimate
+
+Now assume Claire wants to allow for roughly 150 a year in platform cost.
+
+That means her portfolio really needs to produce **12,150**, not just 12,000.
+
+| Yield assumption | Required portfolio for 12,150/year |
+|---|---:|
+| 3% | 405,000 |
+| 4% | 303,750 |
+| 5% | 243,000 |
+| 6% | 202,500 |
+
+The change is not huge, but it is real. And if the costs are higher, the gap widens.
+
+### Pass 3: wrapper-aware estimate
+
+Now suppose some of Claire's eventual income will sit outside tax shelters in a GIA.
+
+If part of the dividend stream is taxable, she may need more than 12,000 gross to leave herself with 12,000 spendable.
+
+A simplified example:
+
+- target spendable income: 12,000
+- annual costs: 150
+- GIA portion creates an extra 500 of tax drag
+- required gross income now becomes roughly 12,650
+
+At that point the portfolio requirement becomes:
+
+| Yield assumption | Required portfolio for 12,650/year |
+|---|---:|
+| 3% | about 421,667 |
+| 4% | about 316,250 |
+| 5% | 253,000 |
+| 6% | about 210,833 |
+
+Now the range looks very different.
+
+The original "1,000 a month at 4% means 300,000" answer was not false.
+
+It was just the start.
+
+Once Claire adds even moderate friction, the realistic answer shifts closer to **316,000** at 4%, and materially higher if she uses more conservative yield assumptions.
+
+That is the kind of gap a useful calculator should make visible.
+
+## How to use the retirement calculator as a better second step
+
+A simple yield table is good for a first pass.
+
+It is not good enough once you want to test:
+
+- different accumulation periods
+- different growth assumptions
+- different wrapper splits
+- more realistic scenario ranges
+
+That is where the live [retirement calculator](/tools/retirement-calculator) becomes more useful than a one-line dividend-income formula.
+
+The best workflow is:
+
+1. use this article to pressure-test the rough capital required
+2. choose a realistic yield range instead of a fantasy number
+3. think about wrapper mix, tax drag, and costs
+4. then run Bear, Base, and Bull style scenarios in the retirement calculator
+
+If you are unsure what the calculator output means once you get there, read the [retirement-income calculator guide](/blog/retirement-income-calculator-guide) next.
+
+That flow is much more honest than pretending a single dividend-income formula can answer the whole planning problem.
+
+## Common mistakes when estimating dividend income targets
+
+### Mistake 1: chasing the highest yield because it shrinks the required portfolio
+
+This is the classic trap.
+
+A 7% or 8% yield can make the capital requirement look dramatically easier. It can also hide weaker dividend quality.
+
+If the yield only looks attractive because the market no longer trusts the business, your calculator result is flattering you.
+
+### Mistake 2: forgetting that taxes and wrappers change the result
+
+A 12,000 gross target is not automatically a 12,000 spendable target.
+
+If you are planning with GIA assets, the gap matters.
+
+### Mistake 3: ignoring costs because they look small in isolation
+
+100 or 200 a year is easy to dismiss.
+
+But if your target is 6,000 to 12,000 a year of income, those costs are taking a visible slice out of the result.
+
+### Mistake 4: using one static yield assumption forever
+
+Portfolios change. Markets change. Your income mix changes.
+
+A planning model should show what happens at 3%, 4%, 5%, and 6%, not just your favourite number.
+
+### Mistake 5: confusing a planning estimate with a promise
+
+The calculator is there to help you frame the problem.
+
+It is not there to promise that a specific target will be hit on a fixed schedule.
+
+## How this fits into the wider DividendMapper workflow
+
+This article answers the early-stage question: **how much capital might I need?**
+
+The rest of the cluster answers what comes after that:
+
+- use the [retirement-income calculator guide](/blog/retirement-income-calculator-guide) if you want help interpreting scenario outputs
+- use the [retirement tax planning article](/blog/dividend-income-retirement-tax-planning-uk-investors) if the next question is what the income looks like in retirement
+- use the [UK dividend tax guide](/blog/uk-dividend-tax-guide) if you need the current tax rules in plain English
+- use the [headline-yield explainer](/blog/why-headline-yield-can-be-misleading) if the yield assumption itself feels too neat
+- use the [platform-fees comparison](/blog/uk-platform-fees-comparison) if costs may be distorting the plan
+- use the [dividend growth vs high-yield comparison](/blog/dividend-growth-vs-high-yield-uk-income-investors) if you are still deciding between a yield-led and a growth-led strategy
+
+That is the bigger point.
+
+A dividend income calculator is not just a number generator. It is the front door into a more realistic planning workflow.
+
+The formula is easy.
+
+The judgement comes from what you layer on top of it.
+
+<PostFooter
+  nextHref="/blog/retirement-income-calculator-guide"
+  nextLabel="Next: interpret your scenario outputs in the retirement calculator guide"
+/>
