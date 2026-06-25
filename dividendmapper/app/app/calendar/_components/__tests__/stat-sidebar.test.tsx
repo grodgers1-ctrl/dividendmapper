@@ -62,14 +62,14 @@ describe("StatSidebar — unprojected caveat", () => {
   it("renders the unprojected count when > 0", () => {
     render(<StatSidebar {...base} unprojectedCount={3} />);
     expect(screen.getByTestId("calendar-stat-unprojected")).toHaveTextContent(
-      "3 holdings not yet projected",
+      "3 holdings not projected",
     );
   });
 
   it("uses 'holding' (singular) when count is 1", () => {
     render(<StatSidebar {...base} unprojectedCount={1} />);
     expect(screen.getByTestId("calendar-stat-unprojected")).toHaveTextContent(
-      "1 holding not yet projected",
+      "1 holding not projected",
     );
   });
 

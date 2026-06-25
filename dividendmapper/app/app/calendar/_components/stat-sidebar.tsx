@@ -104,8 +104,8 @@ export function StatSidebar(props: StatSidebarProps) {
             className="mt-1 text-[10px] text-[var(--text-muted)]"
           >
             {unprojectedCount === 1
-              ? "1 holding not yet projected"
-              : `${unprojectedCount} holdings not yet projected`}
+              ? "1 holding not projected"
+              : `${unprojectedCount} holdings not projected`}
           </p>
         )}
       </div>
