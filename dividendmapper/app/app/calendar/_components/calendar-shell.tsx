@@ -1,20 +1,66 @@
 "use client";
 
-// Client wrapper owning the toggle + filter state for /app/calendar.
-// Day 2 wires placeholder slots; Day 4 fills the chart + drill-down + filter.
+// Client wrapper owning the toggle + filter state for /app/calendar. Composes
+// the chart, drill-down, KPI strip, wrapper filter, and optional empty-state
+// CTA. KPIs recompute on filter / Net-Gross / Year-mode change in-memory.
 
-import { useState } from "react";
-import type { WrapperFilter } from "@/lib/portfolio/income-calendar";
+import { useMemo, useState } from "react";
+import type {
+  IncomeCalendarResult,
+  IncomeCalendarUserDividend,
+  Locale,
+  Wrapper,
+  WrapperFilter,
+} from "@/lib/portfolio/income-calendar";
+import { computeNetDividend } from "@/lib/portfolio/dividend-tax";
+import { HeroKpiStrip } from "./hero-kpi-strip";
+import { WrapperFilterRow } from "./wrapper-filter-row";
+import { CalendarChart } from "./calendar-chart";
+import { DrilldownPanel } from "./drilldown-panel";
+import { CadenceTimeline } from "./cadence-timeline";
+import { EmptyStateCta } from "./empty-state-cta";
 
 export interface CalendarShellProps {
-  priced: unknown;
-  userId: string;
+  locale: Locale;
+  calendar: IncomeCalendarResult;
+  userDividends: ReadonlyArray<IncomeCalendarUserDividend>;
+  ratesToPrimary: Record<string, number>;
+  showEmptyStateCta: boolean;
 }
 
-export function CalendarShell({ priced: _priced, userId: _userId }: CalendarShellProps) {
+export function CalendarShell({
+  locale,
+  calendar,
+  userDividends,
+  ratesToPrimary,
+  showEmptyStateCta,
+}: CalendarShellProps) {
   const [netMode, setNetMode] = useState<"net" | "gross">("net");
   const [yearMode, setYearMode] = useState<"tax" | "calendar">("tax");
-  const [_wrapperFilter, _setWrapperFilter] = useState<WrapperFilter>("all");
+  const [wrapperFilter, setWrapperFilter] = useState<WrapperFilter>("all");
+  const [selectedYm, setSelectedYm] = useState<string>(() => {
+    const partial = calendar.months.find((m) => m.kind === "partial");
+    return partial?.ym ?? calendar.months[0]?.ym ?? "";
+  });
+
+  const kpis = useMemo(
+    () =>
+      computeKpis(
+        calendar,
+        wrapperFilter,
+        netMode,
+        locale,
+        userDividends,
+        ratesToPrimary,
+        yearMode,
+      ),
+    [calendar, wrapperFilter, netMode, locale, userDividends, ratesToPrimary, yearMode],
+  );
+
+  const drilldownPayments = useMemo(
+    () => buildDrilldownPayments(calendar, selectedYm, wrapperFilter),
+    [calendar, selectedYm, wrapperFilter],
+  );
 
   return (
     <div className="flex flex-col gap-6">
@@ -41,10 +87,34 @@ export function CalendarShell({ priced: _priced, userId: _userId }: CalendarShel
           onChange={(v) => setYearMode(v as "tax" | "calendar")}
         />
       </div>
-      <div data-testid="calendar-wrapper-filter-slot" />
-      <div data-testid="calendar-hero-kpi-slot" />
-      <div data-testid="calendar-chart-slot" />
-      <div data-testid="calendar-drilldown-slot" />
+      <WrapperFilterRow locale={locale} value={wrapperFilter} onChange={setWrapperFilter} />
+      {showEmptyStateCta && <EmptyStateCta />}
+      <HeroKpiStrip
+        primaryCurrency={calendar.primaryCurrency}
+        next7Days={kpis.next7Days}
+        next30Days={kpis.next30Days}
+        ytdReceived={kpis.ytdReceived}
+        last12mReceived={kpis.last12mReceived}
+        includesProjected={false}
+      />
+      <CalendarChart
+        months={calendar.months}
+        onSelectMonth={setSelectedYm}
+        selectedYm={selectedYm}
+      />
+      <DrilldownPanel
+        primaryCurrency={calendar.primaryCurrency}
+        payments={drilldownPayments}
+        emptyReason={drilldownPayments.length === 0 ? "no-announcement" : undefined}
+      />
+      <CadenceTimeline
+        monthYm={selectedYm}
+        anchor="ex"
+        today={new Date().toISOString().slice(0, 10)}
+        markers={drilldownPayments
+          .filter((p) => p.exDate.slice(0, 7) === selectedYm)
+          .map((p) => ({ id: `${p.ticker}-${p.exDate}`, dayOfMonth: Number(p.exDate.slice(8, 10)) }))}
+      />
     </div>
   );
 }
@@ -83,4 +153,95 @@ function ToggleGroup<T extends string>({
       ))}
     </div>
   );
+}
+
+function computeKpis(
+  calendar: IncomeCalendarResult,
+  filter: WrapperFilter,
+  netMode: "net" | "gross",
+  locale: Locale,
+  userDividends: ReadonlyArray<IncomeCalendarUserDividend>,
+  ratesToPrimary: Record<string, number>,
+  yearMode: "tax" | "calendar",
+): { next7Days: number; next30Days: number; ytdReceived: number; last12mReceived: number } {
+  const apply = (gross: number, wrapper: Wrapper) => applyNet(gross, wrapper, netMode, locale);
+
+  const next7Days = calendar.nextThree
+    .filter((p) => filter === "all" || p.wrapper === filter)
+    .filter((p) => withinDays(p.exDate, 7))
+    .reduce((s, p) => s + apply(p.gbp, p.wrapper), 0);
+
+  const next30Days = calendar.nextThree
+    .filter((p) => filter === "all" || p.wrapper === filter)
+    .filter((p) => withinDays(p.exDate, 30))
+    .reduce((s, p) => s + apply(p.gbp, p.wrapper), 0);
+
+  // YTD start: UK tax year starts Apr 6; US calendar year. yearMode='calendar'
+  // forces Jan 1 regardless of locale.
+  const now = new Date();
+  let ytdStart: Date;
+  if (yearMode === "calendar") {
+    ytdStart = new Date(Date.UTC(now.getUTCFullYear(), 0, 1));
+  } else if (locale === "uk") {
+    const thisYearStart = new Date(Date.UTC(now.getUTCFullYear(), 3, 6));
+    ytdStart = now >= thisYearStart ? thisYearStart : new Date(Date.UTC(now.getUTCFullYear() - 1, 3, 6));
+  } else {
+    ytdStart = new Date(Date.UTC(now.getUTCFullYear(), 0, 1));
+  }
+  const ytdStartIso = ytdStart.toISOString().slice(0, 10);
+  const twelveMoAgoIso = new Date(now.getTime() - 365 * 86_400_000)
+    .toISOString()
+    .slice(0, 10);
+
+  const ytd = userDividends
+    .filter((d) => filter === "all" || d.wrapper === filter)
+    .filter((d) => d.paid_on >= ytdStartIso)
+    .reduce((s, d) => s + apply((d.amount * (ratesToPrimary[d.currency] ?? 0)), d.wrapper), 0);
+
+  const last12m = userDividends
+    .filter((d) => filter === "all" || d.wrapper === filter)
+    .filter((d) => d.paid_on >= twelveMoAgoIso)
+    .reduce((s, d) => s + apply((d.amount * (ratesToPrimary[d.currency] ?? 0)), d.wrapper), 0);
+
+  return { next7Days, next30Days, ytdReceived: ytd, last12mReceived: last12m };
+}
+
+function withinDays(iso: string, days: number): boolean {
+  const target = new Date(iso).getTime();
+  const now = Date.now();
+  return target - now <= days * 86_400_000 && target >= now;
+}
+
+function applyNet(gross: number, wrapper: Wrapper, mode: "net" | "gross", locale: Locale): number {
+  if (mode === "gross") return gross;
+  const { net } = computeNetDividend({
+    grossPrimaryCurrency: gross,
+    wrapper,
+    locale,
+    ytdGrossInTaxableSoFar: 0,
+  });
+  return net;
+}
+
+function buildDrilldownPayments(
+  calendar: IncomeCalendarResult,
+  selectedYm: string,
+  filter: WrapperFilter,
+) {
+  // Slice A drill-down sources from nextThree filtered to the selected
+  // month. Slice B replaces this with a richer per-month list assembled
+  // from segments.
+  return calendar.nextThree
+    .filter((p) => p.exDate.slice(0, 7) === selectedYm)
+    .filter((p) => filter === "all" || p.wrapper === filter)
+    .map((p) => ({
+      ticker: p.ticker,
+      exDate: p.exDate,
+      payDate: p.payDate,
+      nativeAmount: p.gbp, // TODO Slice B: native amount via richer next-3 shape
+      nativeCurrency: calendar.primaryCurrency,
+      primaryAmount: p.gbp,
+      wrapper: p.wrapper,
+      confidence: "confirmed" as const,
+    }));
 }

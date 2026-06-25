@@ -17,12 +17,22 @@ vi.mock("@/lib/portfolio/load-priced-holdings", () => ({
   loadPricedHoldings: (id: string) => loadPricedHoldingsMock(id),
 }));
 
+const loadCalendarDataMock = vi.fn();
+vi.mock("@/lib/portfolio/load-calendar-data", () => ({
+  loadCalendarData: (...args: unknown[]) => loadCalendarDataMock(...args),
+}));
+
 import CalendarPage from "../page";
 
 describe("/app/calendar page", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     requireUserMock.mockResolvedValue({ id: "u1", email: "u@example.com" });
+    loadCalendarDataMock.mockResolvedValue({
+      userDividends: [],
+      exDivByTicker: {},
+      ratesToPrimary: { GBP: 1, USD: 0.79 },
+    });
   });
 
   it("calls requireUser with the soft-nav-safe currentPath", async () => {
