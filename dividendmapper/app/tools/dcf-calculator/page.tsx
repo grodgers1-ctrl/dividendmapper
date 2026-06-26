@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { DcfCalculator } from "./_components/dcf-calculator";
 
 export const metadata: Metadata = {
@@ -63,6 +64,23 @@ export default function DcfCalculatorPage() {
           growth and discount-rate assumptions move.
         </p>
       </header>
+
+      <section className="mx-auto mt-8 max-w-3xl rounded-2xl border border-border bg-card/70 p-5 text-left shadow-sm">
+        <p className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+          Need the plain-English version first?
+        </p>
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground md:text-base">
+          Read the{" "}
+          <Link
+            href="/blog/dcf-ddm-valuation-uk-income-investors"
+            className="font-medium text-foreground underline decoration-brand-500/60 underline-offset-4 hover:text-brand-600"
+          >
+            DCF vs DDM guide
+          </Link>{" "}
+          for model choice, assumption risk, and when each approach fits. Then
+          come back here to run the numbers on your dividend stock.
+        </p>
+      </section>
 
       <div className="mt-10">
         <DcfCalculator />
