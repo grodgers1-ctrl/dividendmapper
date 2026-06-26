@@ -34,8 +34,8 @@ export default function HomePage() {
   return (
     <div className="bg-background">
       <HeroSection />
-      <FeaturesSection />
       <TrackerRoutingSection />
+      <FeaturesSection />
       <ProofSection />
       <HowItWorksSection />
       <FaqSection />
@@ -130,16 +130,16 @@ const TRACKER_PATHS = [
       "Start with the core guide if you want the honest definition, the metrics worth tracking, and the point where a spreadsheet stops being enough.",
   },
   {
-    title: "Track income across ISA, SIPP, and GIA accounts",
-    href: "/blog/portfolio-tracking-dividend-income-uk-investors",
+    title: "How we stack up against Sharesight",
+    href: "/blog/sharesight-vs-dividendmapper-uk-income-investors",
     description:
-      "Use the portfolio-tracking guide if you need a wrapper-aware workflow for dividend income, yield-on-cost, and rebalancing decisions.",
+      "If you are weighing up trackers, read the side-by-side. Where Sharesight is strong, where we differ, and when you might use one, both, or neither.",
   },
   {
-    title: "Build a spreadsheet before you commit to a tool",
-    href: "/blog/dividend-tracker-spreadsheet-uk-investors",
+    title: "Project what your portfolio could pay in retirement",
+    href: "/tools/retirement-calculator",
     description:
-      "Use the spreadsheet guide if you want a practical checklist for what to record first and when a dedicated tracker becomes worth it.",
+      "Skip the reading if you came to model the numbers. Three scenarios, your ISA, SIPP and GIA values, retirement income at the end.",
   },
 ];
 
@@ -149,16 +149,16 @@ function TrackerRoutingSection() {
       <div className="mx-auto max-w-7xl px-4 py-16 md:px-6 md:py-20 lg:px-8">
         <div className="max-w-3xl">
           <p className="text-sm font-medium uppercase tracking-[0.18em] text-brand-600 dark:text-brand-400">
-            Homepage tracker-routing
+            Choose your next step
           </p>
           <h2 className="mt-3 font-display text-3xl font-bold tracking-tight text-foreground md:text-4xl">
-            Start tracking your dividends.
+            Pick what fits your setup.
           </h2>
           <p className="mt-4 max-w-2xl text-base leading-relaxed text-muted-foreground md:text-lg">
-            Search demand is already telling us what new readers want. If you are
-            comparing dividend trackers, deciding what to monitor, or trying to
-            move from a spreadsheet to a repeatable workflow, start with the
-            path that fits your setup.
+            Search demand is telling us what new readers want. If you are comparing
+            tools, deciding what to track first, or curious what your portfolio
+            could pay in retirement, the three paths below cover the most common
+            starting points.
           </p>
         </div>
 

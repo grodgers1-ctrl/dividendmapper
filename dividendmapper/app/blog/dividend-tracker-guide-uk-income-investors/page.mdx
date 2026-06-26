@@ -1,6 +1,7 @@
 import { postMetadata } from "@/lib/blog/posts";
 import { PostHeader, PostFooter } from "@/components/blog/post-header";
 import { FaqJsonLd } from "@/components/blog/faq-json-ld";
+import { RelatedLinks } from "@/components/related-links";
 
 export const metadata = postMetadata("dividend-tracker-guide-uk-income-investors");
 
@@ -219,12 +220,25 @@ Yield on cost is the dividend yield calculated using your original purchase pric
 
 Indirectly. By tracking yield on cost and dividend growth across your existing holdings, you identify which positions are genuinely growing your income. That informs future buying decisions.
 
-## Related guides
-
-- The [Sharesight vs DividendMapper for UK Income Investors](/blog/sharesight-vs-dividendmapper-uk-income-investors) comparison covers where dedicated tracking fits different portfolio profiles.
-- Use the [Retirement Income Calculator](/blog/retirement-income-calculator-guide) with your tracking data to project future income.
-- The [UK Dividend Tax Guide 2026/27](/blog/uk-dividend-tax-guide) explains allowance, rates, and wrapper rules that determine how much dividend income you keep.
-- [Why Headline Yield Can Be Misleading](/blog/why-headline-yield-can-be-misleading) covers yield on cost, payout sustainability, and the difference between a high yield and a reliable one.
+<RelatedLinks
+  items={[
+    {
+      href: "/blog/portfolio-tracking-dividend-income-uk-investors",
+      label: "Manage your dividend portfolio across wrappers",
+      description: "Once tracking is set up, the practical workflow guide covers ISA, SIPP, and GIA management, yield on cost, and rebalancing for income.",
+    },
+    {
+      href: "/tools/retirement-calculator",
+      label: "Project what your portfolio could pay",
+      description: "Take the dividend data you started tracking and feed it into Bear, Base, and Bull retirement scenarios.",
+    },
+    {
+      href: "/blog/dcf-ddm-valuation-uk-income-investors",
+      label: "Value individual dividend stocks with DDM",
+      description: "How DCF and DDM actually work for income stocks, and where each one fits.",
+    },
+  ]}
+/>
 
 <PostFooter
   nextHref="/blog/sharesight-vs-dividendmapper-uk-income-investors"

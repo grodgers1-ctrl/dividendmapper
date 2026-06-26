@@ -1,6 +1,7 @@
 import { postMetadata } from "@/lib/blog/posts";
 import { PostHeader, PostFooter } from "@/components/blog/post-header";
 import { FaqJsonLd } from "@/components/blog/faq-json-ld";
+import { RelatedLinks } from "@/components/related-links";
 
 export const metadata = postMetadata("dcf-ddm-valuation-uk-income-investors");
 
@@ -120,11 +121,27 @@ Using the DDM with a current annual dividend of £0.45, expected growth of 3%, a
 
 A variable-growth DDM here produces a wide range. Small input changes swing the valuation by plus or minus 30%. Using a multi-year average FCF in a DCF produces a much more stable anchor: fair value of about £5.80 against a £5.50 price. Near fair value. When the DDM is unstable, DCF is the more reliable tool.
 
-## Related guides
+<RelatedLinks
+  items={[
+    {
+      href: "/blog/dividend-tracker-guide-uk-income-investors",
+      label: "Track the stocks you have valued",
+      description: "Valuation is one half of the work. Tracking what you actually own is the other. Start with the tracker basics.",
+    },
+    {
+      href: "/blog/retirement-income-calculator-guide",
+      label: "Project the income picture",
+      description: "Roll per-stock value up into a portfolio retirement-income range across Bear, Base, and Bull scenarios.",
+    },
+    {
+      href: "/blog/sharesight-vs-dividendmapper-uk-income-investors",
+      label: "Pick a tracker tool",
+      description: "Sharesight vs DividendMapper for UK income investors, honestly.",
+    },
+  ]}
+/>
 
-- Use the [DividendMapper DCF calculator](/tools/dcf-calculator) to run your own fair-value estimates.
-- The [Retirement Income Calculator Guide](/blog/retirement-income-calculator-guide) explains how to project your dividend income across wrappers.
-- The [dividend tracker guide](/blog/dividend-tracker-guide-uk-income-investors) covers why tracking dividend history matters for your DDM assumptions.
-- [Why Headline Yield Can Be Misleading](/blog/why-headline-yield-can-be-misleading) helps distinguish sustainable income from a high but fragile yield.
-
-<PostFooter slug="dcf-ddm-valuation-uk-income-investors" />
+<PostFooter
+  nextHref="/tools/dcf-calculator"
+  nextLabel="Try the DCF calculator on a stock you already own"
+/>
