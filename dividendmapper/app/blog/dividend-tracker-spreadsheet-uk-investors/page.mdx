@@ -1,0 +1,261 @@
+import { postMetadata } from "@/lib/blog/posts";
+import { PostHeader, PostFooter } from "@/components/blog/post-header";
+import { FaqJsonLd } from "@/components/blog/faq-json-ld";
+
+export const metadata = postMetadata("dividend-tracker-spreadsheet-uk-investors");
+
+<FaqJsonLd
+  items={[
+    {
+      question: "What should a dividend tracker spreadsheet include?",
+      answer:
+        "At minimum: holding name or ticker, wrapper, shares held, cost basis, current price, annual dividend per share, expected annual income, ex-dividend date, payment date, dividends received year to date, and a notes field for special dividends, FX, or tax-year flags.",
+    },
+    {
+      question: "Should I use one dividend spreadsheet or one tab per wrapper?",
+      answer:
+        "Both work. One master sheet with a wrapper column is fine for a smaller, simpler portfolio. Separate ISA, SIPP, and GIA tabs become easier to trust once you have more holdings, more brokers, or more wrapper-specific planning.",
+    },
+    {
+      question: "Is a spreadsheet enough for a UK dividend portfolio?",
+      answer:
+        "Usually, yes, when the portfolio is still simple. A spreadsheet is enough for many UK investors with one broker and a manageable number of holdings. The upgrade trigger is usually complexity: multiple brokers, foreign dividends, frequent trades, or data-entry fatigue.",
+    },
+    {
+      question: "Why track ex-dividend dates and payment dates separately?",
+      answer:
+        "The ex-dividend date tells you when entitlement cuts off. The payment date tells you when cash should arrive. If you only track payment dates, you lose the calendar that lets you plan buys, expected cash flow, and GIA tax-year timing properly.",
+    },
+    {
+      question: "Do I need to track wrappers separately?",
+      answer:
+        "Yes. ISA, SIPP, and GIA dividends behave differently for tax, access, and planning. If the spreadsheet does not separate wrappers cleanly, the tax-year arithmetic and cash-flow picture quickly become unreliable.",
+    },
+  ]}
+/>
+
+<PostHeader slug="dividend-tracker-spreadsheet-uk-investors" />
+
+If you already know you should be tracking your dividend income, you have probably hit the next problem straight away: most dividend tracker guides explain why tracking matters, then leave the spreadsheet setup to you. That is the hard bit.
+
+A dividend tracker spreadsheet is still the right starting point for a lot of UK investors. It is free, flexible, and honest about where your portfolio is today. The point is not to build a pretty dashboard for its own sake. The point is to know what dividend cash flow to expect, which wrapper it sits in, and whether the cash that lands matches the income you thought you were building.
+
+The broader [dividend tracker guide](/blog/dividend-tracker-guide-uk-income-investors) covers whether you need a tracker at all. This piece starts one step later: what columns to include, how to split ISA, SIPP, and GIA cleanly, and when the spreadsheet itself is telling you it is time to upgrade.
+
+## Why a spreadsheet still works for many UK dividend investors
+
+A spreadsheet is not the amateur option. It is often the most sensible option.
+
+If you hold a manageable number of UK dividend stocks, use one or two brokers, and still want full control over the fields you track, a spreadsheet does the job well. It lets you build the exact view you need instead of accepting the narrow version of "income tracking" a broker dashboard happens to show.
+
+That matters because a dividend portfolio is not just a list of holdings. It is a cash-flow system. You want to know:
+
+- what each holding is expected to pay
+- when that cash should arrive
+- which wrapper it belongs to
+- how much has actually landed this tax year
+- whether the portfolio is getting easier or harder to manage
+
+A spreadsheet is often enough for that. The mistake is not starting with a spreadsheet. The mistake is building one that only tracks yield and misses the cash-flow questions that matter later.
+
+## The minimum columns every dividend tracker spreadsheet should include
+
+You can build a useful dividend tracker in Google Sheets or Excel with roughly a dozen core fields. Every field should answer a real question you will ask later.
+
+| Field | Why it matters |
+|---|---|
+| Holding or ticker | Lets you audit income by company, not just by account |
+| Wrapper | Separates ISA, SIPP, and GIA treatment |
+| Shares held | Needed for any per-share income calculation |
+| Cost basis | Lets you review yield on cost and gain/loss context |
+| Current share price | Helps compare market value with income output |
+| Annual dividend per share | Core input for projected income |
+| Expected annual income | Converts per-share data into cash-flow planning |
+| Ex-dividend date | Tells you when entitlement cuts off |
+| Payment date | Tells you when cash should arrive |
+| Gross dividend received | Useful where withholding or FX can distort the picture |
+| Dividends received YTD | Separates projection from cash actually landed |
+| Reinvested or paid out | Distinguishes accumulation from income drawdown |
+| Tax-year flag | Especially useful for GIA tracking |
+| Notes | Catches special dividends, FX, dividend cuts, or corporate actions |
+
+The fields most often skipped are cost basis, wrapper, and notes. That is usually where the trouble starts.
+
+Without cost basis, you cannot tell current yield from yield on cost. Without the wrapper field, ISA, SIPP, and GIA income gets mixed together and the tax picture becomes fuzzy. Without notes, one-off events such as a special dividend or a changed payout schedule start to look like normal income.
+
+## How to structure the sheet for ISA, SIPP, and GIA without creating a mess
+
+Two structures work well. The right one depends on portfolio complexity.
+
+### Option 1: one master sheet with a wrapper column
+
+This works best when you have a smaller portfolio and want one place to update everything.
+
+Each row is a holding. One column records the wrapper: ISA, SIPP, or GIA. You then filter or pivot the data when you want a wrapper-specific view.
+
+The advantage is simplicity. One table means one place to update prices, annual dividends, and payments received.
+
+The risk is discipline. If the wrapper column is wrong or missing on even a few rows, the whole tax-year and cash-flow view becomes unreliable.
+
+### Option 2: one tab per wrapper plus a dashboard tab
+
+This is usually better once the portfolio becomes more complex.
+
+You keep separate ISA, SIPP, and GIA tabs, then pull summary figures into a dashboard tab. That dashboard might show:
+
+- expected annual income by wrapper
+- dividends received year to date by wrapper
+- next 30 or 90 days expected cash
+- total portfolio yield
+- top holdings by income contribution
+
+This structure creates more upkeep, but it is easier to trust once you have multiple brokers or wrapper-specific planning questions. If the GIA tab is separate, for example, your tax-year tracking is much harder to muddle by accident.
+
+For most people starting out, the master-sheet route is enough. Move to wrapper-specific tabs when the single sheet begins to feel like a compromise rather than a convenience.
+
+## The date fields that make the spreadsheet genuinely useful
+
+A surprising number of spreadsheets track only payment dates. That leaves out half the value.
+
+Three dates matter in dividend tracking:
+
+- **Ex-dividend date**: when entitlement cuts off
+- **Record date**: the company checks who is entitled
+- **Payment date**: when cash lands
+
+The spreadsheet does not need to teach every rule behind those dates. It needs to use them properly.
+
+A good setup should help you:
+
+- flag upcoming ex-dividend dates
+- separate expected income from cash already received
+- sort future payments chronologically
+- see which GIA payments belong to which tax year
+
+A simple helper view in Google Sheets might sort upcoming payments with a formula such as `=SORT(FILTER(ex_date_range, ex_date_range >= TODAY()), 1, TRUE)`. The exact range names are up to you. The point is the same either way: the ex-date drives the calendar, the payment date drives the cash view.
+
+If you only record payment dates, you lose the part of the sheet that makes it useful for planning.
+
+## How to track actual cash flow, not just headline yield
+
+Headline yield is an estimate. Cash received is reality.
+
+The spreadsheet should make that distinction visible at dashboard level. Four figures matter most:
+
+- **Projected full-year income**
+- **Dividends received year to date**
+- **Next 90 days expected cash**
+- **Income by wrapper**
+
+That gives you a cleaner operating view than yield alone.
+
+If your projected full-year income is £7,400 and the spreadsheet shows £3,330 received by the halfway point of the year, you are broadly on pace. If the year-to-date figure is much lighter than expected, the spreadsheet forces the right question: was a payment delayed, cut, or simply mis-recorded?
+
+This is where the sheet starts to connect with the wider [portfolio-tracking guide](/blog/portfolio-tracking-dividend-income-uk-investors) and the [retirement income calculator guide](/blog/retirement-income-calculator-guide). The sheet is not the whole planning system. It is the data layer that feeds the system.
+
+## Simple formulas and dashboard views worth adding
+
+The best spreadsheet formulas are the ones you can still trust and maintain six months later.
+
+Useful additions include:
+
+- **Total portfolio yield**: expected annual income divided by current total market value
+- **Yield on cost per holding**: annual dividend per share divided by your average cost basis per share
+- **Income by wrapper**: `SUMIF` or pivot-table totals for ISA, SIPP, and GIA
+- **Monthly or quarterly calendar**: future payment dates grouped into a simple cash view
+- **Projected versus received**: expected full-year income beside year-to-date cash actually received
+- **Top holdings by income contribution**: useful for concentration review
+
+Keep formulas in a helper area or dashboard tab instead of scattering them through the main table. That way the maintenance burden stays reasonable.
+
+If the spreadsheet only works because you remember a maze of custom formulas, it is already too brittle.
+
+## When a spreadsheet stops being enough
+
+The real trigger is complexity, not portfolio size.
+
+A modest portfolio spread across several brokers can be harder to track than a larger one sitting quietly in one place. Signs that the spreadsheet is running out of headroom include:
+
+- holdings across multiple brokers
+- frequent top-ups or trades
+- foreign dividends and FX handling
+- repeated manual data-entry fatigue
+- corporate actions that need more careful reconciliation
+- long gaps between updates because the spreadsheet has become a chore
+
+At that point, the honest move is not to pretend the spreadsheet still scales. It is to recognise that the portfolio has outgrown it.
+
+That is where the [Sharesight vs DividendMapper comparison](/blog/sharesight-vs-dividendmapper-uk-income-investors) becomes useful. The upgrade path is part of the workflow. It is not a failure of the spreadsheet-first approach.
+
+## Worked example: a three-wrapper UK income portfolio spreadsheet
+
+Take Rachel, a UK investor with twelve dividend-paying holdings spread across three wrappers.
+
+- Her ISA holds long-term accumulation positions.
+- Her SIPP holds retirement-income positions.
+- Her GIA holds overflow positions above annual wrapper contributions.
+
+Her spreadsheet needs to answer four questions every month:
+
+1. How much dividend income is expected this year by wrapper?
+2. Which ex-dividend dates are next?
+3. Which payments have actually landed versus only being projected?
+4. How much GIA income is likely to fall outside the dividend allowance?
+
+A simple dashboard view might look like this:
+
+| Wrapper | Expected annual income | Dividends received YTD | Next 30 days expected cash |
+|---|---:|---:|---:|
+| ISA | £3,200 | £1,450 | £280 |
+| SIPP | £2,400 | £1,100 | £0 |
+| GIA | £1,800 | £780 | £150 |
+| Total | £7,400 | £3,330 | £430 |
+
+This tells Rachel something useful straight away.
+
+The ISA and SIPP rows show how income is building inside the wrappers she cares about most for long-term planning. The GIA row shows £780 already received against £1,800 expected for the year, which means the remaining £1,020 is the part that needs closer tax attention. She does not have to wait until Self Assessment season to realise that.
+
+The numbers are illustrative, not personalised advice. The point is the workflow: the spreadsheet should answer planning questions, not just store transactions.
+
+## Common spreadsheet mistakes dividend investors make
+
+A few mistakes come up again and again.
+
+### Tracking only yield and ignoring actual cash received
+
+Yield is useful, but it is not proof. If the year-to-date cash figure is missing, the spreadsheet is telling only half the story.
+
+### Mixing ISA, SIPP, and GIA rows without a clean wrapper field
+
+Wrapper confusion is where tax mistakes start. If wrappers are not separated clearly, the whole view becomes less trustworthy.
+
+### Forgetting dividend cuts, special dividends, or odd payments
+
+These are exactly what the notes field is for. Ignore them and the spreadsheet will quietly distort what the portfolio is really producing.
+
+### Ignoring ex-dividend dates until after the cash-flow plan breaks
+
+The ex-date is what tells you whether the next payment is yours. Waiting until the payment date means you are reacting too late.
+
+### Never reviewing whether the spreadsheet is still fit for purpose
+
+A setup that worked for five holdings can become unreliable at twenty-five. Review the system, not just the stocks.
+
+## What to read next after the spreadsheet is built
+
+Once the spreadsheet is doing its job, the next useful reads are the ones that expand the system around it.
+
+- [What is a dividend tracker, and does every UK income investor need one?](/blog/dividend-tracker-guide-uk-income-investors)
+- [Portfolio tracking for dividend income: a UK investor's practical guide](/blog/portfolio-tracking-dividend-income-uk-investors)
+- [UK Dividend Tax Guide 2026/27](/blog/uk-dividend-tax-guide)
+- [Retirement Income Calculator Guide: What Your Dividend Portfolio Could Pay](/blog/retirement-income-calculator-guide)
+- [Sharesight vs DividendMapper: what UK income investors actually need](/blog/sharesight-vs-dividendmapper-uk-income-investors)
+
+If you want to register interest in a future DividendMapper-built tracker, the [waitlist](/waitlist) is the place to do it. That is a future-tooling signal, not a promise that a spreadsheet export or live tracking product exists today.
+
+<PostFooter
+  nextHref="/blog/sharesight-vs-dividendmapper-uk-income-investors"
+  nextLabel="Sharesight vs DividendMapper: what UK income investors actually need"
+/>
+
+***Disclaimer:** This article is educational, not financial or tax advice. Tax treatment depends on your circumstances, and rates or allowances can change. Check current HMRC guidance or speak to a qualified adviser or accountant where needed. DividendMapper does not currently offer a live dividend-tracking spreadsheet export or tracker feature.*

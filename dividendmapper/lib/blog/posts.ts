@@ -246,6 +246,17 @@ export const POSTS: BlogPost[] = [
     locale: "uk",
   },
   {
+    slug: "dividend-tracker-spreadsheet-uk-investors",
+    title:
+      "Dividend tracker spreadsheet for UK investors: what to track in ISA, SIPP, and GIA",
+    description:
+      "A practical UK guide to building a dividend tracker spreadsheet, covering the core fields to track, how to separate ISA, SIPP, and GIA holdings, and when a spreadsheet has stopped being enough.",
+    publishedAt: "2026-06-26",
+    readingTime: "14 min",
+    tags: ["UK", "Dividend", "Tracking"],
+    locale: "uk",
+  },
+  {
     slug: "best-uk-dividend-stocks-income-investors",
     title:
       "Best UK dividend stocks for income: a practical screening framework for 2026/27",
