@@ -35,6 +35,7 @@ export default function HomePage() {
     <div className="bg-background">
       <HeroSection />
       <FeaturesSection />
+      <TrackerRoutingSection />
       <ProofSection />
       <HowItWorksSection />
       <FaqSection />
@@ -113,6 +114,71 @@ function FeaturesSection() {
                 className="mt-2 text-sm leading-relaxed text-muted-foreground"
                 dangerouslySetInnerHTML={{ __html: f.description }}
               />
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+const TRACKER_PATHS = [
+  {
+    title: "What a dividend tracker should actually help you see",
+    href: "/blog/dividend-tracker-guide-uk-income-investors",
+    description:
+      "Start with the core guide if you want the honest definition, the metrics worth tracking, and the point where a spreadsheet stops being enough.",
+  },
+  {
+    title: "Track income across ISA, SIPP, and GIA accounts",
+    href: "/blog/portfolio-tracking-dividend-income-uk-investors",
+    description:
+      "Use the portfolio-tracking guide if you need a wrapper-aware workflow for dividend income, yield-on-cost, and rebalancing decisions.",
+  },
+  {
+    title: "Build a spreadsheet before you commit to a tool",
+    href: "/blog/dividend-tracker-spreadsheet-uk-investors",
+    description:
+      "Use the spreadsheet guide if you want a practical checklist for what to record first and when a dedicated tracker becomes worth it.",
+  },
+];
+
+function TrackerRoutingSection() {
+  return (
+    <section className="border-t border-border bg-background">
+      <div className="mx-auto max-w-7xl px-4 py-16 md:px-6 md:py-20 lg:px-8">
+        <div className="max-w-3xl">
+          <p className="text-sm font-medium uppercase tracking-[0.18em] text-brand-600 dark:text-brand-400">
+            Homepage tracker-routing
+          </p>
+          <h2 className="mt-3 font-display text-3xl font-bold tracking-tight text-foreground md:text-4xl">
+            Start tracking your dividends.
+          </h2>
+          <p className="mt-4 max-w-2xl text-base leading-relaxed text-muted-foreground md:text-lg">
+            Search demand is already telling us what new readers want. If you are
+            comparing dividend trackers, deciding what to monitor, or trying to
+            move from a spreadsheet to a repeatable workflow, start with the
+            path that fits your setup.
+          </p>
+        </div>
+
+        <div className="mt-10 grid gap-5 lg:grid-cols-3">
+          {TRACKER_PATHS.map((path) => (
+            <Link
+              key={path.href}
+              href={path.href}
+              className="group rounded-2xl border border-border bg-card p-6 transition-all duration-200 hover:border-brand-500 md:hover:-translate-y-0.5 md:hover:shadow-sm md:hover:shadow-brand-500/10"
+            >
+              <h3 className="font-display text-xl font-semibold text-foreground group-hover:text-brand-700 dark:group-hover:text-brand-300">
+                {path.title}
+              </h3>
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground md:text-base">
+                {path.description}
+              </p>
+              <span className="mt-5 inline-flex items-center gap-1.5 text-sm font-medium text-brand-600 group-hover:text-brand-700 dark:text-brand-400 dark:group-hover:text-brand-300">
+                Read the guide
+                <span aria-hidden>→</span>
+              </span>
             </Link>
           ))}
         </div>
