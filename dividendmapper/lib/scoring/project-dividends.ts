@@ -61,6 +61,13 @@ const CADENCE_BUCKETS: ReadonlyArray<{
   { cadence: "annual",    min: 355, max: 370, payOffsetDays: 28 },
 ];
 
+export interface CadenceByYearCountResult {
+  /** The cadence label that the mode count maps to. */
+  cadence: Cadence;
+  /** The actual payments-per-year mode (e.g. 3 for UK semi + occasional special). */
+  modeCount: number;
+}
+
 /**
  * Cadence detection by per-calendar-year payment count.
  *
@@ -70,17 +77,17 @@ const CADENCE_BUCKETS: ReadonlyArray<{
  * 'irregular'. Counting payments per calendar year sidesteps timing drift
  * entirely.
  *
- * Returns the cadence when the mode payment count appears in 2 or more of
- * the most recent 3 complete calendar years, and the mode maps to a known
- * cadence ({1, 2, 3, 4, 12}). A mode of 3 is read as 'semi' because the
- * common shape is a UK semi-annual payer (interim + final) with an
- * occasional special — projecting 2 regular payments per year is the
- * conservative read. Otherwise returns null, letting the caller fall back
- * to median-gap bucket detection.
+ * Returns the cadence + the actual mode count when the mode payment count
+ * appears in 2 or more of the most recent 3 complete calendar years, and
+ * the mode maps to a known cadence ({1, 2, 3, 4, 12}). A mode of 3 is read
+ * as 'semi' but the modeCount of 3 is preserved so callers (specifically
+ * `projectDividends`) can project the right number of payments per year.
+ * Otherwise returns null, letting the caller fall back to median-gap
+ * bucket detection.
  */
 export function detectCadenceByYearCount(
   history: ReadonlyArray<HistoricalPayment>,
-): Cadence | null {
+): CadenceByYearCountResult | null {
   const countByYear = new Map<number, number>();
   for (const h of history) {
     const y = Number(h.exDate.slice(0, 4));
@@ -109,13 +116,30 @@ export function detectCadenceByYearCount(
   const [modeCount, modeFreq] = sorted[0];
   if (modeFreq < 2) return null;
 
+  let cadence: Cadence;
   switch (modeCount) {
-    case 12: return "monthly";
-    case 4:  return "quarterly";
-    case 3:  return "semi";
-    case 2:  return "semi";
-    case 1:  return "annual";
+    case 12: cadence = "monthly"; break;
+    case 4:  cadence = "quarterly"; break;
+    case 3:  cadence = "semi"; break;
+    case 2:  cadence = "semi"; break;
+    case 1:  cadence = "annual"; break;
     default: return null;
+  }
+  return { cadence, modeCount };
+}
+
+/**
+ * Number of payments per year implied by the cadence label. Used to decide
+ * whether the year-count detector's actual mode count disagrees with the
+ * label (e.g. mode 3 mapped to 'semi' — semi implies 2, so we have an extra).
+ */
+function expectedPaymentsPerYear(cadence: Cadence): number {
+  switch (cadence) {
+    case "monthly":   return 12;
+    case "quarterly": return 4;
+    case "semi":      return 2;
+    case "annual":    return 1;
+    default:          return 1;
   }
 }
 
@@ -126,7 +150,7 @@ export function detectCadence(history: ReadonlyArray<HistoricalPayment>): Cadenc
   // timing drift that breaks the median-gap detector for UK semi-annual
   // payers. Returns null when ambiguous; we fall through to median-gap below.
   const byYear = detectCadenceByYearCount(history);
-  if (byYear) return byYear;
+  if (byYear) return byYear.cadence;
 
   // Fallback: median inter-payment gap matched against narrow buckets. Catches
   // payers with a clean rhythm but fewer than 2 complete calendar years of
@@ -210,6 +234,66 @@ export function projectDividends(args: ProjectDividendsArgs): ProjectedPayment[]
   const sorted = [...history].sort((a, b) => (a.exDate < b.exDate ? -1 : 1));
   const latest = sorted[sorted.length - 1];
   const ttmAvg = trailingTwelveMonthAvg(history, today);
+  const todayIso = today.toISOString().slice(0, 10);
+  const sixMoAgoIso = addDays(todayIso, -180);
+
+  // Mode-based projection: when the year-count detector saw more payments
+  // per year than the cadence label implies (e.g. UK semi + occasional
+  // special = mode 3, cadence='semi' implies 2), project the actual mode
+  // count instead. Per-payment base = TTM-sum / modeCount so the annual
+  // total tracks reality. Without this, BME.L-style payers under-project
+  // by ~30% because the engine emits only 2 payments × latest.amount.
+  const byYear = detectCadenceByYearCount(history);
+  if (
+    byYear !== null &&
+    byYear.modeCount > expectedPaymentsPerYear(cadence) &&
+    ttmAvg > 0
+  ) {
+    const cutoffIso = addDays(todayIso, -365);
+    const ttmSum = history
+      .filter((h) => h.exDate >= cutoffIso)
+      .reduce((s, h) => s + h.amount, 0);
+    if (ttmSum > 0) {
+      const baseAmount = ttmSum / byYear.modeCount;
+      const gapDays = 365 / byYear.modeCount;
+      const payOffsetDays = payOffsetDaysFor(cadence);
+      const out: ProjectedPayment[] = [];
+
+      if (direction === "forward") {
+        const endIso = addDays(todayIso, 365);
+        let cursor = latest.exDate;
+        while (true) {
+          cursor = addDays(cursor, gapDays);
+          if (cursor > endIso) break;
+          if (cursor <= todayIso) continue;
+          out.push({
+            exDate: cursor,
+            payDate: addDays(cursor, payOffsetDays),
+            perShareAmount: round4(baseAmount),
+            currency,
+            confidence: "cadence",
+          });
+        }
+      } else {
+        const createdAt = holding.createdAt ? holding.createdAt.slice(0, 10) : sixMoAgoIso;
+        const floor = createdAt > sixMoAgoIso ? createdAt : sixMoAgoIso;
+        let cursor = sorted[0].exDate;
+        while (cursor < todayIso) {
+          cursor = addDays(cursor, gapDays);
+          if (cursor < floor) continue;
+          if (cursor > todayIso) break;
+          out.push({
+            exDate: cursor,
+            payDate: addDays(cursor, payOffsetDays),
+            perShareAmount: round4(baseAmount),
+            currency,
+            confidence: "cadence",
+          });
+        }
+      }
+      return out;
+    }
+  }
 
   const isCutOrFreeze = ttmAvg > 0 && latest.amount < 0.95 * ttmAvg;
   const growthRate = isCutOrFreeze ? 0 : computeGrowthRate(history);
@@ -228,9 +312,6 @@ export function projectDividends(args: ProjectDividendsArgs): ProjectedPayment[]
 
   const gapDays = gapDaysFor(cadence);
   const payOffsetDays = payOffsetDaysFor(cadence);
-
-  const todayIso = today.toISOString().slice(0, 10);
-  const sixMoAgoIso = addDays(todayIso, -180);
 
   const out: ProjectedPayment[] = [];
 
