@@ -125,9 +125,15 @@ export async function loadCalendarData(
   // Collect every currency we might need to convert. Start with holdings'
   // cost currencies, add user_dividends currencies, plus GBP/USD as the
   // primary-currency anchor.
+  //
+  // GBp/GBX (pence) are unconditionally included because the cron writes UK
+  // cache rows in pence regardless of how the broker reports cost basis (T212
+  // settles in GBP, so cost_currency is "GBP" — that doesn't seed GBp in the
+  // rate map). Without these, every UK pence cache row silently drops in
+  // convertToPrimary because the rate lookup returns undefined.
   const currencies = new Set<string>([
     locale === "us" ? "USD" : "GBP",
-    "GBP", "USD",
+    "GBP", "USD", "GBp", "GBX",
     ...holdings.map((h) => h.cost_currency),
     ...userDividends.map((d) => d.currency),
   ]);
