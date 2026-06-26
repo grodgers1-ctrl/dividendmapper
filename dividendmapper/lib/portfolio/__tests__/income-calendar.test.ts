@@ -244,7 +244,10 @@ describe("buildIncomeCalendar — v2 segments + wrapper aggregation", () => {
     expect(onlyIsa.months.find((m) => m.ym === "2026-04")?.gbp).toBe(100);
   });
 
-  it("returns 19 buckets (6 back + current + 12 forward)", () => {
+  it("returns 20 buckets (6 back + current + 13 forward)", () => {
+    // FUTURE_MONTHS bumped from 12 to 13 to capture cache pay-dates that
+    // drift just past the +12mo mark (e.g. W7L.L Jul 2027 final, BME.L Jul
+    // 2027 final, the final SMIF.L monthly).
     const result = buildIncomeCalendar({
       userDividends: [],
       holdings: [],
@@ -253,11 +256,11 @@ describe("buildIncomeCalendar — v2 segments + wrapper aggregation", () => {
       now,
       locale: "uk",
     });
-    expect(result.months).toHaveLength(19);
+    expect(result.months).toHaveLength(20);
     expect(result.months[0].ym).toBe("2025-12");
     expect(result.months[6].kind).toBe("partial");
     expect(result.months[6].ym).toBe("2026-06");
-    expect(result.months[18].ym).toBe("2027-06");
+    expect(result.months[19].ym).toBe("2027-07");
   });
 
   it("US locale primary currency = USD; UK holdings convert", () => {
@@ -628,9 +631,11 @@ describe("buildIncomeCalendar — paymentsByMonth assembly", () => {
 });
 
 describe("buildIncomeCalendar — FMP forward-DPS fallback", () => {
-  it("FMP fallback: holdings without a projection cache get DPS/12 spread across the next 12 future months", () => {
+  it("FMP fallback: holdings without a projection cache spread DPS evenly across the future confirmed-forecast buckets", () => {
     // Bug B α regression: a ticker with no projected_next_12m_payments must
-    // still contribute to annual income via FMP forward DPS × quantity / 12.
+    // still contribute to annual income via FMP forward DPS × quantity.
+    // Per-bucket = annual / bucketCount (NOT a hardcoded /12) so the total
+    // stays exactly dps×quantity even when FUTURE_MONTHS changes (now 13).
     const now = new Date("2026-06-25T00:00:00Z");
     const result = buildIncomeCalendar({
       userDividends: [],
@@ -645,9 +650,9 @@ describe("buildIncomeCalendar — FMP forward-DPS fallback", () => {
       projectedHistorical12mByTicker: {},
       forwardDpsByTicker: { NU: { dps: 0.12, currency: "USD" } },
     });
-    // 100 × 0.12 USD × 0.79 = £9.48 annual; / 12 = £0.79/month across 12 buckets.
+    // 100 × 0.12 USD × 0.79 = £9.48 annual; spread across 13 future buckets.
     const futureMonths = result.months.filter((m) => m.kind === "confirmed-forecast");
-    expect(futureMonths.length).toBe(12);
+    expect(futureMonths.length).toBe(13);
     let sum = 0;
     for (const m of futureMonths) {
       const fmpSeg = m.segments.find((s) => s.kind === "fmp-estimate");
