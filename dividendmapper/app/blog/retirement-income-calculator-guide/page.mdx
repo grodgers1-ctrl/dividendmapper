@@ -1,6 +1,7 @@
 import { postMetadata } from "@/lib/blog/posts";
 import { PostHeader, PostFooter } from "@/components/blog/post-header";
 import { FaqJsonLd } from "@/components/blog/faq-json-ld";
+import { RelatedLinks } from "@/components/related-links";
 
 export const metadata = postMetadata("retirement-income-calculator-guide");
 
@@ -104,6 +105,26 @@ The calculator is one piece. Use it alongside:
 - A **gap analysis:** if the calculator says you're short, you need to decide whether to save more, aim for higher yield, shift wrappers, or adjust your target date
 
 The goal isn't to forecast the future. Nobody can do that. It's to give you a range of realistic outcomes so you can make decisions with your eyes open.
+
+<RelatedLinks
+  items={[
+    {
+      href: "/blog/dividend-tracker-guide-uk-income-investors",
+      label: "Track the dividends you already own",
+      description: "The calculator is only as good as the data you feed it. Step one is real tracking, not guessed yields.",
+    },
+    {
+      href: "/blog/portfolio-tracking-dividend-income-uk-investors",
+      label: "Manage the portfolio across wrappers",
+      description: "The day-to-day workflow once tracking is in place: yield on cost, dividend growth, when to trim.",
+    },
+    {
+      href: "/blog/sharesight-vs-dividendmapper-uk-income-investors",
+      label: "Pick a tracker tool",
+      description: "If you need a dedicated tool to feed the calculator with real data, see where each fits.",
+    },
+  ]}
+/>
 
 <PostFooter
   nextHref="/blog/uk-dividend-tax-guide"

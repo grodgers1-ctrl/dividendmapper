@@ -1,6 +1,7 @@
 import { postMetadata } from "@/lib/blog/posts";
 import { PostHeader, PostFooter } from "@/components/blog/post-header";
 import { FaqJsonLd } from "@/components/blog/faq-json-ld";
+import { RelatedLinks } from "@/components/related-links";
 
 export const metadata = postMetadata("portfolio-tracking-dividend-income-uk-investors");
 
@@ -204,4 +205,27 @@ The [dividend-tracker guide](/blog/dividend-tracker-guide-uk-income-investors) i
 
 *DividendMapper helps UK dividend investors track, analyse, and project their dividend income across multiple portfolios and tax wrappers. It is not a financial adviser. No personalised investment or tax advice; it does not tell you what to buy or sell. Data calculations happen client-side in the browser.*
 
-<PostFooter slug="portfolio-tracking-dividend-income-uk-investors" />
+<RelatedLinks
+  items={[
+    {
+      href: "/blog/dividend-tracker-guide-uk-income-investors",
+      label: "Start with the tracker basics",
+      description: "The prequel: what dividend tracking is and the threshold where a spreadsheet stops being enough.",
+    },
+    {
+      href: "/blog/sharesight-vs-dividendmapper-uk-income-investors",
+      label: "Sharesight vs DividendMapper, honestly",
+      description: "Where dedicated tracker tools fit, and where they overlap with the wrapper-first income lens.",
+    },
+    {
+      href: "/tools/retirement-calculator",
+      label: "Project the retirement-income side",
+      description: "Three scenarios, your wrapper mix, and what your tracked income could compound to.",
+    },
+  ]}
+/>
+
+<PostFooter
+  nextHref="/blog/dividend-tracker-guide-uk-income-investors"
+  nextLabel="If you are new to dividend tracking, start with the basics first"
+/>
