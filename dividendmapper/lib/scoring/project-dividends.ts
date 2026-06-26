@@ -44,6 +44,11 @@ export interface ProjectDividendsArgs {
 
 const GROWTH_CAP = 0.20;
 
+// Bucket widths chosen to absorb the realistic timing drift we see in FMP
+// data without overlapping. Quarterly's upper edge stretches to 110d to
+// catch recently-initiated quarterly payers whose first Q1 lands a month
+// late (PYPL: 2025-11-19 → 2026-03-04 = 105d). Semi widens to 170-210d to
+// catch UK interim/final asymmetries that miss the narrower window.
 const CADENCE_BUCKETS: ReadonlyArray<{
   cadence: Cadence;
   min: number;
@@ -51,8 +56,8 @@ const CADENCE_BUCKETS: ReadonlyArray<{
   payOffsetDays: number;
 }> = [
   { cadence: "monthly",   min: 28,  max: 35,  payOffsetDays: 7 },
-  { cadence: "quarterly", min: 85,  max: 95,  payOffsetDays: 14 },
-  { cadence: "semi",      min: 175, max: 190, payOffsetDays: 28 },
+  { cadence: "quarterly", min: 85,  max: 110, payOffsetDays: 14 },
+  { cadence: "semi",      min: 170, max: 210, payOffsetDays: 28 },
   { cadence: "annual",    min: 355, max: 370, payOffsetDays: 28 },
 ];
 
@@ -67,8 +72,11 @@ const CADENCE_BUCKETS: ReadonlyArray<{
  *
  * Returns the cadence when the mode payment count appears in 2 or more of
  * the most recent 3 complete calendar years, and the mode maps to a known
- * cadence ({1, 2, 4, 12}). Otherwise returns null, letting the caller fall
- * back to median-gap bucket detection.
+ * cadence ({1, 2, 3, 4, 12}). A mode of 3 is read as 'semi' because the
+ * common shape is a UK semi-annual payer (interim + final) with an
+ * occasional special — projecting 2 regular payments per year is the
+ * conservative read. Otherwise returns null, letting the caller fall back
+ * to median-gap bucket detection.
  */
 export function detectCadenceByYearCount(
   history: ReadonlyArray<HistoricalPayment>,
@@ -104,6 +112,7 @@ export function detectCadenceByYearCount(
   switch (modeCount) {
     case 12: return "monthly";
     case 4:  return "quarterly";
+    case 3:  return "semi";
     case 2:  return "semi";
     case 1:  return "annual";
     default: return null;

@@ -158,6 +158,43 @@ describe("detectCadence", () => {
     expect(detectCadence(history)).toBe("quarterly");
   });
 
+  it("returns 'quarterly' for PYPL's real FMP-observed dates with a drifted Q1 (~105d gap)", () => {
+    // Real FMP rows for PYPL as of 2026-06: a recently-initiated quarterly
+    // payer whose first three ex-dates were 2025-11-19, 2026-03-04, 2026-06-04.
+    // Gaps: 105d (Nov→Mar) and 92d (Mar→Jun). Median is 105d, which fell
+    // outside the previous narrow quarterly bucket [85, 95] and got
+    // mis-classified as 'irregular'. Bucket widened to [85, 110] to handle
+    // realistic Q1 timing drift on newly-initiated quarterly payers.
+    const history = [
+      { exDate: "2026-06-04", amount: 0.14 },
+      { exDate: "2026-03-04", amount: 0.14 },
+      { exDate: "2025-11-19", amount: 0.14 },
+    ];
+    expect(detectCadence(history)).toBe("quarterly");
+  });
+
+  it("returns 'semi' for BME.L pattern: 3 payments/year (interim + final + special)", () => {
+    // Real FMP rows for BME.L. UK retailers commonly pay an interim + final +
+    // occasional special, giving 3 payments/year. detectCadenceByYearCount
+    // saw a mode of 3 and fell through to median-gap (147d, no bucket)
+    // → 'irregular'. Mapping 3 → semi captures the recurring cadence
+    // underneath the special; the projection engine will forecast 2 regular
+    // payments per year, which is the conservative read.
+    const history = [
+      { exDate: "2026-06-11", amount: 6.1 },
+      { exDate: "2025-11-20", amount: 3.5 },
+      { exDate: "2025-06-26", amount: 8.245 },
+      { exDate: "2025-01-16", amount: 15 },
+      { exDate: "2024-11-21", amount: 5.3 },
+      { exDate: "2024-06-27", amount: 9.6 },
+      { exDate: "2024-01-18", amount: 17 },
+      { exDate: "2023-11-16", amount: 5.1 },
+      { exDate: "2023-06-29", amount: 9.6 },
+      { exDate: "2023-01-12", amount: 20 },
+    ];
+    expect(detectCadence(history)).toBe("semi");
+  });
+
   it("returns 'semi' for a 2-payment history with a ~180d gap", () => {
     const history = [
       { exDate: "2026-04-01", amount: 1.0 },
@@ -479,15 +516,39 @@ describe("detectCadenceByYearCount", () => {
     expect(detectCadenceByYearCount(history)).toBeNull();
   });
 
-  it("returns null when the mode count maps to none of {1, 2, 4, 12}", () => {
+  it("returns 'semi' when the mode count is 3 (UK semi + occasional special)", () => {
+    // BME.L: interim + final + special each year for 2023-2025 produces a
+    // year-count mode of 3. Map to 'semi' so the projection engine forecasts
+    // 2 regular payments per year — conservative read that ignores the
+    // sporadic special.
     const history = [
-      { exDate: "2026-06-15", amount: 1 },
-      { exDate: "2025-09-15", amount: 1 },
-      { exDate: "2025-06-15", amount: 1 },
-      { exDate: "2025-03-15", amount: 1 },
+      { exDate: "2025-11-20", amount: 3.5 },
+      { exDate: "2025-06-26", amount: 8.245 },
+      { exDate: "2025-01-16", amount: 15 },
+      { exDate: "2024-11-21", amount: 5.3 },
+      { exDate: "2024-06-27", amount: 9.6 },
+      { exDate: "2024-01-18", amount: 17 },
+      { exDate: "2023-11-16", amount: 5.1 },
+      { exDate: "2023-06-29", amount: 9.6 },
+      { exDate: "2023-01-12", amount: 20 },
+    ];
+    expect(detectCadenceByYearCount(history)).toBe("semi");
+  });
+
+  it("returns null when the mode count maps to none of {1, 2, 3, 4, 12}", () => {
+    // Mode 5 doesn't map to any known cadence — fall through to median-gap.
+    const history = [
+      { exDate: "2024-01-15", amount: 1 },
+      { exDate: "2024-04-15", amount: 1 },
+      { exDate: "2024-07-15", amount: 1 },
       { exDate: "2024-09-15", amount: 1 },
-      { exDate: "2024-06-15", amount: 1 },
-      { exDate: "2024-03-15", amount: 1 },
+      { exDate: "2024-11-15", amount: 1 },
+      { exDate: "2025-01-15", amount: 1 },
+      { exDate: "2025-04-15", amount: 1 },
+      { exDate: "2025-07-15", amount: 1 },
+      { exDate: "2025-09-15", amount: 1 },
+      { exDate: "2025-11-15", amount: 1 },
+      { exDate: "2026-04-15", amount: 1 },
     ];
     expect(detectCadenceByYearCount(history)).toBeNull();
   });
