@@ -11,6 +11,7 @@ import { primaryGateReason } from "@/lib/scoring/gate-reasons";
 import type { GateCode } from "@/lib/scoring/quality-gates";
 import { ProScoreDetail } from "../_components/pro-score-detail";
 import { ScoreThisTicker } from "../_components/score-this-ticker";
+import { QuickCheckStrip } from "../_components/quick-check-strip";
 
 // Scores refresh nightly; an hour-old static render is plenty fresh and keeps
 // these public pages cheap to crawl.
@@ -22,6 +23,21 @@ export const dynamicParams = true;
 const getScore = cache((ticker: string) =>
   loadScore(createSupabasePublicClient(), ticker),
 );
+
+// Latest current_yield for the Quick check strip. equity_scores doesn't carry
+// a yield column; equity_score_history is public-read and indexed on
+// (ticker, observed_at desc) so this is a single cheap row lookup.
+const getLatestYield = cache(async (ticker: string): Promise<number | null> => {
+  const supabase = createSupabasePublicClient();
+  const { data } = await supabase
+    .from("equity_score_history")
+    .select("current_yield")
+    .eq("ticker", ticker)
+    .order("observed_at", { ascending: false })
+    .limit(1)
+    .maybeSingle<{ current_yield: number | null }>();
+  return data?.current_yield != null ? Number(data.current_yield) : null;
+});
 
 export async function generateStaticParams(): Promise<{ ticker: string }[]> {
   // Prebuild the scored tickers. dynamicParams=true means anything not listed
@@ -82,7 +98,10 @@ export default async function ScoringTickerPage({
 }) {
   const ticker = normalizeTicker((await params).ticker);
   if (!ticker) notFound();
-  const score = await getScore(ticker).catch(() => null);
+  const [score, latestYield] = await Promise.all([
+    getScore(ticker).catch(() => null),
+    getLatestYield(ticker).catch(() => null),
+  ]);
   if (!score) {
     return (
       <div className="bg-background">
@@ -165,6 +184,15 @@ export default async function ScoringTickerPage({
           These are a resilience check on the dividend, not a recommendation to buy or sell.
           They are not financial advice.
         </p>
+
+        <QuickCheckStrip
+          signals={{
+            forwardYield: latestYield,
+            payoutRatio: score.payoutRatio,
+            fcfCoverage: score.fcfCoverage,
+            dividendCagr5y: score.dividendCagr5y,
+          }}
+        />
 
         <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-3">
           {SCORE_CARDS.map(({ type, label, blurb }) => {
