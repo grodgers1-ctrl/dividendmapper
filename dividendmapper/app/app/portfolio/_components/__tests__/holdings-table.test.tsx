@@ -176,6 +176,99 @@ describe("<HoldingsTable> column set (portfolio defaults)", () => {
   });
 });
 
+describe("<HoldingsTable> 2dp formatting + PortfolioBar", () => {
+  it("renders Quantity to 2dp with full-precision title", () => {
+    const { container } = render(
+      <HoldingsTable
+        rows={[
+          {
+            id: "1",
+            ticker: "TW.L",
+            quantity: 994.790201,
+            avg_cost: 0.9968,
+            cost_currency: "GBP",
+            wrapper: "isa",
+            broker_label: null,
+            notes: null,
+            created_at: "2026-01-01",
+          },
+        ]}
+        quotes={{}}
+        tier="pro"
+        pricingPublic={true}
+        isBeta={true}
+        scoresByTicker={{}}
+        showScores={false}
+      />,
+    );
+    const cell = container.querySelector(
+      "[data-testid='row-quantity-1']",
+    ) as HTMLElement;
+    expect(cell.textContent).toBe("994.79");
+    expect(cell.title).toContain("994.790201");
+  });
+
+  it("renders Avg cost to 2dp", () => {
+    const { container } = render(
+      <HoldingsTable
+        rows={[
+          {
+            id: "1",
+            ticker: "TW.L",
+            quantity: 1,
+            avg_cost: 0.9968,
+            cost_currency: "GBP",
+            wrapper: "isa",
+            broker_label: null,
+            notes: null,
+            created_at: "2026-01-01",
+          },
+        ]}
+        quotes={{}}
+        tier="pro"
+        pricingPublic={true}
+        isBeta={true}
+        scoresByTicker={{}}
+        showScores={false}
+      />,
+    );
+    expect(
+      container.querySelector("[data-testid='row-cost-1']")?.textContent,
+    ).toBe("£1.00");
+  });
+
+  it("renders the PortfolioBar inside the Value cell when totals are present", () => {
+    const { container } = render(
+      <HoldingsTable
+        rows={[
+          {
+            id: "1",
+            ticker: "AAPL",
+            quantity: 10,
+            avg_cost: 100,
+            cost_currency: "USD",
+            wrapper: "isa",
+            broker_label: null,
+            notes: null,
+            created_at: "2026-01-01",
+          },
+        ]}
+        quotes={{}}
+        priceByTicker={{ AAPL: { price: 200, currency: "USD" } }}
+        tier="pro"
+        pricingPublic={true}
+        isBeta={true}
+        scoresByTicker={{}}
+        showScores={false}
+      />,
+    );
+    const valueCell = container.querySelector(
+      "[data-testid='row-value-1']",
+    ) as HTMLElement;
+    expect(valueCell.querySelector("[aria-hidden='true']")).not.toBeNull();
+  });
+});
+
 describe("<HoldingsTable> score column (Pro)", () => {
   const props = {
     rows: [row("1", "PEP"), row("2", "SCHD")],

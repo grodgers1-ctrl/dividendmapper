@@ -204,6 +204,15 @@ export function HoldingsTable({
     });
   }, [rows, sortKey, priceByTicker, quotes, actualsByKey, scoresByTicker]);
 
+  const totalVisibleValue = useMemo(() => {
+    let sum = 0;
+    for (const r of sortedRows) {
+      const v = resolveRowValue(r, priceByTicker ?? {});
+      if (v.kind === "ok") sum += v.amount;
+    }
+    return sum;
+  }, [sortedRows, priceByTicker]);
+
   const isFree = tier === "free";
   const handleOpenScore: OpenScore = (ticker, type) =>
     setOpenScore({ ticker, type });
@@ -355,6 +364,7 @@ export function HoldingsTable({
                   isBeta={isBeta}
                   sparklineRange={sparklineRange}
                   sparklineSeries={sparklineByTicker?.get(row.ticker) ?? null}
+                  totalVisibleValue={totalVisibleValue}
                   onOpenScore={handleOpenScore}
                   onOpenVehicleScore={handleOpenVehicleScore}
                   onDelete={handleDelete}

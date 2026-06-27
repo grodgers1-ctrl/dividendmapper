@@ -21,6 +21,7 @@ import { UpgradePill } from "./upgrade-pill";
 import { VehicleChip } from "./vehicle-chip";
 import { HoldingLogo } from "./holding-logo";
 import { RowSparkline } from "./row-sparkline";
+import { PortfolioBar } from "./portfolio-bar";
 import type {
   SparklineRange,
   SparklineSeries,
@@ -265,6 +266,7 @@ interface HoldingRowProps {
   isBeta: boolean;
   sparklineRange: SparklineRange;
   sparklineSeries: SparklineSeries | null;
+  totalVisibleValue: number;
   onOpenScore: OpenScore;
   onOpenVehicleScore: (ticker: string) => void;
   onDelete: (row: HoldingRowData) => void;
@@ -286,6 +288,7 @@ export function HoldingRow({
   isBeta,
   sparklineRange,
   sparklineSeries,
+  totalVisibleValue,
   onOpenScore,
   onOpenVehicleScore,
   onDelete,
@@ -358,14 +361,34 @@ export function HoldingRow({
           ) : null}
         </td>
       )}
-      <td className="w-px whitespace-nowrap px-3 py-3 text-right font-mono text-foreground">
-        {formatQuantity(Number(row.quantity))}
+      <td
+        data-testid={`row-quantity-${row.id}`}
+        title={String(row.quantity)}
+        className="w-px whitespace-nowrap px-3 py-3 text-right font-mono text-foreground"
+      >
+        {Number(row.quantity).toLocaleString("en-GB", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })}
       </td>
-      <td className="w-px whitespace-nowrap px-3 py-3 text-right font-mono text-foreground">
-        {formatCost(Number(row.avg_cost), row.cost_currency)}
+      <td
+        data-testid={`row-cost-${row.id}`}
+        title={String(row.avg_cost)}
+        className="w-px whitespace-nowrap px-3 py-3 text-right font-mono text-foreground"
+      >
+        {formatMoney(Number(row.avg_cost), row.cost_currency, { dp: 2 })}
       </td>
-      <td className="w-px whitespace-nowrap px-3 py-3 text-right text-sm">
+      <td
+        data-testid={`row-value-${row.id}`}
+        className="relative w-px whitespace-nowrap px-3 py-3 text-right text-sm"
+      >
         <ValueCell status={valueStatus} />
+        {valueStatus.kind === "ok" && (
+          <PortfolioBar
+            value={valueStatus.amount}
+            totalValue={totalVisibleValue}
+          />
+        )}
       </td>
       <td className="w-px whitespace-nowrap px-3 py-3 text-right text-sm">
         <IncomeCell status={incomeStatus} />
