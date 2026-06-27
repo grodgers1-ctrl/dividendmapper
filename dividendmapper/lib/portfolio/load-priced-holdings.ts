@@ -14,6 +14,10 @@ import {
   type ValueCurrencyTotal,
 } from "@/lib/portfolio/portfolio-value";
 import { FREE_TIER_LIMIT } from "@/app/app/portfolio/_components/free-tier-copy";
+import {
+  loadSparklineSeriesByTicker,
+  type SparklineSeries,
+} from "@/lib/portfolio/load-sparkline-series";
 
 export type HoldingRow = {
   id: string;
@@ -49,6 +53,9 @@ export interface PricedHoldings {
   valueTotalsByCurrency: ValueCurrencyTotal[];
   /** Company name per ticker (FMP profile), for the table. Ticker falls back. */
   nameByTicker: Record<string, string>;
+  /** 5Y daily-close series per visible ticker for the row sparklines. Empty
+   *  for tickers where ticker_price_history has no data yet. */
+  sparklineByTicker: Record<string, SparklineSeries>;
   income: PortfolioIncome;
 }
 
@@ -170,6 +177,17 @@ export async function loadPricedHoldings(userId: string): Promise<PricedHoldings
   const quotesByTicker = Object.fromEntries(quotes);
   const actualsByKey = Object.fromEntries(actuals);
 
+  // 5Y daily-close series per visible-ticker for the row sparklines. We load
+  // the full 5Y window once and let the client slice per active range.
+  const visibleTickers = [...new Set(visibleRows.map((h) => h.ticker))];
+  const sparklineMap = await loadSparklineSeriesByTicker(
+    supabase,
+    visibleTickers,
+    "5Y",
+  );
+  const sparklineByTicker: Record<string, SparklineSeries> =
+    Object.fromEntries(sparklineMap);
+
   return {
     tier,
     allHoldings,
@@ -184,6 +202,7 @@ export async function loadPricedHoldings(userId: string): Promise<PricedHoldings
     priceByTicker,
     valueTotalsByCurrency,
     nameByTicker,
+    sparklineByTicker,
     income,
   };
 }

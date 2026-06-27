@@ -3,40 +3,61 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useSyncExternalStore, useTransition } from "react";
-import { Trash2, Clock } from "lucide-react";
+import { Trash2, ArrowDown, Pencil } from "lucide-react";
 import type { QuoteResult } from "@/lib/market/quote";
 import type { HoldingScore } from "@/lib/scoring/portfolio-scores";
 import type { ScoreType } from "@/lib/scoring/chip-display";
-import { resolveRowIncome, type RowIncomeStatus } from "@/lib/portfolio/row-income";
-import { resolveRowValue, type RowValueStatus, type TickerPrice } from "@/lib/portfolio/row-value";
+import { resolveRowIncome } from "@/lib/portfolio/row-income";
+import { resolveRowValue, type TickerPrice } from "@/lib/portfolio/row-value";
 import { actualKey, type ActualIncome } from "@/lib/portfolio/income";
-import { formatMoney } from "@/lib/portfolio/format-money";
 import {
   sortHoldings,
   SORT_LABELS,
   DEFAULT_SORT,
   type SortKey,
 } from "@/lib/portfolio/sort-holdings";
-import { ScoreChip } from "./score-chip";
 import { ScoreDrawer } from "./score-drawer";
 import { UpgradePill } from "./upgrade-pill";
 import { VehicleChip } from "./vehicle-chip";
 import type { VehicleType } from "@/lib/scoring/load-vehicle-score";
 import { captureClientEvent } from "@/lib/analytics/posthog-capture";
 import { SortSelect } from "@/app/app/_components/SortSelect";
-
-type HoldingRow = {
-  id: string;
-  ticker: string;
-  quantity: number;
-  avg_cost: number;
-  cost_currency: string;
-  wrapper: string;
-  broker_label: string | null;
-  notes: string | null;
-  created_at: string;
-  source?: "manual" | "trading212" | "csv";
-};
+import type {
+  SparklineRange,
+  SparklineSeries,
+} from "@/lib/portfolio/load-sparkline-series";
+import {
+  RANGE_STORAGE_KEY,
+  RANGE_CHANGE_EVENT,
+  readStoredRange,
+  RangeToggle,
+} from "./range-toggle";
+import {
+  DENSITY_STORAGE_KEY,
+  DENSITY_CHANGE_EVENT,
+  readStoredDensity,
+  DensityToggle,
+  type Density,
+} from "./density-toggle";
+import { WrapperFilterChips } from "./wrapper-filter-chips";
+import { HoldingLogo } from "./holding-logo";
+import { RowSparkline } from "./row-sparkline";
+import { PortfolioBar } from "./portfolio-bar";
+import { formatMoney } from "@/lib/portfolio/format-money";
+import {
+  HoldingRow,
+  BrokerCell,
+  IncomeCell,
+  ValueCell,
+  ReceivedCell,
+  PendingScorePill,
+  ScoreChipStack,
+  WRAPPER_LABEL,
+  formatQuantity,
+  formatCost,
+  type HoldingRowData,
+  type OpenScore,
+} from "./holding-row";
 
 const SORT_STORAGE_KEY = "dm.holdings-sort";
 const SORT_CHANGE_EVENT = "dm:holdings-sort-change";
@@ -63,202 +84,37 @@ function subscribeSortKey(callback: () => void) {
 
 const getServerSortKey = (): SortKey => DEFAULT_SORT;
 
-// Provenance shown in the Broker column: a synced row gets a "Trading 212"
-// badge; a manual row falls back to its free-text broker label (or a dash).
-function BrokerCell({ row }: { row: HoldingRow }) {
-  if (row.source === "trading212") {
-    return (
-      <span className="inline-flex items-center rounded-full border border-brand-500/30 bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700 dark:border-brand-400/20 dark:bg-brand-900/20 dark:text-brand-300">
-        Trading 212
-      </span>
-    );
-  }
-  return row.broker_label ? (
-    <span className="text-muted-foreground">{row.broker_label}</span>
-  ) : (
-    <span className="text-muted-foreground/60">—</span>
-  );
+function subscribeRange(callback: () => void) {
+  if (typeof window === "undefined") return () => {};
+  const onStorage = (event: StorageEvent) => {
+    if (event.key === RANGE_STORAGE_KEY) callback();
+  };
+  const onCustom = () => callback();
+  window.addEventListener("storage", onStorage);
+  window.addEventListener(RANGE_CHANGE_EVENT, onCustom);
+  return () => {
+    window.removeEventListener("storage", onStorage);
+    window.removeEventListener(RANGE_CHANGE_EVENT, onCustom);
+  };
 }
 
-const WRAPPER_LABEL: Record<string, string> = {
-  isa: "ISA",
-  sipp: "SIPP",
-  gia: "GIA",
-  "401k": "401(k)",
-  ira: "IRA",
-  roth_ira: "Roth IRA",
-  brokerage: "Brokerage",
-};
+const getServerRange = (): SparklineRange => "30D";
 
-const CURRENCY_PREFIX: Record<string, string> = {
-  GBP: "£",
-  USD: "$",
-  EUR: "€",
-};
-
-function formatQuantity(n: number): string {
-  const fixed = n.toFixed(6).replace(/\.?0+$/, "");
-  return fixed === "" ? "0" : fixed;
+function subscribeDensity(callback: () => void) {
+  if (typeof window === "undefined") return () => {};
+  const onStorage = (event: StorageEvent) => {
+    if (event.key === DENSITY_STORAGE_KEY) callback();
+  };
+  const onCustom = () => callback();
+  window.addEventListener("storage", onStorage);
+  window.addEventListener(DENSITY_CHANGE_EVENT, onCustom);
+  return () => {
+    window.removeEventListener("storage", onStorage);
+    window.removeEventListener(DENSITY_CHANGE_EVENT, onCustom);
+  };
 }
 
-function formatCost(value: number, currency: string): string {
-  const prefix = CURRENCY_PREFIX[currency] ?? "";
-  return `${prefix}${value.toLocaleString("en-GB", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 4,
-  })}`;
-}
-
-function formatIncome(amount: number, currency: string): string {
-  const prefix = CURRENCY_PREFIX[currency] ?? "";
-  const formatted = Math.round(amount).toLocaleString("en-GB");
-  return prefix ? `${prefix}${formatted}/yr` : `${formatted} ${currency}/yr`;
-}
-
-interface IncomeCellProps {
-  status: RowIncomeStatus;
-  className?: string;
-}
-
-function IncomeCell({ status, className }: IncomeCellProps) {
-  if (status.kind === "ok") {
-    return (
-      <span
-        title={
-          status.source === "actual"
-            ? "Your real dividends from the last 12 months, synced from your broker."
-            : "Estimated from the latest annual dividend per share."
-        }
-        className={`font-mono tabular-nums text-foreground ${className ?? ""}`}
-      >
-        {formatIncome(status.amount, status.currency)}
-      </span>
-    );
-  }
-  if (status.kind === "no_data") {
-    return (
-      <span
-        title="No dividend data yet. New holdings get figures after the next nightly update."
-        className={`cursor-help text-muted-foreground/70 ${className ?? ""}`}
-      >
-        —
-      </span>
-    );
-  }
-  return (
-    <span
-      title="Try refreshing the page."
-      className={`cursor-help italic text-muted-foreground ${className ?? ""}`}
-    >
-      couldn&apos;t fetch
-    </span>
-  );
-}
-
-// Position value: quantity × latest FMP price. "—" until the nightly cron prices it.
-function ValueCell({ status, className }: { status: RowValueStatus; className?: string }) {
-  if (status.kind === "ok") {
-    return (
-      <span
-        title="Estimated position value: quantity × latest price."
-        className={`font-mono tabular-nums text-foreground ${className ?? ""}`}
-      >
-        {formatMoney(status.amount, status.currency)}
-      </span>
-    );
-  }
-  return (
-    <span
-      title="Value appears after the next nightly price update."
-      className={`cursor-help text-muted-foreground/70 ${className ?? ""}`}
-    >
-      —
-    </span>
-  );
-}
-
-// Real dividends received in the trailing 12 months, from broker sync. "—" if none.
-function ReceivedCell({ actual, className }: { actual?: ActualIncome; className?: string }) {
-  if (actual && actual.amount > 0 && actual.currency) {
-    return (
-      <span
-        title="Dividends actually received in the last 12 months, synced from your broker."
-        className={`font-mono tabular-nums text-foreground ${className ?? ""}`}
-      >
-        {formatMoney(actual.amount, actual.currency)}
-      </span>
-    );
-  }
-  return (
-    <span
-      title="No broker-synced dividends in the last 12 months. Connect a broker to track what you actually received."
-      className={`cursor-help text-muted-foreground/70 ${className ?? ""}`}
-    >
-      —
-    </span>
-  );
-}
-
-type OpenScore = (ticker: string, type: ScoreType) => void;
-
-// Shown for a holding the nightly cron hasn't scored yet (e.g. just added).
-// The scoring job refreshes every ticker overnight, so this resolves on its own.
-function PendingScorePill() {
-  return (
-    <span
-      data-testid="pending-score-pill"
-      title="New holding. Scores refresh overnight and appear after the next nightly update."
-      className="inline-flex items-center gap-1 rounded-full border border-border bg-secondary px-2 py-0.5 text-xs font-medium text-muted-foreground"
-    >
-      <Clock className="h-3 w-3" aria-hidden="true" />
-      Collecting…
-    </span>
-  );
-}
-
-// The three-chip stack + action hint shown in the desktop score column.
-function ScoreChipStack({
-  score,
-  isBeta,
-  onOpen,
-}: {
-  score: HoldingScore;
-  isBeta: boolean;
-  onOpen: OpenScore;
-}) {
-  return (
-    <div className="flex flex-col items-start gap-0.5">
-      <div className="flex items-center gap-1">
-        <ScoreChip
-          type="buy"
-          score={score.buy}
-          gateReason={score.buyGateReason}
-          delta={score.deltas.buy}
-          hidden={score.hidden.buy}
-          isBeta={isBeta}
-          onOpen={() => onOpen(score.ticker, "buy")}
-        />
-        <ScoreChip
-          type="trim"
-          score={score.trim}
-          delta={score.deltas.trim}
-          hidden={score.hidden.trim}
-          isBeta={isBeta}
-          onOpen={() => onOpen(score.ticker, "trim")}
-        />
-        <ScoreChip
-          type="risk"
-          score={score.risk}
-          delta={score.deltas.risk}
-          hidden={score.hidden.risk}
-          isBeta={isBeta}
-          onOpen={() => onOpen(score.ticker, "risk")}
-        />
-      </div>
-      <span className="text-xs text-muted-foreground">{score.actionHint}</span>
-    </div>
-  );
-}
+const getServerDensity = (): Density => "comfortable";
 
 // Mobile collapses the three chips into one pill that taps to expand.
 function MobileScorePill({
@@ -298,7 +154,7 @@ export type VehicleChipData = {
 };
 
 interface HoldingsTableProps {
-  rows: HoldingRow[];
+  rows: HoldingRowData[];
   quotes: Record<string, QuoteResult>;
   /** Per-holding real synced dividends (TTM), keyed `ticker::wrapper`. */
   actualsByKey?: Record<string, ActualIncome>;
@@ -319,6 +175,15 @@ interface HoldingsTableProps {
    * on /app/portfolio without the equity score column being open).
    */
   vehicleScoresByTicker?: Record<string, VehicleChipData>;
+  /** Per-ticker price series for the row sparkline. Plain Record (not Map)
+   *  so it survives the RSC boundary — see
+   *  reference_rsc_map_serialization. */
+  sparklineByTicker?: Record<string, SparklineSeries>;
+  /** Distinct wrappers present in the user's visible portfolio (for chip filter).
+   *  When omitted, derived from rows. */
+  presentWrappers?: string[];
+  /** Currently active wrapper filter (URL-driven, null = All). */
+  activeWrapper?: string | null;
 }
 
 export function HoldingsTable({
@@ -333,6 +198,9 @@ export function HoldingsTable({
   scoresByTicker,
   showScores,
   vehicleScoresByTicker,
+  sparklineByTicker,
+  presentWrappers,
+  activeWrapper = null,
 }: HoldingsTableProps) {
   const router = useRouter();
   const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
@@ -347,6 +215,16 @@ export function HoldingsTable({
     subscribeSortKey,
     readStoredSortKey,
     getServerSortKey,
+  );
+  const sparklineRange = useSyncExternalStore(
+    subscribeRange,
+    readStoredRange,
+    getServerRange,
+  );
+  const density = useSyncExternalStore(
+    subscribeDensity,
+    readStoredDensity,
+    getServerDensity,
   );
   const changeSort = (key: SortKey) => {
     try {
@@ -367,6 +245,22 @@ export function HoldingsTable({
       buyScoreByTicker,
     });
   }, [rows, sortKey, priceByTicker, quotes, actualsByKey, scoresByTicker]);
+
+  const totalVisibleValue = useMemo(() => {
+    let sum = 0;
+    for (const r of sortedRows) {
+      const v = resolveRowValue(r, priceByTicker ?? {});
+      if (v.kind === "ok") sum += v.amount;
+    }
+    return sum;
+  }, [sortedRows, priceByTicker]);
+
+  const derivedPresentWrappers = useMemo(
+    () =>
+      presentWrappers ??
+      Array.from(new Set(sortedRows.map((r) => r.wrapper))),
+    [presentWrappers, sortedRows],
+  );
 
   const isFree = tier === "free";
   const handleOpenScore: OpenScore = (ticker, type) =>
@@ -401,7 +295,7 @@ export function HoldingsTable({
     });
   };
 
-  const handleDelete = (row: HoldingRow) => {
+  const handleDelete = (row: HoldingRowData) => {
     const ok = window.confirm(
       `Delete ${row.ticker} (${WRAPPER_LABEL[row.wrapper] ?? row.wrapper})? This can't be undone.`,
     );
@@ -441,8 +335,121 @@ export function HoldingsTable({
 
   return (
     <>
-      {/* Sort control — applies to both the desktop table and mobile cards. */}
-      <div className="mb-3 flex items-center justify-end gap-2">
+      {/* Controls row — wrapper filter chips + range + density */}
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <WrapperFilterChips
+          present={derivedPresentWrappers}
+          active={activeWrapper}
+        />
+        <div className="flex items-center gap-2">
+          <RangeToggle />
+          <DensityToggle />
+        </div>
+      </div>
+
+      {/* Desktop / tablet — full table */}
+      <div className="hidden overflow-clip rounded-xl border border-border bg-card md:block">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="sticky top-[56px] z-[5] border-b border-border bg-secondary/95 backdrop-blur supports-[backdrop-filter]:bg-secondary/80 [box-shadow:inset_0_-1px_0_rgb(255_255_255/0.04),inset_0_1px_0_rgb(0_0_0/0.20)]">
+              <tr className="text-left text-[12px] font-medium leading-[16px] text-muted-foreground">
+                <th scope="col" className="px-4 py-3">
+                  <button
+                    type="button"
+                    onClick={() => changeSort("ticker")}
+                    aria-label="Sort by Ticker"
+                    className="inline-flex items-center gap-1 text-[12px] font-medium leading-[16px] text-muted-foreground hover:text-foreground"
+                  >
+                    Ticker
+                    {sortKey === "ticker" && (
+                      <ArrowDown className="h-3 w-3" aria-hidden="true" />
+                    )}
+                  </button>
+                </th>
+                <th scope="col" className="w-[140px] px-2 py-3">
+                  <span className="sr-only">Sparkline</span>
+                </th>
+                {showScoresColumn && (
+                  <th scope="col" className="px-4 py-3">
+                    Scores
+                  </th>
+                )}
+                <th scope="col" className="w-px whitespace-nowrap px-3 py-3 text-right">
+                  Quantity
+                </th>
+                <th scope="col" className="w-px whitespace-nowrap px-3 py-3 text-right">
+                  Avg cost
+                </th>
+                <th scope="col" className="w-px whitespace-nowrap px-3 py-3 text-right">
+                  <button
+                    type="button"
+                    onClick={() => changeSort("value")}
+                    aria-label="Sort by Value"
+                    className="inline-flex items-center gap-1 text-[12px] font-medium leading-[16px] text-muted-foreground hover:text-foreground"
+                  >
+                    Value
+                    {sortKey === "value" && (
+                      <ArrowDown className="h-3 w-3" aria-hidden="true" />
+                    )}
+                  </button>
+                </th>
+                <th scope="col" className="w-px whitespace-nowrap px-3 py-3 text-right">
+                  <button
+                    type="button"
+                    onClick={() => changeSort("income")}
+                    aria-label="Sort by Income"
+                    className="inline-flex items-center gap-1 text-[12px] font-medium leading-[16px] text-muted-foreground hover:text-foreground"
+                  >
+                    Income
+                    {sortKey === "income" && (
+                      <ArrowDown className="h-3 w-3" aria-hidden="true" />
+                    )}
+                  </button>
+                </th>
+                <th scope="col" className="w-px whitespace-nowrap px-3 py-3 text-right">
+                  Received (12m)
+                </th>
+                <th scope="col" className="w-px whitespace-nowrap px-3 py-3">
+                  Broker
+                </th>
+                <th scope="col" className="w-px whitespace-nowrap px-3 py-3 text-right">
+                  <span className="sr-only">Actions</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {sortedRows.map((row) => (
+                <HoldingRow
+                  key={row.id}
+                  row={row}
+                  pending={pendingIds.has(row.id)}
+                  nameByTicker={nameByTicker}
+                  quotes={quotes}
+                  actualsByKey={actualsByKey}
+                  priceByTicker={priceByTicker}
+                  score={scoresByTicker[row.ticker]}
+                  vehicle={vehicleScoresByTicker?.[row.ticker]}
+                  showScoresColumn={showScoresColumn}
+                  showScores={showScores}
+                  isFree={isFree}
+                  pricingPublic={pricingPublic}
+                  isBeta={isBeta}
+                  sparklineRange={sparklineRange}
+                  sparklineSeries={sparklineByTicker?.[row.ticker] ?? null}
+                  totalVisibleValue={totalVisibleValue}
+                  density={density}
+                  onOpenScore={handleOpenScore}
+                  onOpenVehicleScore={handleOpenVehicleScore}
+                  onDelete={handleDelete}
+                />
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Mobile sort dropdown — desktop uses sortable column headers instead. */}
+      <div className="mb-3 flex items-center justify-end gap-2 md:hidden">
         <label
           htmlFor="holdings-sort"
           className="text-[12px] font-medium leading-[16px] text-muted-foreground"
@@ -460,138 +467,6 @@ export function HoldingsTable({
         />
       </div>
 
-      {/* Desktop / tablet — full table */}
-      <div className="hidden overflow-hidden rounded-xl border border-border bg-card md:block">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="border-b border-border bg-secondary/40">
-              <tr className="text-left text-[12px] font-medium leading-[16px] text-muted-foreground">
-                <th scope="col" className="px-4 py-3">
-                  Ticker
-                </th>
-                <th scope="col" className="w-px whitespace-nowrap px-3 py-3">
-                  Wrapper
-                </th>
-                {showScoresColumn && (
-                  <th scope="col" className="px-4 py-3">
-                    Scores
-                  </th>
-                )}
-                <th scope="col" className="w-px whitespace-nowrap px-3 py-3 text-right">
-                  Quantity
-                </th>
-                <th scope="col" className="w-px whitespace-nowrap px-3 py-3 text-right">
-                  Avg cost
-                </th>
-                <th scope="col" className="w-px whitespace-nowrap px-3 py-3 text-right">
-                  Value
-                </th>
-                <th scope="col" className="w-px whitespace-nowrap px-3 py-3 text-right">
-                  Income
-                </th>
-                <th scope="col" className="w-px whitespace-nowrap px-3 py-3 text-right">
-                  Received (12m)
-                </th>
-                <th scope="col" className="w-px whitespace-nowrap px-3 py-3">
-                  Broker
-                </th>
-                <th scope="col" className="w-px whitespace-nowrap px-3 py-3 text-right">
-                  <span className="sr-only">Actions</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {sortedRows.map((row) => {
-                const pending = pendingIds.has(row.id);
-                const incomeStatus = resolveRowIncome(row, quotes, actualsByKey);
-                const valueStatus = resolveRowValue(row, priceByTicker ?? {});
-                const received = actualsByKey?.[actualKey(row.ticker, row.wrapper)];
-                const score = scoresByTicker[row.ticker];
-                const vehicle = vehicleScoresByTicker?.[row.ticker];
-                return (
-                  <tr
-                    key={row.id}
-                    className={`border-b border-border last:border-b-0 transition-opacity ${
-                      pending ? "opacity-50" : ""
-                    }`}
-                  >
-                    <td className="px-4 py-3">
-                      <Link
-                        href={`/app/portfolio/${row.ticker}`}
-                        className="font-mono text-sm font-medium text-foreground hover:underline"
-                      >
-                        {row.ticker}
-                      </Link>
-                      {nameByTicker?.[row.ticker] && (
-                        <span className="mt-0.5 block max-w-[11rem] truncate text-xs text-muted-foreground">
-                          {nameByTicker[row.ticker]}
-                        </span>
-                      )}
-                    </td>
-                    <td className="w-px whitespace-nowrap px-3 py-3">
-                      <span className="inline-flex items-center rounded-full border border-border bg-secondary px-2 py-0.5 text-xs font-medium text-foreground">
-                        {WRAPPER_LABEL[row.wrapper] ?? row.wrapper}
-                      </span>
-                    </td>
-                    {showScoresColumn && (
-                      <td className="whitespace-nowrap px-4 py-3 text-left">
-                        {vehicle ? (
-                          <VehicleChip
-                            vehicleType={vehicle.vehicleType}
-                            resilienceScore={vehicle.resilienceScore}
-                            qualityGatePassed={vehicle.qualityGatePassed}
-                            onOpen={() => handleOpenVehicleScore(row.ticker)}
-                          />
-                        ) : isFree ? (
-                          <UpgradePill pricingPublic={pricingPublic} />
-                        ) : score ? (
-                          <ScoreChipStack
-                            score={score}
-                            isBeta={isBeta}
-                            onOpen={handleOpenScore}
-                          />
-                        ) : showScores ? (
-                          <PendingScorePill />
-                        ) : null}
-                      </td>
-                    )}
-                    <td className="w-px whitespace-nowrap px-3 py-3 text-right font-mono text-foreground">
-                      {formatQuantity(Number(row.quantity))}
-                    </td>
-                    <td className="w-px whitespace-nowrap px-3 py-3 text-right font-mono text-foreground">
-                      {formatCost(Number(row.avg_cost), row.cost_currency)}
-                    </td>
-                    <td className="w-px whitespace-nowrap px-3 py-3 text-right text-sm">
-                      <ValueCell status={valueStatus} />
-                    </td>
-                    <td className="w-px whitespace-nowrap px-3 py-3 text-right text-sm">
-                      <IncomeCell status={incomeStatus} />
-                    </td>
-                    <td className="w-px whitespace-nowrap px-3 py-3 text-right text-sm">
-                      <ReceivedCell actual={received} />
-                    </td>
-                    <td className="w-px whitespace-nowrap px-3 py-3 text-muted-foreground">
-                      <BrokerCell row={row} />
-                    </td>
-                    <td className="w-px whitespace-nowrap px-3 py-3 text-right">
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(row)}
-                        disabled={pending}
-                        aria-label={`Delete ${row.ticker}`}
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 focus:ring-offset-card disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        <Trash2 className="h-4 w-4" aria-hidden="true" />
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
       {/* Mobile — stacked cards */}
       <ul className="space-y-3 md:hidden" aria-label="Your holdings">
         {sortedRows.map((row) => {
@@ -601,31 +476,64 @@ export function HoldingsTable({
           const received = actualsByKey?.[actualKey(row.ticker, row.wrapper)];
           const score = scoresByTicker[row.ticker];
           const vehicle = vehicleScoresByTicker?.[row.ticker];
+          const series = sparklineByTicker?.[row.ticker] ?? null;
+          const openDetail = () =>
+            router.push(`/app/portfolio/${row.ticker}`);
           return (
             <li
               key={row.id}
-              className={`rounded-xl border border-border bg-card p-4 transition-opacity ${
+              role="link"
+              tabIndex={0}
+              aria-label={`Open ${row.ticker} details`}
+              onClick={(e) => {
+                const target = e.target as HTMLElement;
+                if (target.closest("button, a, input")) return;
+                const sel =
+                  typeof window !== "undefined"
+                    ? window.getSelection()
+                    : null;
+                if (
+                  sel &&
+                  sel.toString().length > 0 &&
+                  e.currentTarget.contains(sel.anchorNode as Node)
+                ) {
+                  return;
+                }
+                openDetail();
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  openDetail();
+                }
+              }}
+              className={`cursor-pointer rounded-xl border border-border bg-card p-4 transition-all hover:bg-secondary/40 focus:outline-none focus:ring-2 focus:ring-ring [box-shadow:inset_0_1px_0_rgb(255_255_255/0.04),inset_0_-1px_0_rgb(0_0_0/0.15)] ${
                 pending ? "opacity-50" : ""
               }`}
             >
               <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <Link
-                    href={`/app/portfolio/${row.ticker}`}
-                    className="block font-mono text-base font-semibold text-foreground hover:underline"
-                  >
-                    {row.ticker}
-                  </Link>
-                  {nameByTicker?.[row.ticker] && (
-                    <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                      {nameByTicker[row.ticker]}
+                <div className="flex min-w-0 items-center gap-3">
+                  <HoldingLogo
+                    ticker={row.ticker}
+                    name={nameByTicker?.[row.ticker]}
+                    size={40}
+                  />
+                  <div className="min-w-0">
+                    <span className="block font-mono text-base font-semibold text-foreground">
+                      {row.ticker}
+                    </span>
+                    {nameByTicker?.[row.ticker] && (
+                      <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                        {nameByTicker[row.ticker]}
+                      </p>
+                    )}
+                    <p className="mt-0.5 text-[11px] uppercase tracking-wider text-muted-foreground/80">
+                      {WRAPPER_LABEL[row.wrapper] ?? row.wrapper} ·{" "}
+                      {row.cost_currency}
                     </p>
-                  )}
-                  <span className="mt-1 inline-flex items-center rounded-full border border-border bg-secondary px-2 py-0.5 text-xs font-medium text-foreground">
-                    {WRAPPER_LABEL[row.wrapper] ?? row.wrapper}
-                  </span>
+                  </div>
                 </div>
-                <div className="flex shrink-0 items-center gap-2">
+                <div className="flex shrink-0 items-center gap-1">
                   {vehicle ? (
                     <VehicleChip
                       vehicleType={vehicle.vehicleType}
@@ -649,7 +557,22 @@ export function HoldingsTable({
                   )}
                   <button
                     type="button"
-                    onClick={() => handleDelete(row)}
+                    aria-disabled="true"
+                    aria-label={`Edit ${row.ticker}`}
+                    title="Edit coming soon"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                    }}
+                    className="inline-flex h-9 w-9 cursor-not-allowed items-center justify-center rounded-md text-muted-foreground opacity-50"
+                  >
+                    <Pencil className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(row);
+                    }}
                     disabled={pending}
                     aria-label={`Delete ${row.ticker}`}
                     className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 focus:ring-offset-card disabled:cursor-not-allowed disabled:opacity-50"
@@ -659,29 +582,55 @@ export function HoldingsTable({
                 </div>
               </div>
 
-              <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+              <div className="mt-3">
+                <RowSparkline
+                  ticker={row.ticker}
+                  name={nameByTicker?.[row.ticker]}
+                  range={sparklineRange}
+                  series={series}
+                />
+              </div>
+
+              <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
                 <div>
                   <dt className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                     Quantity
                   </dt>
-                  <dd className="mt-0.5 font-mono text-foreground">
-                    {formatQuantity(Number(row.quantity))}
+                  <dd
+                    className="mt-0.5 font-mono text-foreground"
+                    title={String(row.quantity)}
+                  >
+                    {Number(row.quantity).toLocaleString("en-GB", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
                   </dd>
                 </div>
                 <div>
                   <dt className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                     Avg cost
                   </dt>
-                  <dd className="mt-0.5 font-mono text-foreground">
-                    {formatCost(Number(row.avg_cost), row.cost_currency)}
+                  <dd
+                    className="mt-0.5 font-mono text-foreground"
+                    title={String(row.avg_cost)}
+                  >
+                    {formatMoney(Number(row.avg_cost), row.cost_currency, {
+                      dp: 2,
+                    })}
                   </dd>
                 </div>
-                <div>
+                <div className="relative">
                   <dt className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                     Value
                   </dt>
                   <dd className="mt-0.5 text-sm">
                     <ValueCell status={valueStatus} />
+                    {valueStatus.kind === "ok" && (
+                      <PortfolioBar
+                        value={valueStatus.amount}
+                        totalValue={totalVisibleValue}
+                      />
+                    )}
                   </dd>
                 </div>
                 <div>
