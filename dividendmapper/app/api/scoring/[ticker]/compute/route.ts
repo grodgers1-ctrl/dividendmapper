@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { createClient } from "@supabase/supabase-js";
 import * as Sentry from "@sentry/nextjs";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -148,6 +149,10 @@ export async function POST(
     const ip = clientIp(req.headers);
     await admin.from("scoring_lookup_audit").insert({ ip, ticker });
   }
+
+  // Flush the ISR cache for this ticker's public page so the next render shows
+  // the freshly computed score, not the cached "score this ticker" UI.
+  revalidatePath(`/scoring/${ticker}`);
 
   return NextResponse.json({ ok: true, cached: false, ticker });
 }
