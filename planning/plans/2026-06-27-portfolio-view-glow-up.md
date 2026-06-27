@@ -40,13 +40,13 @@ If `node_modules` is empty in the primary checkout (a parallel agent wiped it), 
 Run: `npx vitest run --no-file-parallelism 2>&1 | tail -3`
 Expected: `Tests <baseline-count> passed (<n>)`. Note the count; later tasks will add ~30-40 new tests across the new components.
 
-- [ ] **Step 3: Confirm `LOGO_DEV_TOKEN` is in `.env.local`**
+- [ ] **Step 3: Confirm `LOGO_DEV_PUBLISHABLE_API_KEY` is in `.env.local`**
 
 ```bash
-grep -E '^(NEXT_PUBLIC_)?LOGO_DEV_TOKEN=' .env.local
+grep -E '^(NEXT_PUBLIC_)?LOGO_DEV_PUBLISHABLE_API_KEY=' .env.local
 ```
 
-Expected: at least one line. If `NEXT_PUBLIC_LOGO_DEV_TOKEN=...` isn't present, add it — copy the value from the private `LOGO_DEV_TOKEN` line. The `NEXT_PUBLIC_` prefix is required because logo.dev URLs render in client HTML.
+Expected: at least one line. If `NEXT_PUBLIC_LOGO_DEV_PUBLISHABLE_API_KEY=...` isn't present, add it — copy the value from the private `LOGO_DEV_PUBLISHABLE_API_KEY` line. The `NEXT_PUBLIC_` prefix is required because logo.dev URLs render in client HTML.
 
 ---
 
@@ -626,7 +626,7 @@ In `dividendmapper/.env.example`, append:
 ```
 # Public token for logo.dev — used to render holding logos on /app/portfolio.
 # Free tier: 500k req/month with attribution. Public-by-design (appears in client HTML).
-NEXT_PUBLIC_LOGO_DEV_TOKEN=
+NEXT_PUBLIC_LOGO_DEV_PUBLISHABLE_API_KEY=
 ```
 
 - [ ] **Step 3: Sanity check the dev server still boots**
@@ -641,7 +641,7 @@ Visit `http://localhost:3000/`. Confirm no console error about the next.config s
 
 ```bash
 git add dividendmapper/next.config.ts dividendmapper/.env.example
-git commit -m "chore(config): allow img.logo.dev in next/image + add NEXT_PUBLIC_LOGO_DEV_TOKEN"
+git commit -m "chore(config): allow img.logo.dev in next/image + add NEXT_PUBLIC_LOGO_DEV_PUBLISHABLE_API_KEY"
 ```
 
 ---
@@ -800,7 +800,7 @@ import { HoldingLogo } from "../holding-logo";
 // project's existing test setup. Confirm with the existing image-using tests.
 
 beforeEach(() => {
-  vi.stubEnv("NEXT_PUBLIC_LOGO_DEV_TOKEN", "test_token_123");
+  vi.stubEnv("NEXT_PUBLIC_LOGO_DEV_PUBLISHABLE_API_KEY", "test_token_123");
 });
 
 describe("HoldingLogo", () => {
@@ -858,7 +858,7 @@ export function HoldingLogo({ ticker, name, size = 32 }: Props) {
   const [errored, setErrored] = useState(false);
   if (errored) return <InitialsTile ticker={ticker} size={size} />;
 
-  const token = process.env.NEXT_PUBLIC_LOGO_DEV_TOKEN ?? "";
+  const token = process.env.NEXT_PUBLIC_LOGO_DEV_PUBLISHABLE_API_KEY ?? "";
   const url = `https://img.logo.dev/ticker/${ticker}?token=${token}&size=${size * 2}&retina=true&format=webp&fallback=404`;
 
   return (

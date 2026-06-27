@@ -16,7 +16,7 @@
 
 1. **Sparkline data path:** new `ticker_price_history` table, FMP `historical-price-full` one-time backfill, existing nightly cron extended to append today's close per ticker. Server-rendered SVG, no client JS. No 1D intraday.
 2. **Sparkline ranges:** `30D · 1Y · 5Y` global toggle above the table (single source of truth, all rows redraw to the same window). `localStorage` persisted. Default `30D`.
-3. **Logos:** logo.dev via `https://img.logo.dev/ticker/{TICKER}?token=…&size=64&retina=true&format=webp&fallback=404`. `LOGO_DEV_TOKEN` is a public token in env. Attribution: a single "Logos via logo.dev" line in the table footer.
+3. **Logos:** logo.dev via `https://img.logo.dev/ticker/{TICKER}?token=…&size=64&retina=true&format=webp&fallback=404`. `LOGO_DEV_PUBLISHABLE_API_KEY` is a public token in env. Attribution: a single "Logos via logo.dev" line in the table footer.
 4. **Logo fallback:** deterministic `<InitialsTile>` on 404 — HSL background hashed from ticker, 1–2 uppercase letters in display font, identical dimensions so the row never reflows.
 5. **Vehicle resilience chip is killed from the row.** Replaced by the per-row sparkline. Resilience scores remain on `/app/portfolio/[ticker]` and `/app/portfolio/scoring`.
 6. **Whole row is the click target** → `/app/portfolio/[ticker]`. Text-selection-aware (active selection cancels the click). Edit / Delete cluster stops propagation.
@@ -138,7 +138,7 @@ export function HoldingLogo({ ticker, name, size = 32 }: {
   if (errored) return <InitialsTile ticker={ticker} name={name} size={size} />;
   return (
     <Image
-      src={`https://img.logo.dev/ticker/${ticker}?token=${process.env.NEXT_PUBLIC_LOGO_DEV_TOKEN}&size=${size * 2}&retina=true&format=webp&fallback=404`}
+      src={`https://img.logo.dev/ticker/${ticker}?token=${process.env.NEXT_PUBLIC_LOGO_DEV_PUBLISHABLE_API_KEY}&size=${size * 2}&retina=true&format=webp&fallback=404`}
       width={size}
       height={size}
       alt={`${name ?? ticker} logo`}
@@ -179,7 +179,7 @@ The `hashHue` helper is a pure function over the ticker string (e.g., FNV-1a →
 
 ### Config
 
-- `LOGO_DEV_TOKEN` lives in `.env.local` (already added) and Vercel project env, exposed as `NEXT_PUBLIC_LOGO_DEV_TOKEN` so it can ship in the client HTML.
+- `LOGO_DEV_PUBLISHABLE_API_KEY` lives in `.env.local` (already added) and Vercel project env, exposed as `NEXT_PUBLIC_LOGO_DEV_PUBLISHABLE_API_KEY` so it can ship in the client HTML.
 - Image domain allowlist: add `img.logo.dev` to `next.config.ts` under `images.remotePatterns`.
 - Attribution: render once below the table.
   ```tsx
@@ -285,7 +285,7 @@ Mobile keeps the card-list view (`md:hidden` in the current file). Each card inh
 | `scripts/sanity/backfill-ticker-price-history.mjs` (new) | Backfill script. |
 | Existing nightly cron (likely `app/api/cron/nightly-prices/route.ts` or equivalent — to be confirmed in the implementation plan) | Append `ticker_price_history` row per ticker per run. |
 | [next.config.ts](../../dividendmapper/next.config.ts) | Add `img.logo.dev` to `images.remotePatterns`. |
-| `.env.example` | Add `NEXT_PUBLIC_LOGO_DEV_TOKEN`. |
+| `.env.example` | Add `NEXT_PUBLIC_LOGO_DEV_PUBLISHABLE_API_KEY`. |
 
 ## 9. Testing
 
