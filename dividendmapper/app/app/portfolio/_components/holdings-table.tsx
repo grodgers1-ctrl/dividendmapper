@@ -175,9 +175,10 @@ interface HoldingsTableProps {
    * on /app/portfolio without the equity score column being open).
    */
   vehicleScoresByTicker?: Record<string, VehicleChipData>;
-  /** Per-ticker price series for the row sparkline. Optional — rows without
-   *  data render the "Collecting…" pill. */
-  sparklineByTicker?: Map<string, SparklineSeries>;
+  /** Per-ticker price series for the row sparkline. Plain Record (not Map)
+   *  so it survives the RSC boundary — see
+   *  reference_rsc_map_serialization. */
+  sparklineByTicker?: Record<string, SparklineSeries>;
   /** Distinct wrappers present in the user's visible portfolio (for chip filter).
    *  When omitted, derived from rows. */
   presentWrappers?: string[];
@@ -434,7 +435,7 @@ export function HoldingsTable({
                   pricingPublic={pricingPublic}
                   isBeta={isBeta}
                   sparklineRange={sparklineRange}
-                  sparklineSeries={sparklineByTicker?.get(row.ticker) ?? null}
+                  sparklineSeries={sparklineByTicker?.[row.ticker] ?? null}
                   totalVisibleValue={totalVisibleValue}
                   density={density}
                   onOpenScore={handleOpenScore}
@@ -475,7 +476,7 @@ export function HoldingsTable({
           const received = actualsByKey?.[actualKey(row.ticker, row.wrapper)];
           const score = scoresByTicker[row.ticker];
           const vehicle = vehicleScoresByTicker?.[row.ticker];
-          const series = sparklineByTicker?.get(row.ticker) ?? null;
+          const series = sparklineByTicker?.[row.ticker] ?? null;
           const openDetail = () =>
             router.push(`/app/portfolio/${row.ticker}`);
           return (

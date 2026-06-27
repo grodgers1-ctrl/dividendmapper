@@ -138,14 +138,9 @@ describe("<HoldingsTable> column set (portfolio defaults)", () => {
         isBeta={true}
         scoresByTicker={{}}
         showScores={false}
-        sparklineByTicker={
-          new Map([
-            [
-              "AAPL",
-              { points, firstClose: 100, lastClose: 129, currency: "USD" },
-            ],
-          ])
-        }
+        sparklineByTicker={{
+          AAPL: { points, firstClose: 100, lastClose: 129, currency: "USD" },
+        }}
       />,
     );
     const table = screen.getByRole("table");
@@ -164,7 +159,7 @@ describe("<HoldingsTable> column set (portfolio defaults)", () => {
         isBeta={true}
         scoresByTicker={{}}
         showScores={false}
-        sparklineByTicker={new Map()}
+        sparklineByTicker={{}}
       />,
     );
     const table = screen.getByRole("table");
