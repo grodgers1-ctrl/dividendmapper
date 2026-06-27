@@ -19,6 +19,7 @@ import { formatMoney } from "@/lib/portfolio/format-money";
 import { ScoreChip } from "./score-chip";
 import { UpgradePill } from "./upgrade-pill";
 import { VehicleChip } from "./vehicle-chip";
+import { HoldingLogo } from "./holding-logo";
 import type { VehicleChipData } from "./holdings-table";
 
 export type HoldingRowData = {
@@ -290,18 +291,33 @@ export function HoldingRow({
         pending ? "opacity-50" : ""
       }`}
     >
-      <td className="px-4 py-3">
-        <Link
-          href={`/app/portfolio/${row.ticker}`}
-          className="font-mono text-sm font-medium text-foreground hover:underline"
-        >
-          {row.ticker}
-        </Link>
-        {nameByTicker?.[row.ticker] && (
-          <span className="mt-0.5 block max-w-[11rem] truncate text-xs text-muted-foreground">
-            {nameByTicker[row.ticker]}
-          </span>
-        )}
+      <td
+        data-testid={`row-ticker-cell-${row.ticker}`}
+        className="px-4 py-3"
+      >
+        <div className="flex items-center gap-3">
+          <HoldingLogo
+            ticker={row.ticker}
+            name={nameByTicker?.[row.ticker]}
+          />
+          <div className="min-w-0">
+            <Link
+              href={`/app/portfolio/${row.ticker}`}
+              className="block font-mono text-sm font-medium text-foreground hover:underline"
+            >
+              {row.ticker}
+            </Link>
+            {nameByTicker?.[row.ticker] && (
+              <span className="mt-0.5 block max-w-[14rem] truncate text-xs text-muted-foreground">
+                {nameByTicker[row.ticker]}
+              </span>
+            )}
+            <span className="mt-0.5 block text-[11px] uppercase tracking-wider text-muted-foreground/80">
+              {WRAPPER_LABEL[row.wrapper] ?? row.wrapper} ·{" "}
+              {row.cost_currency}
+            </span>
+          </div>
+        </div>
       </td>
       <td className="w-[140px] px-2 py-3">
         {/* Sparkline lands in Task 17 */}

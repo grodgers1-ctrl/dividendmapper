@@ -89,6 +89,30 @@ describe("<HoldingsTable> column set (portfolio defaults)", () => {
     expect(screen.queryByRole("columnheader", { name: /scores/i })).toBeNull();
   });
 
+  it("renders a HoldingLogo at the start of each row, followed by ticker + name + wrapper line", () => {
+    const { container } = render(
+      <HoldingsTable
+        rows={[row("1", "AAPL")]}
+        quotes={{}}
+        nameByTicker={{ AAPL: "Apple Inc." }}
+        tier="pro"
+        pricingPublic={true}
+        isBeta={true}
+        scoresByTicker={{}}
+        showScores={false}
+      />,
+    );
+    const tickerCell = container.querySelector(
+      "[data-testid='row-ticker-cell-AAPL']",
+    );
+    expect(tickerCell).not.toBeNull();
+    expect(tickerCell?.textContent).toContain("AAPL");
+    expect(tickerCell?.textContent).toContain("Apple Inc.");
+    expect(tickerCell?.textContent).toContain("ISA");
+    expect(tickerCell?.textContent).toContain("USD");
+    expect(tickerCell?.querySelector("img,[role='img']")).not.toBeNull();
+  });
+
   it("renders the Sparkline column header (visually hidden)", () => {
     render(
       <HoldingsTable
