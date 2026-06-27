@@ -10,6 +10,8 @@ import { chipColor } from "@/lib/scoring/chip-display";
 import { primaryGateReason } from "@/lib/scoring/gate-reasons";
 import type { GateCode } from "@/lib/scoring/quality-gates";
 import { ProScoreDetail } from "../_components/pro-score-detail";
+import { ScoreThisTicker } from "../_components/score-this-ticker";
+import { QuickCheckStrip } from "../_components/quick-check-strip";
 
 // Scores refresh nightly; an hour-old static render is plenty fresh and keeps
 // these public pages cheap to crawl.
@@ -21,6 +23,21 @@ export const dynamicParams = true;
 const getScore = cache((ticker: string) =>
   loadScore(createSupabasePublicClient(), ticker),
 );
+
+// Latest current_yield for the Quick check strip. equity_scores doesn't carry
+// a yield column; equity_score_history is public-read and indexed on
+// (ticker, observed_at desc) so this is a single cheap row lookup.
+const getLatestYield = cache(async (ticker: string): Promise<number | null> => {
+  const supabase = createSupabasePublicClient();
+  const { data } = await supabase
+    .from("equity_score_history")
+    .select("current_yield")
+    .eq("ticker", ticker)
+    .order("observed_at", { ascending: false })
+    .limit(1)
+    .maybeSingle<{ current_yield: number | null }>();
+  return data?.current_yield != null ? Number(data.current_yield) : null;
+});
 
 export async function generateStaticParams(): Promise<{ ticker: string }[]> {
   // Prebuild the scored tickers. dynamicParams=true means anything not listed
@@ -44,7 +61,12 @@ export async function generateMetadata({
   if (!ticker) return {};
   const score = await getScore(ticker).catch(() => null);
   if (!score) {
-    return { title: "Ticker not scored", robots: { index: false, follow: true } };
+    // The not-found path renders an auto-firing compute UI rather than a
+    // hard 404. Noindex prevents Google caching the "Scoring..." render.
+    return {
+      title: `Scoring ${ticker}`,
+      robots: { index: false, follow: true },
+    };
   }
   const { headline } = publicSummary(score);
   // Keep the description within the ~160-char sweet spot. The headline already
@@ -76,8 +98,37 @@ export default async function ScoringTickerPage({
 }) {
   const ticker = normalizeTicker((await params).ticker);
   if (!ticker) notFound();
-  const score = await getScore(ticker).catch(() => null);
-  if (!score) notFound();
+  const [score, latestYield] = await Promise.all([
+    getScore(ticker).catch(() => null),
+    getLatestYield(ticker).catch(() => null),
+  ]);
+  if (!score) {
+    return (
+      <div className="bg-background">
+        <div className="mx-auto max-w-3xl px-4 py-10 md:px-6 md:py-12">
+          <nav aria-label="Breadcrumb" className="text-sm text-muted-foreground">
+            <Link
+              href="/scoring"
+              className="inline-flex items-center gap-1 hover:text-foreground"
+            >
+              <span aria-hidden>←</span>
+              All dividend scores
+            </Link>
+          </nav>
+          <h1 className="mt-2 font-mono text-3xl font-bold tracking-tight text-foreground">
+            {ticker}
+          </h1>
+          <div className="mt-8">
+            <ScoreThisTicker ticker={ticker} />
+          </div>
+          <p className="mt-10 border-t border-border pt-6 text-xs leading-relaxed text-muted-foreground/80">
+            Scores are informational. They are not financial advice, not a
+            prediction of future returns, and not instructions to buy or sell.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const { headline } = publicSummary(score);
   const gateReason = primaryGateReason((score.buyFailedGates ?? []) as GateCode[]);
@@ -133,6 +184,15 @@ export default async function ScoringTickerPage({
           These are a resilience check on the dividend, not a recommendation to buy or sell.
           They are not financial advice.
         </p>
+
+        <QuickCheckStrip
+          signals={{
+            forwardYield: latestYield,
+            payoutRatio: score.payoutRatio,
+            fcfCoverage: score.fcfCoverage,
+            dividendCagr5y: score.dividendCagr5y,
+          }}
+        />
 
         <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-3">
           {SCORE_CARDS.map(({ type, label, blurb }) => {
