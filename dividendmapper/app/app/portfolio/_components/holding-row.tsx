@@ -20,6 +20,11 @@ import { ScoreChip } from "./score-chip";
 import { UpgradePill } from "./upgrade-pill";
 import { VehicleChip } from "./vehicle-chip";
 import { HoldingLogo } from "./holding-logo";
+import { RowSparkline } from "./row-sparkline";
+import type {
+  SparklineRange,
+  SparklineSeries,
+} from "@/lib/portfolio/load-sparkline-series";
 import type { VehicleChipData } from "./holdings-table";
 
 export type HoldingRowData = {
@@ -258,6 +263,8 @@ interface HoldingRowProps {
   isFree: boolean;
   pricingPublic: boolean;
   isBeta: boolean;
+  sparklineRange: SparklineRange;
+  sparklineSeries: SparklineSeries | null;
   onOpenScore: OpenScore;
   onOpenVehicleScore: (ticker: string) => void;
   onDelete: (row: HoldingRowData) => void;
@@ -277,6 +284,8 @@ export function HoldingRow({
   isFree,
   pricingPublic,
   isBeta,
+  sparklineRange,
+  sparklineSeries,
   onOpenScore,
   onOpenVehicleScore,
   onDelete,
@@ -320,7 +329,12 @@ export function HoldingRow({
         </div>
       </td>
       <td className="w-[140px] px-2 py-3">
-        {/* Sparkline lands in Task 17 */}
+        <RowSparkline
+          ticker={row.ticker}
+          name={nameByTicker?.[row.ticker]}
+          range={sparklineRange}
+          series={sparklineSeries}
+        />
       </td>
       {showScoresColumn && (
         <td className="whitespace-nowrap px-4 py-3 text-left">

@@ -22,6 +22,15 @@ import { VehicleChip } from "./vehicle-chip";
 import type { VehicleType } from "@/lib/scoring/load-vehicle-score";
 import { captureClientEvent } from "@/lib/analytics/posthog-capture";
 import { SortSelect } from "@/app/app/_components/SortSelect";
+import type {
+  SparklineRange,
+  SparklineSeries,
+} from "@/lib/portfolio/load-sparkline-series";
+import {
+  RANGE_STORAGE_KEY,
+  RANGE_CHANGE_EVENT,
+  readStoredRange,
+} from "./range-toggle";
 import {
   HoldingRow,
   BrokerCell,
@@ -61,6 +70,22 @@ function subscribeSortKey(callback: () => void) {
 }
 
 const getServerSortKey = (): SortKey => DEFAULT_SORT;
+
+function subscribeRange(callback: () => void) {
+  if (typeof window === "undefined") return () => {};
+  const onStorage = (event: StorageEvent) => {
+    if (event.key === RANGE_STORAGE_KEY) callback();
+  };
+  const onCustom = () => callback();
+  window.addEventListener("storage", onStorage);
+  window.addEventListener(RANGE_CHANGE_EVENT, onCustom);
+  return () => {
+    window.removeEventListener("storage", onStorage);
+    window.removeEventListener(RANGE_CHANGE_EVENT, onCustom);
+  };
+}
+
+const getServerRange = (): SparklineRange => "30D";
 
 // Mobile collapses the three chips into one pill that taps to expand.
 function MobileScorePill({
@@ -121,6 +146,9 @@ interface HoldingsTableProps {
    * on /app/portfolio without the equity score column being open).
    */
   vehicleScoresByTicker?: Record<string, VehicleChipData>;
+  /** Per-ticker price series for the row sparkline. Optional — rows without
+   *  data render the "Collecting…" pill. */
+  sparklineByTicker?: Map<string, SparklineSeries>;
 }
 
 export function HoldingsTable({
@@ -135,6 +163,7 @@ export function HoldingsTable({
   scoresByTicker,
   showScores,
   vehicleScoresByTicker,
+  sparklineByTicker,
 }: HoldingsTableProps) {
   const router = useRouter();
   const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
@@ -149,6 +178,11 @@ export function HoldingsTable({
     subscribeSortKey,
     readStoredSortKey,
     getServerSortKey,
+  );
+  const sparklineRange = useSyncExternalStore(
+    subscribeRange,
+    readStoredRange,
+    getServerRange,
   );
   const changeSort = (key: SortKey) => {
     try {
@@ -319,6 +353,8 @@ export function HoldingsTable({
                   isFree={isFree}
                   pricingPublic={pricingPublic}
                   isBeta={isBeta}
+                  sparklineRange={sparklineRange}
+                  sparklineSeries={sparklineByTicker?.get(row.ticker) ?? null}
                   onOpenScore={handleOpenScore}
                   onOpenVehicleScore={handleOpenVehicleScore}
                   onDelete={handleDelete}

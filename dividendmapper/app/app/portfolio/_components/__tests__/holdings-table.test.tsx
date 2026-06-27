@@ -113,6 +113,50 @@ describe("<HoldingsTable> column set (portfolio defaults)", () => {
     expect(tickerCell?.querySelector("img,[role='img']")).not.toBeNull();
   });
 
+  it("renders the RowSparkline in the sparkline cell when series data is present", () => {
+    const points = Array.from({ length: 30 }, (_, i) => 100 + i);
+    render(
+      <HoldingsTable
+        rows={[row("1", "AAPL")]}
+        quotes={{}}
+        tier="pro"
+        pricingPublic={true}
+        isBeta={true}
+        scoresByTicker={{}}
+        showScores={false}
+        sparklineByTicker={
+          new Map([
+            [
+              "AAPL",
+              { points, firstClose: 100, lastClose: 129, currency: "USD" },
+            ],
+          ])
+        }
+      />,
+    );
+    const table = screen.getByRole("table");
+    expect(
+      within(table).getByLabelText(/AAPL.*price line/i),
+    ).toBeInTheDocument();
+  });
+
+  it("renders the Collecting pill when a row has no sparkline series", () => {
+    render(
+      <HoldingsTable
+        rows={[row("1", "AAPL")]}
+        quotes={{}}
+        tier="pro"
+        pricingPublic={true}
+        isBeta={true}
+        scoresByTicker={{}}
+        showScores={false}
+        sparklineByTicker={new Map()}
+      />,
+    );
+    const table = screen.getByRole("table");
+    expect(within(table).getByText(/Collecting/)).toBeInTheDocument();
+  });
+
   it("renders the Sparkline column header (visually hidden)", () => {
     render(
       <HoldingsTable
