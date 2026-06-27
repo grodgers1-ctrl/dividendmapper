@@ -1,11 +1,21 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, within, waitFor } from "@testing-library/react";
+import {
+  render,
+  screen,
+  within,
+  waitFor,
+  fireEvent,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { HoldingsTable } from "../holdings-table";
 import type { HoldingScore } from "@/lib/scoring/portfolio-scores";
 
+const { pushMock, refreshMock } = vi.hoisted(() => ({
+  pushMock: vi.fn(),
+  refreshMock: vi.fn(),
+}));
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ refresh: vi.fn() }),
+  useRouter: () => ({ push: pushMock, refresh: refreshMock }),
 }));
 
 function row(id: string, ticker: string) {
@@ -50,6 +60,8 @@ const schdScore: HoldingScore = {
 
 beforeEach(() => {
   window.localStorage.clear();
+  pushMock.mockClear();
+  refreshMock.mockClear();
   globalThis.fetch = vi.fn().mockResolvedValue({
     ok: true,
     status: 200,
@@ -269,6 +281,58 @@ describe("<HoldingsTable> 2dp formatting + PortfolioBar", () => {
   });
 });
 
+describe("<HoldingsTable> whole-row click + Edit placeholder", () => {
+  const baseRow = row("1", "AAPL");
+  const baseProps = {
+    rows: [baseRow],
+    quotes: {},
+    tier: "pro" as const,
+    pricingPublic: true,
+    isBeta: true,
+    scoresByTicker: {},
+    showScores: false,
+  };
+
+  it("navigates to /app/portfolio/[ticker] when a row body is clicked", () => {
+    const { container } = render(<HoldingsTable {...baseProps} />);
+    const row = container.querySelector("tr[role='link']") as HTMLElement;
+    expect(row).not.toBeNull();
+    fireEvent.click(row);
+    expect(pushMock).toHaveBeenCalledWith("/app/portfolio/AAPL");
+  });
+
+  it("does NOT navigate when an action button is clicked", () => {
+    render(<HoldingsTable {...baseProps} />);
+    const table = screen.getByRole("table");
+    fireEvent.click(within(table).getByLabelText("Delete AAPL"));
+    expect(pushMock).not.toHaveBeenCalled();
+  });
+
+  it("does NOT navigate when there is an active text selection inside the row", () => {
+    const { container } = render(<HoldingsTable {...baseProps} />);
+    const row = container.querySelector("tr[role='link']") as HTMLElement;
+    const realGetSelection = window.getSelection;
+    window.getSelection = () =>
+      ({
+        toString: () => "$100",
+        anchorNode: row,
+      }) as unknown as Selection;
+    fireEvent.click(row);
+    expect(pushMock).not.toHaveBeenCalled();
+    window.getSelection = realGetSelection;
+  });
+
+  it("renders an Edit placeholder that is disabled with title='Edit coming soon'", () => {
+    render(<HoldingsTable {...baseProps} />);
+    const table = screen.getByRole("table");
+    const edit = within(table).getByLabelText("Edit AAPL") as HTMLButtonElement;
+    expect(edit.getAttribute("aria-disabled")).toBe("true");
+    expect(edit.title).toBe("Edit coming soon");
+    fireEvent.click(edit);
+    expect(pushMock).not.toHaveBeenCalled();
+  });
+});
+
 describe("<HoldingsTable> score column (Pro)", () => {
   const props = {
     rows: [row("1", "PEP"), row("2", "SCHD")],
@@ -458,8 +522,8 @@ describe("<HoldingsTable> sort control", () => {
 
   function firstDataRowTicker() {
     const table = screen.getByRole("table");
-    const allRows = within(table).getAllByRole("row");
-    return allRows[1].querySelector("td")?.textContent ?? "";
+    const tbodyRow = table.querySelector("tbody tr");
+    return tbodyRow?.querySelector("td")?.textContent ?? "";
   }
 
   it("defaults to value-desc (highest value first)", () => {

@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
-import { Trash2, Clock } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Trash2, Clock, Pencil } from "lucide-react";
 import type { QuoteResult } from "@/lib/market/quote";
 import type { HoldingScore } from "@/lib/scoring/portfolio-scores";
 import type { ScoreType } from "@/lib/scoring/chip-display";
@@ -293,13 +293,41 @@ export function HoldingRow({
   onOpenVehicleScore,
   onDelete,
 }: HoldingRowProps) {
+  const router = useRouter();
   const incomeStatus = resolveRowIncome(row, quotes, actualsByKey);
   const valueStatus = resolveRowValue(row, priceByTicker ?? {});
   const received = actualsByKey?.[actualKey(row.ticker, row.wrapper)];
 
+  function handleRowClick(e: React.MouseEvent<HTMLTableRowElement>) {
+    const target = e.target as HTMLElement;
+    if (target.closest("button, a, input")) return;
+    const sel =
+      typeof window !== "undefined" ? window.getSelection() : null;
+    if (
+      sel &&
+      sel.toString().length > 0 &&
+      e.currentTarget.contains(sel.anchorNode as Node)
+    ) {
+      return;
+    }
+    router.push(`/app/portfolio/${row.ticker}`);
+  }
+
+  function handleRowKeyDown(e: React.KeyboardEvent<HTMLTableRowElement>) {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      router.push(`/app/portfolio/${row.ticker}`);
+    }
+  }
+
   return (
     <tr
-      className={`border-b border-border last:border-b-0 transition-opacity ${
+      role="link"
+      tabIndex={0}
+      onClick={handleRowClick}
+      onKeyDown={handleRowKeyDown}
+      aria-label={`Open ${row.ticker} details`}
+      className={`group cursor-pointer border-b border-border last:border-b-0 transition-all hover:bg-secondary/40 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-inset ${
         pending ? "opacity-50" : ""
       }`}
     >
@@ -313,12 +341,9 @@ export function HoldingRow({
             name={nameByTicker?.[row.ticker]}
           />
           <div className="min-w-0">
-            <Link
-              href={`/app/portfolio/${row.ticker}`}
-              className="block font-mono text-sm font-medium text-foreground hover:underline"
-            >
+            <span className="block font-mono text-sm font-medium text-foreground">
               {row.ticker}
-            </Link>
+            </span>
             {nameByTicker?.[row.ticker] && (
               <span className="mt-0.5 block max-w-[14rem] truncate text-xs text-muted-foreground">
                 {nameByTicker[row.ticker]}
@@ -400,15 +425,32 @@ export function HoldingRow({
         <BrokerCell row={row} />
       </td>
       <td className="w-px whitespace-nowrap px-3 py-3 text-right">
-        <button
-          type="button"
-          onClick={() => onDelete(row)}
-          disabled={pending}
-          aria-label={`Delete ${row.ticker}`}
-          className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 focus:ring-offset-card disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          <Trash2 className="h-4 w-4" aria-hidden="true" />
-        </button>
+        <div className="flex items-center justify-end gap-1 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100">
+          <button
+            type="button"
+            aria-disabled="true"
+            aria-label={`Edit ${row.ticker}`}
+            title="Edit coming soon"
+            onClick={(e) => {
+              e.stopPropagation();
+            }}
+            className="inline-flex h-8 w-8 cursor-not-allowed items-center justify-center rounded-md text-muted-foreground opacity-50"
+          >
+            <Pencil className="h-4 w-4" aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(row);
+            }}
+            disabled={pending}
+            aria-label={`Delete ${row.ticker}`}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 focus:ring-offset-card disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Trash2 className="h-4 w-4" aria-hidden="true" />
+          </button>
+        </div>
       </td>
     </tr>
   );
