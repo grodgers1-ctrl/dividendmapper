@@ -161,6 +161,17 @@ export default async function PortfolioPage({
               </p>
             )}
             <PortfolioIncomeChart income={income} />
+            <p className="mt-3 text-[11px] text-muted-foreground/70">
+              Logos via{" "}
+              <a
+                href="https://www.logo.dev"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline-offset-2 hover:underline"
+              >
+                logo.dev
+              </a>
+            </p>
           </div>
         )}
         {archived.length > 0 && (
