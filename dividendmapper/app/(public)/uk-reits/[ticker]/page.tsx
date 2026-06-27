@@ -56,7 +56,7 @@ export async function generateMetadata({
       ? headline
       : `${score.displayName} dividend Resilience score.`;
   return {
-    title: `${ticker} (${score.displayName}) — UK REIT Dividend Resilience`,
+    title: `${ticker} (${score.displayName}) | UK REIT Dividend Resilience`,
     description,
     alternates: { canonical: `/uk-reits/${ticker}` },
     openGraph: {

@@ -70,7 +70,7 @@ export interface DrilldownPanelProps {
 function emptyMessage(reason: DrilldownPanelProps["emptyReason"]): string {
   switch (reason) {
     case "no-announcement":
-      return "No payments in this month yet — we'll fill it in when the next ex-dividend is announced.";
+      return "No payments in this month yet. We'll fill it in when the next ex-dividend is announced.";
     case "non-paying":
       return "This stock doesn't pay a dividend.";
     case "no-holdings":

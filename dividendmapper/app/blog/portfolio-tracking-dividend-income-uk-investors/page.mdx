@@ -1,6 +1,7 @@
 import { postMetadata } from "@/lib/blog/posts";
 import { PostHeader, PostFooter } from "@/components/blog/post-header";
 import { FaqJsonLd } from "@/components/blog/faq-json-ld";
+import { RelatedLinks } from "@/components/related-links";
 
 export const metadata = postMetadata("portfolio-tracking-dividend-income-uk-investors");
 
@@ -190,7 +191,7 @@ A spreadsheet is the right tool for most UK income investors at the start. But t
 
 Most UK income investors with 3-10 holdings across 1-2 brokers can manage with a well-structured spreadsheet. The time cost is maybe 30 minutes per month. If that sounds low, it is because the tracking setup matters more than the ongoing maintenance: get the columns right once, and the monthly update is just entering dividend amounts and checking that nothing changed.
 
-When DividendMapper adds portfolio-level dividend tracking (it is not there yet), the value will be in the income-first lens: yield by wrapper, allowance consumption, withholding-tax tracking, and projection into retirement-income scenarios. The product is on the waitlist at [dividendmapper.com/waitlist](https://dividendmapper.com/waitlist).
+DividendMapper's portfolio-level dividend tracking is live and free for up to 10 holdings, with an income-first lens: yield by wrapper, allowance consumption, withholding-tax tracking, and projection into retirement-income scenarios. Start at [dividendmapper.com](https://dividendmapper.com/login?next=/app/portfolio).
 
 ## What to do next
 
@@ -204,4 +205,27 @@ The [dividend-tracker guide](/blog/dividend-tracker-guide-uk-income-investors) i
 
 *DividendMapper helps UK dividend investors track, analyse, and project their dividend income across multiple portfolios and tax wrappers. It is not a financial adviser. No personalised investment or tax advice; it does not tell you what to buy or sell. Data calculations happen client-side in the browser.*
 
-<PostFooter slug="portfolio-tracking-dividend-income-uk-investors" />
+<RelatedLinks
+  items={[
+    {
+      href: "/blog/dividend-tracker-guide-uk-income-investors",
+      label: "Start with the tracker basics",
+      description: "The prequel: what dividend tracking is and the threshold where a spreadsheet stops being enough.",
+    },
+    {
+      href: "/blog/sharesight-vs-dividendmapper-uk-income-investors",
+      label: "Sharesight vs DividendMapper, honestly",
+      description: "Where dedicated tracker tools fit, and where they overlap with the wrapper-first income lens.",
+    },
+    {
+      href: "/tools/retirement-calculator",
+      label: "Project the retirement-income side",
+      description: "Three scenarios, your wrapper mix, and what your tracked income could compound to.",
+    },
+  ]}
+/>
+
+<PostFooter
+  nextHref="/blog/dividend-tracker-guide-uk-income-investors"
+  nextLabel="If you are new to dividend tracking, start with the basics first"
+/>

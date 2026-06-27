@@ -151,7 +151,13 @@ interface BuildArgs {
 }
 
 const PAST_MONTHS = 6;
-const FUTURE_MONTHS = 12;
+// 13 months not 12: semi-annual and monthly payers can have a final cache
+// entry whose pay_date drifts 1–4 weeks past the +12mo mark (e.g. an ex_date
+// at +365d plus a 28d pay-offset). Without the extra bucket those entries
+// silently drop out of the calendar — W7L.L's Jul 2027 final, BME.L's Jul
+// 2027 final, SMIF.L's last monthly, etc. The chart shows 13 future bars;
+// "Annual income" reads as "next ~12 months of projected income".
+const FUTURE_MONTHS = 13;
 
 function ym(d: Date): string {
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
@@ -364,9 +370,10 @@ export function buildIncomeCalendar(args: BuildArgs): IncomeCalendarResult {
 
   // Slice B α: FMP forward-DPS fallback. For holdings the projection cache
   // couldn't service (cadence='unknown' or zero matching rows), spread
-  // dps×quantity evenly across the 12 future confirmed-forecast buckets so
-  // they still contribute to annual income. Lossy on timing but right on
-  // total. The new SegmentKind 'fmp-estimate' lets the chart dim them.
+  // dps×quantity evenly across the future confirmed-forecast buckets so they
+  // still contribute to annual income. Per-bucket = annual / futureBuckets.length
+  // (NOT a hardcoded /12) so the total stays exactly dps×quantity even when
+  // FUTURE_MONTHS changes. Lossy on timing but right on total.
   const tickersWithProjection = new Set<string>();
   for (const h of holdings) {
     if (!passesWrapperFilter(h.wrapper, wrapperFilter)) continue;
@@ -377,12 +384,13 @@ export function buildIncomeCalendar(args: BuildArgs): IncomeCalendarResult {
     const futureBuckets = Array.from(buckets.values()).filter(
       (b) => b.kind === "confirmed-forecast",
     );
+    const bucketCount = futureBuckets.length;
     for (const h of holdings) {
       if (!passesWrapperFilter(h.wrapper, wrapperFilter)) continue;
       if (tickersWithProjection.has(h.ticker)) continue;
       const fmp = args.forwardDpsByTicker[h.ticker];
       if (!fmp || !fmp.dps || fmp.dps <= 0) continue;
-      const perMonthNative = (fmp.dps * h.quantity) / 12;
+      const perMonthNative = (fmp.dps * h.quantity) / bucketCount;
       const perMonth = convertToPrimary(perMonthNative, fmp.currency, ratesToGbp);
       if (perMonth === null || !Number.isFinite(perMonth) || perMonth <= 0) continue;
       for (const b of futureBuckets) {
@@ -393,7 +401,7 @@ export function buildIncomeCalendar(args: BuildArgs): IncomeCalendarResult {
             name: nameByTicker[h.ticker],
             exDate: b.ym + "-01",
             payDate: b.ym + "-01",
-            perShareNative: fmp.dps / 12,
+            perShareNative: fmp.dps / bucketCount,
             nativeCurrency: fmp.currency,
             quantity: h.quantity,
             primaryAmount: perMonth,

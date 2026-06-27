@@ -36,7 +36,7 @@ const ERROR_COPY: Record<string, string> = {
   broker_label_too_long: "Broker label is too long (80 char max).",
   notes_too_long: "Notes are too long (500 char max).",
   ticker_not_editable:
-    "Ticker can't be edited — delete this row and add a new one if you need to change it.",
+    "Ticker can't be edited. Delete this row and add a new one if you need to change it.",
   no_changes: "Nothing has changed.",
   not_found: "That holding no longer exists. Refresh the page.",
 };

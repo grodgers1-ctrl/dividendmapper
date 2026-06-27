@@ -4,10 +4,7 @@ import { requireUser } from "@/lib/auth/server";
 import { isPricingPublic } from "@/lib/flags/pricing";
 import { isBeta } from "@/lib/scoring/config";
 import { loadPricedHoldings, loadArchivedHoldings } from "@/lib/portfolio/load-priced-holdings";
-import { loadVehicleScoresByTickers } from "@/lib/scoring/load-vehicle-score";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { formatMoney } from "@/lib/portfolio/format-money";
-import type { VehicleChipData } from "./_components/holdings-table";
 import { PageHeader } from "../_components/page-header/page-header";
 import { HoldingsTable } from "./_components/holdings-table";
 import { ArchivedHoldings } from "./_components/archived-holdings";
@@ -26,12 +23,19 @@ export const metadata: Metadata = {
 // and never cacheable.
 export const dynamic = "force-dynamic";
 
-export default async function PortfolioPage() {
+export default async function PortfolioPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   // Guard here too: a soft nav re-renders only this segment, so the layout's
   // requireUser() may not re-run. requireUser redirects on a null session
   // (cache()-memoised, so free on a full load).
   const user = await requireUser("/app/portfolio");
   const pricingPublic = isPricingPublic();
+  const params = await searchParams;
+  const wrapperParam =
+    typeof params?.wrapper === "string" ? params.wrapper : null;
 
   const {
     tier,
@@ -45,30 +49,19 @@ export default async function PortfolioPage() {
     priceByTicker,
     valueTotalsByCurrency,
     nameByTicker,
+    sparklineByTicker,
     income,
   } = await loadPricedHoldings(user.id);
   const archived = await loadArchivedHoldings();
 
-  // Vehicle (REIT/BDC/UK REIT) resilience chips. One round-trip across the
-  // distinct ticker list, then converted to the chip-display shape.
-  const distinctTickersForVehicles = [
-    ...new Set(visibleRows.map((h) => h.ticker)),
-  ];
-  const vehicleScoresByTicker: Record<string, VehicleChipData> = {};
-  if (distinctTickersForVehicles.length > 0) {
-    const supabase = await createSupabaseServerClient();
-    const vehicleMap = await loadVehicleScoresByTickers(
-      supabase,
-      distinctTickersForVehicles,
-    );
-    for (const [ticker, v] of vehicleMap) {
-      vehicleScoresByTicker[ticker] = {
-        vehicleType: v.vehicleType,
-        resilienceScore: v.resilienceScore,
-        qualityGatePassed: v.qualityGatePassed,
-      };
-    }
-  }
+  // Wrapper filter chips operate on the unfiltered visibleRows set so chips
+  // for ISA/SIPP/GIA stay visible even when one is the active filter.
+  const presentWrappers = Array.from(
+    new Set(visibleRows.map((r) => r.wrapper)),
+  );
+  const filteredVisibleRows = wrapperParam
+    ? visibleRows.filter((r) => r.wrapper === wrapperParam)
+    : visibleRows;
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-12 md:px-6 md:py-16">
@@ -143,7 +136,7 @@ export default async function PortfolioPage() {
               </div>
             )}
             <HoldingsTable
-              rows={visibleRows}
+              rows={filteredVisibleRows}
               quotes={quotesByTicker}
               actualsByKey={actualsByKey}
               priceByTicker={priceByTicker}
@@ -152,8 +145,10 @@ export default async function PortfolioPage() {
               pricingPublic={pricingPublic}
               isBeta={isBeta()}
               scoresByTicker={{}}
-              showScores={tier === "free"}
-              vehicleScoresByTicker={vehicleScoresByTicker}
+              showScores={false}
+              sparklineByTicker={sparklineByTicker}
+              presentWrappers={presentWrappers}
+              activeWrapper={wrapperParam}
             />
             {valueTotalsByCurrency.length > 0 && (
               <p className="text-sm text-muted-foreground">
@@ -166,6 +161,17 @@ export default async function PortfolioPage() {
               </p>
             )}
             <PortfolioIncomeChart income={income} />
+            <p className="mt-3 text-[11px] text-muted-foreground/70">
+              Logos via{" "}
+              <a
+                href="https://www.logo.dev"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline-offset-2 hover:underline"
+              >
+                logo.dev
+              </a>
+            </p>
           </div>
         )}
         {archived.length > 0 && (

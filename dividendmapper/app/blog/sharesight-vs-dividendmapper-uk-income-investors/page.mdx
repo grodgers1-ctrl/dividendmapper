@@ -1,6 +1,7 @@
 import { postMetadata } from "@/lib/blog/posts";
 import { PostHeader, PostFooter } from "@/components/blog/post-header";
 import { FaqJsonLd } from "@/components/blog/faq-json-ld";
+import { RelatedLinks } from "@/components/related-links";
 
 export const metadata = postMetadata("sharesight-vs-dividendmapper-uk-income-investors");
 
@@ -76,7 +77,7 @@ The capacity line matters because it tells you what each product thinks the job 
 
 Sharesight's tiering is built like portfolio software. You move from one portfolio and 10 holdings on Free to more portfolios and eventually unlimited holdings on paid plans.
 
-DividendMapper's live waitlist copy is simpler: Free covers up to 10 holdings and Pro is £15 a month for unlimited. That is a cleaner offer, but it also sits inside a younger product with a narrower scope.
+DividendMapper's live pricing is simpler: Free covers up to 10 holdings and Pro is £15 a month for unlimited. That is a cleaner offer, but it also sits inside a younger product with a narrower scope.
 
 ## Where Sharesight is stronger today
 
@@ -181,11 +182,31 @@ If the income stream is the centre of gravity, DividendMapper is closer to the p
 
 And if you already use Sharesight but still find yourself asking wrapper-level income questions it does not answer cleanly, using both is a perfectly sensible outcome.
 
-If you want to test the income-planning side first, try the [retirement calculator](/tools/retirement-calculator). If the comparison made you realise you want a more wrapper-aware dividend workflow, the [waitlist](/waitlist) is the next step.
+If you want to test the income-planning side first, try the [retirement calculator](/tools/retirement-calculator). If the comparison made you realise you want a more wrapper-aware dividend workflow, [start tracking for free](/login?next=/app/portfolio).
 
 This is an educational comparison, not financial or tax advice. Tools can help you see the shape of the problem. They do not remove the need for judgement.
 
+<RelatedLinks
+  items={[
+    {
+      href: "/blog/dividend-tracker-guide-uk-income-investors",
+      label: "What a tracker should actually give you",
+      description: "If you are not yet sure what to look for in a tracker, this covers the metrics worth measuring before picking a tool.",
+    },
+    {
+      href: "/blog/portfolio-tracking-dividend-income-uk-investors",
+      label: "Manage the portfolio across wrappers",
+      description: "Once you choose a tool, the practical workflow: ISA, SIPP, and GIA tracking, yield on cost, and rebalancing for income.",
+    },
+    {
+      href: "/tools/retirement-calculator",
+      label: "Project what the portfolio could pay",
+      description: "Skip the tool choice for a moment and try the retirement calculator if you came for the outcome, not the workflow.",
+    },
+  ]}
+/>
+
 <PostFooter
-  nextHref="/waitlist"
-  nextLabel="Join the waitlist if you want a wrapper-first dividend workflow"
+  nextHref="/login?next=/app/portfolio"
+  nextLabel="Start tracking for free if you want a wrapper-first dividend workflow"
 />

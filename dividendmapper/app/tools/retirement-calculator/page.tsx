@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { RetirementCalculator } from "./_components/retirement-calculator";
+import { RelatedLinks } from "@/components/related-links";
 
 export const metadata: Metadata = {
   title: "Retirement income calculator for dividend investors | UK ISA, SIPP and US 401(k)",
@@ -70,46 +70,33 @@ export default function RetirementCalculatorPage() {
         <RetirementCalculator />
       </div>
 
-      <section className="mx-auto mt-12 max-w-3xl rounded-2xl border border-border bg-card/60 p-6">
-        <h2 className="font-display text-xl font-semibold text-foreground">
-          Read next
-        </h2>
-        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+      <section className="mx-auto mt-12 max-w-3xl">
+        <p className="text-sm leading-relaxed text-muted-foreground">
           If the calculator changed how you think about wrapper mix, these three
           guides are the best next reads before you make the income plan more
           concrete.
         </p>
-        <div className="mt-5 space-y-3 text-sm leading-relaxed">
-          <p>
-            <Link
-              href="/blog/uk-dividend-tax-guide"
-              className="font-medium text-brand-600 transition-colors hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
-            >
-              UK Dividend Tax Guide 2026/27
-            </Link>
-            {" "}for the allowance, band, and wrapper rules that shape what you
-            actually keep.
-          </p>
-          <p>
-            <Link
-              href="/blog/dividend-income-retirement-tax-planning-uk-investors"
-              className="font-medium text-brand-600 transition-colors hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
-            >
-              Dividend Income in Retirement: Tax and Planning for UK Investors
-            </Link>
-            {" "}if you want to turn the calculator&apos;s gross income output into a more
-            realistic after-tax retirement plan.
-          </p>
-          <p>
-            <Link
-              href="/blog/retirement-income-calculator-guide"
-              className="font-medium text-brand-600 transition-colors hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
-            >
-              Retirement Income Calculator Guide
-            </Link>
-            {" "}for what each scenario means, how the Bear / Base / Bull
-            projections work, and how to apply them to your own portfolio.
-          </p>
+        <div className="mt-5">
+          <RelatedLinks
+            title="Read next"
+            items={[
+              {
+                href: "/blog/uk-dividend-tax-guide",
+                label: "UK Dividend Tax Guide 2026/27",
+                description: "The allowance, band, and wrapper rules that shape what you actually keep.",
+              },
+              {
+                href: "/blog/dividend-income-retirement-tax-planning-uk-investors",
+                label: "Dividend Income in Retirement: tax and planning",
+                description: "Turn the calculator's gross income output into a more realistic after-tax retirement plan.",
+              },
+              {
+                href: "/blog/retirement-income-calculator-guide",
+                label: "Retirement Income Calculator Guide",
+                description: "What each scenario means, how Bear, Base, and Bull projections work, and how to apply them to your portfolio.",
+              },
+            ]}
+          />
         </div>
       </section>
     </div>

@@ -52,7 +52,7 @@ export function VehicleChip({
       title={gateFailed ? "Quality gate failed for this vehicle" : undefined}
       aria-label={
         gateFailed
-          ? `${label} resilience unavailable — quality gate failed`
+          ? `${label} resilience unavailable, quality gate failed`
           : `${label} resilience ${resilienceScore}`
       }
       className="inline-flex items-center gap-1.5 rounded-full border bg-[var(--surface-2)] px-2 py-0.5 leading-tight text-[var(--text)] transition-transform duration-150 hover:-translate-y-px focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 focus:ring-offset-card"

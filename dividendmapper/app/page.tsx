@@ -34,8 +34,8 @@ export default function HomePage() {
   return (
     <div className="bg-background">
       <HeroSection />
-      <FeaturesSection />
       <TrackerRoutingSection />
+      <FeaturesSection />
       <ProofSection />
       <HowItWorksSection />
       <FaqSection />
@@ -78,10 +78,10 @@ const FEATURES = [
       "Calculator inputs never leave the page. No account, no analytics on your numbers, no &ldquo;send us your portfolio.&rdquo; Signed-in portfolio tracking is opt-in and lives behind your own login.",
   },
   {
-    title: "Roadmap on the table",
-    href: "/waitlist",
+    title: "Income vehicles, scored",
+    href: "/income-vehicles",
     description:
-      "Calculators landed in Phase 1. Portfolio tracking and the Pro tier are live in Phase 2. Trading 212 sync follows in Phase 3, US brokers via SnapTrade in Phase 4. Dates and order, on one page.",
+      "REIT, BDC and UK REIT ratings on one page. The same Quality, Trim and Reinvest framework applied to income vehicles, with a public dividend calendar showing ex-div and payment dates across the universe.",
   },
 ];
 
@@ -130,16 +130,16 @@ const TRACKER_PATHS = [
       "Start with the core guide if you want the honest definition, the metrics worth tracking, and the point where a spreadsheet stops being enough.",
   },
   {
-    title: "Track income across ISA, SIPP, and GIA accounts",
-    href: "/blog/portfolio-tracking-dividend-income-uk-investors",
+    title: "How we stack up against Sharesight",
+    href: "/blog/sharesight-vs-dividendmapper-uk-income-investors",
     description:
-      "Use the portfolio-tracking guide if you need a wrapper-aware workflow for dividend income, yield-on-cost, and rebalancing decisions.",
+      "If you are weighing up trackers, read the side-by-side. Where Sharesight is strong, where we differ, and when you might use one, both, or neither.",
   },
   {
-    title: "Build a spreadsheet before you commit to a tool",
-    href: "/blog/dividend-tracker-spreadsheet-uk-investors",
+    title: "Project what your portfolio could pay in retirement",
+    href: "/tools/retirement-calculator",
     description:
-      "Use the spreadsheet guide if you want a practical checklist for what to record first and when a dedicated tracker becomes worth it.",
+      "Skip the reading if you came to model the numbers. Three scenarios, your ISA, SIPP and GIA values, retirement income at the end.",
   },
 ];
 
@@ -149,16 +149,16 @@ function TrackerRoutingSection() {
       <div className="mx-auto max-w-7xl px-4 py-16 md:px-6 md:py-20 lg:px-8">
         <div className="max-w-3xl">
           <p className="text-sm font-medium uppercase tracking-[0.18em] text-brand-600 dark:text-brand-400">
-            Homepage tracker-routing
+            Choose your next step
           </p>
           <h2 className="mt-3 font-display text-3xl font-bold tracking-tight text-foreground md:text-4xl">
-            Start tracking your dividends.
+            Pick what fits your setup.
           </h2>
           <p className="mt-4 max-w-2xl text-base leading-relaxed text-muted-foreground md:text-lg">
-            Search demand is already telling us what new readers want. If you are
-            comparing dividend trackers, deciding what to monitor, or trying to
-            move from a spreadsheet to a repeatable workflow, start with the
-            path that fits your setup.
+            Search demand is telling us what new readers want. If you are comparing
+            tools, deciding what to track first, or curious what your portfolio
+            could pay in retirement, the three paths below cover the most common
+            starting points.
           </p>
         </div>
 
@@ -245,11 +245,7 @@ function ProofSection() {
         <p className="mx-auto mt-10 max-w-3xl text-xs leading-relaxed text-muted-foreground">
           28-ticker basket. 2010 to 2024 is a US large-cap growth supercycle:
           different basket, different period, different headline. Survivorship
-          bias real. Methodology and CSVs published; reproduce with{" "}
-          <code className="rounded bg-secondary px-1 py-0.5 font-mono text-[11px]">
-            npm run analyst:event-study
-          </code>
-          .
+          bias real. Methodology and CSVs published.
         </p>
 
         <div className="mt-8 flex justify-center">
@@ -327,7 +323,7 @@ function HowItWorksSection() {
 const FAQS = [
   {
     q: "Is DividendMapper free?",
-    a: "Calculators are free forever. No signup, no credit card. Pro is £15 a month for unlimited holdings and projected income; the Free tier keeps up to 10 manual holdings. Broker auto-sync lands in Phase 3.",
+    a: "Calculators are free forever. No signup, no credit card. Pro is £15 a month for unlimited holdings, daily resilience scores, and Trading 212 auto-sync for UK ISA, SIPP and GIA accounts. Free tracks up to 10 holdings manually.",
   },
   {
     q: "Do I need an account to use the calculators?",
@@ -343,7 +339,7 @@ const FAQS = [
   },
   {
     q: "What broker integrations are coming?",
-    a: "Trading 212 first, in Phase 3 (around Month 4), covering UK ISA, SIPP and GIA in one connection. Schwab, Fidelity, Robinhood, Vanguard US and Interactive Brokers follow in Phase 4 through SnapTrade. We skipped Plaid; their $500-a-month minimum doesn&rsquo;t fit a low-priced consumer product.",
+    a: "Trading 212 is live for UK ISA, SIPP and GIA accounts in one connection. US brokers (Schwab, Fidelity, Robinhood, Vanguard US, Interactive Brokers) follow next via SnapTrade. We skipped Plaid; their $500-a-month minimum doesn&rsquo;t fit a low-priced consumer product.",
   },
   {
     q: "Is this financial advice?",

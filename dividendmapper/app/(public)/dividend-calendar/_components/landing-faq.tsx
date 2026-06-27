@@ -13,7 +13,7 @@ const FAQS = [
   },
   {
     q: "Why do you cap growth at ±20% per year?",
-    a: "A single one-off bonus payment or a recently-cut dividend can distort short-period CAGR. The cap keeps projections sensible — if you see a ⚠ on a bar, it means the underlying CAGR hit the limit.",
+    a: "A single one-off bonus payment or a recently-cut dividend can distort short-period CAGR. The cap keeps projections sensible. If you see a ⚠ on a bar, it means the underlying CAGR hit the limit.",
   },
   {
     q: "What's free vs Pro?",

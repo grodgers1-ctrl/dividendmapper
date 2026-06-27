@@ -1,11 +1,23 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, within, waitFor } from "@testing-library/react";
+import {
+  render,
+  screen,
+  within,
+  waitFor,
+  fireEvent,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { HoldingsTable } from "../holdings-table";
 import type { HoldingScore } from "@/lib/scoring/portfolio-scores";
 
+const { pushMock, refreshMock } = vi.hoisted(() => ({
+  pushMock: vi.fn(),
+  refreshMock: vi.fn(),
+}));
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ refresh: vi.fn() }),
+  useRouter: () => ({ push: pushMock, refresh: refreshMock }),
+  usePathname: () => "/app/portfolio",
+  useSearchParams: () => new URLSearchParams(),
 }));
 
 function row(id: string, ticker: string) {
@@ -50,6 +62,8 @@ const schdScore: HoldingScore = {
 
 beforeEach(() => {
   window.localStorage.clear();
+  pushMock.mockClear();
+  refreshMock.mockClear();
   globalThis.fetch = vi.fn().mockResolvedValue({
     ok: true,
     status: 200,
@@ -57,6 +71,296 @@ beforeEach(() => {
   }) as unknown as typeof fetch;
 });
 afterEach(() => vi.restoreAllMocks());
+
+describe("<HoldingsTable> column set (portfolio defaults)", () => {
+  it("does not render a Wrapper column header", () => {
+    render(
+      <HoldingsTable
+        rows={[row("1", "PEP")]}
+        quotes={{}}
+        tier="pro"
+        pricingPublic={true}
+        isBeta={true}
+        scoresByTicker={{}}
+        showScores={false}
+      />,
+    );
+    expect(screen.queryByRole("columnheader", { name: /^wrapper$/i })).toBeNull();
+  });
+
+  it("does not render a Scores column header when showScores=false and no vehicle chips", () => {
+    render(
+      <HoldingsTable
+        rows={[row("1", "PEP")]}
+        quotes={{}}
+        tier="pro"
+        pricingPublic={true}
+        isBeta={true}
+        scoresByTicker={{}}
+        showScores={false}
+      />,
+    );
+    expect(screen.queryByRole("columnheader", { name: /scores/i })).toBeNull();
+  });
+
+  it("renders a HoldingLogo at the start of each row, followed by ticker + name + wrapper line", () => {
+    const { container } = render(
+      <HoldingsTable
+        rows={[row("1", "AAPL")]}
+        quotes={{}}
+        nameByTicker={{ AAPL: "Apple Inc." }}
+        tier="pro"
+        pricingPublic={true}
+        isBeta={true}
+        scoresByTicker={{}}
+        showScores={false}
+      />,
+    );
+    const tickerCell = container.querySelector(
+      "[data-testid='row-ticker-cell-AAPL']",
+    );
+    expect(tickerCell).not.toBeNull();
+    expect(tickerCell?.textContent).toContain("AAPL");
+    expect(tickerCell?.textContent).toContain("Apple Inc.");
+    expect(tickerCell?.textContent).toContain("ISA");
+    expect(tickerCell?.textContent).toContain("USD");
+    expect(tickerCell?.querySelector("img,[role='img']")).not.toBeNull();
+  });
+
+  it("renders the RowSparkline in the sparkline cell when series data is present", () => {
+    const points = Array.from({ length: 30 }, (_, i) => 100 + i);
+    render(
+      <HoldingsTable
+        rows={[row("1", "AAPL")]}
+        quotes={{}}
+        tier="pro"
+        pricingPublic={true}
+        isBeta={true}
+        scoresByTicker={{}}
+        showScores={false}
+        sparklineByTicker={{
+          AAPL: { points, firstClose: 100, lastClose: 129, currency: "USD" },
+        }}
+      />,
+    );
+    const table = screen.getByRole("table");
+    expect(
+      within(table).getByLabelText(/AAPL.*price line/i),
+    ).toBeInTheDocument();
+  });
+
+  it("renders the Collecting pill when a row has no sparkline series", () => {
+    render(
+      <HoldingsTable
+        rows={[row("1", "AAPL")]}
+        quotes={{}}
+        tier="pro"
+        pricingPublic={true}
+        isBeta={true}
+        scoresByTicker={{}}
+        showScores={false}
+        sparklineByTicker={{}}
+      />,
+    );
+    const table = screen.getByRole("table");
+    expect(within(table).getByText(/Collecting/)).toBeInTheDocument();
+  });
+
+  it("renders the Sparkline column header (visually hidden)", () => {
+    render(
+      <HoldingsTable
+        rows={[row("1", "PEP")]}
+        quotes={{}}
+        tier="pro"
+        pricingPublic={true}
+        isBeta={true}
+        scoresByTicker={{}}
+        showScores={false}
+      />,
+    );
+    const headers = screen
+      .getAllByRole("columnheader")
+      .map((h) => h.textContent?.toLowerCase().trim() ?? "");
+    expect(headers).toContain("sparkline");
+  });
+});
+
+describe("<HoldingsTable> 2dp formatting + PortfolioBar", () => {
+  it("renders Quantity to 2dp with full-precision title", () => {
+    const { container } = render(
+      <HoldingsTable
+        rows={[
+          {
+            id: "1",
+            ticker: "TW.L",
+            quantity: 994.790201,
+            avg_cost: 0.9968,
+            cost_currency: "GBP",
+            wrapper: "isa",
+            broker_label: null,
+            notes: null,
+            created_at: "2026-01-01",
+          },
+        ]}
+        quotes={{}}
+        tier="pro"
+        pricingPublic={true}
+        isBeta={true}
+        scoresByTicker={{}}
+        showScores={false}
+      />,
+    );
+    const cell = container.querySelector(
+      "[data-testid='row-quantity-1']",
+    ) as HTMLElement;
+    expect(cell.textContent).toBe("994.79");
+    expect(cell.title).toContain("994.790201");
+  });
+
+  it("renders Avg cost to 2dp", () => {
+    const { container } = render(
+      <HoldingsTable
+        rows={[
+          {
+            id: "1",
+            ticker: "TW.L",
+            quantity: 1,
+            avg_cost: 0.9968,
+            cost_currency: "GBP",
+            wrapper: "isa",
+            broker_label: null,
+            notes: null,
+            created_at: "2026-01-01",
+          },
+        ]}
+        quotes={{}}
+        tier="pro"
+        pricingPublic={true}
+        isBeta={true}
+        scoresByTicker={{}}
+        showScores={false}
+      />,
+    );
+    expect(
+      container.querySelector("[data-testid='row-cost-1']")?.textContent,
+    ).toBe("£1.00");
+  });
+
+  it("renders the PortfolioBar inside the Value cell when totals are present", () => {
+    const { container } = render(
+      <HoldingsTable
+        rows={[
+          {
+            id: "1",
+            ticker: "AAPL",
+            quantity: 10,
+            avg_cost: 100,
+            cost_currency: "USD",
+            wrapper: "isa",
+            broker_label: null,
+            notes: null,
+            created_at: "2026-01-01",
+          },
+        ]}
+        quotes={{}}
+        priceByTicker={{ AAPL: { price: 200, currency: "USD" } }}
+        tier="pro"
+        pricingPublic={true}
+        isBeta={true}
+        scoresByTicker={{}}
+        showScores={false}
+      />,
+    );
+    const valueCell = container.querySelector(
+      "[data-testid='row-value-1']",
+    ) as HTMLElement;
+    expect(valueCell.querySelector("[aria-hidden='true']")).not.toBeNull();
+  });
+});
+
+describe("<HoldingsTable> sortable headers", () => {
+  const sortProps = {
+    rows: [row("1", "AAPL"), row("2", "MSFT")],
+    quotes: {},
+    priceByTicker: {
+      AAPL: { price: 200, currency: "USD" },
+      MSFT: { price: 400, currency: "USD" },
+    },
+    tier: "pro" as const,
+    pricingPublic: true,
+    isBeta: true,
+    scoresByTicker: {},
+    showScores: false,
+  };
+
+  it("clicking a sortable column header persists the sort key", () => {
+    render(<HoldingsTable {...sortProps} />);
+    const valueHeader = screen.getByRole("button", { name: /sort by value/i });
+    fireEvent.click(valueHeader);
+    expect(window.localStorage.getItem("dm.holdings-sort")).toBe("value");
+  });
+
+  it("does NOT render the desktop Sort dropdown", () => {
+    render(<HoldingsTable {...sortProps} />);
+    // Only the mobile SortSelect should render. The desktop "Sort" label is gone.
+    // (Mobile SortSelect renders via md:hidden but jsdom doesn't apply media,
+    // so we scope on aria/label uniqueness.)
+    const sortLabels = screen.queryAllByText("Sort");
+    expect(sortLabels.length).toBeLessThanOrEqual(1);
+  });
+});
+
+describe("<HoldingsTable> whole-row click + Edit placeholder", () => {
+  const baseRow = row("1", "AAPL");
+  const baseProps = {
+    rows: [baseRow],
+    quotes: {},
+    tier: "pro" as const,
+    pricingPublic: true,
+    isBeta: true,
+    scoresByTicker: {},
+    showScores: false,
+  };
+
+  it("navigates to /app/portfolio/[ticker] when a row body is clicked", () => {
+    const { container } = render(<HoldingsTable {...baseProps} />);
+    const row = container.querySelector("tr[role='link']") as HTMLElement;
+    expect(row).not.toBeNull();
+    fireEvent.click(row);
+    expect(pushMock).toHaveBeenCalledWith("/app/portfolio/AAPL");
+  });
+
+  it("does NOT navigate when an action button is clicked", () => {
+    render(<HoldingsTable {...baseProps} />);
+    const table = screen.getByRole("table");
+    fireEvent.click(within(table).getByLabelText("Delete AAPL"));
+    expect(pushMock).not.toHaveBeenCalled();
+  });
+
+  it("does NOT navigate when there is an active text selection inside the row", () => {
+    const { container } = render(<HoldingsTable {...baseProps} />);
+    const row = container.querySelector("tr[role='link']") as HTMLElement;
+    const realGetSelection = window.getSelection;
+    window.getSelection = () =>
+      ({
+        toString: () => "$100",
+        anchorNode: row,
+      }) as unknown as Selection;
+    fireEvent.click(row);
+    expect(pushMock).not.toHaveBeenCalled();
+    window.getSelection = realGetSelection;
+  });
+
+  it("renders an Edit placeholder that is disabled with title='Edit coming soon'", () => {
+    render(<HoldingsTable {...baseProps} />);
+    const table = screen.getByRole("table");
+    const edit = within(table).getByLabelText("Edit AAPL") as HTMLButtonElement;
+    expect(edit.getAttribute("aria-disabled")).toBe("true");
+    expect(edit.title).toBe("Edit coming soon");
+    fireEvent.click(edit);
+    expect(pushMock).not.toHaveBeenCalled();
+  });
+});
 
 describe("<HoldingsTable> score column (Pro)", () => {
   const props = {
@@ -247,8 +551,8 @@ describe("<HoldingsTable> sort control", () => {
 
   function firstDataRowTicker() {
     const table = screen.getByRole("table");
-    const allRows = within(table).getAllByRole("row");
-    return allRows[1].querySelector("td")?.textContent ?? "";
+    const tbodyRow = table.querySelector("tbody tr");
+    return tbodyRow?.querySelector("td")?.textContent ?? "";
   }
 
   it("defaults to value-desc (highest value first)", () => {

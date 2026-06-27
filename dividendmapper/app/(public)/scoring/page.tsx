@@ -10,15 +10,17 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "Dividend resilience scores",
   description:
-    "Quality, Risk and Trim scores screen a dividend's resilience for UK and US shares. Informational only, not financial advice.",
+    "Search any UK or US share for Quality, Risk and Trim dividend-resilience scores. Two free scores per day before signup. Informational only, not financial advice.",
   alternates: { canonical: "/scoring" },
   openGraph: {
     title: "Dividend resilience scores | DividendMapper",
     description:
-      "Quality, Risk and Trim scores screen a dividend's resilience. Informational only, not financial advice.",
+      "Search any UK or US share. Quality, Risk and Trim scores screen a dividend's resilience.",
     url: `${SITE_URL}/scoring`,
   },
 };
+
+const EXAMPLE_CHIPS = ["AAPL", "ULVR.L", "SCHD", "BATS.L"];
 
 export default async function ScoringIndexPage() {
   const tickers = await listScoredTickers();
@@ -26,17 +28,36 @@ export default async function ScoringIndexPage() {
   return (
     <div className="bg-background">
       <div className="mx-auto max-w-3xl px-4 py-10 md:px-6 md:py-12">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">
-          Dividend resilience scores
+        <h1 className="font-display text-3xl font-bold tracking-tight text-foreground md:text-4xl">
+          Look up any UK or US share.
         </h1>
         <p className="mt-3 max-w-prose text-base text-foreground">
-          Each scored share gets three numbers from 0 to 100: a Quality score that screens
-          how resilient the dividend looks, a Risk score that flags signs of cut pressure,
-          and a Trim score for how extended the valuation looks. They refresh once a day.
+          Search by name or symbol. We pull fundamentals, cash flow and dividend
+          history, then return Quality, Trim and Risk scores plus a quick check
+          on yield, payout and coverage.
         </p>
-        <p className="mt-2 max-w-prose text-sm text-muted-foreground">
-          These scores are a resilience check, not a recommendation to buy or sell, and not
-          financial advice. They summarise data to help you review a holding.{" "}
+
+        <div className="mt-6">
+          <ScoringSearch />
+        </div>
+
+        <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+          <span>Try:</span>
+          {EXAMPLE_CHIPS.map((chip) => (
+            <Link
+              key={chip}
+              href={`/scoring/${chip}`}
+              className="rounded-md border border-border bg-card px-2 py-1 font-mono text-foreground hover:bg-secondary"
+            >
+              {chip}
+            </Link>
+          ))}
+        </div>
+
+        <p className="mt-6 max-w-prose text-sm text-muted-foreground">
+          Two scores per day on the house. Sign up free for a fresh counter, or
+          upgrade to Pro to score every holding in your portfolio
+          automatically.{" "}
           <Link
             href="/scoring-methodology"
             className="underline underline-offset-2 hover:text-foreground"
@@ -46,18 +67,9 @@ export default async function ScoringIndexPage() {
           .
         </p>
 
-        <div className="mt-8">
-          <label htmlFor="scoring-search" className="block text-sm font-medium text-foreground">
-            Look up a share
-          </label>
-          <div className="mt-2">
-            <ScoringSearch />
-          </div>
-        </div>
-
         {tickers.length > 0 && (
           <section className="mt-10" aria-label="Scored shares">
-            <h2 className="text-lg font-semibold text-foreground">Scored shares</h2>
+            <h2 className="text-lg font-semibold text-foreground">All scored shares</h2>
             <ul className="mt-3 flex flex-wrap gap-2">
               {tickers.map((ticker) => (
                 <li key={ticker}>
@@ -71,15 +83,16 @@ export default async function ScoringIndexPage() {
               ))}
             </ul>
             <p className="mt-3 text-xs text-muted-foreground">
-              Coverage is expanding. A share you search may not be scored yet.
+              Coverage grows every time someone searches. Any share you look up
+              gets scored and joins the list.
             </p>
           </section>
         )}
 
         <p className="mt-10 border-t border-border pt-6 text-xs leading-relaxed text-muted-foreground/80">
-          Scores are informational and refresh once a day. They are not financial advice, not a
-          prediction of future returns, and not instructions to buy or sell. Always do your own
-          research. See the{" "}
+          Scores are informational and refresh once a day. They are not
+          financial advice, not a prediction of future returns, and not
+          instructions to buy or sell. Always do your own research. See the{" "}
           <Link href="/terms" className="underline underline-offset-2 hover:text-foreground">
             Terms of Service
           </Link>

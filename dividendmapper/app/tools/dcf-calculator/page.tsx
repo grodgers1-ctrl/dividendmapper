@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { DcfCalculator } from "./_components/dcf-calculator";
+import { RelatedLinks } from "@/components/related-links";
 
 export const metadata: Metadata = {
   title: "Dividend DCF Calculator: Intrinsic value of dividend stocks",
@@ -84,6 +85,29 @@ export default function DcfCalculatorPage() {
 
       <div className="mt-10">
         <DcfCalculator />
+      </div>
+
+      <div className="mx-auto mt-12 max-w-3xl">
+        <RelatedLinks
+          title="Where to next"
+          items={[
+            {
+              href: "/blog/dividend-tracker-guide-uk-income-investors",
+              label: "Track the stocks you have valued",
+              description: "Valuation is one half. Tracking what you actually own is the other. Start with the tracker basics.",
+            },
+            {
+              href: "/tools/retirement-calculator",
+              label: "Project the income picture",
+              description: "Roll per-stock fair value up into a portfolio retirement-income range across Bear, Base, and Bull scenarios.",
+            },
+            {
+              href: "/blog/sharesight-vs-dividendmapper-uk-income-investors",
+              label: "Pick a tracker tool",
+              description: "Sharesight vs DividendMapper for UK income investors, honestly.",
+            },
+          ]}
+        />
       </div>
     </div>
   );

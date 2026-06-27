@@ -457,7 +457,7 @@ describe("detectCadenceByYearCount", () => {
       { exDate: "2024-06-15", amount: 0.24 },
       { exDate: "2024-03-15", amount: 0.24 },
     ];
-    expect(detectCadenceByYearCount(history)).toBe("quarterly");
+    expect(detectCadenceByYearCount(history)).toEqual({ cadence: "quarterly", modeCount: 4 });
   });
 
   it("returns 'semi' for a UK-style payer paying twice a year", () => {
@@ -470,7 +470,7 @@ describe("detectCadenceByYearCount", () => {
       { exDate: "2023-08-15", amount: 7.0 },
       { exDate: "2023-03-15", amount: 7.0 },
     ];
-    expect(detectCadenceByYearCount(history)).toBe("semi");
+    expect(detectCadenceByYearCount(history)).toEqual({ cadence: "semi", modeCount: 2 });
   });
 
   it("returns 'monthly' when the mode is 12", () => {
@@ -480,7 +480,7 @@ describe("detectCadenceByYearCount", () => {
       history.push({ exDate: `2024-${String(m).padStart(2, "0")}-15`, amount: 0.25 });
     }
     history.push({ exDate: "2026-01-15", amount: 0.27 });
-    expect(detectCadenceByYearCount(history)).toBe("monthly");
+    expect(detectCadenceByYearCount(history)).toEqual({ cadence: "monthly", modeCount: 12 });
   });
 
   it("returns 'annual' when the mode is 1", () => {
@@ -490,7 +490,7 @@ describe("detectCadenceByYearCount", () => {
       { exDate: "2024-04-10", amount: 1.0 },
       { exDate: "2023-04-10", amount: 0.9 },
     ];
-    expect(detectCadenceByYearCount(history)).toBe("annual");
+    expect(detectCadenceByYearCount(history)).toEqual({ cadence: "annual", modeCount: 1 });
   });
 
   it("returns null when there are fewer than 2 complete years", () => {
@@ -516,11 +516,11 @@ describe("detectCadenceByYearCount", () => {
     expect(detectCadenceByYearCount(history)).toBeNull();
   });
 
-  it("returns 'semi' when the mode count is 3 (UK semi + occasional special)", () => {
+  it("returns 'semi' with modeCount 3 (UK semi + occasional special)", () => {
     // BME.L: interim + final + special each year for 2023-2025 produces a
-    // year-count mode of 3. Map to 'semi' so the projection engine forecasts
-    // 2 regular payments per year — conservative read that ignores the
-    // sporadic special.
+    // year-count mode of 3. Map to 'semi' for the cadence label (downstream
+    // UI is binary monthly/quarterly/semi/annual) but preserve modeCount=3
+    // so projectDividends emits 3 payments per year, not 2.
     const history = [
       { exDate: "2025-11-20", amount: 3.5 },
       { exDate: "2025-06-26", amount: 8.245 },
@@ -532,7 +532,7 @@ describe("detectCadenceByYearCount", () => {
       { exDate: "2023-06-29", amount: 9.6 },
       { exDate: "2023-01-12", amount: 20 },
     ];
-    expect(detectCadenceByYearCount(history)).toBe("semi");
+    expect(detectCadenceByYearCount(history)).toEqual({ cadence: "semi", modeCount: 3 });
   });
 
   it("returns null when the mode count maps to none of {1, 2, 3, 4, 12}", () => {
@@ -564,6 +564,73 @@ describe("detectCadenceByYearCount", () => {
       { exDate: "2023-08-15", amount: 7.0 },
       { exDate: "2023-03-15", amount: 7.0 },
     ];
-    expect(detectCadenceByYearCount(history)).toBe("semi");
+    expect(detectCadenceByYearCount(history)).toEqual({ cadence: "semi", modeCount: 2 });
+  });
+});
+
+describe("projectDividends — mode-based for UK semi + special (BME.L pattern)", () => {
+  const today = new Date("2026-06-26T00:00:00Z");
+
+  it("projects 3 payments per year using TTM-sum / 3 as base", () => {
+    // BME.L history: interim + final + occasional special each year.
+    // Pre-fix: cadence='semi' + baseAmount=latest (6.1p) × 2 = 12.2p/yr,
+    // under-projecting by ~30% vs FMP forward DPS of 17.845p.
+    // Post-fix: modeCount=3 detected, baseAmount = TTM-sum / 3.
+    const history: HistoricalPayment[] = [
+      { exDate: "2026-06-11", amount: 6.1 },    // interim 2026
+      { exDate: "2025-11-20", amount: 3.5 },    // interim 2025 (in TTM)
+      { exDate: "2025-06-26", amount: 8.245 },  // final 2025 (in TTM)
+      { exDate: "2025-01-16", amount: 15 },     // special 2025 (just outside TTM)
+      { exDate: "2024-11-21", amount: 5.3 },
+      { exDate: "2024-06-27", amount: 9.6 },
+      { exDate: "2024-01-18", amount: 17 },
+      { exDate: "2023-11-16", amount: 5.1 },
+      { exDate: "2023-06-29", amount: 9.6 },
+      { exDate: "2023-01-12", amount: 20 },
+    ];
+    const result = projectDividends({
+      ticker: "BME.L",
+      historicalPayments: history,
+      holding: { quantity: 1, createdAt: null },
+      today,
+      direction: "forward",
+      currency: "GBp",
+    });
+    // Mode 3 → emit 3 payments. TTM-sum = 6.1 + 3.5 + 8.245 = 17.845p
+    // (cutoff = 2025-06-26; >= cutoff includes itself). Base = 17.845 / 3 = 5.948.
+    expect(result.length).toBe(3);
+    const ttmSum = 6.1 + 3.5 + 8.245;
+    const expectedPerPayment = ttmSum / 3;
+    for (const p of result) {
+      expect(p.perShareAmount).toBeCloseTo(expectedPerPayment, 2);
+      expect(p.confidence).toBe("cadence");
+    }
+    const annual = result.reduce((s, p) => s + p.perShareAmount, 0);
+    expect(annual).toBeCloseTo(ttmSum, 2);
+  });
+
+  it("keeps existing cadence-based projection for mode-2 semis (TW.L pattern)", () => {
+    // TW.L: clean interim + final each year, no special. modeCount=2 matches
+    // semi's expected 2 → existing path (latest × 2 with growth).
+    const history: HistoricalPayment[] = [
+      { exDate: "2026-02-12", amount: 2.95 },
+      { exDate: "2025-08-15", amount: 2.95 },
+      { exDate: "2025-02-12", amount: 2.95 },
+      { exDate: "2024-08-15", amount: 2.85 },
+      { exDate: "2024-02-12", amount: 2.85 },
+      { exDate: "2023-08-15", amount: 2.75 },
+      { exDate: "2023-02-12", amount: 2.75 },
+    ];
+    const result = projectDividends({
+      ticker: "TW.L",
+      historicalPayments: history,
+      holding: { quantity: 1, createdAt: null },
+      today,
+      direction: "forward",
+      currency: "GBp",
+    });
+    // Mode 2, expected 2 → standard path. Two payments roughly equal to latest.
+    expect(result.length).toBe(2);
+    expect(result[0].perShareAmount).toBeCloseTo(2.95, 1);
   });
 });

@@ -56,7 +56,7 @@ export async function generateMetadata({
       ? headline
       : `${score.displayName} dividend Resilience score.`;
   return {
-    title: `${ticker} (${score.displayName}) — BDC Dividend Resilience`,
+    title: `${ticker} (${score.displayName}) | BDC Dividend Resilience`,
     description,
     alternates: { canonical: `/bdcs/${ticker}` },
     openGraph: {
