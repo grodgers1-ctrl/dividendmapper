@@ -6,6 +6,11 @@ const nextConfig: NextConfig = {
   // Let .mdx files act as App Router pages. Each post lives at
   // app/blog/{slug}/page.mdx alongside the React routes.
   pageExtensions: ["js", "jsx", "ts", "tsx", "md", "mdx"],
+  images: {
+    remotePatterns: [
+      { protocol: "https", hostname: "img.logo.dev", pathname: "/**" },
+    ],
+  },
 };
 
 const withMDX = createMDX({
