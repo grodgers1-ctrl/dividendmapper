@@ -53,14 +53,22 @@ Expected: at least one line. If `NEXT_PUBLIC_LOGO_DEV_TOKEN=...` isn't present, 
 ## Task 2: Database migration — ticker_price_history
 
 **Files:**
-- Create: `dividendmapper/supabase/migrations/0023_ticker_price_history.sql`
+- Create: `dividendmapper/supabase/migrations/0024_ticker_price_history.sql`
 
-> **Note:** Glenn applied this migration directly against the Supabase project before plan execution started. The migration file still needs to exist in the repo so `supabase db push` stays consistent on future runs, but the agent must NOT re-apply it. The steps below write the file and verify the table is already in place.
+> **Note:** `0023_scoring_lookup_audit.sql` lands first (from the free-UX glow-up branch — Glenn applied it to prod on 2026-06-27). Our migration is therefore `0024`. If the migration head has moved further by the time you run this task, bump every reference in this task to the next free number.
 
-- [ ] **Step 1: Author the migration file**
+- [ ] **Step 1: Confirm the next free migration number**
+
+```bash
+ls dividendmapper/supabase/migrations/ | sort | tail -3
+```
+
+Expected: head is `0023_scoring_lookup_audit.sql`. Our new file is `0024_ticker_price_history.sql`. If head is higher than `0023`, bump every reference in this task to `head + 1`.
+
+- [ ] **Step 2: Author the migration**
 
 ```sql
--- 0023_ticker_price_history.sql
+-- 0024_ticker_price_history.sql
 -- Per-ticker daily close-price history backing the row sparklines on /app/portfolio.
 -- Populated by the one-time backfill script (FMP historical-price-full) and the
 -- nightly cron (append today's close per ticker). Retention is bounded by a daily
@@ -92,35 +100,39 @@ comment on table public.ticker_price_history is
   'FMP historical-price-full and appended by the nightly cron.';
 ```
 
-The `if not exists` / `drop policy if exists` clauses make the file idempotent — it can be re-run safely against a database where Glenn already applied the schema.
-
-- [ ] **Step 2: Verify the table already exists in Supabase**
+- [ ] **Step 3: Dry-run the migration**
 
 ```bash
 set -a && source .env.local && set +a
+npx supabase db push --dry-run | tail -20
+```
+
+Expected: lists `0024_ticker_price_history.sql` as the only new migration. If `0023_scoring_lookup_audit.sql` also appears as pending, the free-UX branch's migration has not been applied to this database yet — stop and confirm with Glenn before proceeding. Per memory `reference_supabase_out_of_order_migration_workaround`, applying our `0024` while `0023` is pending will jam the migration tracker.
+
+- [ ] **Step 4: Apply the migration**
+
+Stop and ask Glenn to run the apply step in his terminal — direct database writes are a hand-off step in his workflow:
+
+> Migration `0024_ticker_price_history.sql` is dry-run clean. Please run:
+>
+> ```bash
+> set -a && source .env.local && set +a && npx supabase db push --yes
+> ```
+>
+> Confirm `Applied migration 0024_ticker_price_history.sql` before continuing.
+
+- [ ] **Step 5: Verify the table is in place**
+
+```bash
 psql "$DATABASE_URL" -c "\d public.ticker_price_history"
 ```
 
-Expected: the `\d` output shows the table with the four columns above and the composite primary key. If the table is missing, stop and ask Glenn — do NOT run `npx supabase db push`, because the migration history may be out of sync with what was applied manually.
+Expected: the `\d` output shows the table with the four columns above, the composite primary key, and the `ticker_price_history_recent_idx` index.
 
-Verify the migration is recorded in Supabase's history:
-
-```bash
-npx supabase migration list 2>&1 | grep 0023 || echo "0023 not in migration history yet"
-```
-
-If `0023` is missing from history but the table exists (Glenn applied via SQL Editor rather than the CLI), repair the history without re-running the SQL:
+- [ ] **Step 6: Commit**
 
 ```bash
-npx supabase migration repair --status applied 0023
-```
-
-If `0023` is present in history, skip the repair.
-
-- [ ] **Step 3: Commit the migration file**
-
-```bash
-git add dividendmapper/supabase/migrations/0023_ticker_price_history.sql
+git add dividendmapper/supabase/migrations/0024_ticker_price_history.sql
 git commit -m "feat(db): add ticker_price_history for sparkline series"
 ```
 

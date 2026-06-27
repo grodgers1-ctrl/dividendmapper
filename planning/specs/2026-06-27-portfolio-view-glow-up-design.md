@@ -281,7 +281,7 @@ Mobile keeps the card-list view (`md:hidden` in the current file). Each card inh
 | [lib/portfolio/load-priced-holdings.ts](../../dividendmapper/lib/portfolio/load-priced-holdings.ts) | Add `loadSparklineSeriesByTicker(tickers, range)` and return it from `loadPricedHoldings`. |
 | `lib/portfolio/load-sparkline-series.ts` (new) | The new helper above, isolated for testing. |
 | [app/app/portfolio/page.tsx](../../dividendmapper/app/app/portfolio/page.tsx) | Read the `?wrapper=` query param, filter `visibleRows` server-side; pass `sparklineByTicker` into the table; drop `vehicleScoresByTicker` plumbing (still loaded for `/app/portfolio/scoring`). |
-| `supabase/migrations/0023_ticker_price_history.sql` (new) | Schema above. Next free number after `0022_welcome_wizard_dismissals.sql`. |
+| `supabase/migrations/0024_ticker_price_history.sql` (new) | Schema above. Sits after `0023_scoring_lookup_audit.sql` (free-UX branch, applied to prod 2026-06-27). |
 | `scripts/sanity/backfill-ticker-price-history.mjs` (new) | Backfill script. |
 | Existing nightly cron (likely `app/api/cron/nightly-prices/route.ts` or equivalent — to be confirmed in the implementation plan) | Append `ticker_price_history` row per ticker per run. |
 | [next.config.ts](../../dividendmapper/next.config.ts) | Add `img.logo.dev` to `images.remotePatterns`. |
