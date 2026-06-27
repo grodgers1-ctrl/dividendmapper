@@ -47,6 +47,7 @@ const FREE_FEATURES = [
   "Track up to 10 holdings manually",
   "Annual income view across the holdings you add",
   "UK and US wrapper support: ISA, SIPP, 401(k), IRA, brokerage",
+  "Dividend calendar across the public universe",
 ];
 
 const PRO_FEATURES = [
@@ -55,12 +56,14 @@ const PRO_FEATURES = [
   "Full portfolio income across every holding, every wrapper",
   "Daily Quality, Risk and Trim scores that flag cut risk and stretched valuations",
   "Email alerts when a holding's Quality or Risk score crosses your threshold",
+  "Income Vehicles Hub: REIT, BDC and UK REIT ratings",
+  "Dividend calendar with ex-div and payment dates across every holding",
+  "Trading 212 auto-sync for UK ISA, SIPP and GIA accounts",
   "Tax notes on each wrapper, GIA dividend-allowance warnings",
 ];
 
 const PRO_COMING_SOON = [
-  "Trading 212 auto-sync (Phase 3, summer 2026)",
-  "Dividend calendar with ex-div and payment dates",
+  "US broker sync via SnapTrade (Phase 5)",
   "Reinvest alerts when a holding goes ex-dividend",
 ];
 
@@ -100,27 +103,28 @@ export default async function PricingPage() {
           Pricing
         </h1>
         <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-muted-foreground md:text-lg">
-          Free covers the basics. Pro tracks your whole portfolio and scores
-          every holding for quality and risk. Broker sync and the dividend
-          calendar arrive through 2026.
+          Free covers the calculators. Pro tracks every holding, scores them
+          daily, syncs your Trading 212 account, and surfaces the dividend
+          calendar across what you actually own.
         </p>
       </header>
 
       {!user && (
-        <div className="mx-auto mt-10 max-w-3xl rounded-xl border border-brand-500/30 bg-brand-50 p-5 dark:border-brand-400/20 dark:bg-brand-900/20">
+        <div className="mx-auto mt-10 max-w-4xl rounded-xl border border-brand-500/30 bg-brand-50 p-6 dark:border-brand-400/20 dark:bg-brand-900/20">
           <p className="font-display text-sm font-semibold text-foreground">
             Already on our founding-member list?
           </p>
-          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             Sign in with the email you gave us. Your six months of Pro is
-            already on your account, no card needed.{" "}
-            <Link
-              href="/login?next=%2Fpricing"
-              className="font-medium text-brand-700 underline-offset-2 hover:underline dark:text-brand-300"
-            >
-              Sign in
-            </Link>
+            already on your account, no card needed.
           </p>
+          <Link
+            href="/login?next=%2Fpricing"
+            className="mt-3 inline-flex items-center text-sm font-medium text-brand-700 underline-offset-2 hover:underline dark:text-brand-300"
+          >
+            Sign in
+            <span aria-hidden className="ml-1">→</span>
+          </Link>
         </div>
       )}
 

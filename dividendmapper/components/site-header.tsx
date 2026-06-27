@@ -4,21 +4,15 @@ import { HeaderAuthSlot } from "./header-auth-slot";
 import { LocaleToggle } from "./locale-toggle";
 import { MobileMenu } from "./mobile-menu";
 import { ThemeToggle } from "./theme-toggle";
+import { ToolsDropdown, TOOL_LINKS } from "./tools-dropdown";
 import { isPricingPublic } from "@/lib/flags/pricing";
 
-const BASE_NAV = [
-  { href: "/tools/retirement-calculator", label: "Retirement" },
-  { href: "/tools/dcf-calculator", label: "DCF" },
-  { href: "/scoring", label: "Resilience" },
-  { href: "/income-vehicles", label: "Income vehicles" },
-  { href: "/dividend-calendar", label: "Dividend calendar" },
-  { href: "/blog", label: "Research" },
-];
+const TOP_NAV = [{ href: "/blog", label: "Research" }];
 
 export function SiteHeader() {
   const nav = isPricingPublic()
-    ? [...BASE_NAV, { href: "/pricing", label: "Pricing" }]
-    : BASE_NAV;
+    ? [...TOP_NAV, { href: "/pricing", label: "Pricing" }]
+    : TOP_NAV;
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-sm isolate">
       <div
@@ -44,6 +38,7 @@ export function SiteHeader() {
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex">
+          <ToolsDropdown />
           {nav.map((item) => (
             <Link
               key={item.href}
@@ -59,7 +54,7 @@ export function SiteHeader() {
           <LocaleToggle />
           <ThemeToggle />
           <HeaderAuthSlot />
-          <MobileMenu nav={nav} />
+          <MobileMenu nav={nav} toolLinks={TOOL_LINKS} />
         </div>
       </div>
     </header>

@@ -15,6 +15,7 @@ interface NavItem {
 
 interface MobileMenuProps {
   nav: NavItem[];
+  toolLinks: NavItem[];
 }
 
 /**
@@ -23,7 +24,7 @@ interface MobileMenuProps {
  * state is observed via the Supabase browser client so it stays in sync with
  * HeaderAuthSlot (which renders the same state for sm+).
  */
-export function MobileMenu({ nav }: MobileMenuProps) {
+export function MobileMenu({ nav, toolLinks }: MobileMenuProps) {
   const [open, setOpen] = useState(false);
   const [auth, setAuth] = useState<AuthState>({ kind: "loading" });
 
@@ -75,6 +76,20 @@ export function MobileMenu({ nav }: MobileMenuProps) {
           </div>
 
           <nav aria-label="Primary" className="flex flex-col px-2 py-3">
+            <p className="px-3 pb-1 pt-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Tools
+            </p>
+            {toolLinks.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setOpen(false)}
+                className="rounded-lg px-3 py-3 text-base font-medium text-foreground transition-colors hover:bg-secondary"
+              >
+                {item.label}
+              </Link>
+            ))}
+            <div className="my-2 border-t border-border" aria-hidden />
             {nav.map((item) => (
               <Link
                 key={item.href}

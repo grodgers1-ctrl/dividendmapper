@@ -170,14 +170,14 @@ export default function BlogIndexPage() {
       )}
 
       <p className="mt-12 text-center text-sm text-muted-foreground">
-        More guides land alongside the Phase 2 launch.{" "}
+        More guides every month.{" "}
         <Link
-          href="/waitlist"
+          href="/login?next=%2Fapp%2Fportfolio"
           className="text-brand-600 underline decoration-brand-600/40 underline-offset-2 hover:text-brand-700 hover:decoration-brand-600"
         >
-          Join the waitlist
+          Start tracking for free
         </Link>{" "}
-        to get the next one in your inbox.
+        and you&rsquo;ll see them as they ship.
       </p>
     </div>
   );
