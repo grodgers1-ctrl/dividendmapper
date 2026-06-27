@@ -8,13 +8,19 @@ import {
 function fakeSupabase(
   rows: { ticker: string; trade_date: string; close: number; currency: string }[],
 ) {
+  // Mirrors the per-ticker `from().select().eq().gte().order().range()` chain
+  // that load-sparkline-series uses to dodge PostgREST's 1000-row hard cap.
   return {
     from: (_table: string) => ({
       select: (_cols: string) => ({
-        in: (_col: string, _vals: string[]) => ({
+        eq: (_col: string, ticker: string) => ({
           gte: (_col2: string, _val: string) => ({
             order: () => ({
-              order: () => Promise.resolve({ data: rows, error: null }),
+              range: () =>
+                Promise.resolve({
+                  data: rows.filter((r) => r.ticker === ticker),
+                  error: null,
+                }),
             }),
           }),
         }),

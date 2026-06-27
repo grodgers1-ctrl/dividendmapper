@@ -41,24 +41,34 @@ export async function loadSparklineSeriesByTicker(
   const out = new Map<string, SparklineSeries>();
   if (tickers.length === 0) return out;
 
+  // Per-ticker queries in parallel — Supabase/PostgREST hard-caps responses at
+  // 1000 rows, and a single `.in("ticker", [...])` over a multi-year window
+  // silently truncates: only the alphabetically-first ticker comes back full,
+  // the rest get partial or zero rows. Each per-ticker query is bounded by
+  // <= 5Y daily closes (~1300 rows worst case, ~965 typical) so we slice with
+  // `.range(0, 2999)` to stay well above the realistic ceiling.
   const since = daysAgoIso(RANGE_DAYS[range]);
-  const { data, error } = await supabase
-    .from("ticker_price_history")
-    .select("ticker, trade_date, close, currency")
-    .in("ticker", tickers)
-    .gte("trade_date", since)
-    .order("ticker", { ascending: true })
-    .order("trade_date", { ascending: true });
+  const perTicker = await Promise.all(
+    tickers.map(async (ticker) => {
+      const { data, error } = await supabase
+        .from("ticker_price_history")
+        .select("trade_date, close, currency")
+        .eq("ticker", ticker)
+        .gte("trade_date", since)
+        .order("trade_date", { ascending: true })
+        .range(0, 2999);
+      if (error || !data) return { ticker, rows: [] as { close: number; currency: string }[] };
+      return {
+        ticker,
+        rows: data.map((r) => ({
+          close: Number((r as { close: number }).close),
+          currency: (r as { currency: string }).currency,
+        })),
+      };
+    }),
+  );
 
-  if (error || !data) return out;
-
-  const grouped = new Map<string, { close: number; currency: string }[]>();
-  for (const row of data as { ticker: string; close: number; currency: string }[]) {
-    if (!grouped.has(row.ticker)) grouped.set(row.ticker, []);
-    grouped.get(row.ticker)!.push({ close: Number(row.close), currency: row.currency });
-  }
-
-  for (const [ticker, rows] of grouped) {
+  for (const { ticker, rows } of perTicker) {
     if (rows.length === 0) continue;
     const points = rows.map((r) => r.close);
     const downsampled =
