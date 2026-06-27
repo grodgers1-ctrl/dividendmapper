@@ -55,7 +55,9 @@ Expected: at least one line. If `NEXT_PUBLIC_LOGO_DEV_TOKEN=...` isn't present, 
 **Files:**
 - Create: `dividendmapper/supabase/migrations/0023_ticker_price_history.sql`
 
-- [ ] **Step 1: Author the migration**
+> **Note:** Glenn applied this migration directly against the Supabase project before plan execution started. The migration file still needs to exist in the repo so `supabase db push` stays consistent on future runs, but the agent must NOT re-apply it. The steps below write the file and verify the table is already in place.
+
+- [ ] **Step 1: Author the migration file**
 
 ```sql
 -- 0023_ticker_price_history.sql
@@ -90,24 +92,32 @@ comment on table public.ticker_price_history is
   'FMP historical-price-full and appended by the nightly cron.';
 ```
 
-- [ ] **Step 2: Dry-run + apply the migration**
+The `if not exists` / `drop policy if exists` clauses make the file idempotent — it can be re-run safely against a database where Glenn already applied the schema.
+
+- [ ] **Step 2: Verify the table already exists in Supabase**
 
 ```bash
 set -a && source .env.local && set +a
-npx supabase db push --dry-run | tail -20
+psql "$DATABASE_URL" -c "\d public.ticker_price_history"
 ```
 
-Expected: lists `0023_ticker_price_history.sql` as the only new migration. If anything else appears, abort and check for a drifted branch.
+Expected: the `\d` output shows the table with the four columns above and the composite primary key. If the table is missing, stop and ask Glenn — do NOT run `npx supabase db push`, because the migration history may be out of sync with what was applied manually.
 
-Then:
+Verify the migration is recorded in Supabase's history:
 
 ```bash
-npx supabase db push --yes
+npx supabase migration list 2>&1 | grep 0023 || echo "0023 not in migration history yet"
 ```
 
-Expected: `Applied migration 0023_ticker_price_history.sql`.
+If `0023` is missing from history but the table exists (Glenn applied via SQL Editor rather than the CLI), repair the history without re-running the SQL:
 
-- [ ] **Step 3: Commit**
+```bash
+npx supabase migration repair --status applied 0023
+```
+
+If `0023` is present in history, skip the repair.
+
+- [ ] **Step 3: Commit the migration file**
 
 ```bash
 git add dividendmapper/supabase/migrations/0023_ticker_price_history.sql
