@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   loadSparklineSeriesByTicker,
   downsampleSeries,
+  sliceSeriesForRange,
   RANGE_DAYS,
 } from "../load-sparkline-series";
 
@@ -78,7 +79,7 @@ describe("loadSparklineSeriesByTicker", () => {
     expect(RANGE_DAYS["5Y"]).toBe(1825);
   });
 
-  it("downsamples 5Y range to ~100 points per ticker", async () => {
+  it("returns raw daily points for 5Y range (client re-slices per active range)", async () => {
     const rows = Array.from({ length: 1260 }, (_, i) => ({
       ticker: "AAPL",
       trade_date: `2021-01-${String((i % 28) + 1).padStart(2, "0")}`,
@@ -88,9 +89,53 @@ describe("loadSparklineSeriesByTicker", () => {
     const supabase = fakeSupabase(rows);
     const out = await loadSparklineSeriesByTicker(supabase as never, ["AAPL"], "5Y");
     const series = out.get("AAPL")!;
-    expect(series.points.length).toBeGreaterThan(95);
-    expect(series.points.length).toBeLessThanOrEqual(110);
+    expect(series.points.length).toBe(1260);
     expect(series.firstClose).toBe(200);
     expect(series.lastClose).toBe(200 + 1259);
+  });
+});
+
+describe("sliceSeriesForRange", () => {
+  const full = {
+    points: Array.from({ length: 1260 }, (_, i) => 100 + i),
+    firstClose: 100,
+    lastClose: 100 + 1259,
+    currency: "USD",
+  };
+
+  it("returns null for missing or empty series", () => {
+    expect(sliceSeriesForRange(undefined, "30D")).toBeNull();
+    expect(
+      sliceSeriesForRange(
+        { points: [], firstClose: 0, lastClose: 0, currency: "USD" },
+        "30D",
+      ),
+    ).toBeNull();
+  });
+
+  it("30D slices the last ~22 trading days", () => {
+    const s = sliceSeriesForRange(full, "30D")!;
+    expect(s.points.length).toBe(22);
+    expect(s.lastClose).toBe(full.lastClose);
+    expect(s.firstClose).toBe(full.points[full.points.length - 22]);
+  });
+
+  it("1Y slices the last ~252 trading days", () => {
+    const s = sliceSeriesForRange(full, "1Y")!;
+    expect(s.points.length).toBe(252);
+    expect(s.lastClose).toBe(full.lastClose);
+  });
+
+  it("5Y returns the full window, downsampled to ~100 points", () => {
+    const s = sliceSeriesForRange(full, "5Y")!;
+    expect(s.points.length).toBeGreaterThan(95);
+    expect(s.points.length).toBeLessThanOrEqual(110);
+    expect(s.firstClose).toBe(100);
+    expect(s.lastClose).toBe(100 + 1259);
+  });
+
+  it("preserves currency through the slice", () => {
+    const gbp = { ...full, currency: "GBp" };
+    expect(sliceSeriesForRange(gbp, "30D")!.currency).toBe("GBp");
   });
 });

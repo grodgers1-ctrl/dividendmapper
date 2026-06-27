@@ -71,10 +71,12 @@ export async function loadSparklineSeriesByTicker(
   for (const { ticker, rows } of perTicker) {
     if (rows.length === 0) continue;
     const points = rows.map((r) => r.close);
-    const downsampled =
-      range === "5Y" ? downsampleSeries(points, DOWNSAMPLE_TARGET) : points;
+    // Keep the raw daily closes — the client re-slices to the active range
+    // (30D/1Y/5Y) and downsamples only the 5Y view. If we downsampled here,
+    // a 30D slice off a 100-point 5Y stride would actually show ~6 weeks,
+    // not 30 days.
     out.set(ticker, {
-      points: downsampled,
+      points,
       firstClose: points[0],
       lastClose: points.at(-1)!,
       currency: rows[0].currency,
@@ -82,4 +84,35 @@ export async function loadSparklineSeriesByTicker(
   }
 
   return out;
+}
+
+// Trading-day counts per range. FMP historical-price-full already excludes
+// weekends/holidays, so the points array is calendar-trading days. ~252/year.
+const TRADING_DAYS_PER_RANGE: Record<SparklineRange, number> = {
+  "30D": 22,
+  "1Y": 252,
+  "5Y": 1260,
+};
+
+/**
+ * Slice a full daily series to the last N trading days for `range`. For 5Y,
+ * downsamples the result so the rendered SVG stays under ~100 points.
+ * Returns null when the slice has too few points to draw a meaningful line.
+ */
+export function sliceSeriesForRange(
+  full: SparklineSeries | undefined,
+  range: SparklineRange,
+): SparklineSeries | null {
+  if (!full || full.points.length === 0) return null;
+  const want = TRADING_DAYS_PER_RANGE[range];
+  const sliced = full.points.slice(-want);
+  if (sliced.length === 0) return null;
+  const points =
+    range === "5Y" ? downsampleSeries(sliced, DOWNSAMPLE_TARGET) : sliced;
+  return {
+    points,
+    firstClose: sliced[0],
+    lastClose: sliced[sliced.length - 1],
+    currency: full.currency,
+  };
 }

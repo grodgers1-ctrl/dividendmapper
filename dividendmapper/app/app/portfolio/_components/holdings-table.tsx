@@ -22,9 +22,10 @@ import { VehicleChip } from "./vehicle-chip";
 import type { VehicleType } from "@/lib/scoring/load-vehicle-score";
 import { captureClientEvent } from "@/lib/analytics/posthog-capture";
 import { SortSelect } from "@/app/app/_components/SortSelect";
-import type {
-  SparklineRange,
-  SparklineSeries,
+import {
+  sliceSeriesForRange,
+  type SparklineRange,
+  type SparklineSeries,
 } from "@/lib/portfolio/load-sparkline-series";
 import {
   RANGE_STORAGE_KEY,
@@ -435,7 +436,10 @@ export function HoldingsTable({
                   pricingPublic={pricingPublic}
                   isBeta={isBeta}
                   sparklineRange={sparklineRange}
-                  sparklineSeries={sparklineByTicker?.[row.ticker] ?? null}
+                  sparklineSeries={sliceSeriesForRange(
+                    sparklineByTicker?.[row.ticker],
+                    sparklineRange,
+                  )}
                   totalVisibleValue={totalVisibleValue}
                   density={density}
                   onOpenScore={handleOpenScore}
@@ -476,7 +480,10 @@ export function HoldingsTable({
           const received = actualsByKey?.[actualKey(row.ticker, row.wrapper)];
           const score = scoresByTicker[row.ticker];
           const vehicle = vehicleScoresByTicker?.[row.ticker];
-          const series = sparklineByTicker?.[row.ticker] ?? null;
+          const series = sliceSeriesForRange(
+            sparklineByTicker?.[row.ticker],
+            sparklineRange,
+          );
           const openDetail = () =>
             router.push(`/app/portfolio/${row.ticker}`);
           return (
