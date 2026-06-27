@@ -5,6 +5,7 @@ import { useLocale } from "@/lib/locale/context";
 import { SliderField } from "@/components/ui/slider-field";
 import { NumberField } from "@/components/ui/number-field";
 import { InfoPopover } from "@/components/ui/info-popover";
+import { TickerSearch } from "@/components/ui/ticker-search";
 import { resolveCurrency } from "@/lib/calculators/dcf-currency";
 import type { DcfInputs } from "@/lib/calculators/dcf";
 import { cn } from "@/lib/utils";
@@ -15,7 +16,7 @@ export type LookupState =
   | {
       status: "success";
       ticker: string;
-      source: "EODHD" | "Polygon";
+      source: "EODHD" | "Polygon" | "FMP";
       name: string | null;
       currency: string | null;
       fetchedAt: string;
@@ -273,11 +274,10 @@ function TickerLookup({
   }) => void;
 }) {
   const { config } = useLocale();
-  const placeholder = config.locale === "uk" ? "e.g. ULVR.L or SCHD" : "e.g. SCHD or ULVR.L";
-  const [ticker, setTicker] = React.useState("");
+  const placeholder = config.locale === "uk" ? "Search ULVR, SCHD, AAPL..." : "Search SCHD, AAPL, ULVR.L...";
 
-  async function runLookup() {
-    const cleaned = ticker.trim().toUpperCase();
+  async function runLookup(symbol: string) {
+    const cleaned = symbol.trim().toUpperCase();
     if (!cleaned) return;
     setLookup({ status: "loading", ticker: cleaned });
     try {
@@ -299,7 +299,7 @@ function TickerLookup({
         price: number | null;
         dividend: number | null;
         dividendGrowth3yr: number | null;
-        source: "EODHD" | "Polygon";
+        source: "EODHD" | "Polygon" | "FMP";
         name: string | null;
         currency: string | null;
         fetchedAt: string;
@@ -344,15 +344,6 @@ function TickerLookup({
     }
   }
 
-  function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      runLookup();
-    }
-  }
-
-  const isLoading = lookup.status === "loading";
-
   return (
     <div className="rounded-lg border border-border bg-background p-4">
       <label
@@ -364,29 +355,14 @@ function TickerLookup({
       </label>
       <TickerHelpText />
       <p className="mt-1 text-xs text-muted-foreground">
-        Auto-fills price and dividend; growth stays manual.
+        Search by name or symbol. We pull price, dividend and growth from the listed currency.
       </p>
-      <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-stretch">
-        <input
+      <div className="mt-3">
+        <TickerSearch
           id="dcf-ticker"
-          type="text"
-          inputMode="text"
-          autoComplete="off"
-          spellCheck={false}
-          value={ticker}
-          onChange={(e) => setTicker(e.target.value)}
-          onKeyDown={onKeyDown}
           placeholder={placeholder}
-          className="h-10 flex-1 rounded-lg border border-input bg-background px-3 font-mono text-sm uppercase tabular-nums text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 focus:ring-offset-background"
+          onSelect={(result) => runLookup(result.symbol)}
         />
-        <button
-          type="button"
-          onClick={runLookup}
-          disabled={isLoading || ticker.trim() === ""}
-          className="inline-flex h-10 items-center justify-center rounded-lg bg-brand-600 px-4 text-sm font-medium text-white transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {isLoading ? "Fetching…" : "Fetch →"}
-        </button>
       </div>
 
       <LookupStatus lookup={lookup} />
