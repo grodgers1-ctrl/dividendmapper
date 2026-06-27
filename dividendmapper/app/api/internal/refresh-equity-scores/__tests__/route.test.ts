@@ -39,6 +39,7 @@ vi.mock("@sentry/nextjs", () => ({ captureException: vi.fn() }));
 const scoresUpsert = vi.fn().mockResolvedValue({ error: null });
 const historyUpsert = vi.fn().mockResolvedValue({ error: null });
 const signalsUpsert = vi.fn().mockResolvedValue({ error: null });
+const tickerPriceHistoryUpsert = vi.fn().mockResolvedValue({ error: null });
 
 const tickersResult = {
   data: [{ ticker: "AAPL.US" }, { ticker: "ULVR.L" }, { ticker: "AAPL.US" }],
@@ -67,6 +68,8 @@ const fromMock = vi.fn((table: string) => {
   if (table === "equity_score_history") return makeChain({ data: [], error: null }, historyUpsert);
   if (table === "equity_score_signals") return makeChain({ data: [], error: null }, signalsUpsert);
   if (table === "equity_scores") return makeChain({ data: [], error: null }, scoresUpsert);
+  if (table === "ticker_price_history")
+    return makeChain({ data: [], error: null }, tickerPriceHistoryUpsert);
   throw new Error(`unexpected table ${table}`);
 });
 
@@ -164,6 +167,27 @@ describe("GET /api/internal/refresh-equity-scores", () => {
     expect(byTicker["AAPL.US"].next_ex_div_date).toBe("2099-06-05"); // soonest of the two
     expect(byTicker["AAPL.US"].next_ex_div_amount).toBe(1.48);
     expect(byTicker["AAPL.US"].next_ex_div_pay_date).toBe("2099-06-30");
+  });
+
+  it("appends today's close to ticker_price_history for each scored ticker", async () => {
+    const { GET } = await import("../route");
+    await (await GET(authedReq())).json();
+    // One upsert call per distinct ticker (AAPL.US, ULVR.L).
+    expect(tickerPriceHistoryUpsert).toHaveBeenCalledTimes(2);
+    const upserted = tickerPriceHistoryUpsert.mock.calls.map((c) => c[0]);
+    // Each call upserts a single row with the four columns.
+    expect(upserted.every((r) => r.ticker && r.trade_date && Number.isFinite(r.close) && r.currency)).toBe(true);
+    expect(upserted.some((r) => r.ticker === "AAPL.US" && r.currency === "USD")).toBe(true);
+    expect(upserted.some((r) => r.ticker === "ULVR.L" && r.currency === "GBp")).toBe(true);
+  });
+
+  it("does not append to ticker_price_history when scoreTicker throws", async () => {
+    const fmp = await import("@/lib/scoring/fmp-client");
+    vi.mocked(fmp.getProfile).mockRejectedValueOnce(new Error("FMP down"));
+    const { GET } = await import("../route");
+    await (await GET(authedReq())).json();
+    // 1 failure + 1 success → exactly 1 price upsert
+    expect(tickerPriceHistoryUpsert).toHaveBeenCalledTimes(1);
   });
 
   it("writes null ex-div fields for a ticker absent from the calendar", async () => {

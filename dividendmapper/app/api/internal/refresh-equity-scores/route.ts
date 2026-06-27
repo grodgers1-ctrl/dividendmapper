@@ -11,7 +11,11 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import * as Sentry from "@sentry/nextjs";
-import { getDividendsCalendar, type FmpCalendarDividend } from "@/lib/scoring/fmp-client";
+import {
+  getDividendsCalendar,
+  getHistoricalEod,
+  type FmpCalendarDividend,
+} from "@/lib/scoring/fmp-client";
 import { scoreTicker, isoDateOffset } from "@/lib/scoring/score-ticker";
 
 export const runtime = "nodejs";
@@ -81,6 +85,41 @@ async function handle(req: Request): Promise<Response> {
     if (t > 0 && TICKER_PAD_MS > 0) await sleep(TICKER_PAD_MS);
     try {
       await scoreTicker(supabase, ticker, calendar, today);
+      // Append today's close to ticker_price_history for the row sparkline on
+      // /app/portfolio. scoreTicker has already pulled FMP for this ticker, so
+      // this getHistoricalEod hits the fmp-client 24h in-memory cache for any
+      // matching from/to — and even on a miss it's a single small request.
+      try {
+        const fromIso = isoDateOffset(-4);
+        const bars = await getHistoricalEod(ticker, fromIso, today);
+        const latest = bars?.[0];
+        if (
+          latest &&
+          typeof latest.close === "number" &&
+          Number.isFinite(latest.close) &&
+          /^\d{4}-\d{2}-\d{2}$/.test(String(latest.date))
+        ) {
+          const currency = ticker.endsWith(".L") ? "GBp" : "USD";
+          const { error: tphErr } = await supabase
+            .from("ticker_price_history")
+            .upsert(
+              {
+                ticker,
+                trade_date: latest.date,
+                close: latest.close,
+                currency,
+              },
+              { onConflict: "ticker,trade_date" },
+            );
+          if (tphErr) {
+            console.warn(
+              `[refresh-equity-scores] ticker_price_history upsert failed for ${ticker}: ${tphErr.message}`,
+            );
+          }
+        }
+      } catch (priceErr) {
+        Sentry.captureException(priceErr, { extra: { ticker, stage: "ticker_price_history" } });
+      }
       successfulTickerCount++;
     } catch (err) {
       failedTickerCount++;
