@@ -61,10 +61,10 @@ export function HeaderAuthSlot() {
         Sign in
       </Link>
       <Link
-        href="/waitlist"
+        href="/login?next=%2Fapp%2Fportfolio"
         className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-700"
       >
-        Join the waitlist
+        Start for free
       </Link>
     </div>
   );
