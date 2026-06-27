@@ -5,12 +5,12 @@ import { FeaturePanels } from "./_components/feature-panels";
 import { LandingFaq } from "./_components/landing-faq";
 
 export const metadata: Metadata = {
-  title: "Dividend Calendar — see every payment, projected and confirmed",
+  title: "Dividend Calendar: see every payment, projected and confirmed",
   description:
-    "Track every dividend you'll receive — past, confirmed, and cadence-projected. ISA / SIPP / 401(k) / Roth tax-wrapper-aware. Free preview, Pro for full data.",
+    "Track every dividend you'll receive: past, confirmed, and cadence-projected. ISA / SIPP / 401(k) / Roth tax-wrapper-aware. Free preview, Pro for full data.",
   alternates: { canonical: "/dividend-calendar" },
   openGraph: {
-    title: "Dividend Calendar — DividendMapper",
+    title: "Dividend Calendar | DividendMapper",
     description:
       "Track every dividend, projected and confirmed, in the wrappers you actually hold.",
   },

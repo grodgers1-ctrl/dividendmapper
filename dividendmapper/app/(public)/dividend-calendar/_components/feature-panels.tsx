@@ -3,17 +3,17 @@ export function FeaturePanels() {
     {
       title: "Projected, not just confirmed",
       body:
-        "We detect each holding's pay cadence and project the next 12 months — clearly distinguished from confirmed ex-dates and capped at ±20%/yr growth.",
+        "We detect each holding's pay cadence and project the next 12 months, clearly distinguished from confirmed ex-dates and capped at ±20%/yr growth.",
     },
     {
       title: "Every dividend in one place",
       body:
-        "Sync Trading 212, import a CSV, or enter manually — your dividends, your wrappers, your currency.",
+        "Sync Trading 212, import a CSV, or enter manually. Your dividends, your wrappers, your currency.",
     },
     {
       title: "Tax-wrapper-aware",
       body:
-        "ISA / Roth dividends tax-free in your locale, GIA / Brokerage shown net of dividend tax — surfaced automatically.",
+        "ISA / Roth dividends tax-free in your locale, GIA / Brokerage shown net of dividend tax. Surfaced automatically.",
     },
   ];
   return (
