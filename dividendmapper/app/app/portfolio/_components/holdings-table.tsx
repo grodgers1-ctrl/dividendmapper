@@ -271,8 +271,8 @@ export function HoldingsTable({
                 <th scope="col" className="px-4 py-3">
                   Ticker
                 </th>
-                <th scope="col" className="w-px whitespace-nowrap px-3 py-3">
-                  Wrapper
+                <th scope="col" className="w-[140px] px-2 py-3">
+                  <span className="sr-only">Sparkline</span>
                 </th>
                 {showScoresColumn && (
                   <th scope="col" className="px-4 py-3">

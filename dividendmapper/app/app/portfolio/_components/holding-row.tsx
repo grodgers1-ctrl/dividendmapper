@@ -303,10 +303,8 @@ export function HoldingRow({
           </span>
         )}
       </td>
-      <td className="w-px whitespace-nowrap px-3 py-3">
-        <span className="inline-flex items-center rounded-full border border-border bg-secondary px-2 py-0.5 text-xs font-medium text-foreground">
-          {WRAPPER_LABEL[row.wrapper] ?? row.wrapper}
-        </span>
+      <td className="w-[140px] px-2 py-3">
+        {/* Sparkline lands in Task 17 */}
       </td>
       {showScoresColumn && (
         <td className="whitespace-nowrap px-4 py-3 text-left">

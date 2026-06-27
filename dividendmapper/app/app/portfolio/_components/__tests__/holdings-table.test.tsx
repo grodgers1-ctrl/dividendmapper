@@ -58,6 +58,56 @@ beforeEach(() => {
 });
 afterEach(() => vi.restoreAllMocks());
 
+describe("<HoldingsTable> column set (portfolio defaults)", () => {
+  it("does not render a Wrapper column header", () => {
+    render(
+      <HoldingsTable
+        rows={[row("1", "PEP")]}
+        quotes={{}}
+        tier="pro"
+        pricingPublic={true}
+        isBeta={true}
+        scoresByTicker={{}}
+        showScores={false}
+      />,
+    );
+    expect(screen.queryByRole("columnheader", { name: /^wrapper$/i })).toBeNull();
+  });
+
+  it("does not render a Scores column header when showScores=false and no vehicle chips", () => {
+    render(
+      <HoldingsTable
+        rows={[row("1", "PEP")]}
+        quotes={{}}
+        tier="pro"
+        pricingPublic={true}
+        isBeta={true}
+        scoresByTicker={{}}
+        showScores={false}
+      />,
+    );
+    expect(screen.queryByRole("columnheader", { name: /scores/i })).toBeNull();
+  });
+
+  it("renders the Sparkline column header (visually hidden)", () => {
+    render(
+      <HoldingsTable
+        rows={[row("1", "PEP")]}
+        quotes={{}}
+        tier="pro"
+        pricingPublic={true}
+        isBeta={true}
+        scoresByTicker={{}}
+        showScores={false}
+      />,
+    );
+    const headers = screen
+      .getAllByRole("columnheader")
+      .map((h) => h.textContent?.toLowerCase().trim() ?? "");
+    expect(headers).toContain("sparkline");
+  });
+});
+
 describe("<HoldingsTable> score column (Pro)", () => {
   const props = {
     rows: [row("1", "PEP"), row("2", "SCHD")],
