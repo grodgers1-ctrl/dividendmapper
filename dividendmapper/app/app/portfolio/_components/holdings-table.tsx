@@ -351,7 +351,7 @@ export function HoldingsTable({
       <div className="hidden overflow-clip rounded-xl border border-border bg-card md:block">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="sticky top-[56px] z-[5] border-b border-border bg-secondary/95 backdrop-blur supports-[backdrop-filter]:bg-secondary/80 [box-shadow:inset_0_-1px_0_rgb(255_255_255/0.04),inset_0_1px_0_rgb(0_0_0/0.20)]">
+            <thead className="sticky top-0 z-[5] border-b border-border bg-secondary/95 backdrop-blur supports-[backdrop-filter]:bg-secondary/80 [box-shadow:inset_0_-1px_0_rgb(255_255_255/0.04),inset_0_1px_0_rgb(0_0_0/0.20)]">
               <tr className="text-left text-[12px] font-medium leading-[16px] text-muted-foreground">
                 <th scope="col" className="px-4 py-3">
                   <button
