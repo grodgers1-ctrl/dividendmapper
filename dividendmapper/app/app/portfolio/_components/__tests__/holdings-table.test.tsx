@@ -16,6 +16,8 @@ const { pushMock, refreshMock } = vi.hoisted(() => ({
 }));
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: pushMock, refresh: refreshMock }),
+  usePathname: () => "/app/portfolio",
+  useSearchParams: () => new URLSearchParams(),
 }));
 
 function row(id: string, ticker: string) {

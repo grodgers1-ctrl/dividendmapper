@@ -26,6 +26,7 @@ import type {
   SparklineRange,
   SparklineSeries,
 } from "@/lib/portfolio/load-sparkline-series";
+import type { Density } from "./density-toggle";
 import type { VehicleChipData } from "./holdings-table";
 
 export type HoldingRowData = {
@@ -267,6 +268,7 @@ interface HoldingRowProps {
   sparklineRange: SparklineRange;
   sparklineSeries: SparklineSeries | null;
   totalVisibleValue: number;
+  density: Density;
   onOpenScore: OpenScore;
   onOpenVehicleScore: (ticker: string) => void;
   onDelete: (row: HoldingRowData) => void;
@@ -289,6 +291,7 @@ export function HoldingRow({
   sparklineRange,
   sparklineSeries,
   totalVisibleValue,
+  density,
   onOpenScore,
   onOpenVehicleScore,
   onDelete,
@@ -297,6 +300,7 @@ export function HoldingRow({
   const incomeStatus = resolveRowIncome(row, quotes, actualsByKey);
   const valueStatus = resolveRowValue(row, priceByTicker ?? {});
   const received = actualsByKey?.[actualKey(row.ticker, row.wrapper)];
+  const cellPad = density === "compact" ? "py-2" : "py-3";
 
   function handleRowClick(e: React.MouseEvent<HTMLTableRowElement>) {
     const target = e.target as HTMLElement;
@@ -333,7 +337,7 @@ export function HoldingRow({
     >
       <td
         data-testid={`row-ticker-cell-${row.ticker}`}
-        className="px-4 py-3"
+        className={`px-4 ${cellPad}`}
       >
         <div className="flex items-center gap-3">
           <HoldingLogo
@@ -356,7 +360,7 @@ export function HoldingRow({
           </div>
         </div>
       </td>
-      <td className="w-[140px] px-2 py-3">
+      <td className={`w-[140px] px-2 ${cellPad}`}>
         <RowSparkline
           ticker={row.ticker}
           name={nameByTicker?.[row.ticker]}
@@ -365,7 +369,7 @@ export function HoldingRow({
         />
       </td>
       {showScoresColumn && (
-        <td className="whitespace-nowrap px-4 py-3 text-left">
+        <td className={`whitespace-nowrap px-4 ${cellPad} text-left`}>
           {vehicle ? (
             <VehicleChip
               vehicleType={vehicle.vehicleType}
@@ -389,7 +393,7 @@ export function HoldingRow({
       <td
         data-testid={`row-quantity-${row.id}`}
         title={String(row.quantity)}
-        className="w-px whitespace-nowrap px-3 py-3 text-right font-mono text-foreground"
+        className={`w-px whitespace-nowrap px-3 ${cellPad} text-right font-mono text-foreground`}
       >
         {Number(row.quantity).toLocaleString("en-GB", {
           minimumFractionDigits: 2,
@@ -399,13 +403,13 @@ export function HoldingRow({
       <td
         data-testid={`row-cost-${row.id}`}
         title={String(row.avg_cost)}
-        className="w-px whitespace-nowrap px-3 py-3 text-right font-mono text-foreground"
+        className={`w-px whitespace-nowrap px-3 ${cellPad} text-right font-mono text-foreground`}
       >
         {formatMoney(Number(row.avg_cost), row.cost_currency, { dp: 2 })}
       </td>
       <td
         data-testid={`row-value-${row.id}`}
-        className="relative w-px whitespace-nowrap px-3 py-3 text-right text-sm"
+        className={`relative w-px whitespace-nowrap px-3 ${cellPad} text-right text-sm`}
       >
         <ValueCell status={valueStatus} />
         {valueStatus.kind === "ok" && (
@@ -415,16 +419,16 @@ export function HoldingRow({
           />
         )}
       </td>
-      <td className="w-px whitespace-nowrap px-3 py-3 text-right text-sm">
+      <td className={`w-px whitespace-nowrap px-3 ${cellPad} text-right text-sm`}>
         <IncomeCell status={incomeStatus} />
       </td>
-      <td className="w-px whitespace-nowrap px-3 py-3 text-right text-sm">
+      <td className={`w-px whitespace-nowrap px-3 ${cellPad} text-right text-sm`}>
         <ReceivedCell actual={received} />
       </td>
-      <td className="w-px whitespace-nowrap px-3 py-3 text-muted-foreground">
+      <td className={`w-px whitespace-nowrap px-3 ${cellPad} text-muted-foreground`}>
         <BrokerCell row={row} />
       </td>
-      <td className="w-px whitespace-nowrap px-3 py-3 text-right">
+      <td className={`w-px whitespace-nowrap px-3 ${cellPad} text-right`}>
         <div className="flex items-center justify-end gap-1 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100">
           <button
             type="button"

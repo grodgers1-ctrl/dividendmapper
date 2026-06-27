@@ -30,7 +30,16 @@ import {
   RANGE_STORAGE_KEY,
   RANGE_CHANGE_EVENT,
   readStoredRange,
+  RangeToggle,
 } from "./range-toggle";
+import {
+  DENSITY_STORAGE_KEY,
+  DENSITY_CHANGE_EVENT,
+  readStoredDensity,
+  DensityToggle,
+  type Density,
+} from "./density-toggle";
+import { WrapperFilterChips } from "./wrapper-filter-chips";
 import {
   HoldingRow,
   BrokerCell,
@@ -86,6 +95,22 @@ function subscribeRange(callback: () => void) {
 }
 
 const getServerRange = (): SparklineRange => "30D";
+
+function subscribeDensity(callback: () => void) {
+  if (typeof window === "undefined") return () => {};
+  const onStorage = (event: StorageEvent) => {
+    if (event.key === DENSITY_STORAGE_KEY) callback();
+  };
+  const onCustom = () => callback();
+  window.addEventListener("storage", onStorage);
+  window.addEventListener(DENSITY_CHANGE_EVENT, onCustom);
+  return () => {
+    window.removeEventListener("storage", onStorage);
+    window.removeEventListener(DENSITY_CHANGE_EVENT, onCustom);
+  };
+}
+
+const getServerDensity = (): Density => "comfortable";
 
 // Mobile collapses the three chips into one pill that taps to expand.
 function MobileScorePill({
@@ -149,6 +174,11 @@ interface HoldingsTableProps {
   /** Per-ticker price series for the row sparkline. Optional — rows without
    *  data render the "Collecting…" pill. */
   sparklineByTicker?: Map<string, SparklineSeries>;
+  /** Distinct wrappers present in the user's visible portfolio (for chip filter).
+   *  When omitted, derived from rows. */
+  presentWrappers?: string[];
+  /** Currently active wrapper filter (URL-driven, null = All). */
+  activeWrapper?: string | null;
 }
 
 export function HoldingsTable({
@@ -164,6 +194,8 @@ export function HoldingsTable({
   showScores,
   vehicleScoresByTicker,
   sparklineByTicker,
+  presentWrappers,
+  activeWrapper = null,
 }: HoldingsTableProps) {
   const router = useRouter();
   const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
@@ -183,6 +215,11 @@ export function HoldingsTable({
     subscribeRange,
     readStoredRange,
     getServerRange,
+  );
+  const density = useSyncExternalStore(
+    subscribeDensity,
+    readStoredDensity,
+    getServerDensity,
   );
   const changeSort = (key: SortKey) => {
     try {
@@ -212,6 +249,13 @@ export function HoldingsTable({
     }
     return sum;
   }, [sortedRows, priceByTicker]);
+
+  const derivedPresentWrappers = useMemo(
+    () =>
+      presentWrappers ??
+      Array.from(new Set(sortedRows.map((r) => r.wrapper))),
+    [presentWrappers, sortedRows],
+  );
 
   const isFree = tier === "free";
   const handleOpenScore: OpenScore = (ticker, type) =>
@@ -286,6 +330,18 @@ export function HoldingsTable({
 
   return (
     <>
+      {/* Controls row — wrapper filter chips + range + density */}
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <WrapperFilterChips
+          present={derivedPresentWrappers}
+          active={activeWrapper}
+        />
+        <div className="flex items-center gap-2">
+          <RangeToggle />
+          <DensityToggle />
+        </div>
+      </div>
+
       {/* Desktop / tablet — full table */}
       <div className="hidden overflow-clip rounded-xl border border-border bg-card md:block">
         <div className="overflow-x-auto">
@@ -376,6 +432,7 @@ export function HoldingsTable({
                   sparklineRange={sparklineRange}
                   sparklineSeries={sparklineByTicker?.get(row.ticker) ?? null}
                   totalVisibleValue={totalVisibleValue}
+                  density={density}
                   onOpenScore={handleOpenScore}
                   onOpenVehicleScore={handleOpenVehicleScore}
                   onDelete={handleDelete}
