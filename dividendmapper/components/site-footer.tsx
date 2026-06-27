@@ -19,7 +19,6 @@ const TOOLS_COLUMN: ColumnDef = {
 };
 
 const COMPANY_BASE_LINKS = [
-  { href: "/waitlist", label: "Waitlist" },
   { href: "/privacy", label: "Privacy" },
   { href: "/terms", label: "Terms" },
 ];

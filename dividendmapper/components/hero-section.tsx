@@ -33,17 +33,9 @@ export function HeroSection() {
 
       <div className="mx-auto max-w-7xl px-4 py-20 md:px-6 md:py-28 lg:px-8 lg:py-32">
         <div className="mx-auto max-w-3xl text-center">
-          <motion.span
-            {...fadeUp(0)}
-            className="inline-flex items-center gap-2 rounded-full border border-border bg-card/80 px-3 py-1 text-xs font-medium uppercase tracking-wider text-muted-foreground backdrop-blur-sm"
-          >
-            <span className="h-1.5 w-1.5 rounded-full bg-brand-500 shadow-[var(--shadow-glow-brand)]" />
-            Phase 2 is live
-          </motion.span>
-
           <motion.h1
-            {...fadeUp(0.08)}
-            className="mt-6 font-display text-4xl font-bold tracking-tight text-foreground md:text-5xl lg:text-6xl"
+            {...fadeUp(0)}
+            className="font-display text-4xl font-bold tracking-tight text-foreground md:text-5xl lg:text-6xl"
           >
             Know when you can retire on your{" "}
             <span className="text-brand-600 dark:text-brand-400">dividends</span>

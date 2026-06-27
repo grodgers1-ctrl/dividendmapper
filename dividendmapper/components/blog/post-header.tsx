@@ -117,10 +117,10 @@ export function PostFooter({ nextHref, nextLabel }: PostFooterProps) {
           ← All guides
         </Link>
         <Link
-          href="/waitlist"
+          href="/pricing"
           className="text-muted-foreground transition-colors hover:text-foreground"
         >
-          Join the waitlist
+          See pricing
         </Link>
       </div>
     </footer>

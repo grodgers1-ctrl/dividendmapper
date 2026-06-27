@@ -78,10 +78,10 @@ const FEATURES = [
       "Calculator inputs never leave the page. No account, no analytics on your numbers, no &ldquo;send us your portfolio.&rdquo; Signed-in portfolio tracking is opt-in and lives behind your own login.",
   },
   {
-    title: "Roadmap on the table",
-    href: "/waitlist",
+    title: "Income vehicles, scored",
+    href: "/income-vehicles",
     description:
-      "Calculators landed in Phase 1. Portfolio tracking and the Pro tier are live in Phase 2. Trading 212 sync follows in Phase 3, US brokers via SnapTrade in Phase 4. Dates and order, on one page.",
+      "REIT, BDC and UK REIT ratings on one page. The same Quality, Trim and Reinvest framework applied to income vehicles, with a public dividend calendar showing ex-div and payment dates across the universe.",
   },
 ];
 
@@ -245,11 +245,7 @@ function ProofSection() {
         <p className="mx-auto mt-10 max-w-3xl text-xs leading-relaxed text-muted-foreground">
           28-ticker basket. 2010 to 2024 is a US large-cap growth supercycle:
           different basket, different period, different headline. Survivorship
-          bias real. Methodology and CSVs published; reproduce with{" "}
-          <code className="rounded bg-secondary px-1 py-0.5 font-mono text-[11px]">
-            npm run analyst:event-study
-          </code>
-          .
+          bias real. Methodology and CSVs published.
         </p>
 
         <div className="mt-8 flex justify-center">
@@ -327,7 +323,7 @@ function HowItWorksSection() {
 const FAQS = [
   {
     q: "Is DividendMapper free?",
-    a: "Calculators are free forever. No signup, no credit card. Pro is £15 a month for unlimited holdings and projected income; the Free tier keeps up to 10 manual holdings. Broker auto-sync lands in Phase 3.",
+    a: "Calculators are free forever. No signup, no credit card. Pro is £15 a month for unlimited holdings, daily resilience scores, and Trading 212 auto-sync for UK ISA, SIPP and GIA accounts. Free tracks up to 10 holdings manually.",
   },
   {
     q: "Do I need an account to use the calculators?",
@@ -343,7 +339,7 @@ const FAQS = [
   },
   {
     q: "What broker integrations are coming?",
-    a: "Trading 212 first, in Phase 3 (around Month 4), covering UK ISA, SIPP and GIA in one connection. Schwab, Fidelity, Robinhood, Vanguard US and Interactive Brokers follow in Phase 4 through SnapTrade. We skipped Plaid; their $500-a-month minimum doesn&rsquo;t fit a low-priced consumer product.",
+    a: "Trading 212 is live for UK ISA, SIPP and GIA accounts in one connection. US brokers (Schwab, Fidelity, Robinhood, Vanguard US, Interactive Brokers) follow next via SnapTrade. We skipped Plaid; their $500-a-month minimum doesn&rsquo;t fit a low-priced consumer product.",
   },
   {
     q: "Is this financial advice?",
