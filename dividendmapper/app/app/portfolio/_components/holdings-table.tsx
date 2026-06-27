@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useSyncExternalStore, useTransition } from "react";
-import { Trash2, ArrowDown } from "lucide-react";
+import { Trash2, ArrowDown, Pencil } from "lucide-react";
 import type { QuoteResult } from "@/lib/market/quote";
 import type { HoldingScore } from "@/lib/scoring/portfolio-scores";
 import type { ScoreType } from "@/lib/scoring/chip-display";
@@ -40,6 +40,10 @@ import {
   type Density,
 } from "./density-toggle";
 import { WrapperFilterChips } from "./wrapper-filter-chips";
+import { HoldingLogo } from "./holding-logo";
+import { RowSparkline } from "./row-sparkline";
+import { PortfolioBar } from "./portfolio-bar";
+import { formatMoney } from "@/lib/portfolio/format-money";
 import {
   HoldingRow,
   BrokerCell,
@@ -471,31 +475,64 @@ export function HoldingsTable({
           const received = actualsByKey?.[actualKey(row.ticker, row.wrapper)];
           const score = scoresByTicker[row.ticker];
           const vehicle = vehicleScoresByTicker?.[row.ticker];
+          const series = sparklineByTicker?.get(row.ticker) ?? null;
+          const openDetail = () =>
+            router.push(`/app/portfolio/${row.ticker}`);
           return (
             <li
               key={row.id}
-              className={`rounded-xl border border-border bg-card p-4 transition-opacity ${
+              role="link"
+              tabIndex={0}
+              aria-label={`Open ${row.ticker} details`}
+              onClick={(e) => {
+                const target = e.target as HTMLElement;
+                if (target.closest("button, a, input")) return;
+                const sel =
+                  typeof window !== "undefined"
+                    ? window.getSelection()
+                    : null;
+                if (
+                  sel &&
+                  sel.toString().length > 0 &&
+                  e.currentTarget.contains(sel.anchorNode as Node)
+                ) {
+                  return;
+                }
+                openDetail();
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  openDetail();
+                }
+              }}
+              className={`cursor-pointer rounded-xl border border-border bg-card p-4 transition-all hover:bg-secondary/40 focus:outline-none focus:ring-2 focus:ring-ring [box-shadow:inset_0_1px_0_rgb(255_255_255/0.04),inset_0_-1px_0_rgb(0_0_0/0.15)] ${
                 pending ? "opacity-50" : ""
               }`}
             >
               <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <Link
-                    href={`/app/portfolio/${row.ticker}`}
-                    className="block font-mono text-base font-semibold text-foreground hover:underline"
-                  >
-                    {row.ticker}
-                  </Link>
-                  {nameByTicker?.[row.ticker] && (
-                    <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                      {nameByTicker[row.ticker]}
+                <div className="flex min-w-0 items-center gap-3">
+                  <HoldingLogo
+                    ticker={row.ticker}
+                    name={nameByTicker?.[row.ticker]}
+                    size={40}
+                  />
+                  <div className="min-w-0">
+                    <span className="block font-mono text-base font-semibold text-foreground">
+                      {row.ticker}
+                    </span>
+                    {nameByTicker?.[row.ticker] && (
+                      <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                        {nameByTicker[row.ticker]}
+                      </p>
+                    )}
+                    <p className="mt-0.5 text-[11px] uppercase tracking-wider text-muted-foreground/80">
+                      {WRAPPER_LABEL[row.wrapper] ?? row.wrapper} ·{" "}
+                      {row.cost_currency}
                     </p>
-                  )}
-                  <span className="mt-1 inline-flex items-center rounded-full border border-border bg-secondary px-2 py-0.5 text-xs font-medium text-foreground">
-                    {WRAPPER_LABEL[row.wrapper] ?? row.wrapper}
-                  </span>
+                  </div>
                 </div>
-                <div className="flex shrink-0 items-center gap-2">
+                <div className="flex shrink-0 items-center gap-1">
                   {vehicle ? (
                     <VehicleChip
                       vehicleType={vehicle.vehicleType}
@@ -519,7 +556,22 @@ export function HoldingsTable({
                   )}
                   <button
                     type="button"
-                    onClick={() => handleDelete(row)}
+                    aria-disabled="true"
+                    aria-label={`Edit ${row.ticker}`}
+                    title="Edit coming soon"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                    }}
+                    className="inline-flex h-9 w-9 cursor-not-allowed items-center justify-center rounded-md text-muted-foreground opacity-50"
+                  >
+                    <Pencil className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(row);
+                    }}
                     disabled={pending}
                     aria-label={`Delete ${row.ticker}`}
                     className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 focus:ring-offset-card disabled:cursor-not-allowed disabled:opacity-50"
@@ -529,29 +581,55 @@ export function HoldingsTable({
                 </div>
               </div>
 
-              <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+              <div className="mt-3">
+                <RowSparkline
+                  ticker={row.ticker}
+                  name={nameByTicker?.[row.ticker]}
+                  range={sparklineRange}
+                  series={series}
+                />
+              </div>
+
+              <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
                 <div>
                   <dt className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                     Quantity
                   </dt>
-                  <dd className="mt-0.5 font-mono text-foreground">
-                    {formatQuantity(Number(row.quantity))}
+                  <dd
+                    className="mt-0.5 font-mono text-foreground"
+                    title={String(row.quantity)}
+                  >
+                    {Number(row.quantity).toLocaleString("en-GB", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
                   </dd>
                 </div>
                 <div>
                   <dt className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                     Avg cost
                   </dt>
-                  <dd className="mt-0.5 font-mono text-foreground">
-                    {formatCost(Number(row.avg_cost), row.cost_currency)}
+                  <dd
+                    className="mt-0.5 font-mono text-foreground"
+                    title={String(row.avg_cost)}
+                  >
+                    {formatMoney(Number(row.avg_cost), row.cost_currency, {
+                      dp: 2,
+                    })}
                   </dd>
                 </div>
-                <div>
+                <div className="relative">
                   <dt className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                     Value
                   </dt>
                   <dd className="mt-0.5 text-sm">
                     <ValueCell status={valueStatus} />
+                    {valueStatus.kind === "ok" && (
+                      <PortfolioBar
+                        value={valueStatus.amount}
+                        totalValue={totalVisibleValue}
+                      />
+                    )}
                   </dd>
                 </div>
                 <div>
