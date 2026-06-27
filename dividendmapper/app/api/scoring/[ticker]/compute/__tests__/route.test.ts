@@ -10,6 +10,7 @@ vi.mock("@/lib/scoring/fmp-client", () => ({
   getDividendsCalendar: vi.fn().mockResolvedValue([]),
 }));
 vi.mock("@sentry/nextjs", () => ({ captureException: vi.fn() }));
+vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
 // Admin client: insert + from-builder we can inspect.
 const adminInsert = vi.fn().mockResolvedValue({ error: null });
