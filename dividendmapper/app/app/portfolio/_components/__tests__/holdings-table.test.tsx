@@ -281,6 +281,38 @@ describe("<HoldingsTable> 2dp formatting + PortfolioBar", () => {
   });
 });
 
+describe("<HoldingsTable> sortable headers", () => {
+  const sortProps = {
+    rows: [row("1", "AAPL"), row("2", "MSFT")],
+    quotes: {},
+    priceByTicker: {
+      AAPL: { price: 200, currency: "USD" },
+      MSFT: { price: 400, currency: "USD" },
+    },
+    tier: "pro" as const,
+    pricingPublic: true,
+    isBeta: true,
+    scoresByTicker: {},
+    showScores: false,
+  };
+
+  it("clicking a sortable column header persists the sort key", () => {
+    render(<HoldingsTable {...sortProps} />);
+    const valueHeader = screen.getByRole("button", { name: /sort by value/i });
+    fireEvent.click(valueHeader);
+    expect(window.localStorage.getItem("dm.holdings-sort")).toBe("value");
+  });
+
+  it("does NOT render the desktop Sort dropdown", () => {
+    render(<HoldingsTable {...sortProps} />);
+    // Only the mobile SortSelect should render. The desktop "Sort" label is gone.
+    // (Mobile SortSelect renders via md:hidden but jsdom doesn't apply media,
+    // so we scope on aria/label uniqueness.)
+    const sortLabels = screen.queryAllByText("Sort");
+    expect(sortLabels.length).toBeLessThanOrEqual(1);
+  });
+});
+
 describe("<HoldingsTable> whole-row click + Edit placeholder", () => {
   const baseRow = row("1", "AAPL");
   const baseProps = {

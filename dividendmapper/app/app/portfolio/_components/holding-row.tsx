@@ -327,7 +327,7 @@ export function HoldingRow({
       onClick={handleRowClick}
       onKeyDown={handleRowKeyDown}
       aria-label={`Open ${row.ticker} details`}
-      className={`group cursor-pointer border-b border-border last:border-b-0 transition-all hover:bg-secondary/40 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-inset ${
+      className={`group cursor-pointer border-b border-border last:border-b-0 transition-all hover:bg-secondary/40 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-inset [box-shadow:inset_0_1px_0_rgb(255_255_255/0.04),inset_0_-1px_0_rgb(0_0_0/0.15)] hover:[box-shadow:inset_0_1px_0_rgb(255_255_255/0.07),inset_0_-1px_0_rgb(0_0_0/0.25)] ${
         pending ? "opacity-50" : ""
       }`}
     >

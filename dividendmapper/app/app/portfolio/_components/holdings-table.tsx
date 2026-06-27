@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useSyncExternalStore, useTransition } from "react";
-import { Trash2 } from "lucide-react";
+import { Trash2, ArrowDown } from "lucide-react";
 import type { QuoteResult } from "@/lib/market/quote";
 import type { HoldingScore } from "@/lib/scoring/portfolio-scores";
 import type { ScoreType } from "@/lib/scoring/chip-display";
@@ -286,33 +286,24 @@ export function HoldingsTable({
 
   return (
     <>
-      {/* Sort control — applies to both the desktop table and mobile cards. */}
-      <div className="mb-3 flex items-center justify-end gap-2">
-        <label
-          htmlFor="holdings-sort"
-          className="text-[12px] font-medium leading-[16px] text-muted-foreground"
-        >
-          Sort
-        </label>
-        <SortSelect
-          id="holdings-sort"
-          value={sortKey}
-          onChange={(v) => changeSort(v as SortKey)}
-          options={(Object.keys(SORT_LABELS) as SortKey[]).map((k) => ({
-            value: k,
-            label: SORT_LABELS[k],
-          }))}
-        />
-      </div>
-
       {/* Desktop / tablet — full table */}
-      <div className="hidden overflow-hidden rounded-xl border border-border bg-card md:block">
+      <div className="hidden overflow-clip rounded-xl border border-border bg-card md:block">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="border-b border-border bg-secondary/40">
+            <thead className="sticky top-[56px] z-[5] border-b border-border bg-secondary/95 backdrop-blur supports-[backdrop-filter]:bg-secondary/80 [box-shadow:inset_0_-1px_0_rgb(255_255_255/0.04),inset_0_1px_0_rgb(0_0_0/0.20)]">
               <tr className="text-left text-[12px] font-medium leading-[16px] text-muted-foreground">
                 <th scope="col" className="px-4 py-3">
-                  Ticker
+                  <button
+                    type="button"
+                    onClick={() => changeSort("ticker")}
+                    aria-label="Sort by Ticker"
+                    className="inline-flex items-center gap-1 text-[12px] font-medium leading-[16px] text-muted-foreground hover:text-foreground"
+                  >
+                    Ticker
+                    {sortKey === "ticker" && (
+                      <ArrowDown className="h-3 w-3" aria-hidden="true" />
+                    )}
+                  </button>
                 </th>
                 <th scope="col" className="w-[140px] px-2 py-3">
                   <span className="sr-only">Sparkline</span>
@@ -329,10 +320,30 @@ export function HoldingsTable({
                   Avg cost
                 </th>
                 <th scope="col" className="w-px whitespace-nowrap px-3 py-3 text-right">
-                  Value
+                  <button
+                    type="button"
+                    onClick={() => changeSort("value")}
+                    aria-label="Sort by Value"
+                    className="inline-flex items-center gap-1 text-[12px] font-medium leading-[16px] text-muted-foreground hover:text-foreground"
+                  >
+                    Value
+                    {sortKey === "value" && (
+                      <ArrowDown className="h-3 w-3" aria-hidden="true" />
+                    )}
+                  </button>
                 </th>
                 <th scope="col" className="w-px whitespace-nowrap px-3 py-3 text-right">
-                  Income
+                  <button
+                    type="button"
+                    onClick={() => changeSort("income")}
+                    aria-label="Sort by Income"
+                    className="inline-flex items-center gap-1 text-[12px] font-medium leading-[16px] text-muted-foreground hover:text-foreground"
+                  >
+                    Income
+                    {sortKey === "income" && (
+                      <ArrowDown className="h-3 w-3" aria-hidden="true" />
+                    )}
+                  </button>
                 </th>
                 <th scope="col" className="w-px whitespace-nowrap px-3 py-3 text-right">
                   Received (12m)
@@ -373,6 +384,25 @@ export function HoldingsTable({
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* Mobile sort dropdown — desktop uses sortable column headers instead. */}
+      <div className="mb-3 flex items-center justify-end gap-2 md:hidden">
+        <label
+          htmlFor="holdings-sort"
+          className="text-[12px] font-medium leading-[16px] text-muted-foreground"
+        >
+          Sort
+        </label>
+        <SortSelect
+          id="holdings-sort"
+          value={sortKey}
+          onChange={(v) => changeSort(v as SortKey)}
+          options={(Object.keys(SORT_LABELS) as SortKey[]).map((k) => ({
+            value: k,
+            label: SORT_LABELS[k],
+          }))}
+        />
       </div>
 
       {/* Mobile — stacked cards */}
