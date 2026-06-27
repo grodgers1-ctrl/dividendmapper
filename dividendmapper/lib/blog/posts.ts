@@ -26,6 +26,17 @@ export interface BlogPost {
 
 export const POSTS: BlogPost[] = [
   {
+    slug: "dividend-yield-vs-total-return-uk-investors",
+    title:
+      "Dividend yield vs total return: what UK investors should really focus on",
+    description:
+      "A practical UK framework for thinking about dividend stocks on a total-return basis rather than a headline-yield basis, covering the income-and-capital split, time-horizon framing, wrapper drag, and the supporting yield, growth, and safety lenses.",
+    publishedAt: "2026-06-27",
+    readingTime: "9 min",
+    tags: ["UK", "Dividend", "Education"],
+    locale: "uk",
+  },
+  {
     slug: "dividend-tax-efficiency-isa-sipp-gia-uk-comparison",
     title:
       "Dividend tax efficiency across ISA, SIPP, and GIA: the complete UK comparison",

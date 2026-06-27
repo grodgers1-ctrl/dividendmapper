@@ -1,0 +1,213 @@
+import { postMetadata } from "@/lib/blog/posts";
+import { PostHeader, PostFooter } from "@/components/blog/post-header";
+import { FaqJsonLd } from "@/components/blog/faq-json-ld";
+
+export const metadata = postMetadata("dividend-yield-vs-total-return-uk-investors");
+
+<FaqJsonLd
+  items={[
+    {
+      question: "What is total return for a UK dividend investor?",
+      answer:
+        "Total return is the sum of two things over a chosen period: the dividends you received, and the change in the share price. If a stock paid you a 4% dividend yield and the share price grew 6% over the year, the total return is roughly 10%. If the share price fell 6% instead, the total return is roughly -2%, even though the income part was positive. Yield alone misses the second leg.",
+    },
+    {
+      question: "Why is total return a better framework than headline yield?",
+      answer:
+        "Headline yield only tells you the income leg. A 6% yielding stock that loses 30% of its value in a year is not a 6% return. It is a net loss. Total return combines dividends and capital appreciation, so it captures whether the holding actually made you money over the period. For a UK dividend investor with a long time horizon, that combined measure is the more honest number.",
+    },
+    {
+      question: "How does time horizon change which part of total return matters?",
+      answer:
+        "Over short periods (under 3 years), capital swings dominate total return. The 3% to 5% annual yield is small compared with the share price volatility. Over 3 to 10 years, dividend income starts to compound and contribute more meaningfully. Over 10+ years, capital appreciation still tends to do the heavy lifting, but the accumulated dividend stream is a substantial share of the total return.",
+    },
+    {
+      question: "How does wrapper choice change the realised total return?",
+      answer:
+        "The same gross total return can produce different spendable outcomes in ISA, SIPP, and GIA. Inside an ISA, dividends and capital gains are tax-free, so gross total return equals realised total return. Inside a SIPP, tax is deferred until you draw down, but it still applies later. Inside a GIA, the dividend allowance and capital gains allowance both bite, and the difference compounds over time.",
+    },
+    {
+      question: "Does DividendMapper have a dedicated total return calculator?",
+      answer:
+        "No. DividendMapper does not currently offer a dedicated total return calculator. The closest live planning tool is the retirement income calculator at /tools/retirement-calculator, which is better suited for translating a chosen total return assumption into retirement income. The total return arithmetic in this article is simple enough to do by hand or in the dividend tracker spreadsheet, without needing a dedicated tool.",
+    },
+  ]}
+/>
+
+<PostHeader slug="dividend-yield-vs-total-return-uk-investors" />
+
+If you have read the article on why headline yield can be misleading, you already know that a high stated yield does not guarantee a good return. A 6% yielding stock that falls 30% in a single year is not actually a "6% return"; it is a net loss that happens to have paid some income along the way.
+
+The problem is that yield by itself is an incomplete metric. It captures the income leg of the equation but ignores capital return entirely. An investor who focuses only on yield can end up owning stocks whose share prices are falling faster than the dividends can compensate.
+
+This article introduces a more complete measurement framework: **total return**. It combines dividend income and capital appreciation into a single number, giving you a lens for evaluating a UK dividend stock's actual performance over time rather than just one piece of it.
+
+## What total return actually means for UK dividend investors
+
+Total return is the sum of two components over a chosen period:
+
+- Income return: the dividends received during the period
+- Capital return: the change in the share price during the period (positive for appreciation, negative for depreciation)
+
+The basic formula is straightforward:
+
+```
+Total return (%) = Dividend yield (%) + Capital growth (%)
+```
+
+**Worked example:**
+
+You buy a UK dividend stock at 100p per share. Over one year, the company pays 5p per share in dividends (a 5% yield), and the share price rises from 100p to 108p (8% capital growth).
+
+Your total return for the year is approximately 5% + 8% = **13%**.
+
+If the share price instead fell from 100p to 90p (-10% capital change), your total return would be approximately 5% minus 10% = **-5%**.
+
+The second scenario is why yield alone is dangerous: a 5% yielding stock that loses 10% of its value is a net loss, yet the yield number on its own looks positive. Total return catches that reality.
+
+For UK investors, the useful simplification is:
+
+> Total return = dividend yield + capital growth %
+
+Total return is the standard metric for evaluating investment performance because it captures both the income the portfolio generated and the change in the value of the holdings themselves.
+
+## Why time horizon changes which part of total return matters most
+
+The balance between income return and capital return shifts meaningfully depending on how long you hold the position.
+
+### Short horizon (under 3 years)
+
+Over short periods, capital swings dominate total return. A stock's share price can move 10 to 20% in either direction within a few months, dwarfing the 3% to 5% annual dividend yield. For an investor who may need to sell within 3 years, the capital component of total return is the larger risk and the larger variable.
+
+### Medium horizon (3 to 10 years)
+
+Dividend income begins to contribute meaningfully. After five years of reinvested dividends, the compounding effect starts to show in the total return number. The dividend yield matters more because the income leg has had time to accumulate.
+
+### Long horizon (10+ years)
+
+Capital appreciation compounds and becomes the dominant driver of total return. A stock that grows 4% per year in share price will see its price roughly double over 18 years without counting a single dividend payment. Add reinvested dividends on top, and the compounding effect becomes substantial.
+
+**Two worked examples:**
+
+*Example A:* A 4% yielding stock with 3% annual capital growth held for 5 years. Income compounded accounts for roughly 22% of the cumulative total return; capital growth accounts for roughly 78%.
+
+*Example B:* The same stock held for 20 years. Income compounded accounts for roughly 38% of cumulative total return, while capital growth accounts for roughly 62%. Income matters more than in the short term, but capital appreciation still dominates because it compounds on a larger base.
+
+The practical takeaway: for a UK dividend investor with a long time horizon, both legs matter, but capital appreciation does most of the heavy lifting over time.
+
+## How wrapper choice tilts the answer
+
+The same gross total return can produce different realised outcomes depending on which UK wrapper the position sits in. Tax treatment of dividends and capital gains varies by wrapper, and the difference compounds over time.
+
+### ISA
+
+Dividend income and capital gains within an ISA are free of UK tax. The headline total return is also the realised return. This is the most straightforward case: gross total return equals net return.
+
+### SIPP
+
+Dividend income is tax-free within the wrapper (subject to the scheme's tax status). Capital gains are also sheltered. Tax is payable when you draw down the pension (subject to the lump-sum allowance and income tax at your marginal rate on the remaining balance). The tax drag is deferred, not eliminated, but the compounding inside the wrapper happens on a pre-tax basis for decades.
+
+### GIA
+
+Both dividend income and capital gains are taxable in the year they arise. The dividend allowance (£500 for 2026/27) and capital gains allowance (£3,000 for 2026/27) provide some headroom, but a meaningful position will exceed both allowances.
+
+If your gross total return is 8% and your effective tax drag reduces it by 1.5 percentage points, your realised total return is 6.5%. Over 15 years, that difference compounds into a significant gap in spendable income.
+
+The same nominal total return can therefore produce meaningfully different outcomes depending on wrapper choice. The dividend tax efficiency article covers this comparison in more detail.
+
+## Worked example: two hypothetical investors, same total return, different realised income
+
+### Priya (ISA, 15-year horizon, reinvests dividends)
+
+Priya holds a £20,000 ISA position in a single UK dividend stock. The stock pays a 3.5% dividend yield, grows the dividend by 5% per year, and the share price grows by 4% per year.
+
+Priya reinvests all dividends. Over 15 years, the compounding effect runs on the combined base of the original capital, accumulated dividends, and accumulated capital growth. Because her position sits in an ISA, every pound of dividend income and every pound of capital appreciation is untaxed.
+
+The result: Priya's gross total return compounds at the headline rate without any tax erosion. By year 15, the accumulated reinvested dividends represent a material share of the total position value, and the realised spendable outcome reflects the full gross return.
+
+### James (GIA, 15-year horizon, spends dividends)
+
+James holds the same £20,000 position in the same stock, but in a GIA rather than an ISA. The gross total return is identical: same dividend yield, same dividend growth, same share price growth.
+
+However, James spends his dividends rather than reinvesting them, and he pays tax on dividend income above the annual allowance. Over 15 years, the erosion from dividend tax plus the absence of compounding on the spent dividends produces a materially lower realised outcome.
+
+The difference between Priya's and James's outcomes is not driven by stock selection or timing. It is driven entirely by wrapper choice and dividend treatment. The same gross total return produces different spendable income because the wrapper and reinvestment behaviour diverge.
+
+This is why evaluating a stock on gross total return alone is incomplete: the investor's personal wrapper and dividend treatment determine how much of that gross return ends up as spendable income.
+
+## The four lenses to use together: total return, dividend yield, dividend growth, dividend safety
+
+Total return is the headline metric, but it is not the only lens worth checking. Three supporting metrics help you understand whether the headline number is sustainable:
+
+1. Dividend yield: tells you the income component of total return at the current price. The headline-yield explainer covers why this number alone is misleading without the other lenses.
+
+2. Dividend growth: tells you whether the income component is rising or falling over time. The dividend growth vs high-yield strategy article covers the trade-off between starting yield and compounding potential.
+
+3. Dividend safety: tells you whether the dividend is sustainable. A stock with a high total return driven by an unsafe dividend is a stock that may cut, and a cut will destroy both legs of the equation. The safety-score framework covers the four-metric check (payout ratio, dividend cover, FCF yield, debt to EBITDA).
+
+Using all four lenses together gives you a composite view: the total return measures the result, yield measures the income share, growth measures the trajectory, and safety measures the durability.
+
+## How to calculate and track total return in practice
+
+Tracking total return does not require a dedicated calculator or a complex spreadsheet. You need two numbers per holding per period:
+
+- Dividends received during the period (sum of all payments)
+- End-of-period share price compared to start-of-period share price
+
+The arithmetic:
+
+```
+Total return = (Dividends received + (End price - Start price)) / Start price x 100
+```
+
+**Simple example:**
+
+You held a stock for one year. Start price: 200p. End price: 215p. Dividends received: 10p per share.
+
+```
+Total return = (10p + (215p - 200p)) / 200p x 100 = (10p + 15p) / 200p x 100 = 12.5%
+```
+
+The dividend tracker spreadsheet article covers the practical spreadsheet fields, wrapper columns or filters, and the tax-year tracking workflow that makes this calculation straightforward for ISA, SIPP, and GIA holdings separately.
+
+If you already use the portfolio tracking workflow described in the portfolio-tracking deep-dive, you can extend it by adding an end-of-period price column and recording the movement alongside the dividend income. The spreadsheet fields and the monthly or quarterly review cadence are the same; you are adding one column to capture the capital leg.
+
+## Where total return stops being the right answer
+
+Total return is a useful headline metric, but it is not the only metric that matters for every investor in every situation.
+
+### Retirees who spend the dividends and never sell
+
+For an investor who relies on dividend income to cover living costs and has no intention of selling capital, the realised return is the dividend yield on the original cost basis, not the total return. The capital appreciation leg exists on paper but is not accessible without selling. In this scenario, the investor should still track total return to understand whether the portfolio is keeping pace with inflation, but the spendable income metric is the dividend income received.
+
+### Very short horizons (under 1 year)
+
+Capital volatility can overwhelm dividend income within a single year, making total return a noisy metric that tells you more about the market in that year than about the holding. For short holding periods, focus on cash-flow planning and risk management rather than total return as a performance benchmark.
+
+### Concentrated single-stock holdings
+
+A single stock can produce a misleadingly positive total return that conceals risk concentration. The portfolio tracking workflow shows how to measure position weight drift and concentration risk alongside total return.
+
+The framework is a measurement tool, not a prescription. Use it alongside the safety checks, valuation context, and wrapper-specific planning that the rest of the DividendMapper blog cluster covers.
+
+> **Educational disclaimer:** This article is for educational purposes only. It is not financial, tax, or regulated investment advice, and it is not a recommendation to buy, sell, or hold any specific investment. The examples are simple planning illustrations, not predictions. Past performance is not a guide to future returns. Tax treatment depends on individual circumstances and may change. If you need advice about your own situation, speak to a qualified financial adviser or tax professional.
+
+## What to read next after the framework is set
+
+Once total return is part of your measurement workflow, the next useful reads are the ones that supply the supporting lenses:
+
+- [Why headline yield can be misleading](/blog/why-headline-yield-can-be-misleading): the diagnostic that this article is the positive replacement for
+- [Dividend safety score](/blog/dividend-safety-score-uk-income-investors): the four-metric check that tells you whether the income leg is sustainable
+- [Portfolio tracking for dividend income](/blog/portfolio-tracking-dividend-income-uk-investors): the workflow that records the inputs you need to calculate total return
+- [Dividend growth vs high yield](/blog/dividend-growth-vs-high-yield-uk-income-investors): the strategy trade-off between starting yield and compounding potential
+- [Dividend tax efficiency: ISA, SIPP, GIA](/blog/dividend-tax-efficiency-isa-sipp-gia-uk-comparison): the wrapper comparison that explains why gross total return and realised total return diverge
+- [Dividend tracker spreadsheet](/blog/dividend-tracker-spreadsheet-uk-investors): the spreadsheet fields that capture dividends received and end-of-period share price
+- [Retirement income calculator guide](/blog/retirement-income-calculator-guide): the tool for translating a total return assumption into retirement cash flow
+- [Retirement tax planning for dividend income](/blog/dividend-income-retirement-tax-planning-uk-investors): the withdrawal-stage wrapper context
+
+The framework is a measurement tool, not a prescription. Use it alongside the safety checks, valuation context, and wrapper-specific planning that the wider blog cluster covers.
+
+<PostFooter
+  nextHref="/blog/dividend-safety-score-uk-income-investors"
+  nextLabel="Next: check the dividend safety score so the income leg stays sustainable"
+/>
