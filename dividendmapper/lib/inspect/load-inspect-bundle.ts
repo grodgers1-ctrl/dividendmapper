@@ -79,10 +79,14 @@ export async function loadInspectBundle(ticker: string): Promise<InspectLoadResu
       // priceToFreeCashFlowsRatio -> priceToFreeCashFlowRatio,
       // roic -> returnOnInvestedCapital. Read both for backwards-compat in
       // case FMP serves an older response from cache.
+      // Note: P/FCF lives on the RATIOS endpoint, not key-metrics. The
+      // key-metrics endpoint only exposes freeCashFlowYield / evToFreeCashFlow.
       const pe = r.priceToEarningsRatio ?? r.priceEarningsRatio ?? null;
       const interestCoverage =
         r.interestCoverageRatio ?? r.interestCoverage ?? null;
       const pFcf =
+        r.priceToFreeCashFlowRatio ??
+        r.priceToFreeCashFlowsRatio ??
         (k as any).priceToFreeCashFlowRatio ??
         (k as any).priceToFreeCashFlowsRatio ??
         null;
