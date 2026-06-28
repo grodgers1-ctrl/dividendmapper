@@ -41,10 +41,11 @@ export function HeaderAuthSlot() {
   if (state.kind === "in") {
     return (
       <Link
-        href="/app/account"
-        className="hidden rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-secondary md:inline-flex"
+        href="/app/dashboard"
+        className="hidden items-center gap-1 rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-secondary md:inline-flex"
       >
-        Account
+        Open dashboard
+        <span aria-hidden>→</span>
       </Link>
     );
   }

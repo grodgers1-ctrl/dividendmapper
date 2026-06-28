@@ -109,9 +109,16 @@ export function MobileMenu({ nav, toolLinks }: MobileMenuProps) {
             {auth.kind === "in" ? (
               <>
                 <Link
+                  href="/app/dashboard"
+                  onClick={() => setOpen(false)}
+                  className="flex items-center justify-center rounded-lg bg-brand-600 px-3 py-3 text-base font-medium text-white transition-colors hover:bg-brand-700"
+                >
+                  Open dashboard
+                </Link>
+                <Link
                   href="/app/account"
                   onClick={() => setOpen(false)}
-                  className="flex items-center gap-2 rounded-lg px-3 py-3 text-base font-medium text-foreground transition-colors hover:bg-secondary"
+                  className="mt-1 flex items-center gap-2 rounded-lg px-3 py-3 text-base font-medium text-foreground transition-colors hover:bg-secondary"
                 >
                   <User className="h-4 w-4" aria-hidden />
                   Account
