@@ -8,11 +8,13 @@ import { readCachedBundle } from "@/lib/inspect/read-cached-bundle";
 import { loadInspectBundle } from "@/lib/inspect/load-inspect-bundle";
 import { attachPercentileBand } from "@/lib/inspect/percentile-bands";
 import { synthesiseVerdicts } from "@/lib/inspect/synthesise-verdicts";
+import { inspectAdminClient } from "@/lib/inspect/supabase-admin";
 import type {
   InspectBundle,
   InspectMetricFormat,
   InspectMetricSeries,
 } from "@/lib/inspect/types";
+import { HoldingLogo } from "@/app/app/portfolio/_components/holding-logo";
 import { InspectSnapshotStrip } from "../_components/inspect-snapshot-strip";
 import { InspectUpsellCard } from "../_components/inspect-upsell-card";
 import {
@@ -38,6 +40,22 @@ const loadOrFetch = cache(async (ticker: string): Promise<LoadResult> => {
   const loaded = await loadInspectBundle(ticker);
   if (loaded.status === "uncoverable") return { ok: false, reason: "uncoverable" };
   return { ok: true, bundle: loaded.bundle, cacheHit: false };
+});
+
+// Company name lookup from equity_scores. Memoised per request so header
+// and metadata share one query; the page still ships if the row is missing.
+const loadProfile = cache(async (ticker: string): Promise<{ name: string | null }> => {
+  try {
+    const sb = inspectAdminClient();
+    const { data } = await sb
+      .from("equity_scores")
+      .select("name")
+      .eq("ticker", ticker)
+      .maybeSingle();
+    return { name: (data?.name as string | null) ?? null };
+  } catch {
+    return { name: null };
+  }
 });
 
 export async function generateMetadata({
@@ -175,7 +193,10 @@ export default async function InspectTickerPage({
   const ticker = normalizeTicker((await params).ticker);
   if (!ticker) notFound();
 
-  const result = await loadOrFetch(ticker).catch((): LoadResult | null => null);
+  const [result, profile] = await Promise.all([
+    loadOrFetch(ticker).catch((): LoadResult | null => null),
+    loadProfile(ticker),
+  ]);
 
   if (!result || !result.ok) {
     return (
@@ -274,10 +295,20 @@ export default async function InspectTickerPage({
             All Inspect lookups
           </Link>
         </nav>
-        <h1 className="mt-2 font-mono text-3xl font-bold tracking-tight text-foreground">
-          {ticker}
-        </h1>
-        <p className="mt-2 max-w-prose text-sm text-muted-foreground">
+        <div className="mt-2 flex items-center gap-4">
+          <HoldingLogo ticker={ticker} name={profile.name ?? undefined} size={56} />
+          <div className="min-w-0 flex-1">
+            <h1 className="font-mono text-3xl font-bold tracking-tight text-foreground">
+              {ticker}
+            </h1>
+            {profile.name && (
+              <p className="truncate text-base text-muted-foreground">
+                {profile.name}
+              </p>
+            )}
+          </div>
+        </div>
+        <p className="mt-3 max-w-prose text-sm text-muted-foreground">
           Ten-year history of valuation, safety, growth and profitability, with
           percentile bands against {ticker}&rsquo;s own range.
         </p>
