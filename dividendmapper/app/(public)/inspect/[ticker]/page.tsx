@@ -89,7 +89,7 @@ const CARDS: [CardConfig, CardConfig, CardConfig, CardConfig] = [
     verdictKey: "value",
     metrics: [
       { key: "pe", label: "P/E", color: "#3b82f6", goodDirection: "low", format: "multiple", source: "quarterly" },
-      { key: "p_fcf", label: "P/FCF", color: "#6366f1", goodDirection: "low", format: "multiple", source: "quarterly" },
+      { key: "p_fcf", label: "P/FCF", color: "#f59e0b", goodDirection: "low", format: "multiple", source: "quarterly" },
       { key: "dividend_yield", label: "Yield", color: "#10b981", goodDirection: "high", format: "pct1", source: "monthly" },
     ],
   },
@@ -99,7 +99,7 @@ const CARDS: [CardConfig, CardConfig, CardConfig, CardConfig] = [
     verdictKey: "safety",
     metrics: [
       { key: "fcf_payout", label: "FCF Payout", color: "#3b82f6", goodDirection: "low", format: "pct", source: "quarterly" },
-      { key: "net_debt_ebitda", label: "Net Debt/EBITDA", color: "#6366f1", goodDirection: "low", format: "ratio", source: "quarterly" },
+      { key: "net_debt_ebitda", label: "Net Debt/EBITDA", color: "#f59e0b", goodDirection: "low", format: "ratio", source: "quarterly" },
       { key: "interest_coverage", label: "Interest Coverage", color: "#10b981", goodDirection: "high", format: "ratio", source: "quarterly" },
     ],
   },
@@ -109,7 +109,7 @@ const CARDS: [CardConfig, CardConfig, CardConfig, CardConfig] = [
     verdictKey: "growth",
     metrics: [
       { key: "dgr_5y", label: "DGR 5y", color: "#3b82f6", goodDirection: "high", format: "pct", source: "monthly" },
-      { key: "fcf_growth_yoy", label: "FCF Growth", color: "#6366f1", goodDirection: "high", format: "pct", source: "quarterly" },
+      { key: "fcf_growth_yoy", label: "FCF Growth", color: "#f59e0b", goodDirection: "high", format: "pct", source: "quarterly" },
       { key: "roic", label: "ROIC", color: "#10b981", goodDirection: "high", format: "pct", source: "quarterly" },
     ],
   },
@@ -119,7 +119,7 @@ const CARDS: [CardConfig, CardConfig, CardConfig, CardConfig] = [
     verdictKey: "profitability",
     metrics: [
       { key: "gross_margin", label: "Gross Margin", color: "#3b82f6", goodDirection: "high", format: "pct", source: "quarterly" },
-      { key: "operating_margin", label: "Operating Margin", color: "#6366f1", goodDirection: "high", format: "pct", source: "quarterly" },
+      { key: "operating_margin", label: "Operating Margin", color: "#f59e0b", goodDirection: "high", format: "pct", source: "quarterly" },
       { key: "net_margin", label: "Net Margin", color: "#10b981", goodDirection: "high", format: "pct", source: "quarterly" },
     ],
   },

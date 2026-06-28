@@ -156,21 +156,19 @@ export function InspectGraphCard({
 
   return (
     <section className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-semibold text-foreground">{title}</h2>
-          <p className="text-sm text-muted-foreground">{subtitle}</p>
-        </div>
-        {dataQualityWarn && (
-          <span
-            className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900"
-            title="Some metrics in this window are missing more than 40% of their observations."
-          >
-            Data quality: partial
-          </span>
-        )}
+      <div>
+        <h2 className="text-xl font-semibold text-foreground">{title}</h2>
+        <p className="text-sm text-muted-foreground">{subtitle}</p>
       </div>
       <p className="mt-3 text-base font-medium text-foreground">{verdict}</p>
+      {dataQualityWarn && (
+        <p
+          className="mt-1 text-xs italic text-muted-foreground"
+          title="One or more metrics in this window are missing more than 40% of their observations. Read the percentile bands loosely."
+        >
+          Partial data in this window.
+        </p>
+      )}
 
       <div className="relative mt-6">
         <svg
