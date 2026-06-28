@@ -17,6 +17,8 @@ import {
   type FmpCalendarDividend,
 } from "@/lib/scoring/fmp-client";
 import { scoreTicker, isoDateOffset } from "@/lib/scoring/score-ticker";
+import { warmInspectCache, type WarmSummary } from "@/lib/inspect/cron-warm-cache";
+import { inspectAdminClient } from "@/lib/inspect/supabase-admin";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -128,12 +130,40 @@ async function handle(req: Request): Promise<Response> {
     }
   }
 
+  // Warm the inspect-cache for the active ticker set. Wrapped so any failure
+  // here can never roll back the equity-scoring work above.
+  let inspectWarm: WarmSummary | string;
+  try {
+    inspectWarm = await warmInspectCache();
+  } catch (err) {
+    Sentry.captureException(err, { extra: { stage: "warm-inspect-cache" } });
+    inspectWarm = `failed: ${err instanceof Error ? err.message : String(err)}`;
+  }
+
+  // Prune the inspect lookup audit (7-day retention). Same try/catch story.
+  let inspectAuditPruned: number | string = 0;
+  try {
+    const sb = inspectAdminClient();
+    const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const { count, error } = await sb
+      .from("inspect_lookup_audit")
+      .delete({ count: "exact" })
+      .lt("occurred_at", cutoff);
+    if (error) throw error;
+    inspectAuditPruned = count ?? 0;
+  } catch (err) {
+    Sentry.captureException(err, { extra: { stage: "prune-inspect-audit" } });
+    inspectAuditPruned = `failed: ${err instanceof Error ? err.message : String(err)}`;
+  }
+
   return NextResponse.json({
     ok: true,
     tickerCount: uniqueTickers.length,
     successfulTickerCount,
     failedTickerCount,
     durationMs: Date.now() - startedAt,
+    inspect_warm: inspectWarm,
+    inspect_audit_pruned: inspectAuditPruned,
   });
 }
 
