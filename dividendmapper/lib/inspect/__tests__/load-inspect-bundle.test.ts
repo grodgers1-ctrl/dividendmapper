@@ -107,4 +107,36 @@ describe('loadInspectBundle', () => {
     expect(upsertQuarterly).toHaveBeenCalled();
     expect(upsertMonthly).toHaveBeenCalled();
   });
+
+  it('reads p_fcf from the ratios endpoint (priceToFreeCashFlowRatio)', async () => {
+    // FMP serves P/FCF on the RATIOS endpoint, not key-metrics. Key-metrics
+    // only exposes freeCashFlowYield / evToFreeCashFlow. Regression guard
+    // for the 2026-06 Glenn-smoke bug where MSFT showed P/FCF n/a because
+    // the loader read from key-metrics only.
+    const date = '2026-03-31';
+    (fmp.getRatiosQuarterly as any).mockResolvedValue([
+      { date, priceToEarningsRatio: 21.6, priceToFreeCashFlowRatio: 174 },
+    ]);
+    (fmp.getKeyMetricsQuarterly as any).mockResolvedValue([
+      // No priceToFreeCashFlow* key here on the live API.
+      { date, netDebtToEBITDA: 0.5, returnOnInvestedCapital: 0.05 },
+    ]);
+    (fmp.getCashFlowStatementQuarterly as any).mockResolvedValue([]);
+    (fmp.getIncomeStatementQuarterly as any).mockResolvedValue([]);
+    (fmp.getDividends as any).mockResolvedValue([]);
+
+    (sb.inspectAdminClient as any).mockReturnValue({
+      from: (table: string) => {
+        if (table === 'ticker_inspect_quarterly') return { upsert: vi.fn().mockResolvedValue({ error: null }) };
+        if (table === 'ticker_inspect_monthly') return { upsert: vi.fn().mockResolvedValue({ error: null }) };
+        if (table === 'ticker_price_history') return makeChainedSelect([]);
+        throw new Error(`unexpected table ${table}`);
+      },
+    });
+
+    const res = await loadInspectBundle('MSFT');
+    expect(res.status).toBe('ok');
+    if (res.status !== 'ok') throw new Error();
+    expect(res.bundle.quarterly[0].p_fcf).toBe(174);
+  });
 });
