@@ -23,7 +23,7 @@ type Props = {
 };
 
 function formatValue(value: number | null, format: Format): string {
-  if (value == null) return "n/a";
+  if (value == null || !Number.isFinite(value)) return "n/a";
   if (format === "multiple") return `${value.toFixed(1)}×`;
   if (format === "pct") return `${(value * 100).toFixed(1)}%`;
   return value.toFixed(2);
@@ -32,7 +32,7 @@ function formatValue(value: number | null, format: Format): string {
 // Map a 0-1 percentile + direction onto a small palette of Tailwind classes.
 // goodDirection 'high' rewards a percentile near 1; 'low' inverts it.
 function chipClasses(percentile: number | null, direction: Direction): string {
-  if (percentile == null) return "";
+  if (percentile == null || !Number.isFinite(percentile)) return "";
   const good = direction === "high" ? percentile : 1 - percentile;
   if (good >= 0.7) {
     return "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200";
@@ -70,7 +70,7 @@ export function InspectSnapshotStrip({ current, percentiles }: Props) {
             <p className="mt-1 font-mono text-lg font-semibold tabular-nums text-foreground">
               {formatValue(tile.value, tile.format)}
             </p>
-            {tile.percentile != null && (
+            {tile.percentile != null && Number.isFinite(tile.percentile) && (
               <span
                 className={`mt-2 inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${chipClasses(
                   tile.percentile,

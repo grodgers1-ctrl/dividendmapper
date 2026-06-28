@@ -74,16 +74,30 @@ export async function loadInspectBundle(ticker: string): Promise<InspectLoadResu
     .map((r: any): CachedQuarterlyRow => {
       const k = keyByDate.get(r.date) ?? {};
       const m = margins.get(r.date);
+      // FMP renamed several fields in 2025: priceEarningsRatio ->
+      // priceToEarningsRatio, interestCoverage -> interestCoverageRatio,
+      // priceToFreeCashFlowsRatio -> priceToFreeCashFlowRatio,
+      // roic -> returnOnInvestedCapital. Read both for backwards-compat in
+      // case FMP serves an older response from cache.
+      const pe = r.priceToEarningsRatio ?? r.priceEarningsRatio ?? null;
+      const interestCoverage =
+        r.interestCoverageRatio ?? r.interestCoverage ?? null;
+      const pFcf =
+        (k as any).priceToFreeCashFlowRatio ??
+        (k as any).priceToFreeCashFlowsRatio ??
+        null;
+      const roic =
+        (k as any).returnOnInvestedCapital ?? (k as any).roic ?? null;
       return {
         ticker,
         observed_at: r.date,
-        pe: r.priceEarningsRatio ?? null,
-        p_fcf: (k as any).priceToFreeCashFlowsRatio ?? null,
+        pe,
+        p_fcf: pFcf,
         net_debt_ebitda: (k as any).netDebtToEBITDA ?? null,
-        interest_coverage: r.interestCoverage ?? null,
+        interest_coverage: interestCoverage,
         fcf_payout: fcfPayout.get(r.date) ?? null,
         fcf_growth_yoy: fcfGrowth.get(r.date) ?? null,
-        roic: (k as any).roic ?? null,
+        roic,
         gross_margin: m?.grossMargin ?? null,
         operating_margin: m?.operatingMargin ?? null,
         net_margin: m?.netMargin ?? null,

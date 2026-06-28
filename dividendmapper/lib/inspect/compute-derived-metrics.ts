@@ -7,7 +7,14 @@
 import { computeDividendCagr, type DividendPayment } from '../scoring/dividend-cagr';
 
 type QuarterlyRow = { date: string };
-type CashFlowRow = QuarterlyRow & { freeCashFlow: number; dividendsPaid: number };
+// FMP renamed `dividendsPaid` to `netDividendsPaid` / `commonDividendsPaid`
+// in 2025. We read all three and pick the first finite one.
+type CashFlowRow = QuarterlyRow & {
+  freeCashFlow?: number | null;
+  dividendsPaid?: number | null;
+  netDividendsPaid?: number | null;
+  commonDividendsPaid?: number | null;
+};
 type IncomeRow = QuarterlyRow & {
   revenue: number;
   grossProfit: number;
@@ -16,6 +23,19 @@ type IncomeRow = QuarterlyRow & {
 };
 
 export type DerivedPoint = { at: string; raw: number | null };
+
+function num(v: unknown): number {
+  return typeof v === 'number' && Number.isFinite(v) ? v : 0;
+}
+
+function pickDividendsPaid(r: CashFlowRow): number {
+  // Prefer the new name; fall back to the old.
+  const candidates = [r.netDividendsPaid, r.commonDividendsPaid, r.dividendsPaid];
+  for (const c of candidates) {
+    if (typeof c === 'number' && Number.isFinite(c)) return c;
+  }
+  return 0;
+}
 
 function rollingTtm<R extends QuarterlyRow>(
   rows: ReadonlyArray<R>,
@@ -33,23 +53,32 @@ function rollingTtm<R extends QuarterlyRow>(
 }
 
 export function computeFcfPayoutTtm(cashFlow: ReadonlyArray<CashFlowRow>): DerivedPoint[] {
-  const fcfTtm = rollingTtm(cashFlow, (r) => r.freeCashFlow);
-  const divsTtm = rollingTtm(cashFlow, (r) => Math.abs(r.dividendsPaid));
-  return fcfTtm.map((f, i) => ({
-    at: f.at,
-    raw: f.ttm > 0 ? divsTtm[i].ttm / f.ttm : null,
-  }));
+  const fcfTtm = rollingTtm(cashFlow, (r) => num(r.freeCashFlow));
+  const divsTtm = rollingTtm(cashFlow, (r) => Math.abs(pickDividendsPaid(r)));
+  return fcfTtm.map((f, i) => {
+    const denom = f.ttm;
+    const numer = divsTtm[i]?.ttm ?? 0;
+    if (!Number.isFinite(denom) || !Number.isFinite(numer) || denom <= 0) {
+      return { at: f.at, raw: null };
+    }
+    return { at: f.at, raw: numer / denom };
+  });
 }
 
 export function computeFcfGrowthYoy(cashFlow: ReadonlyArray<CashFlowRow>): DerivedPoint[] {
-  const ttm = rollingTtm(cashFlow, (r) => r.freeCashFlow);
+  const ttm = rollingTtm(cashFlow, (r) => num(r.freeCashFlow));
   const out: DerivedPoint[] = [];
   for (let i = 0; i + 4 < ttm.length; i++) {
     const cur = ttm[i].ttm;
     const prior = ttm[i + 4].ttm;
+    const safe =
+      Number.isFinite(cur) &&
+      Number.isFinite(prior) &&
+      prior > 0 &&
+      Number.isFinite(cur / prior);
     out.push({
       at: ttm[i].at,
-      raw: prior > 0 && Number.isFinite(cur / prior) ? (cur - prior) / prior : null,
+      raw: safe ? (cur - prior) / prior : null,
     });
   }
   return out;

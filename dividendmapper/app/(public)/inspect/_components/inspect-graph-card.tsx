@@ -54,8 +54,13 @@ function projectPoints(
 ): ProjectedPoint[] {
   // points arrives newest-first. Filter to those inside the window with a
   // computable percentile (the band helper returns null when raw is null).
+  // Guard against NaN percentile (can leak through if upstream raw was NaN
+  // rather than null — e.g. computeFcfPayoutTtm divide-by-zero edge cases).
   const filtered = points.filter(
-    (p) => new Date(p.at).getTime() >= cutoffMs && p.percentile !== null,
+    (p) =>
+      new Date(p.at).getTime() >= cutoffMs &&
+      p.percentile !== null &&
+      Number.isFinite(p.percentile),
   );
   if (filtered.length === 0) return [];
   const newestMs = new Date(filtered[0].at).getTime();
@@ -235,6 +240,13 @@ export function InspectGraphCard({
           {linesData.map((l) => {
             if (!selectedKeys.has(l.key) || l.pts.length === 0) return null;
             const last = l.pts[l.pts.length - 1];
+            if (
+              !last ||
+              !Number.isFinite(last.x) ||
+              !Number.isFinite(last.y)
+            ) {
+              return null;
+            }
             return (
               <circle
                 key={`mk-${l.key}`}
@@ -259,20 +271,26 @@ export function InspectGraphCard({
         </svg>
         {hovered && (
           <div className="pointer-events-none absolute left-2 top-2 rounded-md border border-border bg-background/95 px-2 py-1 text-xs shadow-sm backdrop-blur">
-            {hovered.items.map((it) => (
-              <div key={it.key} className="flex items-center gap-2">
-                <span
-                  aria-hidden
-                  className="inline-block h-2 w-2 rounded-full"
-                  style={{ backgroundColor: it.color }}
-                />
-                <span className="font-medium">{it.label}:</span>
-                <span>{formatValue(it.pt.raw, it.format)}</span>
-                <span className="text-muted-foreground">
-                  P{Math.round((it.pt.percentile ?? 0) * 100)}
-                </span>
-              </div>
-            ))}
+            {hovered.items.map((it) => {
+              const p = it.pt.percentile;
+              const hasPct = p !== null && Number.isFinite(p);
+              return (
+                <div key={it.key} className="flex items-center gap-2">
+                  <span
+                    aria-hidden
+                    className="inline-block h-2 w-2 rounded-full"
+                    style={{ backgroundColor: it.color }}
+                  />
+                  <span className="font-medium">{it.label}:</span>
+                  <span>{formatValue(it.pt.raw, it.format)}</span>
+                  {hasPct && (
+                    <span className="text-muted-foreground">
+                      P{Math.round((p as number) * 100)}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
@@ -314,7 +332,7 @@ export function InspectGraphCard({
               <span className="text-muted-foreground">
                 {formatValue(cur, m.format)}
               </span>
-              {curPct !== null && (
+              {curPct !== null && Number.isFinite(curPct) && (
                 <span className="text-xs text-muted-foreground">
                   P{Math.round(curPct * 100)}
                   {rangeSuffix}
