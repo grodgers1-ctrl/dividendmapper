@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { computeDividendCagr5y } from "@/lib/scoring/dividend-cagr";
+import {
+  computeDividendCagr5y,
+  computeDividendCagr,
+} from "@/lib/scoring/dividend-cagr";
 
 const asOf = new Date("2026-06-22T00:00:00Z");
 const YEAR_MS = 365.25 * 86_400_000;
@@ -86,5 +89,67 @@ describe("computeDividendCagr5y", () => {
     expect(cagr).not.toBeNull();
     expect(cagr!).toBeGreaterThan(0.035);
     expect(cagr!).toBeLessThan(0.04);
+  });
+});
+
+// helper: a synthetic dividend stream growing 10% per year, quarterly
+function syntheticDividends(
+  startYear: number,
+  years: number,
+  base = 0.5,
+  growth = 0.1,
+) {
+  const out: Array<{ date: string; dividend: number }> = [];
+  for (let y = 0; y < years; y++) {
+    const year = startYear + y;
+    const annual = base * Math.pow(1 + growth, y);
+    for (let q = 0; q < 4; q++) {
+      const month = String(q * 3 + 1).padStart(2, "0");
+      out.push({ date: `${year}-${month}-15`, dividend: annual / 4 });
+    }
+  }
+  return out;
+}
+
+describe("computeDividendCagr", () => {
+  it("returns ~10% for a 5y window over 10%-growth synthetic stream", () => {
+    const stream = syntheticDividends(2015, 10);
+    const cagr = computeDividendCagr(stream, {
+      windowYears: 5,
+      asOfDate: new Date("2024-06-30"),
+    });
+    expect(cagr).not.toBeNull();
+    expect(cagr!).toBeGreaterThan(0.095);
+    expect(cagr!).toBeLessThan(0.105);
+  });
+  it("returns ~10% for a 3y window over the same stream", () => {
+    const stream = syntheticDividends(2015, 10);
+    const cagr = computeDividendCagr(stream, {
+      windowYears: 3,
+      asOfDate: new Date("2024-06-30"),
+    });
+    expect(cagr).not.toBeNull();
+    expect(cagr!).toBeGreaterThan(0.095);
+    expect(cagr!).toBeLessThan(0.105);
+  });
+  it("returns null when stream has < window of data before asOfDate", () => {
+    const stream = syntheticDividends(2023, 1);
+    const cagr = computeDividendCagr(stream, {
+      windowYears: 5,
+      asOfDate: new Date("2024-06-30"),
+    });
+    expect(cagr).toBeNull();
+  });
+  it("uses only payments at or before asOfDate", () => {
+    const stream = syntheticDividends(2015, 10);
+    const earlyCagr = computeDividendCagr(stream, {
+      windowYears: 5,
+      asOfDate: new Date("2020-06-30"),
+    });
+    const laterCagr = computeDividendCagr(stream, {
+      windowYears: 5,
+      asOfDate: new Date("2024-06-30"),
+    });
+    expect(earlyCagr).not.toBe(laterCagr);
   });
 });
