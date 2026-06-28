@@ -53,7 +53,7 @@ export const DEFAULT_NAV_ITEMS: readonly NavItem[] = [
     icon: Star,
     requiresPro: true,
   },
-  { href: "/inspect", label: "Inspect", icon: Search },
+  { href: "/app/inspect", label: "Inspect", icon: Search },
   { href: "/app/account", label: "Account", icon: User },
   {
     href: "/app/admin/scoring/audit",

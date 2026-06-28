@@ -14,7 +14,7 @@ describe("DEFAULT_NAV_ITEMS", () => {
       "/app/portfolio/scoring",
       "/app/income-vehicles",
       "/app/portfolio/watchlist",
-      "/inspect",
+      "/app/inspect",
       "/app/account",
       "/app/admin/scoring/audit",
     ]);
@@ -58,7 +58,7 @@ describe("filterNavItems", () => {
     expect(items.map((i) => i.href)).toEqual([
       "/app/dashboard",
       "/app/portfolio",
-      "/inspect",
+      "/app/inspect",
       "/app/account",
     ]);
   });
@@ -76,7 +76,7 @@ describe("filterNavItems", () => {
       "/app/portfolio/scoring",
       "/app/income-vehicles",
       "/app/portfolio/watchlist",
-      "/inspect",
+      "/app/inspect",
       "/app/account",
     ]);
   });
@@ -108,7 +108,7 @@ describe("filterNavItems", () => {
     expect(items.map((i) => i.href)).toEqual([
       "/app/dashboard",
       "/app/portfolio",
-      "/inspect",
+      "/app/inspect",
       "/app/account",
       "/app/admin/scoring/audit",
     ]);
