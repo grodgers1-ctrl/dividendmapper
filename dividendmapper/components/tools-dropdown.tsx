@@ -7,6 +7,7 @@ export const TOOL_LINKS = [
   { href: "/tools/retirement-calculator", label: "Retirement calculator" },
   { href: "/tools/dcf-calculator", label: "DCF calculator" },
   { href: "/scoring", label: "Resilience scoring" },
+  { href: "/inspect", label: "Inspect" },
   { href: "/income-vehicles", label: "Income vehicles" },
   { href: "/dividend-calendar", label: "Dividend calendar" },
 ];
