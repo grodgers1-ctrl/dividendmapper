@@ -229,7 +229,7 @@ export default async function HoldingDetailPage({
 
       <div className="mt-4 mb-6">
         <Link
-          href={`/inspect/${ticker}`}
+          href={`/app/inspect/${ticker}`}
           className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
         >
           Inspect 10-year valuation history
