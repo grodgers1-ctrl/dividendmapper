@@ -38,3 +38,16 @@ export type InspectBundle = {
 export type InspectLoadResult =
   | { status: 'ok'; bundle: InspectBundle; cacheHit: boolean }
   | { status: 'uncoverable' };
+
+export type InspectMetricFormat = 'pct' | 'pct1' | 'multiple' | 'ratio';
+
+export type InspectMetricSeries = {
+  key: string;
+  label: string;
+  color: string;
+  cadence: 'monthly' | 'quarterly';
+  rangeYears: number;
+  goodDirection: 'high' | 'low';
+  format: InspectMetricFormat;
+  points: Array<{ at: string; raw: number | null; percentile: number | null }>;
+};

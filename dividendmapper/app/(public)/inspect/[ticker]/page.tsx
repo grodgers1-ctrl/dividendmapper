@@ -8,10 +8,17 @@ import { readCachedBundle } from "@/lib/inspect/read-cached-bundle";
 import { loadInspectBundle } from "@/lib/inspect/load-inspect-bundle";
 import { attachPercentileBand } from "@/lib/inspect/percentile-bands";
 import { synthesiseVerdicts } from "@/lib/inspect/synthesise-verdicts";
-import type { InspectBundle } from "@/lib/inspect/types";
+import type {
+  InspectBundle,
+  InspectMetricFormat,
+  InspectMetricSeries,
+} from "@/lib/inspect/types";
 import { InspectSnapshotStrip } from "../_components/inspect-snapshot-strip";
-import { InspectGraphCard, type Metric } from "../_components/inspect-graph-card";
 import { InspectUpsellCard } from "../_components/inspect-upsell-card";
+import {
+  InspectClientShell,
+  type InspectCard,
+} from "./_inspect-client-shell";
 
 // Inspect bundles refresh nightly via the API route's fall-through to FMP.
 // An hour of ISR keeps the page cheap to crawl, and the cached HTML serves
@@ -59,32 +66,95 @@ export async function generateMetadata({
   };
 }
 
-const VALUE_METRICS: [Metric, Metric, Metric] = [
-  { key: "pe", label: "P/E", goodDirection: "low" },
-  { key: "p_fcf", label: "P/FCF", goodDirection: "low" },
-  { key: "dividend_yield", label: "Dividend yield", goodDirection: "high" },
+type MetricConfig = {
+  key: string;
+  label: string;
+  color: string;
+  goodDirection: "high" | "low";
+  format: InspectMetricFormat;
+  source: "monthly" | "quarterly";
+};
+
+type CardConfig = {
+  title: string;
+  subtitle: string;
+  verdictKey: "value" | "safety" | "growth" | "profitability";
+  metrics: [MetricConfig, MetricConfig, MetricConfig];
+};
+
+const CARDS: [CardConfig, CardConfig, CardConfig, CardConfig] = [
+  {
+    title: "Value",
+    subtitle: "Is the share cheap or dear by its own history?",
+    verdictKey: "value",
+    metrics: [
+      { key: "pe", label: "P/E", color: "#3b82f6", goodDirection: "low", format: "multiple", source: "quarterly" },
+      { key: "p_fcf", label: "P/FCF", color: "#6366f1", goodDirection: "low", format: "multiple", source: "quarterly" },
+      { key: "dividend_yield", label: "Yield", color: "#10b981", goodDirection: "high", format: "pct1", source: "monthly" },
+    ],
+  },
+  {
+    title: "Safety",
+    subtitle: "Can the business comfortably cover the dividend?",
+    verdictKey: "safety",
+    metrics: [
+      { key: "fcf_payout", label: "FCF Payout", color: "#3b82f6", goodDirection: "low", format: "pct", source: "quarterly" },
+      { key: "net_debt_ebitda", label: "Net Debt/EBITDA", color: "#6366f1", goodDirection: "low", format: "ratio", source: "quarterly" },
+      { key: "interest_coverage", label: "Interest Coverage", color: "#10b981", goodDirection: "high", format: "ratio", source: "quarterly" },
+    ],
+  },
+  {
+    title: "Growth",
+    subtitle: "Is the dividend and the cash behind it still growing?",
+    verdictKey: "growth",
+    metrics: [
+      { key: "dgr_5y", label: "DGR 5y", color: "#3b82f6", goodDirection: "high", format: "pct", source: "monthly" },
+      { key: "fcf_growth_yoy", label: "FCF Growth", color: "#6366f1", goodDirection: "high", format: "pct", source: "quarterly" },
+      { key: "roic", label: "ROIC", color: "#10b981", goodDirection: "high", format: "pct", source: "quarterly" },
+    ],
+  },
+  {
+    title: "Profitability",
+    subtitle: "Is the engine getting better or worse at making money?",
+    verdictKey: "profitability",
+    metrics: [
+      { key: "gross_margin", label: "Gross Margin", color: "#3b82f6", goodDirection: "high", format: "pct", source: "quarterly" },
+      { key: "operating_margin", label: "Operating Margin", color: "#6366f1", goodDirection: "high", format: "pct", source: "quarterly" },
+      { key: "net_margin", label: "Net Margin", color: "#10b981", goodDirection: "high", format: "pct", source: "quarterly" },
+    ],
+  },
 ];
 
-const SAFETY_METRICS: [Metric, Metric, Metric] = [
-  { key: "fcf_payout", label: "FCF payout", goodDirection: "low" },
-  { key: "net_debt_ebitda", label: "Net debt / EBITDA", goodDirection: "low" },
-  { key: "interest_coverage", label: "Interest coverage", goodDirection: "high" },
-];
-
-const GROWTH_METRICS: [Metric, Metric, Metric] = [
-  { key: "dgr_5y", label: "DGR 5y", goodDirection: "high" },
-  { key: "fcf_growth_yoy", label: "FCF growth (YoY)", goodDirection: "high" },
-  { key: "roic", label: "ROIC", goodDirection: "high" },
-];
-
-const PROFITABILITY_METRICS: [Metric, Metric, Metric] = [
-  { key: "gross_margin", label: "Gross margin", goodDirection: "high" },
-  { key: "operating_margin", label: "Operating margin", goodDirection: "high" },
-  { key: "net_margin", label: "Net margin", goodDirection: "high" },
-];
+function buildSeries(
+  bundle: InspectBundle,
+  cfg: MetricConfig,
+): InspectMetricSeries {
+  const rows = cfg.source === "monthly" ? bundle.monthly : bundle.quarterly;
+  const banded = attachPercentileBand(
+    rows.map((r) => ({
+      at: r.observed_at,
+      raw:
+        ((r as unknown as Record<string, number | null | undefined>)[cfg.key] ??
+          null) as number | null,
+    })),
+  );
+  return {
+    key: cfg.key,
+    label: cfg.label,
+    color: cfg.color,
+    cadence: cfg.source,
+    rangeYears:
+      cfg.source === "monthly"
+        ? bundle.rangeYearsMonthly
+        : bundle.rangeYearsQuarterly,
+    goodDirection: cfg.goodDirection,
+    format: cfg.format,
+    points: banded,
+  };
+}
 
 // Mirror the API route's percentile-bands shape: the most-recent point's
-// percentile within its own history.
+// percentile within its own history. Used for the snapshot strip + verdicts.
 function bandFor(
   rows: Array<{ observed_at: string; [k: string]: unknown }>,
   key: string,
@@ -179,6 +249,19 @@ export default async function InspectTickerPage({
 
   const verdicts = synthesiseVerdicts({ ticker, current, percentiles });
 
+  const cards = CARDS.map((cfg): InspectCard => ({
+    title: cfg.title,
+    subtitle: cfg.subtitle,
+    verdict: verdicts[cfg.verdictKey],
+    metrics: [
+      buildSeries(bundle, cfg.metrics[0]),
+      buildSeries(bundle, cfg.metrics[1]),
+      buildSeries(bundle, cfg.metrics[2]),
+    ],
+  })) as [InspectCard, InspectCard, InspectCard, InspectCard];
+
+  const available10y = bundle.rangeYearsMonthly >= 9.5;
+
   return (
     <div className="bg-background">
       <div className="mx-auto max-w-4xl px-4 py-10 md:px-6 md:py-12">
@@ -199,46 +282,14 @@ export default async function InspectTickerPage({
           percentile bands against {ticker}&rsquo;s own range.
         </p>
 
-        {/* Window selector (3y / 5y / 10y) wires up Day 6 when the cards
-            actually re-render off the selected window. */}
-
         <InspectSnapshotStrip current={current} percentiles={percentiles} />
 
-        <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2">
-          <InspectGraphCard
-            title="Value"
-            subtitle="Is the share cheap or dear by its own history?"
-            verdict={verdicts.value}
-            metrics={VALUE_METRICS}
-            windowYears={10}
-          />
-          <InspectGraphCard
-            title="Safety"
-            subtitle="Can the business comfortably cover the dividend?"
-            verdict={verdicts.safety}
-            metrics={SAFETY_METRICS}
-            windowYears={10}
-          />
-          <InspectGraphCard
-            title="Growth"
-            subtitle="Is the dividend and the cash behind it still growing?"
-            verdict={verdicts.growth}
-            metrics={GROWTH_METRICS}
-            windowYears={10}
-          />
-          <InspectGraphCard
-            title="Profitability"
-            subtitle="How much of every pound of sales survives to the bottom line?"
-            verdict={verdicts.profitability}
-            metrics={PROFITABILITY_METRICS}
-            windowYears={10}
-          />
-        </div>
+        <InspectClientShell cards={cards} available10y={available10y} />
 
         {/*
           Upsell card is hard-coded to "anon" while the page is statically
-          rendered: reading auth would force it dynamic. Day 6 / Day 8 swap
-          this for a small client island that reads the real tier.
+          rendered: reading auth would force it dynamic. Day 8 swaps this for
+          a small client island that reads the real tier.
         */}
         <InspectUpsellCard tier="anon" />
 
