@@ -226,6 +226,16 @@ export default async function ScoringTickerPage({
           })}
         </div>
 
+        <div className="mt-4">
+          <Link
+            href={`/inspect/${ticker}`}
+            className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+          >
+            Inspect 10-year valuation history
+            <span aria-hidden>→</span>
+          </Link>
+        </div>
+
         <p className="mt-6 text-sm text-muted-foreground">
           <Link
             href="/scoring-methodology"

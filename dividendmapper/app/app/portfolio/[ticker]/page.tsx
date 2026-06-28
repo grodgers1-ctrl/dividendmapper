@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -225,6 +226,16 @@ export default async function HoldingDetailPage({
           notes: holding.notes,
         }}
       />
+
+      <div className="mt-4 mb-6">
+        <Link
+          href={`/inspect/${ticker}`}
+          className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+        >
+          Inspect 10-year valuation history
+          <span aria-hidden>→</span>
+        </Link>
+      </div>
 
       <div className="grid grid-cols-12 gap-4">
         <div className="col-span-12 md:col-span-6">
