@@ -251,7 +251,7 @@ export async function getRatiosTtm(symbol: string): Promise<FmpRatiosTtm[]> {
 
 // Historical quarterly ratios — used for the A2 P/E history series
 // (priceToEarningsRatio) and R6 (interestCoverageRatio).
-export async function getRatiosQuarterly(symbol: string, limit = 20): Promise<FmpRow[]> {
+export async function getRatiosQuarterly(symbol: string, limit = 40): Promise<FmpRow[]> {
   return (await fetchEndpoint("ratios", {
     symbol,
     period: "quarter",
@@ -269,7 +269,7 @@ export async function getDividends(symbol: string, limit = 8): Promise<FmpDivide
   return (await fetchEndpoint("dividends", { symbol, limit: String(limit) })) as FmpDividend[];
 }
 
-export async function getIncomeStatementQuarterly(symbol: string, limit = 8): Promise<FmpRow[]> {
+export async function getIncomeStatementQuarterly(symbol: string, limit = 40): Promise<FmpRow[]> {
   return (await fetchEndpoint("income-statement", {
     symbol,
     period: "quarter",
@@ -277,7 +277,7 @@ export async function getIncomeStatementQuarterly(symbol: string, limit = 8): Pr
   })) as FmpRow[];
 }
 
-export async function getCashFlowStatementQuarterly(symbol: string, limit = 8): Promise<FmpRow[]> {
+export async function getCashFlowStatementQuarterly(symbol: string, limit = 40): Promise<FmpRow[]> {
   return (await fetchEndpoint("cash-flow-statement", {
     symbol,
     period: "quarter",
@@ -297,7 +297,7 @@ export async function getKeyMetricsTtm(symbol: string): Promise<FmpRow[]> {
   return (await fetchEndpoint("key-metrics-ttm", { symbol })) as FmpRow[];
 }
 
-export async function getKeyMetricsQuarterly(symbol: string, limit = 8): Promise<FmpRow[]> {
+export async function getKeyMetricsQuarterly(symbol: string, limit = 40): Promise<FmpRow[]> {
   return (await fetchEndpoint("key-metrics", {
     symbol,
     period: "quarter",
