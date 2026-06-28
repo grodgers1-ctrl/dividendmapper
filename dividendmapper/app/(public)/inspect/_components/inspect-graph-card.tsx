@@ -155,7 +155,7 @@ export function InspectGraphCard({
   const midlineY = PAD.top + (HEIGHT - PAD.top - PAD.bottom) / 2;
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+    <section className="group rounded-2xl border border-border bg-card p-6 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-brand-500/40 hover:shadow-md hover:shadow-brand-500/5">
       <div>
         <h2 className="text-xl font-semibold text-foreground">{title}</h2>
         <p className="text-sm text-muted-foreground">{subtitle}</p>
