@@ -72,28 +72,25 @@ export function IncomeCalendarChart({ months }: IncomeCalendarChartProps) {
           />
         )}
       </section>
-      <div className="mt-1.5 flex gap-1.5 overflow-hidden">
-        {months.map((m, idx) => {
-          // Phone widths can't fit 19 month labels — every other one is
-          // hidden via `invisible` so the slot keeps its width and bars stay
-          // aligned. The partial ("today") month always shows so the user
-          // can anchor themselves.
-          const showOnMobile = m.kind === "partial" || idx % 2 === 0;
-          return (
-            <span
-              key={m.ym}
-              className={`flex-1 text-center text-[9px] tabular-nums sm:text-[10px] ${
-                m.kind === "partial"
-                  ? "text-[var(--text)] font-semibold"
-                  : "text-[var(--text-muted)]"
-              }`}
-            >
-              <span className={showOnMobile ? "" : "invisible sm:visible"}>
-                {monthName(m.ym)}
-              </span>
+      <div className="mt-2 flex gap-1.5">
+        {months.map((m) => (
+          // The dashboard sits in a 1/3-width column at every viewport, so
+          // there's never room for 19 horizontal month labels above bars
+          // ~14px wide. Rotating labels vertically gives each one ~12px of
+          // line-box width — fits its bar slot, no overflow, all 19 align.
+          <span
+            key={m.ym}
+            className={`flex min-w-0 flex-1 justify-center ${
+              m.kind === "partial"
+                ? "text-[var(--text)] font-semibold"
+                : "text-[var(--text-muted)]"
+            }`}
+          >
+            <span className="text-[10px] leading-none tabular-nums [writing-mode:vertical-rl] [transform:rotate(180deg)]">
+              {monthName(m.ym)}
             </span>
-          );
-        })}
+          </span>
+        ))}
       </div>
       <div className="mt-3 flex gap-3 text-[11px] text-[var(--text-muted)]">
         <span className="flex items-center gap-1.5">
