@@ -70,6 +70,17 @@ describe("FutureProjectionCard — controls + KPI tiles", () => {
       screen.getByText("Add holdings with dividend history to project forward income."),
     ).toBeInTheDocument();
   });
+
+  it("chip row and growth slider row are in separate parent containers", () => {
+    // Regression: when 'Reset to historical' appears, it must not reflow the
+    // chips or DRIP toggle. Encoded structurally — the chips/DRIP and the
+    // slider live in different flex rows so the slider's children can't
+    // affect the row above.
+    render(<FutureProjectionCard tickers={tickers()} ratesToPrimary={RATES} primaryCurrency="GBP" />);
+    const chipsGroup = screen.getByRole("group", { name: "Projection horizon" });
+    const slider = screen.getByTestId("fp-cagr-slider");
+    expect(chipsGroup.parentElement).not.toBe(slider.parentElement);
+  });
 });
 
 describe("FutureProjectionCard — chart + modal", () => {
