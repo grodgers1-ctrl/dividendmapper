@@ -19,7 +19,16 @@ import { motion, useReducedMotion } from "framer-motion";
 import { resolveRowValue, type TickerPrice } from "@/lib/portfolio/row-value";
 import type { HoldingRow } from "@/lib/portfolio/load-priced-holdings";
 import { ScoreChip } from "@/app/app/portfolio/_components/score-chip";
+import { HoldingLogo } from "@/app/app/portfolio/_components/holding-logo";
 import type { FlaggableScore } from "@/lib/scoring/pick-flagged";
+
+// Grid templates shared by the header row and each data row so values + chips
+// stack cleanly into proper columns. `minmax(0,1fr)` lets the name column
+// truncate instead of pushing value/quality off the right. Mobile uses a
+// tighter logo/ticker/value to leave room for the truncated name.
+const GRID_MOBILE = "grid-cols-[2rem_4.5rem_minmax(0,1fr)_5rem] gap-3";
+const GRID_SM_FREE = "sm:grid-cols-[2.5rem_5rem_minmax(0,1fr)_6rem] sm:gap-4";
+const GRID_SM_PRO = "sm:grid-cols-[2.5rem_5rem_minmax(0,1fr)_6rem_5.5rem] sm:gap-4";
 
 export interface TopHoldingsStripProps {
   holdings: ReadonlyArray<HoldingRow>;
@@ -144,6 +153,8 @@ export function TopHoldingsStrip({
   priced.sort((a, b) => b.sortKey - a.sortKey);
   const top = priced.slice(0, TOP_N);
 
+  const gridCols = `${GRID_MOBILE} ${isPro ? GRID_SM_PRO : GRID_SM_FREE}`;
+
   return (
     <div className="rounded-[10px] border border-[var(--border-subtle)] bg-[var(--surface)] p-6 shadow-[var(--card-shadow)]">
       <div className="flex items-center justify-between">
@@ -151,7 +162,17 @@ export function TopHoldingsStrip({
           Top holdings
         </h2>
       </div>
-      <ul className="mt-4 divide-y divide-[var(--border-subtle)]">
+      <div
+        aria-hidden
+        className={`mt-4 hidden ${gridCols} items-baseline pb-2 text-[10px] font-medium uppercase tracking-[0.08em] text-[var(--text-muted)] sm:grid`}
+      >
+        <span />
+        <span>Ticker</span>
+        <span>Name</span>
+        <span className="text-right">Value</span>
+        {isPro && <span className="text-right">Quality</span>}
+      </div>
+      <ul className="divide-y divide-[var(--border-subtle)]">
         {top.map(({ holding, amount, currency }, rowIdx) => {
           const name = nameByTicker[holding.ticker] ?? holding.ticker;
           const score = isPro ? scores.get(holding.ticker) : undefined;
@@ -163,17 +184,18 @@ export function TopHoldingsStrip({
             <li key={holding.id} className="flex flex-col py-2.5">
               <Link
                 href={`/app/portfolio/${holding.ticker}`}
-                className="grid grid-cols-[5.5rem_1fr_auto] items-center gap-4 text-sm hover:bg-[var(--surface-2)] sm:grid-cols-[5.5rem_1fr_auto_auto]"
+                className={`grid ${gridCols} items-center text-sm hover:bg-[var(--surface-2)]`}
               >
+                <HoldingLogo ticker={holding.ticker} name={name} size={32} />
                 <span className="font-mono text-[13px] font-semibold tracking-wide text-[var(--text)]">
                   {holding.ticker}
                 </span>
                 <span className="truncate text-[var(--text-muted)]">{name}</span>
-                <span className="font-mono tabular-nums text-[var(--text)]">
+                <span className="text-right font-mono tabular-nums text-[var(--text)]">
                   {format(amount, currency)}
                 </span>
                 {isPro && (
-                  <span className="hidden sm:inline-flex">
+                  <span className="hidden justify-self-end sm:inline-flex">
                     {score && score.buy !== null ? (
                       <ScoreChip type="buy" score={score.buy} />
                     ) : (
@@ -183,7 +205,7 @@ export function TopHoldingsStrip({
                 )}
               </Link>
               {chips.length > 0 && (
-                <div className="ml-[5.5rem] mt-1.5 hidden gap-1.5 pl-4 sm:flex">
+                <div className="ml-[9.5rem] mt-1.5 hidden gap-1.5 sm:flex">
                   {chips.map((chip, chipIdx) => (
                     <motion.span
                       key={chip.label}
