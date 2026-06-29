@@ -3,7 +3,9 @@ import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth/server";
 import { loadPricedHoldings } from "@/lib/portfolio/load-priced-holdings";
 import { loadCalendarData } from "@/lib/portfolio/load-calendar-data";
+import { loadFutureProjectionInputs } from "@/lib/portfolio/load-future-projection-inputs";
 import { buildIncomeCalendar } from "@/lib/portfolio/income-calendar";
+import type { ProjectionTickerInput } from "@/lib/portfolio/future-projection";
 import { aggregatePortfolioValue } from "@/lib/portfolio/portfolio-value";
 import { TopographyMotif } from "@/components/visual/topography-motif";
 import { PageHeader } from "../_components/page-header/page-header";
@@ -29,15 +31,21 @@ export default async function CalendarPage() {
   // TODO Slice B: read locale from user settings. UK default for now.
   const locale = "uk" as const;
 
-  const {
-    userDividends,
-    exDivByTicker,
-    ratesToPrimary,
-    projectedNext12mByTicker,
-    projectedHistorical12mByTicker,
-    nameByTicker,
-    cadenceByTicker,
-  } = await loadCalendarData(user.id, priced.allHoldings, locale);
+  const [
+    {
+      userDividends,
+      exDivByTicker,
+      ratesToPrimary,
+      projectedNext12mByTicker,
+      projectedHistorical12mByTicker,
+      nameByTicker,
+      cadenceByTicker,
+    },
+    { growthRateByTicker },
+  ] = await Promise.all([
+    loadCalendarData(user.id, priced.allHoldings, locale),
+    loadFutureProjectionInputs(user.id, priced.allHoldings),
+  ]);
 
   const holdings = priced.allHoldings.map((h) => ({
     ticker: h.ticker,
@@ -69,6 +77,35 @@ export default async function CalendarPage() {
     cadenceByTicker,
     forwardDpsByTicker,
   });
+
+  // Assemble per-ticker inputs for the future-projection card. dps0 prefers
+  // the sum of projected_next_12m_payments (cache); falls back to the FMP
+  // forward DPS for newly-initiated payers (source = "fmp-fallback").
+  const projectionTickers: ProjectionTickerInput[] = [];
+  for (const h of priced.allHoldings) {
+    const t = h.ticker;
+    const cacheRows = projectedNext12mByTicker[t] ?? [];
+    const dpsFromCache = cacheRows.reduce((s, r) => s + (r.per_share_amount ?? 0), 0);
+    const cacheCurrency = cacheRows[0]?.currency;
+    const fmp = forwardDpsByTicker[t];
+    const dps0 = dpsFromCache > 0 ? dpsFromCache : fmp?.dps ?? 0;
+    if (dps0 <= 0) continue;
+    const dpsCurrency =
+      dpsFromCache > 0 ? cacheCurrency ?? "GBP" : fmp?.currency ?? "GBP";
+    const price = priced.priceByTicker[t];
+    projectionTickers.push({
+      ticker: t,
+      shares: Number(h.quantity),
+      dps0,
+      dpsCurrency,
+      price0: price?.price ?? null,
+      priceCurrency: price?.currency ?? dpsCurrency,
+      avgCost: Number(h.avg_cost) ?? 0,
+      costCurrency: h.cost_currency ?? "GBP",
+      rawCagr: growthRateByTicker[t] ?? 0,
+      source: dpsFromCache > 0 ? "cache" : "fmp-fallback",
+    });
+  }
 
   // Portfolio value in the user's primary currency, used for the Yield KPI.
   // Pulls per-currency totals from priced.allHoldings × priceByTicker, then
@@ -116,6 +153,7 @@ export default async function CalendarPage() {
           ratesToPrimary={ratesToPrimary}
           showEmptyStateCta={pastUserDividendsCount === 0}
           portfolioValuePrimary={portfolioValuePrimary}
+          projectionTickers={projectionTickers}
         />
       </div>
     </div>

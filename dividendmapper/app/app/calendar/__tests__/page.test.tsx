@@ -22,6 +22,12 @@ vi.mock("@/lib/portfolio/load-calendar-data", () => ({
   loadCalendarData: (...args: unknown[]) => loadCalendarDataMock(...args),
 }));
 
+const loadFutureProjectionInputsMock = vi.fn();
+vi.mock("@/lib/portfolio/load-future-projection-inputs", () => ({
+  loadFutureProjectionInputs: (...args: unknown[]) =>
+    loadFutureProjectionInputsMock(...args),
+}));
+
 import CalendarPage from "../page";
 
 describe("/app/calendar page", () => {
@@ -32,6 +38,9 @@ describe("/app/calendar page", () => {
       userDividends: [],
       exDivByTicker: {},
       ratesToPrimary: { GBP: 1, USD: 0.79 },
+    });
+    loadFutureProjectionInputsMock.mockResolvedValue({
+      growthRateByTicker: {},
     });
   });
 
