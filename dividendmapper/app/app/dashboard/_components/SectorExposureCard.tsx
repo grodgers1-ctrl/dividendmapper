@@ -97,13 +97,12 @@ export function SectorExposureCard({ rollup }: SectorExposureCardProps) {
       <section
         role="figure"
         aria-label={ariaLabel}
-        className="mt-4 grid grid-cols-[120px_1fr] gap-4 items-center"
+        className="mt-4 grid grid-cols-[96px_minmax(0,1fr)] gap-3 items-center sm:grid-cols-[120px_minmax(0,1fr)] sm:gap-4"
       >
         <svg
           viewBox="0 0 140 140"
-          width="120"
-          height="120"
           aria-hidden="true"
+          className="h-24 w-24 sm:h-[120px] sm:w-[120px]"
         >
           <g transform="translate(70 70) rotate(-90)">
             {sliceMeta.map((s) => (
@@ -138,7 +137,7 @@ export function SectorExposureCard({ rollup }: SectorExposureCardProps) {
           </g>
         </svg>
 
-        <ul className="space-y-1">
+        <ul className="min-w-0 space-y-1">
           {sliceMeta.map((s) => (
             <li
               key={s.sector}
@@ -150,7 +149,7 @@ export function SectorExposureCard({ rollup }: SectorExposureCardProps) {
                 style={{ backgroundColor: s.colour }}
               />
               <span className="min-w-0 flex-1 truncate">{formatSector(s.sector)}</span>
-              <span className="font-mono tabular-nums text-[var(--text-muted)]">
+              <span className="flex-shrink-0 font-mono tabular-nums text-[var(--text-muted)]">
                 {PCT_0DP.format(s.weight)}
               </span>
             </li>

@@ -130,7 +130,7 @@ export function CalendarChart({
                   <span
                     data-testid={`calendar-bar-value-${m.ym}`}
                     aria-hidden
-                    className="absolute -top-4 left-1/2 -translate-x-1/2 text-[9px] font-medium tabular-nums text-[var(--text-muted)]"
+                    className="absolute -top-4 left-1/2 hidden -translate-x-1/2 text-[9px] font-medium tabular-nums text-[var(--text-muted)] sm:block"
                   >
                     {formatAxis(m.gbp, primaryCurrency)}
                   </span>
@@ -215,20 +215,29 @@ export function CalendarChart({
           )}
         </section>
       </div>
-      <div className="ml-12 mt-1.5 flex gap-1.5">
-        {months.map((m) => (
-          <span
-            key={m.ym}
-            data-testid="calendar-month-label"
-            className={`flex-1 text-center text-[10px] tabular-nums ${
-              m.kind === "partial"
-                ? "text-[var(--text)] font-semibold"
-                : "text-[var(--text-muted)]"
-            }`}
-          >
-            {monthName(m.ym)}
-          </span>
-        ))}
+      <div className="ml-12 mt-1.5 flex gap-1.5 overflow-hidden">
+        {months.map((m, idx) => {
+          // Narrow viewports can't fit 19 month labels — every other one is
+          // hidden via `invisible` so the slot keeps its width and bars stay
+          // aligned. The partial ("today") month always shows so users can
+          // anchor themselves.
+          const showOnMobile = m.kind === "partial" || idx % 2 === 0;
+          return (
+            <span
+              key={m.ym}
+              data-testid="calendar-month-label"
+              className={`flex-1 text-center text-[9px] tabular-nums sm:text-[10px] ${
+                m.kind === "partial"
+                  ? "text-[var(--text)] font-semibold"
+                  : "text-[var(--text-muted)]"
+              }`}
+            >
+              <span className={showOnMobile ? "" : "invisible sm:visible"}>
+                {monthName(m.ym)}
+              </span>
+            </span>
+          );
+        })}
       </div>
       <div
         data-testid="calendar-legend"
