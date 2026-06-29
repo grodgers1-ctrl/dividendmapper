@@ -71,3 +71,59 @@ describe("FutureProjectionCard — controls + KPI tiles", () => {
     ).toBeInTheDocument();
   });
 });
+
+describe("FutureProjectionCard — chart + modal", () => {
+  it("renders one bar per year in the horizon", () => {
+    render(<FutureProjectionCard tickers={tickers()} ratesToPrimary={RATES} primaryCurrency="GBP" />);
+    expect(screen.getAllByTestId(/fp-bar-/)).toHaveLength(10);
+  });
+
+  it("hovering a bar shows year, income, and contributing tickers", () => {
+    render(
+      <FutureProjectionCard
+        tickers={[
+          {
+            ticker: "A.L",
+            shares: 100,
+            dps0: 5,
+            dpsCurrency: "GBp",
+            price0: 500,
+            priceCurrency: "GBp",
+            avgCost: 4,
+            costCurrency: "GBP",
+            rawCagr: 0.03,
+            source: "cache",
+          },
+          {
+            ticker: "B.L",
+            shares: 200,
+            dps0: 8,
+            dpsCurrency: "GBp",
+            price0: 800,
+            priceCurrency: "GBp",
+            avgCost: 6,
+            costCurrency: "GBP",
+            rawCagr: 0.02,
+            source: "cache",
+          },
+        ]}
+        ratesToPrimary={RATES}
+        primaryCurrency="GBP"
+      />,
+    );
+    fireEvent.mouseEnter(screen.getByTestId("fp-bar-3"));
+    const tip = screen.getByTestId("fp-tooltip");
+    expect(tip).toHaveTextContent("Year 3");
+    expect(tip).toHaveTextContent("A.L");
+    expect(tip).toHaveTextContent("B.L");
+  });
+
+  it("'How this is calculated' link opens the assumptions modal", () => {
+    render(<FutureProjectionCard tickers={tickers()} ratesToPrimary={RATES} primaryCurrency="GBP" />);
+    expect(screen.queryByTestId("fp-assumptions-modal")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /How this is calculated/i }));
+    expect(screen.getByTestId("fp-assumptions-modal")).toBeInTheDocument();
+    expect(screen.getByTestId("fp-assumptions-modal")).toHaveTextContent(/DRIP/);
+    expect(screen.getByTestId("fp-assumptions-modal")).toHaveTextContent(/growth|CAGR/);
+  });
+});

@@ -23,6 +23,8 @@ export function FutureProjectionCard({
   const [horizon, setHorizon] = useState(10);
   const [drip, setDrip] = useState(false);
   const [cagrInput, setCagrInput] = useState<number | null>(null);
+  const [hoverYear, setHoverYear] = useState<number | null>(null);
+  const [showAssumptions, setShowAssumptions] = useState(false);
 
   // 250ms input-side debounce on the slider; chips + DRIP toggle recompute
   // immediately. See [[feedback_debounce_heavy_calc]]. Initial state lands
@@ -67,11 +69,20 @@ export function FutureProjectionCard({
 
   return (
     <section className="card-surface p-6">
-      <header className="mb-4">
-        <h2 className="text-lg font-semibold">Project ahead · {horizon}yr</h2>
-        <p className="text-sm text-[var(--text-muted)]">
-          Where your dividends could land by year {horizon}, on today's holdings.
-        </p>
+      <header className="mb-4 flex items-baseline justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-semibold">Project ahead · {horizon}yr</h2>
+          <p className="text-sm text-[var(--text-muted)]">
+            Where your dividends could land by year {horizon}, on today's holdings.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowAssumptions(true)}
+          className="shrink-0 text-xs underline text-[var(--text-muted)] hover:text-[var(--text)]"
+        >
+          ⓘ How this is calculated
+        </button>
       </header>
 
       <div className="mb-4 flex flex-wrap items-center gap-3">
@@ -168,12 +179,124 @@ export function FutureProjectionCard({
         />
       </div>
 
-      <div data-testid="fp-chart" className="h-48" aria-hidden="true" />
+      {(() => {
+        const maxIncome = projection.years.reduce(
+          (m, y) => (y.annualIncome > m ? y.annualIncome : m),
+          0,
+        );
+        const hovered =
+          hoverYear !== null ? projection.years.find((y) => y.year === hoverYear) ?? null : null;
+        return (
+          <div data-testid="fp-chart">
+            <section
+              role="figure"
+              aria-label={`Projected annual income for ${horizon} years`}
+              className="relative h-[180px] flex items-end gap-1.5 border-b border-[var(--border-subtle)]"
+            >
+              {projection.years.map((y) => {
+                const heightPct = maxIncome > 0 ? Math.max(4, (y.annualIncome / maxIncome) * 100) : 4;
+                return (
+                  <button
+                    key={y.year}
+                    type="button"
+                    data-testid={`fp-bar-${y.year}`}
+                    onMouseEnter={() => setHoverYear(y.year)}
+                    onMouseLeave={() =>
+                      setHoverYear((cur) => (cur === y.year ? null : cur))
+                    }
+                    onFocus={() => setHoverYear(y.year)}
+                    onBlur={() =>
+                      setHoverYear((cur) => (cur === y.year ? null : cur))
+                    }
+                    aria-label={`Year ${y.year}: ${fmt(y.annualIncome)}`}
+                    className="relative flex-1"
+                    style={{
+                      height: `${heightPct}%`,
+                      backgroundColor: "var(--brand)",
+                      opacity: 0.85,
+                    }}
+                  />
+                );
+              })}
+              {hovered && (
+                <div
+                  data-testid="fp-tooltip"
+                  role="tooltip"
+                  className="pointer-events-none absolute top-0 -translate-y-full whitespace-nowrap rounded-md border border-[var(--border-subtle)] bg-[var(--surface)] px-2 py-1.5 text-[10px] text-[var(--text)] shadow-md"
+                  style={{
+                    left: `${((hovered.year - 0.5) / projection.years.length) * 100}%`,
+                    transform: "translate(-50%, -100%)",
+                  }}
+                >
+                  <p className="font-medium">Year {hovered.year}</p>
+                  <p className="font-mono tabular-nums">{fmt(hovered.annualIncome)}</p>
+                  <ul className="mt-1 space-y-0.5 text-[var(--text-muted)]">
+                    {[...hovered.byTicker]
+                      .sort((a, b) => b.contribution - a.contribution)
+                      .slice(0, 5)
+                      .map((t) => (
+                        <li key={t.ticker} className="flex gap-2">
+                          <span className="flex-1">{t.ticker}</span>
+                          <span className="tabular-nums">{fmt(t.contribution)}</span>
+                        </li>
+                      ))}
+                  </ul>
+                </div>
+              )}
+            </section>
+            <div className="mt-1.5 flex gap-1.5 text-[9px] tabular-nums text-[var(--text-muted)]">
+              {projection.years.map((y) => (
+                <span key={y.year} className="flex-1 text-center">
+                  {y.year}
+                </span>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
 
       {projection.fallbackCount > 0 && (
         <p className="mt-3 text-xs text-[var(--text-muted)]">
           {projection.projectedCount} holdings projected, {projection.fallbackCount} via FMP estimate.
         </p>
+      )}
+
+      {showAssumptions && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          data-testid="fp-assumptions-modal"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          onClick={() => setShowAssumptions(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="card-surface max-w-md space-y-3 p-6 text-sm"
+          >
+            <h3 className="font-semibold">How this is calculated</h3>
+            <p>
+              <strong>CAGR:</strong> each holding's historical dividend growth, capped to
+              [0%, +5%] and faded to the long-run 2.5% across years 3 to 12. The scoring
+              engine's raw rate is treated as a noisy signal.
+            </p>
+            <p>
+              <strong>DRIP:</strong> when on, shares compound at the dividend yield, capped
+              at 4% per year. High-yield holdings do not sustain 8-13% reinvestment for
+              decades.
+            </p>
+            <p>
+              <strong>Error band:</strong> historical backtest 5yr MAPE around 32%, 10yr
+              MAPE around 46%. The model predicts central tendency, not recessions.
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowAssumptions(false)}
+              className="text-xs underline text-[var(--text-muted)]"
+            >
+              Close
+            </button>
+          </div>
+        </div>
       )}
     </section>
   );
