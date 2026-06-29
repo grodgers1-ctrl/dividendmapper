@@ -99,4 +99,47 @@ describe("CalendarShell wiring", () => {
     );
     expect(screen.queryByTestId("cadence-marker")).toBeNull();
   });
+
+  it("mounts FutureProjectionCard with the supplied tickers", () => {
+    render(
+      <CalendarShell
+        locale="uk"
+        calendar={stubCalendar}
+        userDividends={[]}
+        ratesToPrimary={{ GBP: 1, GBp: 0.01, USD: 0.79 }}
+        showEmptyStateCta={false}
+        projectionTickers={[
+          {
+            ticker: "ABC.L",
+            shares: 100,
+            dps0: 25,
+            dpsCurrency: "GBp",
+            price0: 1000,
+            priceCurrency: "GBp",
+            avgCost: 8,
+            costCurrency: "GBP",
+            rawCagr: 0.03,
+            source: "cache",
+          },
+        ]}
+      />,
+    );
+    expect(screen.getByText(/Project ahead/)).toBeInTheDocument();
+    expect(screen.getByTestId("fp-kpi-annual")).toBeInTheDocument();
+  });
+
+  it("renders FutureProjectionCard empty state when projectionTickers is empty", () => {
+    render(
+      <CalendarShell
+        locale="uk"
+        calendar={stubCalendar}
+        userDividends={[]}
+        ratesToPrimary={{ GBP: 1, USD: 0.79 }}
+        showEmptyStateCta={false}
+      />,
+    );
+    expect(
+      screen.getByText("Add holdings with dividend history to project forward income."),
+    ).toBeInTheDocument();
+  });
 });

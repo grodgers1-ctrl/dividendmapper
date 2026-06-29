@@ -13,12 +13,14 @@ import type {
   Wrapper,
   WrapperFilter,
 } from "@/lib/portfolio/income-calendar";
+import type { ProjectionTickerInput } from "@/lib/portfolio/future-projection";
 import { computeNetDividend } from "@/lib/portfolio/dividend-tax";
 import { StatSidebar } from "./stat-sidebar";
 import { WrapperFilterRow } from "./wrapper-filter-row";
 import { CalendarChart } from "./calendar-chart";
 import { DrilldownPanel } from "./drilldown-panel";
 import { EmptyStateCta } from "./empty-state-cta";
+import { FutureProjectionCard } from "./future-projection-card";
 
 export interface CalendarShellProps {
   locale: Locale;
@@ -29,6 +31,9 @@ export interface CalendarShellProps {
   /** Total portfolio value in the user's primary currency, for the Yield KPI.
    * null when value can't be computed (e.g. quotes unavailable). */
   portfolioValuePrimary?: number | null;
+  /** Per-ticker inputs for the FutureProjectionCard. Empty array shows the
+   * card's empty state. */
+  projectionTickers?: ProjectionTickerInput[];
 }
 
 export function CalendarShell({
@@ -38,6 +43,7 @@ export function CalendarShell({
   ratesToPrimary,
   showEmptyStateCta,
   portfolioValuePrimary = null,
+  projectionTickers = [],
 }: CalendarShellProps) {
   const [netMode, setNetMode] = useState<"net" | "gross">("net");
   const [yearMode, setYearMode] = useState<"tax" | "calendar">("tax");
@@ -131,6 +137,11 @@ export function CalendarShell({
           primaryCurrency={calendar.primaryCurrency}
           payments={drilldownPayments}
           emptyReason={drilldownPayments.length === 0 ? "no-announcement" : undefined}
+        />
+        <FutureProjectionCard
+          tickers={projectionTickers}
+          ratesToPrimary={ratesToPrimary}
+          primaryCurrency={calendar.primaryCurrency}
         />
       </div>
     </div>
