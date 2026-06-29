@@ -85,45 +85,56 @@ export function FutureProjectionCard({
         </button>
       </header>
 
-      <div className="mb-4 flex flex-wrap items-center gap-3">
-        <div
-          role="group"
-          aria-label="Projection horizon"
-          className="inline-flex rounded-full border border-[var(--border)] bg-[var(--surface)]/95 p-1 shadow-sm backdrop-blur"
-        >
-          {HORIZONS.map((n) => {
-            const selected = n === horizon;
-            return (
-              <button
-                key={n}
-                type="button"
-                onClick={() => setHorizon(n)}
-                aria-pressed={selected}
-                className={cn(
-                  "rounded-full px-3 py-1 text-xs font-medium transition-colors",
-                  selected
-                    ? "bg-[var(--foreground)] text-[var(--background)]"
-                    : "text-[var(--text-muted)] hover:bg-[var(--surface-muted)]",
-                )}
-              >
-                {n}y
-              </button>
-            );
-          })}
+      <div className="mb-4 flex flex-col gap-3">
+        {/* Row 1: chips + DRIP toggle. Width never changes, so the slider
+            row appearing/disappearing the Reset link below can't reflow these. */}
+        <div className="flex flex-wrap items-center gap-3">
+          <div
+            role="group"
+            aria-label="Projection horizon"
+            className="inline-flex rounded-full border border-[var(--border)] bg-[var(--surface)]/95 p-1 shadow-sm backdrop-blur"
+          >
+            {HORIZONS.map((n) => {
+              const selected = n === horizon;
+              return (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => setHorizon(n)}
+                  aria-pressed={selected}
+                  className={cn(
+                    "rounded-full px-3 py-1 text-xs font-medium transition-colors",
+                    selected
+                      ? "bg-[var(--foreground)] text-[var(--background)]"
+                      : "text-[var(--text-muted)] hover:bg-[var(--surface-muted)]",
+                  )}
+                >
+                  {n}y
+                </button>
+              );
+            })}
+          </div>
+
+          <button
+            type="button"
+            data-testid="fp-drip-toggle"
+            onClick={() => setDrip((v) => !v)}
+            aria-pressed={drip}
+            className="rounded-full border border-[var(--border)] px-3 py-1 text-xs font-medium"
+          >
+            DRIP {drip ? "on" : "off"}
+          </button>
         </div>
 
-        <button
-          type="button"
-          data-testid="fp-drip-toggle"
-          onClick={() => setDrip((v) => !v)}
-          aria-pressed={drip}
-          className="rounded-full border border-[var(--border)] px-3 py-1 text-xs font-medium"
-        >
-          DRIP {drip ? "on" : "off"}
-        </button>
-
-        <div className="flex items-center gap-2">
-          <label htmlFor="fp-cagr-slider" className="text-xs text-[var(--text-muted)]">
+        {/* Row 2: growth controls. Slider gets flex-1 + min-w-0 so it absorbs
+            container width instead of pushing siblings around. The Reset link
+            is reserved a fixed-width slot via min-width on the trailing flex
+            block so showing/hiding it doesn't shift the value readout. */}
+        <div className="flex flex-wrap items-center gap-3">
+          <label
+            htmlFor="fp-cagr-slider"
+            className="shrink-0 text-xs text-[var(--text-muted)]"
+          >
             Dividend growth
           </label>
           <input
@@ -135,23 +146,26 @@ export function FutureProjectionCard({
             step={0.0025}
             value={cagrInput ?? 0}
             onChange={(e) => setCagrInput(parseFloat(e.target.value))}
+            className="min-w-0 flex-1"
           />
-          <span className="text-xs">
+          <span className="shrink-0 text-xs tabular-nums w-12 text-right">
             {cagrInput === null ? "Auto" : `${(cagrInput * 100).toFixed(2)}%`}
           </span>
-          {cagrInput !== null && (
-            <button
-              type="button"
-              data-testid="fp-reset"
-              onClick={() => {
-                setCagrInput(null);
-                setDebouncedCagr(null);
-              }}
-              className="text-xs text-[var(--brand)] underline"
-            >
-              Reset to historical
-            </button>
-          )}
+          <div className="shrink-0 w-32">
+            {cagrInput !== null && (
+              <button
+                type="button"
+                data-testid="fp-reset"
+                onClick={() => {
+                  setCagrInput(null);
+                  setDebouncedCagr(null);
+                }}
+                className="text-xs text-[var(--brand)] underline"
+              >
+                Reset to historical
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
