@@ -12,7 +12,7 @@ export function CompareDifferencesToggle({ rows }: { rows: CompareRow[] }) {
   const shown = diffOnly ? rows.filter((r) => r.a !== r.b) : rows;
   return (
     <div>
-      <label className="mb-3 inline-flex items-center gap-2 text-xs text-text-muted">
+      <label className="mb-3 inline-flex items-center gap-2 text-xs text-muted-foreground">
         <input
           type="checkbox"
           checked={diffOnly}
@@ -22,7 +22,7 @@ export function CompareDifferencesToggle({ rows }: { rows: CompareRow[] }) {
         Show only differences
       </label>
       <table className="w-full text-sm">
-        <thead className="text-xs text-text-muted">
+        <thead className="text-xs text-muted-foreground">
           <tr>
             <th className="py-2 text-left font-normal">Field</th>
             <th className="py-2 text-right font-normal">A</th>
@@ -31,7 +31,7 @@ export function CompareDifferencesToggle({ rows }: { rows: CompareRow[] }) {
         </thead>
         <tbody>
           {shown.map((r) => (
-            <tr key={r.label} className="border-t border-border-subtle">
+            <tr key={r.label} className="border-t border-border">
               <td className="py-1.5">{r.label}</td>
               <td className="py-1.5 text-right font-mono tabular-nums">{r.a}</td>
               <td className="py-1.5 text-right font-mono tabular-nums">{r.b}</td>
@@ -39,7 +39,7 @@ export function CompareDifferencesToggle({ rows }: { rows: CompareRow[] }) {
           ))}
           {shown.length === 0 && (
             <tr>
-              <td colSpan={3} className="py-3 text-center text-xs text-text-muted">
+              <td colSpan={3} className="py-3 text-center text-xs text-muted-foreground">
                 No differences across these fields.
               </td>
             </tr>

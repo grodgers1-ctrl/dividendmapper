@@ -36,7 +36,7 @@ export function EtfCountryCard({ countries }: { countries: C[] }) {
   ];
 
   return (
-    <section className="rounded-lg border border-border-subtle bg-surface p-4">
+    <section className="rounded-lg border border-border bg-card p-4">
       <h3 className="mb-3 text-sm font-medium">Country / region weighting</h3>
       <ConcentricDonut
         segments={segs}

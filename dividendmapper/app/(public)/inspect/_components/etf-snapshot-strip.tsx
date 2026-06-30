@@ -19,10 +19,10 @@ function Tile({
   hint?: string;
 }) {
   return (
-    <div className="rounded-lg border border-border-subtle bg-surface-2 p-3">
-      <div className="text-[10px] uppercase tracking-wide text-text-muted">{label}</div>
+    <div className="rounded-lg border border-border bg-secondary/40 p-3">
+      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</div>
       <div className={`mt-1 font-mono text-lg tabular-nums ${tone(percentile)}`}>{value}</div>
-      {hint && <div className="text-[10px] text-text-muted">{hint}</div>}
+      {hint && <div className="text-[10px] text-muted-foreground">{hint}</div>}
     </div>
   );
 }

@@ -15,16 +15,16 @@ export async function EtfInspectBody({ ticker }: { ticker: string }) {
 
   return (
     <article className="mx-auto max-w-5xl px-4 py-8 md:px-6">
-      <nav aria-label="Breadcrumb" className="mb-4 text-sm text-text-muted">
-        <a href="/inspect" className="hover:text-text">Inspect</a>
+      <nav aria-label="Breadcrumb" className="mb-4 text-sm text-muted-foreground">
+        <a href="/inspect" className="hover:text-foreground">Inspect</a>
         <span className="px-2">/</span>
-        <span className="text-text">{ticker}</span>
+        <span className="text-foreground">{ticker}</span>
       </nav>
       <header className="mb-4 flex items-center gap-4">
         <HoldingLogo ticker={ticker} size={56} />
         <div>
           <h1 className="font-mono text-3xl tracking-tight">{ticker}</h1>
-          <p className="text-text-muted">
+          <p className="text-muted-foreground">
             {name}
             {b.universe?.family ? ` · by ${b.universe.family}` : ""}
           </p>
@@ -32,7 +32,7 @@ export async function EtfInspectBody({ ticker }: { ticker: string }) {
       </header>
       <EtfMetadataBar universe={b.universe} facts={b.facts} />
       {verdicts.length > 0 && (
-        <ul className="mb-6 space-y-1 text-sm text-text-muted">
+        <ul className="mb-6 space-y-1 text-sm text-muted-foreground">
           {verdicts.map((v) => (
             <li key={v}>{v}</li>
           ))}

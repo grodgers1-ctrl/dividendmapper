@@ -91,7 +91,7 @@ export default async function AppComparePage({
     return (
       <article className="mx-auto max-w-3xl px-4 py-12 md:px-6">
         <h1 className="mb-3 font-mono text-2xl">Compare ETFs</h1>
-        <p className="mb-4 text-sm text-text-muted">
+        <p className="mb-4 text-sm text-muted-foreground">
           Pairwise ETF overlap is a Pro feature.
         </p>
         <a
@@ -108,9 +108,9 @@ export default async function AppComparePage({
     return (
       <article className="mx-auto max-w-3xl px-4 py-12 md:px-6">
         <h1 className="mb-3 font-mono text-2xl">Compare ETFs</h1>
-        <p className="text-sm text-text-muted">
+        <p className="text-sm text-muted-foreground">
           Pass two tickers as <code>?a=X&amp;b=Y</code>. Example:{" "}
-          <a className="text-text underline" href="/app/inspect/compare?a=VWRL.L&b=VHYL.L">
+          <a className="text-foreground underline" href="/app/inspect/compare?a=VWRL.L&b=VHYL.L">
             /app/inspect/compare?a=VWRL.L&amp;b=VHYL.L
           </a>
         </p>
@@ -139,17 +139,17 @@ export default async function AppComparePage({
     <article className="mx-auto max-w-6xl px-4 py-8 md:px-6">
       <header className="mb-6">
         <h1 className="font-mono text-2xl">
-          {bundleA.ticker} <span className="text-text-muted">vs</span> {bundleB.ticker}
+          {bundleA.ticker} <span className="text-muted-foreground">vs</span> {bundleB.ticker}
         </h1>
       </header>
-      <section className="mb-6 rounded-lg border border-border-subtle bg-surface p-4">
+      <section className="mb-6 rounded-lg border border-border bg-card p-4">
         <h2 className="mb-3 text-sm font-medium">Holdings overlap</h2>
         <CompareOverlapDonut
           overlap={overlap}
           aTicker={bundleA.ticker}
           bTicker={bundleB.ticker}
         />
-        <p className="mt-3 text-xs text-text-muted">
+        <p className="mt-3 text-xs text-muted-foreground">
           Calculated on the top holdings cached for each ETF.
         </p>
       </section>
@@ -160,7 +160,7 @@ export default async function AppComparePage({
         </p>
       )}
 
-      <section className="mb-6 rounded-lg border border-border-subtle bg-surface p-4">
+      <section className="mb-6 rounded-lg border border-border bg-card p-4">
         <h2 className="mb-3 text-sm font-medium">Field comparison</h2>
         <CompareDifferencesToggle rows={buildCompareRows(bundleA, bundleB)} />
       </section>

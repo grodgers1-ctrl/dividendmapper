@@ -19,7 +19,7 @@ export function CompareOverlapDonut({
   // e.g. two bond ETFs). The page section still renders the heading.
   if (everythingTotal === 0) {
     return (
-      <p className="text-sm text-text-muted">No holdings cached for one or both ETFs.</p>
+      <p className="text-sm text-muted-foreground">No holdings cached for one or both ETFs.</p>
     );
   }
 

@@ -21,12 +21,12 @@ function Pillar({
 }) {
   const color = score == null ? "var(--text-muted)" : rampColor(score);
   return (
-    <div className="rounded-lg border border-border-subtle bg-surface p-4">
-      <div className="text-xs uppercase tracking-wide text-text-muted">{label}</div>
+    <div className="rounded-lg border border-border bg-card p-4">
+      <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
       <div className="mt-2 font-mono text-3xl tabular-nums" style={{ color }}>
         {score ?? "—"}
       </div>
-      <div className="mt-1 text-xs text-text-muted">{sub}</div>
+      <div className="mt-1 text-xs text-muted-foreground">{sub}</div>
     </div>
   );
 }
@@ -34,7 +34,7 @@ function Pillar({
 export function EtfQualityBreakdown({ facts }: { facts: EtfBundle["facts"] }) {
   return (
     <section className="mt-6">
-      <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-text-muted">
+      <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
         Income Quality
       </h2>
       <div className="grid gap-3 md:grid-cols-3">
