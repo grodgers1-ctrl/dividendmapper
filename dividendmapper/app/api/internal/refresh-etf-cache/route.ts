@@ -193,6 +193,18 @@ async function handle(req: Request): Promise<Response> {
         });
         infoOk++;
 
+        // Sync etf_universe.name from the freshly-fetched FMP /etf/info payload
+        // so any seed placeholders get corrected automatically on the next cron
+        // pass. The double-eq guard only overwrites the placeholder
+        // (name === ticker), so curator/manual edits are preserved.
+        if (info.name && info.name.length > 0) {
+          await sb
+            .from("etf_universe")
+            .update({ name: info.name })
+            .eq("ticker", u.ticker)
+            .eq("name", u.ticker);
+        }
+
         if (Array.isArray(info.sectorsList) && info.sectorsList.length) {
           await sb.from("etf_sector_weights_cache").delete().eq("ticker", u.ticker);
           await sb.from("etf_sector_weights_cache").insert(
