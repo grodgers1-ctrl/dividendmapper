@@ -5,6 +5,7 @@ import {
   TrendingUp,
   Star,
   ListFilter,
+  Layers,
   Search,
   User,
   ShieldCheck,
@@ -47,6 +48,7 @@ export const DEFAULT_NAV_ITEMS: readonly NavItem[] = [
     icon: ListFilter,
     requiresPro: true,
   },
+  { href: "/app/etfs", label: "ETFs", icon: Layers },
   {
     href: "/app/portfolio/watchlist",
     label: "Watchlist",
