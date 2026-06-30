@@ -4,6 +4,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { normalizeTicker } from "@/lib/scoring/load-score";
 import { loadEtfBundle, type EtfBundle } from "@/lib/etf/load-etf-bundle";
 import { computeOverlap } from "@/lib/etf/compute-overlap";
+import { loadSparklineSeriesByTicker } from "@/lib/portfolio/load-sparkline-series";
 import { CompareOverlapDonut } from "@/app/(public)/inspect/_components/compare-overlap-donut";
 import {
   CompareDifferencesToggle,
@@ -133,7 +134,13 @@ export default async function AppComparePage({
     );
   }
 
-  const [bundleA, bundleB] = await Promise.all([loadEtfBundle(a), loadEtfBundle(b)]);
+  const [bundleA, bundleB, sparklineMap] = await Promise.all([
+    loadEtfBundle(a),
+    loadEtfBundle(b),
+    loadSparklineSeriesByTicker(supabase, [a, b], "5Y").catch(() => new Map()),
+  ]);
+  const aSeries = sparklineMap.get(a) ?? null;
+  const bSeries = sparklineMap.get(b) ?? null;
   const overlap = computeOverlap(
     bundleA.holdings.map((h) => ({
       holding_symbol: h.holding_symbol,
@@ -162,7 +169,7 @@ export default async function AppComparePage({
           {bundleA.ticker} <span className="text-muted-foreground">vs</span> {bundleB.ticker}
         </h1>
       </header>
-      <section className="mb-6 rounded-lg border border-border bg-card p-4">
+      <section className="card-surface mb-6">
         <h2 className="mb-3 text-sm font-medium">Holdings overlap</h2>
         <CompareOverlapDonut
           overlap={overlap}
@@ -180,9 +187,17 @@ export default async function AppComparePage({
         </p>
       )}
 
-      <section className="mb-6 rounded-lg border border-border bg-card p-4">
+      <section className="card-surface mb-6">
         <h2 className="mb-3 text-sm font-medium">Field comparison</h2>
-        <CompareDifferencesToggle rows={buildCompareRows(bundleA, bundleB)} />
+        <CompareDifferencesToggle
+          rows={buildCompareRows(bundleA, bundleB)}
+          aTicker={bundleA.ticker}
+          bTicker={bundleB.ticker}
+          aName={bundleA.universe?.name ?? undefined}
+          bName={bundleB.universe?.name ?? undefined}
+          aSeries={aSeries}
+          bSeries={bSeries}
+        />
       </section>
 
       <p className="mt-6 text-sm">
