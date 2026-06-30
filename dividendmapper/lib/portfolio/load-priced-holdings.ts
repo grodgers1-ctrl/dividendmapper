@@ -8,7 +8,11 @@ import {
 } from "@/lib/portfolio/income";
 import { fetchPortfolioQuotes } from "@/lib/portfolio/quotes";
 import { mergeScoringDividends } from "@/lib/portfolio/uk-income";
-import { scoringPrice, type TickerPrice } from "@/lib/portfolio/row-value";
+import {
+  displayCurrency,
+  scoringPrice,
+  type TickerPrice,
+} from "@/lib/portfolio/row-value";
 import {
   aggregatePortfolioValue,
   type ValueCurrencyTotal,
@@ -110,7 +114,9 @@ export async function loadPricedHoldings(userId: string): Promise<PricedHoldings
   if (allTickers.length > 0) {
     const { data: divRows } = await supabase
       .from("equity_score_history")
-      .select("ticker, dividend_per_share, current_price, observed_at")
+      .select(
+        "ticker, dividend_per_share, current_price, current_price_currency, observed_at",
+      )
       .in("ticker", allTickers)
       .order("observed_at", { ascending: false })
       .returns<
@@ -118,6 +124,7 @@ export async function loadPricedHoldings(userId: string): Promise<PricedHoldings
           ticker: string;
           dividend_per_share: number | null;
           current_price: number | null;
+          current_price_currency: string | null;
           observed_at: string;
         }[]
       >();
@@ -126,9 +133,25 @@ export async function loadPricedHoldings(userId: string): Promise<PricedHoldings
       if (!scoringDividendByTicker.has(r.ticker) && r.dividend_per_share != null) {
         scoringDividendByTicker.set(r.ticker, Number(r.dividend_per_share));
       }
-      if (!(r.ticker in priceByTicker)) {
-        const p = scoringPrice(r.ticker, r.current_price);
-        if (p) priceByTicker[r.ticker] = p;
+      if (
+        !(r.ticker in priceByTicker) &&
+        r.current_price != null &&
+        r.current_price > 0
+      ) {
+        const price = scoringPrice({
+          price: r.current_price,
+          currency: r.current_price_currency,
+          ticker: r.ticker,
+        });
+        if (price > 0) {
+          priceByTicker[r.ticker] = {
+            price,
+            currency: displayCurrency({
+              currency: r.current_price_currency,
+              ticker: r.ticker,
+            }),
+          };
+        }
       }
     }
 
