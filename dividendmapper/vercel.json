@@ -31,6 +31,10 @@
     {
       "path": "/api/internal/refresh-vehicle-scores",
       "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/internal/refresh-etf-cache",
+      "schedule": "0 3 * * 1"
     }
   ]
 }
