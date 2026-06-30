@@ -1,4 +1,4 @@
--- 0028a_score_history_currency.sql
+-- 0028_score_history_currency.sql
 -- Adds currency awareness to score history so scoringPrice() can normalise correctly.
 alter table public.equity_score_history
   add column if not exists current_price_currency text;
