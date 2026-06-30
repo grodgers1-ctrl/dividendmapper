@@ -67,6 +67,30 @@ describe("aggregatePortfolioIncome — estimate preference (forward run-rate)", 
     expect(isaGbp).toMatchObject({ annualIncome: 40, holdingsCount: 2, source: "mixed" });
   });
 
+  it("skips accumulating ETFs from the portfolio income totals", () => {
+    // VWRL.L = Distributing, contributes its quantity × dps.
+    // VWRP.L = Accumulating, reinvests internally — must contribute zero,
+    // even though FMP gives it a non-zero dividend-per-share.
+    const out = aggregatePortfolioIncome(
+      [holding("VWRL.L", "isa", 60), holding("VWRP.L", "isa", 10)],
+      new Map([
+        ["VWRL.L", quote("VWRL.L", 1.5, "GBP")], // 60 × 1.5 = 90
+        ["VWRP.L", quote("VWRP.L", 2.0, "GBP")], // would be 20 — must be skipped
+      ]),
+      new Map(),
+      { "VWRP.L": "Accumulating", "VWRL.L": "Distributing" },
+    );
+    const isaGbp = out.rows.find((r) => r.key === "isa:GBP");
+    expect(isaGbp).toMatchObject({
+      annualIncome: 90,
+      holdingsCount: 1,
+      source: "estimate",
+    });
+    expect(
+      out.totalsByCurrency.find((t) => t.currency === "GBP")?.total,
+    ).toBe(90);
+  });
+
   it("uses the USD estimate for a US stock even when a GBP actual exists", () => {
     // A US stock in an ISA: actual dividends arrive in GBP (account ccy), but the
     // /yr column is the forward estimate, so it lands in the USD bucket.

@@ -95,6 +95,15 @@ export function aggregatePortfolioIncome<T extends IncomeHolding>(
   holdings: ReadonlyArray<T>,
   quotes: ReadonlyMap<string, QuoteResult>,
   actuals: ReadonlyMap<string, ActualIncome> = new Map(),
+  /**
+   * Optional per-ticker ETF distribution policy. Holdings whose policy is
+   * "Accumulating" are skipped: the ETF reinvests internally and never pays
+   * the user a dividend, so its forward-estimate dps would inflate the
+   * portfolio income totals with cash the user never receives. Absent map (or
+   * absent ticker) means no skipping — preserves the prior behaviour for non-
+   * ETF tickers and tests that don't care about policy.
+   */
+  policyByTicker?: Readonly<Record<string, string>>,
 ): PortfolioIncome {
   if (holdings.length === 0) {
     return { ...EMPTY, fetchedAt: new Date().toISOString() };
@@ -149,6 +158,12 @@ export function aggregatePortfolioIncome<T extends IncomeHolding>(
   for (const h of holdings) {
     if (!isWrapperKey(h.wrapper)) {
       missing += 1;
+      continue;
+    }
+
+    // Accumulating ETFs reinvest distributions internally; the user receives
+    // no cash, so they contribute zero income to the portfolio totals.
+    if (policyByTicker?.[h.ticker] === "Accumulating") {
       continue;
     }
 

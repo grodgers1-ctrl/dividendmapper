@@ -227,7 +227,12 @@ export async function loadPricedHoldings(userId: string): Promise<PricedHoldings
     else actuals.set(key, { amount: Number(d.amount), currency: d.currency });
   }
 
-  const income = aggregatePortfolioIncome(allHoldings, quotes, actuals);
+  const income = aggregatePortfolioIncome(
+    allHoldings,
+    quotes,
+    actuals,
+    policyByTicker,
+  );
 
   // Map doesn't reliably survive Next's router cache when crossing the
   // server/client boundary; the table receives an empty Map on return
