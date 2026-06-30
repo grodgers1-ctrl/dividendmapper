@@ -46,7 +46,7 @@ export default async function AppInspectTickerPage({
     .eq("ticker", ticker)
     .maybeSingle<{ asset_type: string }>();
   if (tickerRow?.asset_type === "etf") {
-    return <EtfInspectBody ticker={ticker} />;
+    return <EtfInspectBody ticker={ticker} backHref="/app/etfs" backLabel="ETFs" />;
   }
 
   const { data: profileRow } = await supabase

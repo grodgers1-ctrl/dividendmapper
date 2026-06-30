@@ -8,7 +8,15 @@ import { EtfQualityBreakdown } from "./etf-quality-breakdown";
 import { HoldingLogo } from "@/app/app/portfolio/_components/holding-logo";
 import { synthesiseEtfVerdicts } from "@/lib/inspect/synthesise-etf-verdicts";
 
-export async function EtfInspectBody({ ticker }: { ticker: string }) {
+export async function EtfInspectBody({
+  ticker,
+  backHref = "/inspect",
+  backLabel = "Inspect",
+}: {
+  ticker: string;
+  backHref?: string;
+  backLabel?: string;
+}) {
   const b = await loadEtfBundle(ticker);
   const name = b.universe?.name ?? ticker;
   const verdicts = synthesiseEtfVerdicts(b);
@@ -16,7 +24,7 @@ export async function EtfInspectBody({ ticker }: { ticker: string }) {
   return (
     <article className="mx-auto max-w-5xl px-4 py-8 md:px-6">
       <nav aria-label="Breadcrumb" className="mb-4 text-sm text-muted-foreground">
-        <a href="/inspect" className="hover:text-foreground">Inspect</a>
+        <a href={backHref} className="hover:text-foreground">{backLabel}</a>
         <span className="px-2">/</span>
         <span className="text-foreground">{ticker}</span>
       </nav>
@@ -49,6 +57,13 @@ export async function EtfInspectBody({ ticker }: { ticker: string }) {
         <EtfCountryCard countries={b.countries} />
       </section>
       <EtfQualityBreakdown facts={b.facts} />
+      {backHref === "/app/etfs" && (
+        <p className="mt-8 text-sm">
+          <a href="/app/etfs" className="text-muted-foreground hover:text-foreground">
+            ← Browse more ETFs
+          </a>
+        </p>
+      )}
     </article>
   );
 }
