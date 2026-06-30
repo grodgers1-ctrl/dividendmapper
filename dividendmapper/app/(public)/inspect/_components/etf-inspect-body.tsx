@@ -6,10 +6,12 @@ import { EtfSectorCard } from "./etf-sector-card";
 import { EtfCountryCard } from "./etf-country-card";
 import { EtfQualityBreakdown } from "./etf-quality-breakdown";
 import { HoldingLogo } from "@/app/app/portfolio/_components/holding-logo";
+import { synthesiseEtfVerdicts } from "@/lib/inspect/synthesise-etf-verdicts";
 
 export async function EtfInspectBody({ ticker }: { ticker: string }) {
   const b = await loadEtfBundle(ticker);
   const name = b.universe?.name ?? ticker;
+  const verdicts = synthesiseEtfVerdicts(b);
 
   return (
     <article className="mx-auto max-w-5xl px-4 py-8 md:px-6">
@@ -29,6 +31,13 @@ export async function EtfInspectBody({ ticker }: { ticker: string }) {
         </div>
       </header>
       <EtfMetadataBar universe={b.universe} facts={b.facts} />
+      {verdicts.length > 0 && (
+        <ul className="mb-6 space-y-1 text-sm text-text-muted">
+          {verdicts.map((v) => (
+            <li key={v}>{v}</li>
+          ))}
+        </ul>
+      )}
       <EtfSnapshotStrip facts={b.facts} />
       <section className="mt-6 grid gap-4 md:grid-cols-2">
         <EtfHoldingsCard
