@@ -417,3 +417,10 @@ export function assembleScoreInputs(
     meta: { isUs, sector, dataQualityUk: !isUs },
   };
 }
+
+export function extractCurrentPriceCurrency(
+  bundle: { profile: Array<{ currency?: string | null }> },
+): string | null {
+  const c = bundle.profile?.[0]?.currency;
+  return typeof c === 'string' && c.length > 0 ? c : null;
+}

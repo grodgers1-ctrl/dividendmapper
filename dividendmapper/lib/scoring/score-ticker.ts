@@ -25,7 +25,7 @@ import {
   getInsiderTrades,
   type FmpCalendarDividend,
 } from "@/lib/scoring/fmp-client";
-import { assembleScoreInputs, type RawFmpBundle, type PriorHistory } from "@/lib/scoring/assemble-inputs";
+import { assembleScoreInputs, extractCurrentPriceCurrency, type RawFmpBundle, type PriorHistory } from "@/lib/scoring/assemble-inputs";
 import { computeBuyScore } from "@/lib/scoring/compute-buy-score";
 import { computeTrimScore } from "@/lib/scoring/compute-trim-score";
 import { computeDividendCagr5y } from "@/lib/scoring/dividend-cagr";
@@ -349,6 +349,7 @@ export async function scoreTicker(
       trim_score: trim.score,
       risk_score: risk.score,
       current_price: assembled.buy.b1.currentPrice || null,
+      current_price_currency: extractCurrentPriceCurrency(bundle),
       current_yield: assembled.buy.a1.todayYield || null,
       dividend_per_share: assembled.dividendPerShareTtm || null,
       eps_avg: assembled.risk.r4.currentEpsAvg || null,
