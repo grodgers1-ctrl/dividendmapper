@@ -31,13 +31,14 @@ const only = onlyArg
   : null;
 
 async function distinctTickers() {
-  const [{ data: h }, { data: w }, { data: v }] = await Promise.all([
+  const [{ data: h }, { data: w }, { data: v }, { data: e }] = await Promise.all([
     supabase.from("holdings").select("ticker").is("archived_at", null),
     supabase.from("watchlist").select("ticker"),
     supabase.from("vehicle_scores").select("ticker"),
+    supabase.from("etf_universe").select("ticker"),
   ]);
   const set = new Set();
-  for (const row of [...(h ?? []), ...(w ?? []), ...(v ?? [])]) {
+  for (const row of [...(h ?? []), ...(w ?? []), ...(v ?? []), ...(e ?? [])]) {
     if (row?.ticker) set.add(row.ticker);
   }
   if (only) for (const t of [...set]) if (!only.has(t)) set.delete(t);
