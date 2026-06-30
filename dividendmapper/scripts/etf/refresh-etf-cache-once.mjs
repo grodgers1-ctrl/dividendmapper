@@ -32,6 +32,9 @@ const CHUNK = Number(process.env.CHUNK_SIZE ?? 10);
 const HOST = process.env.REFRESH_HOST ?? "http://localhost:3000";
 const URL_BASE = `${HOST}/api/internal/refresh-etf-cache`;
 
+const STALE_BEFORE = new Date().toISOString();
+console.log(`Refreshing tickers stale before ${STALE_BEFORE} (this run's start time)`);
+
 let round = 0;
 let totalProcessed = 0;
 const allErrors = [];
@@ -39,36 +42,26 @@ const allErrors = [];
 while (true) {
   round++;
   console.log(`\n--- round ${round} (limit=${CHUNK}) ---`);
-  const r = await fetch(`${URL_BASE}?limit=${CHUNK}`, {
-    method: "POST",
-    headers: { authorization: `Bearer ${SECRET}` },
-  });
+  const r = await fetch(
+    `${URL_BASE}?limit=${CHUNK}&staleBefore=${encodeURIComponent(STALE_BEFORE)}`,
+    { method: "POST", headers: { authorization: `Bearer ${SECRET}` } },
+  );
   if (!r.ok) {
     console.error(`HTTP ${r.status}: ${await r.text()}`);
     process.exit(1);
   }
   const out = await r.json();
   console.log(
-    `  processed=${out.processed} infoOk=${out.infoOk} holdingsOk=${out.holdingsOk} sectorOk=${out.sectorOk} countryOk=${out.countryOk} durationMs=${out.durationMs} deadlineHit=${out.deadlineHit}`,
+    `  processed=${out.processed} remaining=${out.remaining} infoOk=${out.infoOk} holdingsOk=${out.holdingsOk} sectorOk=${out.sectorOk} countryOk=${out.countryOk} durationMs=${out.durationMs} deadlineHit=${out.deadlineHit}`,
   );
   if (out.errors?.length) {
     console.warn(`  errors (${out.errors.length}):`);
     out.errors.forEach((e) => console.warn(`    ${e}`));
     allErrors.push(...out.errors);
   }
-  const processed = out.processed ?? 0;
-  const deadlineHit = out.deadlineHit === true;
-  totalProcessed += processed;
-  if (processed < CHUNK && !deadlineHit) {
-    // genuinely drained - chunk returned fewer without deadline pressure
-    break;
-  }
-  if (processed === 0) {
-    // poison-ticker guard: zero processed AND deadline hit means a single
-    // ticker burned the whole budget. Avoid infinite loop.
-    console.error(
-      "Zero processed with deadlineHit - poison ticker stuck at head of queue. Stopping.",
-    );
+  totalProcessed += out.processed ?? 0;
+  if ((out.processed ?? 0) === 0) {
+    // queue truly drained - all tickers refreshed since staleBefore
     break;
   }
   if (round > 50) {

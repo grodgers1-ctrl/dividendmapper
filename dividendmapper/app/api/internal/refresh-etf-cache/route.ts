@@ -95,6 +95,18 @@ async function handle(req: Request): Promise<Response> {
     Math.min(MAX_LIMIT, Number.isFinite(rawLimit) ? Math.floor(rawLimit) : DEFAULT_LIMIT),
   );
 
+  // Optional staleBefore cursor: when set, only pick tickers whose
+  // refreshed_at is NULL or strictly older than this ISO timestamp. The local
+  // smoke captures Date.now() at run start and passes it on every request so
+  // tickers already refreshed this run are excluded, letting the loop
+  // terminate cleanly once every ticker has been touched. Production cron
+  // omits this param and falls back to the "stalest N" cursor.
+  const staleBeforeParam = url.searchParams.get("staleBefore");
+  const staleBefore: string | null =
+    staleBeforeParam && !Number.isNaN(Date.parse(staleBeforeParam))
+      ? new Date(staleBeforeParam).toISOString()
+      : null;
+
   // Cursor: two simple queries + JS-side sort. Bulletproof and avoids
   // PostgREST embed-join gotchas. NULLs (unseeded tickers) come first, then
   // oldest refreshed_at, with alphabetical ticker as the tie-breaker.
@@ -120,7 +132,7 @@ async function handle(req: Request): Promise<Response> {
     ]),
   );
   const totalUniverse = universeRes.data?.length ?? 0;
-  const rows = (universeRes.data ?? [])
+  const universe = (universeRes.data ?? [])
     .map((u: { ticker: string; domicile: string | null }) => ({
       ticker: u.ticker,
       domicile: u.domicile,
@@ -136,8 +148,11 @@ async function handle(req: Request): Promise<Response> {
       // Oldest refreshed_at first; alphabetical tie-breaker.
       const cmp = a.refreshed_at.localeCompare(b.refreshed_at);
       return cmp !== 0 ? cmp : a.ticker.localeCompare(b.ticker);
-    })
-    .slice(0, requestedLimit);
+    });
+  const candidates = universe.filter(
+    (u) => staleBefore === null || u.refreshed_at === null || u.refreshed_at < staleBefore,
+  );
+  const rows = candidates.slice(0, requestedLimit);
 
   let infoOk = 0;
   let holdingsOk = 0;
@@ -160,9 +175,13 @@ async function handle(req: Request): Promise<Response> {
     try {
       const info = (await getEtfInfo(u.ticker))[0];
       if (info) {
+        // FMP returns expenseRatio as a percent number (0.19 = 0.19%). We store
+        // as decimal (0.0019) so computeEtfQuality and downstream display can
+        // both treat it as a fraction.
+        const terDecimal = info.expenseRatio != null ? info.expenseRatio / 100 : null;
         await sb.from("etf_facts").upsert({
           ticker: u.ticker,
-          ter: info.expenseRatio ?? null,
+          ter: terDecimal,
           aum: info.assetsUnderManagement ?? null,
           inception_date: info.inceptionDate ?? null,
           holdings_count: info.holdingsCount ?? null,
@@ -205,7 +224,7 @@ async function handle(req: Request): Promise<Response> {
           | "Accumulating"
           | "Unknown";
         const quality = computeEtfQuality({
-          ter: info.expenseRatio ?? null,
+          ter: terDecimal,
           aum: info.assetsUnderManagement ?? null,
           inception_date: info.inceptionDate ?? null,
           distribution_policy: policy,
@@ -269,6 +288,8 @@ async function handle(req: Request): Promise<Response> {
     requestedLimit,
     processed,
     deadlineHit,
+    remaining: candidates.length - rows.length, // tickers not picked this round
+    staleBefore,
     tickerCount: rows.length,
     universeSize: totalUniverse,
     infoOk,
