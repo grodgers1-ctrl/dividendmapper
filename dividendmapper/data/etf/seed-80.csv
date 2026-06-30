@@ -1,0 +1,81 @@
+ticker,exchange,family,distribution_policy,domicile,benchmark,notes
+VWRL.L,LSE,Vanguard,Distributing,Ireland,FTSE All-World,UCITS
+VHYL.L,LSE,Vanguard,Distributing,Ireland,FTSE All-World High Div Yld,UCITS
+VWRP.L,LSE,Vanguard,Accumulating,Ireland,FTSE All-World,UCITS
+VHVE.L,LSE,Vanguard,Accumulating,Ireland,FTSE Developed World,UCITS
+VEVE.L,LSE,Vanguard,Distributing,Ireland,FTSE Developed World,UCITS
+VUKE.L,LSE,Vanguard,Distributing,Ireland,FTSE 100,UCITS
+VUKG.L,LSE,Vanguard,Accumulating,Ireland,FTSE 100,UCITS
+VMID.L,LSE,Vanguard,Distributing,Ireland,FTSE 250,UCITS
+VFEM.L,LSE,Vanguard,Distributing,Ireland,FTSE Emerging Markets,UCITS
+VAPX.L,LSE,Vanguard,Distributing,Ireland,FTSE Asia ex-Japan,UCITS
+VJPN.L,LSE,Vanguard,Distributing,Ireland,FTSE Japan,UCITS
+VEUR.L,LSE,Vanguard,Distributing,Ireland,FTSE Europe ex-UK,UCITS
+VUSA.L,LSE,Vanguard,Distributing,Ireland,S&P 500,UCITS
+VUAG.L,LSE,Vanguard,Accumulating,Ireland,S&P 500,UCITS
+VGOV.L,LSE,Vanguard,Distributing,Ireland,UK Gilts,UCITS
+VAGS.L,LSE,Vanguard,Accumulating,Ireland,Global Aggregate Bond,GBP-Hedged
+VAGP.L,LSE,Vanguard,Distributing,Ireland,Global Aggregate Bond,GBP-Hedged
+ISF.L,LSE,iShares,Distributing,Ireland,FTSE 100,UCITS
+CUKX.L,LSE,iShares,Accumulating,Ireland,FTSE 100,UCITS
+IUKD.L,LSE,iShares,Distributing,Ireland,FTSE UK Dividend+,UCITS
+IUSA.L,LSE,iShares,Distributing,Ireland,S&P 500,UCITS
+CSP1.L,LSE,iShares,Accumulating,Ireland,S&P 500,UCITS
+IUSP.L,LSE,iShares,Accumulating,Ireland,S&P 500,UCITS
+IUKP.L,LSE,iShares,Distributing,Ireland,FTSE EPRA UK Property,UCITS
+IGLT.L,LSE,iShares,Distributing,Ireland,UK Gilts,UCITS
+ITPS.L,LSE,iShares,Distributing,Ireland,UK Index-Linked Gilts,UCITS
+SLXX.L,LSE,iShares,Distributing,Ireland,GBP Corporate Bond,UCITS
+HYSD.L,LSE,iShares,Distributing,Ireland,Broad USD High Yield Corp,UCITS
+SEMB.L,LSE,iShares,Distributing,Ireland,JPM USD Emerging Markets Bond,UCITS
+EMIM.L,LSE,iShares,Accumulating,Ireland,MSCI EM IMI,UCITS
+IEEM.L,LSE,iShares,Distributing,Ireland,MSCI Emerging Markets,UCITS
+CNDX.L,LSE,iShares,Accumulating,Ireland,NASDAQ 100,UCITS
+WLDS.L,LSE,iShares,Distributing,Ireland,MSCI World Small Cap,UCITS
+WSML.L,LSE,iShares,Accumulating,Ireland,MSCI World Small Cap,UCITS
+IWDA.L,LSE,iShares,Accumulating,Ireland,MSCI World,UCITS
+IDVY.L,LSE,iShares,Distributing,Ireland,Eurozone Dividend,UCITS
+FUSD.L,LSE,Fidelity,Distributing,Ireland,US Quality Income,UCITS
+GBDV.L,LSE,SPDR,Distributing,Ireland,S&P UK Dividend Aristocrats,UCITS
+EUDV.L,LSE,SPDR,Distributing,Ireland,S&P Euro Dividend Aristocrats,UCITS
+GLDV.L,LSE,SPDR,Distributing,Ireland,S&P Global Dividend Aristocrats,UCITS
+WQDV.L,LSE,SPDR,Distributing,Ireland,MSCI World Quality Dividend,UCITS
+EQQQ.L,LSE,Invesco,Distributing,Ireland,NASDAQ 100,UCITS
+HMWO.L,LSE,HSBC,Distributing,Ireland,MSCI World,UCITS
+HMEM.L,LSE,HSBC,Distributing,Ireland,MSCI Emerging Markets,UCITS
+HUKX.L,LSE,HSBC,Distributing,Ireland,FTSE 100,UCITS
+UKRE.L,LSE,iShares,Distributing,Ireland,MSCI Target UK Real Estate,UCITS
+IPRP.L,LSE,iShares,Distributing,Ireland,European Property Yield,UCITS
+SGLN.L,LSE,iShares,Accumulating,Ireland,Physical Gold,UCITS-ETC
+SAAA.L,LSE,iShares,Distributing,Ireland,Global AAA-AA Govt Bond,UCITS
+INRG.L,LSE,iShares,Accumulating,Ireland,Global Clean Energy,UCITS
+SCHD,NYSE,Schwab,Distributing,US,Dow Jones US Dividend 100,
+VYM,NYSE,Vanguard,Distributing,US,FTSE High Dividend Yield,
+VYMI,NASDAQ,Vanguard,Distributing,US,FTSE All-World ex-US High Div Yld,
+HDV,NYSE,iShares,Distributing,US,Morningstar Dividend Yield Focus,
+SPHD,NYSE,Invesco,Distributing,US,S&P 500 Low Volatility High Dividend,
+DGRO,NYSE,iShares,Distributing,US,Morningstar US Dividend Growth,
+DGRW,NASDAQ,WisdomTree,Distributing,US,US Quality Dividend Growth,
+NOBL,NYSE,ProShares,Distributing,US,S&P 500 Dividend Aristocrats,
+DIVO,NYSE,Amplify,Distributing,US,CWP Enhanced Dividend Income,
+JEPI,NYSE,JPMorgan,Distributing,US,JPM Equity Premium Income,
+JEPQ,NASDAQ,JPMorgan,Distributing,US,JPM Nasdaq Equity Premium Income,
+QYLD,NASDAQ,Global X,Distributing,US,NASDAQ 100 Covered Call,
+RYLD,NYSE,Global X,Distributing,US,Russell 2000 Covered Call,
+XYLD,NYSE,Global X,Distributing,US,S&P 500 Covered Call,
+SPYD,NYSE,SPDR,Distributing,US,S&P 500 High Dividend,
+SDY,NYSE,SPDR,Distributing,US,S&P High Yield Dividend Aristocrats,
+VIG,NYSE,Vanguard,Distributing,US,S&P US Dividend Growers,
+DVY,NYSE,iShares,Distributing,US,Dow Jones US Select Dividend,
+FDVV,NASDAQ,Fidelity,Distributing,US,High Dividend,
+DLN,NYSE,WisdomTree,Distributing,US,US LargeCap Dividend,
+VOO,NYSE,Vanguard,Distributing,US,S&P 500,
+SPY,NYSE,SPDR,Distributing,US,S&P 500,
+VTI,NYSE,Vanguard,Distributing,US,Total Stock Market,
+XLU,NYSE,SPDR,Distributing,US,Utilities Select Sector,
+XLP,NYSE,SPDR,Distributing,US,Consumer Staples Select Sector,
+XLE,NYSE,SPDR,Distributing,US,Energy Select Sector,
+VNQ,NYSE,Vanguard,Distributing,US,Real Estate,
+IYR,NYSE,iShares,Distributing,US,US Real Estate,
+BND,NASDAQ,Vanguard,Distributing,US,Total Bond Market,
+AGG,NYSE,iShares,Distributing,US,Core US Aggregate Bond,
