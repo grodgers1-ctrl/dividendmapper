@@ -418,9 +418,10 @@ export function assembleScoreInputs(
   };
 }
 
+// Reads the ISO currency code from FMP profile; used to stamp equity_score_history.current_price_currency.
 export function extractCurrentPriceCurrency(
-  bundle: { profile: Array<{ currency?: string | null }> },
+  bundle: Pick<RawFmpBundle, "profile">,
 ): string | null {
-  const c = bundle.profile?.[0]?.currency;
+  const c = bundle.profile[0]?.currency;
   return typeof c === 'string' && c.length > 0 ? c : null;
 }

@@ -1,18 +1,19 @@
 import { describe, it, expect } from 'vitest';
 import { extractCurrentPriceCurrency } from '../assemble-inputs';
+import type { FmpProfile } from '../fmp-client';
 
 describe('extractCurrentPriceCurrency', () => {
   it('returns currency from profile when present', () => {
-    const bundle = { profile: [{ symbol: 'VWRL.L', currency: 'GBP' }] };
-    expect(extractCurrentPriceCurrency(bundle as never)).toBe('GBP');
+    const profile = [{ symbol: 'VWRL.L', currency: 'GBP' } as FmpProfile];
+    expect(extractCurrentPriceCurrency({ profile })).toBe('GBP');
   });
 
   it('returns null when profile is empty', () => {
-    expect(extractCurrentPriceCurrency({ profile: [] } as never)).toBeNull();
+    expect(extractCurrentPriceCurrency({ profile: [] })).toBeNull();
   });
 
   it('returns null when currency field missing', () => {
-    const bundle = { profile: [{ symbol: 'X' }] };
-    expect(extractCurrentPriceCurrency(bundle as never)).toBeNull();
+    const profile = [{ symbol: 'X' } as FmpProfile];
+    expect(extractCurrentPriceCurrency({ profile })).toBeNull();
   });
 });
