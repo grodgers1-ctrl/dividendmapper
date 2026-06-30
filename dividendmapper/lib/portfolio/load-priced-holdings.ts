@@ -57,6 +57,10 @@ export interface PricedHoldings {
   valueTotalsByCurrency: ValueCurrencyTotal[];
   /** Company name per ticker (FMP profile), for the table. Ticker falls back. */
   nameByTicker: Record<string, string>;
+  /** Distribution policy per ETF ticker (from etf_universe). Non-ETF tickers absent. */
+  policyByTicker: Record<string, "Distributing" | "Accumulating" | "Unknown">;
+  /** asset_type per ticker. Missing tickers default to "equity" downstream. */
+  assetTypeByTicker: Record<string, string>;
   /** 5Y daily-close series per visible ticker for the row sparklines. Empty
    *  for tickers where ticker_price_history has no data yet. */
   sparklineByTicker: Record<string, SparklineSeries>;
@@ -111,6 +115,8 @@ export async function loadPricedHoldings(userId: string): Promise<PricedHoldings
   const scoringDividendByTicker = new Map<string, number>();
   const priceByTicker: Record<string, TickerPrice> = {};
   const nameByTicker: Record<string, string> = {};
+  const policyByTicker: PricedHoldings["policyByTicker"] = {};
+  const assetTypeByTicker: PricedHoldings["assetTypeByTicker"] = {};
   if (allTickers.length > 0) {
     const { data: divRows } = await supabase
       .from("equity_score_history")
@@ -155,13 +161,44 @@ export async function loadPricedHoldings(userId: string): Promise<PricedHoldings
 
     // Company names live on equity_scores (latest snapshot), written nightly
     // from the FMP profile. Ticker falls back when absent (manual/unscored).
-    const { data: nameRows } = await supabase
-      .from("equity_scores")
-      .select("ticker, name")
-      .in("ticker", allTickers)
-      .returns<{ ticker: string; name: string | null }[]>();
-    for (const r of nameRows ?? []) {
+    // ETF distribution policy lives on etf_universe; asset_type on tickers —
+    // both feed the holding-row Accumulating pill and ETF badge.
+    const [nameRes, policyRes, assetTypeRes] = await Promise.all([
+      supabase
+        .from("equity_scores")
+        .select("ticker, name")
+        .in("ticker", allTickers)
+        .returns<{ ticker: string; name: string | null }[]>(),
+      supabase
+        .from("etf_universe")
+        .select("ticker, distribution_policy")
+        .in("ticker", allTickers)
+        .returns<
+          {
+            ticker: string;
+            distribution_policy:
+              | "Distributing"
+              | "Accumulating"
+              | "Unknown"
+              | null;
+          }[]
+        >(),
+      supabase
+        .from("tickers")
+        .select("ticker, asset_type")
+        .in("ticker", allTickers)
+        .returns<{ ticker: string; asset_type: string }[]>(),
+    ]);
+    for (const r of nameRes.data ?? []) {
       if (r.name) nameByTicker[r.ticker] = r.name;
+    }
+    for (const r of policyRes.data ?? []) {
+      if (r.distribution_policy) {
+        policyByTicker[r.ticker] = r.distribution_policy;
+      }
+    }
+    for (const r of assetTypeRes.data ?? []) {
+      assetTypeByTicker[r.ticker] = r.asset_type;
     }
   }
   const quotes = mergeScoringDividends(rawQuotes, allTickers, scoringDividendByTicker);
@@ -223,6 +260,8 @@ export async function loadPricedHoldings(userId: string): Promise<PricedHoldings
     priceByTicker,
     valueTotalsByCurrency,
     nameByTicker,
+    policyByTicker,
+    assetTypeByTicker,
     sparklineByTicker,
     income,
   };

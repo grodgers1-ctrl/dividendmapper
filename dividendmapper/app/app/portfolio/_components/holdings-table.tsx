@@ -163,6 +163,10 @@ interface HoldingsTableProps {
   priceByTicker?: Record<string, TickerPrice>;
   /** Company name per ticker; the ticker is shown alone when absent. */
   nameByTicker?: Record<string, string>;
+  /** Distribution policy per ETF ticker. Accumulating swaps income for a pill. */
+  policyByTicker?: Record<string, "Distributing" | "Accumulating" | "Unknown">;
+  /** asset_type per ticker; "etf" surfaces a small badge next to the ticker. */
+  assetTypeByTicker?: Record<string, string>;
   tier: "free" | "pro" | "premium";
   pricingPublic: boolean;
   isBeta: boolean;
@@ -193,6 +197,8 @@ export function HoldingsTable({
   actualsByKey,
   priceByTicker,
   nameByTicker,
+  policyByTicker,
+  assetTypeByTicker,
   tier,
   pricingPublic,
   isBeta,
@@ -442,6 +448,8 @@ export function HoldingsTable({
                   )}
                   totalVisibleValue={totalVisibleValue}
                   density={density}
+                  distributionPolicy={policyByTicker?.[row.ticker]}
+                  assetType={assetTypeByTicker?.[row.ticker]}
                   onOpenScore={handleOpenScore}
                   onOpenVehicleScore={handleOpenVehicleScore}
                   onDelete={handleDelete}
@@ -480,6 +488,8 @@ export function HoldingsTable({
           const received = actualsByKey?.[actualKey(row.ticker, row.wrapper)];
           const score = scoresByTicker[row.ticker];
           const vehicle = vehicleScoresByTicker?.[row.ticker];
+          const policy = policyByTicker?.[row.ticker];
+          const assetType = assetTypeByTicker?.[row.ticker];
           const series = sliceSeriesForRange(
             sparklineByTicker?.[row.ticker],
             sparklineRange,
@@ -526,8 +536,13 @@ export function HoldingsTable({
                     size={40}
                   />
                   <div className="min-w-0">
-                    <span className="block font-mono text-base font-semibold text-foreground">
+                    <span className="flex items-center font-mono text-base font-semibold text-foreground">
                       {row.ticker}
+                      {assetType === "etf" && (
+                        <span className="ml-2 inline-flex items-center rounded-full bg-secondary/40 px-1.5 py-0.5 text-[10px] text-muted-foreground ring-1 ring-border">
+                          ETF
+                        </span>
+                      )}
                     </span>
                     {nameByTicker?.[row.ticker] && (
                       <p className="mt-0.5 truncate text-xs text-muted-foreground">
@@ -645,7 +660,13 @@ export function HoldingsTable({
                     Income
                   </dt>
                   <dd className="mt-0.5 text-sm">
-                    <IncomeCell status={incomeStatus} />
+                    {policy === "Accumulating" ? (
+                      <span className="inline-flex items-center rounded-full bg-secondary/40 px-2 py-0.5 text-xs text-muted-foreground ring-1 ring-border">
+                        Accumulating
+                      </span>
+                    ) : (
+                      <IncomeCell status={incomeStatus} />
+                    )}
                   </dd>
                 </div>
                 <div>

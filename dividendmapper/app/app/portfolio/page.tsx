@@ -50,6 +50,8 @@ export default async function PortfolioPage({
     priceByTicker,
     valueTotalsByCurrency,
     nameByTicker,
+    policyByTicker,
+    assetTypeByTicker,
     sparklineByTicker,
     income,
   } = await loadPricedHoldings(user.id);
@@ -142,6 +144,8 @@ export default async function PortfolioPage({
               actualsByKey={actualsByKey}
               priceByTicker={priceByTicker}
               nameByTicker={nameByTicker}
+              policyByTicker={policyByTicker}
+              assetTypeByTicker={assetTypeByTicker}
               tier={tier}
               pricingPublic={pricingPublic}
               isBeta={isBeta()}

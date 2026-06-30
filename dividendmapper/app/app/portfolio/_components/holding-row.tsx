@@ -269,6 +269,10 @@ interface HoldingRowProps {
   sparklineSeries: SparklineSeries | null;
   totalVisibleValue: number;
   density: Density;
+  /** Accumulating swaps the income figure for a pill. */
+  distributionPolicy?: "Distributing" | "Accumulating" | "Unknown";
+  /** "etf" surfaces a small badge next to the ticker. */
+  assetType?: string;
   onOpenScore: OpenScore;
   onOpenVehicleScore: (ticker: string) => void;
   onDelete: (row: HoldingRowData) => void;
@@ -292,6 +296,8 @@ export function HoldingRow({
   sparklineSeries,
   totalVisibleValue,
   density,
+  distributionPolicy,
+  assetType,
   onOpenScore,
   onOpenVehicleScore,
   onDelete,
@@ -345,8 +351,13 @@ export function HoldingRow({
             name={nameByTicker?.[row.ticker]}
           />
           <div className="min-w-0">
-            <span className="block font-mono text-sm font-medium text-foreground">
+            <span className="flex items-center font-mono text-sm font-medium text-foreground">
               {row.ticker}
+              {assetType === "etf" && (
+                <span className="ml-2 inline-flex items-center rounded-full bg-secondary/40 px-1.5 py-0.5 text-[10px] text-muted-foreground ring-1 ring-border">
+                  ETF
+                </span>
+              )}
             </span>
             {nameByTicker?.[row.ticker] && (
               <span className="mt-0.5 block max-w-[14rem] truncate text-xs text-muted-foreground">
@@ -420,7 +431,13 @@ export function HoldingRow({
         )}
       </td>
       <td className={`w-px whitespace-nowrap px-3 ${cellPad} text-right text-sm`}>
-        <IncomeCell status={incomeStatus} />
+        {distributionPolicy === "Accumulating" ? (
+          <span className="inline-flex items-center rounded-full bg-secondary/40 px-2 py-0.5 text-xs text-muted-foreground ring-1 ring-border">
+            Accumulating
+          </span>
+        ) : (
+          <IncomeCell status={incomeStatus} />
+        )}
       </td>
       <td className={`w-px whitespace-nowrap px-3 ${cellPad} text-right text-sm`}>
         <ReceivedCell actual={received} />
