@@ -1,7 +1,10 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { HoldingLogo } from "@/app/app/portfolio/_components/holding-logo";
+import { RowSparkline } from "@/app/app/portfolio/_components/row-sparkline";
+import type { SparklineSeries } from "@/lib/portfolio/load-sparkline-series";
 
 // Inlined per project convention; see income-vehicles screener for the canonical body.
 function rampColor(score: number): string {
@@ -62,10 +65,13 @@ function chipCls(active: boolean): string {
 export function EtfScreener({
   rows,
   defaultLimit = 20,
+  sparklineByTicker = {},
 }: {
   rows: ScreenerRow[];
   defaultLimit?: number;
+  sparklineByTicker?: Record<string, SparklineSeries>;
 }) {
+  const router = useRouter();
   const [policy, setPolicy] = useState<Policy>("all");
   const [domicile, setDomicile] = useState<Domicile>("all");
   const [sortKey, setSortKey] = useState<SortKey>("quality_headline");
@@ -151,6 +157,7 @@ export function EtfScreener({
                 Ticker{sortIndicator("ticker")}
               </th>
               <th className="px-3 py-2">Name</th>
+              <th className="hidden lg:table-cell px-3 py-2">5Y</th>
               <th className="px-3 py-2">Policy</th>
               <th
                 className="px-3 py-2 text-right cursor-pointer select-none"
@@ -173,36 +180,58 @@ export function EtfScreener({
             </tr>
           </thead>
           <tbody>
-            {shown.map((r) => (
-              <tr key={r.ticker} className="border-t border-border hover:bg-secondary/40">
-                <td className="px-3 py-2 font-mono">
-                  <Link
-                    href={`/app/inspect/${encodeURIComponent(r.ticker)}`}
-                    className="hover:text-foreground"
-                  >
-                    {r.ticker}
-                  </Link>
-                </td>
-                <td className="px-3 py-2 truncate max-w-[280px]">{r.name}</td>
-                <td className="px-3 py-2">{r.distribution_policy ?? "—"}</td>
-                <td className="px-3 py-2 text-right font-mono tabular-nums">{fmtTer(r.ter)}</td>
-                <td className="px-3 py-2 text-right font-mono tabular-nums">{fmtAum(r.aum)}</td>
-                <td
-                  className="px-3 py-2 text-right font-mono tabular-nums"
-                  style={{
-                    color:
-                      r.quality_headline != null
-                        ? rampColor(r.quality_headline)
-                        : "inherit",
+            {shown.map((r) => {
+              const href = `/app/inspect/${encodeURIComponent(r.ticker)}`;
+              return (
+                <tr
+                  key={r.ticker}
+                  role="link"
+                  tabIndex={0}
+                  onClick={() => router.push(href)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      router.push(href);
+                    }
                   }}
+                  aria-label={`Open ${r.ticker} details`}
+                  className="group cursor-pointer border-t border-border transition-all hover:bg-secondary/40 hover:[box-shadow:inset_3px_0_0_rgb(16_185_129/0.5)] focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:ring-inset"
                 >
-                  {r.quality_headline ?? "—"}
-                </td>
-              </tr>
-            ))}
+                  <td className="px-3 py-2 font-mono">
+                    <div className="flex items-center gap-2">
+                      <HoldingLogo ticker={r.ticker} size={24} />
+                      <span>{r.ticker}</span>
+                    </div>
+                  </td>
+                  <td className="px-3 py-2 truncate max-w-[280px]">{r.name}</td>
+                  <td className="hidden lg:table-cell px-3 py-2">
+                    <RowSparkline
+                      ticker={r.ticker}
+                      name={r.name}
+                      range="5Y"
+                      series={sparklineByTicker[r.ticker] ?? null}
+                    />
+                  </td>
+                  <td className="px-3 py-2">{r.distribution_policy ?? "—"}</td>
+                  <td className="px-3 py-2 text-right font-mono tabular-nums">{fmtTer(r.ter)}</td>
+                  <td className="px-3 py-2 text-right font-mono tabular-nums">{fmtAum(r.aum)}</td>
+                  <td
+                    className="px-3 py-2 text-right font-mono tabular-nums"
+                    style={{
+                      color:
+                        r.quality_headline != null
+                          ? rampColor(r.quality_headline)
+                          : "inherit",
+                    }}
+                  >
+                    {r.quality_headline ?? "—"}
+                  </td>
+                </tr>
+              );
+            })}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-3 py-6 text-center text-xs text-muted-foreground">
+                <td colSpan={7} className="px-3 py-6 text-center text-xs text-muted-foreground">
                   No ETFs match these filters.
                 </td>
               </tr>

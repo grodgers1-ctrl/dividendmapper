@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { requireUser } from "@/lib/auth/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { loadEtfSpotlight } from "@/lib/etf/load-etf-spotlight";
+import { loadSparklineSeriesByTicker, type SparklineSeries } from "@/lib/portfolio/load-sparkline-series";
 import { EtfConcentrationCard } from "../portfolio/_components/etf-concentration-card";
 import { EtfScreener, type ScreenerRow } from "./_components/etf-screener";
 import { EtfSearch } from "./_components/etf-search";
@@ -65,10 +66,17 @@ export default async function EtfsPage() {
     };
   });
 
-  const spotlight = await loadEtfSpotlight(rows).catch(() => ({
-    picks: [] as ScreenerRow[],
-    basis: "quality" as const,
-  }));
+  const tickers = rows.map((r) => r.ticker);
+  const [spotlight, sparklineMap] = await Promise.all([
+    loadEtfSpotlight(rows).catch(() => ({
+      picks: [] as ScreenerRow[],
+      basis: "quality" as const,
+    })),
+    loadSparklineSeriesByTicker(sb, tickers, "5Y").catch(
+      () => new Map<string, SparklineSeries>(),
+    ),
+  ]);
+  const sparklineByTicker = Object.fromEntries(sparklineMap);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 md:px-6">
@@ -88,7 +96,7 @@ export default async function EtfsPage() {
         <EtfComparePanel rows={rows} />
       </div>
       <div className="mb-6">
-        <EtfScreener rows={rows} defaultLimit={20} />
+        <EtfScreener rows={rows} defaultLimit={20} sparklineByTicker={sparklineByTicker} />
       </div>
       <EtfConcentrationCard userId={user.id} />
     </div>
