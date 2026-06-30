@@ -2,8 +2,10 @@
 //
 // Loads .env.local (so it works in PowerShell without a preamble) then loops
 // POSTs against the chunked route on http://localhost:3000 until the queue is
-// drained. Each call processes up to CHUNK_SIZE stalest tickers; when a chunk
-// returns fewer than requested we know the queue is empty.
+// drained. Each call processes up to CHUNK_SIZE stalest tickers. We stop only
+// when a chunk returns fewer than requested AND the route didn't hit its soft
+// deadline - otherwise "processed < CHUNK" could be a deadline-bailed chunk
+// with more work still pending.
 //
 //   node dividendmapper/scripts/etf/refresh-etf-cache-once.mjs
 //
@@ -54,9 +56,19 @@ while (true) {
     out.errors.forEach((e) => console.warn(`    ${e}`));
     allErrors.push(...out.errors);
   }
-  totalProcessed += out.processed ?? 0;
-  if ((out.processed ?? 0) < CHUNK) {
-    // chunk returned fewer than requested -> queue drained
+  const processed = out.processed ?? 0;
+  const deadlineHit = out.deadlineHit === true;
+  totalProcessed += processed;
+  if (processed < CHUNK && !deadlineHit) {
+    // genuinely drained - chunk returned fewer without deadline pressure
+    break;
+  }
+  if (processed === 0) {
+    // poison-ticker guard: zero processed AND deadline hit means a single
+    // ticker burned the whole budget. Avoid infinite loop.
+    console.error(
+      "Zero processed with deadlineHit - poison ticker stuck at head of queue. Stopping.",
+    );
     break;
   }
   if (round > 50) {
