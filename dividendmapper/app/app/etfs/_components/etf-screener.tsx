@@ -59,11 +59,18 @@ function chipCls(active: boolean): string {
     : "rounded px-2.5 py-1 text-xs text-muted-foreground hover:text-foreground";
 }
 
-export function EtfScreener({ rows }: { rows: ScreenerRow[] }) {
+export function EtfScreener({
+  rows,
+  defaultLimit = 20,
+}: {
+  rows: ScreenerRow[];
+  defaultLimit?: number;
+}) {
   const [policy, setPolicy] = useState<Policy>("all");
   const [domicile, setDomicile] = useState<Domicile>("all");
   const [sortKey, setSortKey] = useState<SortKey>("quality_headline");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [expanded, setExpanded] = useState(false);
 
   const filtered = useMemo(() => {
     const subset = rows.filter((r) => {
@@ -98,6 +105,10 @@ export function EtfScreener({ rows }: { rows: ScreenerRow[] }) {
     if (sortKey !== key) return "";
     return sortDir === "asc" ? " ↑" : " ↓";
   }
+
+  const showCount = expanded ? filtered.length : Math.min(defaultLimit, filtered.length);
+  const shown = filtered.slice(0, showCount);
+  const canToggle = filtered.length > defaultLimit;
 
   return (
     <div className="rounded-lg border border-border bg-card">
@@ -162,7 +173,7 @@ export function EtfScreener({ rows }: { rows: ScreenerRow[] }) {
             </tr>
           </thead>
           <tbody>
-            {filtered.map((r) => (
+            {shown.map((r) => (
               <tr key={r.ticker} className="border-t border-border hover:bg-secondary/40">
                 <td className="px-3 py-2 font-mono">
                   <Link
@@ -199,6 +210,17 @@ export function EtfScreener({ rows }: { rows: ScreenerRow[] }) {
           </tbody>
         </table>
       </div>
+      {canToggle && (
+        <div className="border-t border-border p-3 text-center">
+          <button
+            type="button"
+            onClick={() => setExpanded((e) => !e)}
+            className="text-xs text-muted-foreground hover:text-foreground"
+          >
+            {expanded ? "Show less" : `Show all (${filtered.length})`}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
 import { requireUser } from "@/lib/auth/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { loadEtfSpotlight } from "@/lib/etf/load-etf-spotlight";
 import { EtfConcentrationCard } from "../portfolio/_components/etf-concentration-card";
 import { EtfScreener, type ScreenerRow } from "./_components/etf-screener";
+import { EtfSearch } from "./_components/etf-search";
+import { EtfSpotlightStrip } from "./_components/etf-spotlight-strip";
+import { EtfComparePanel } from "./_components/etf-compare-panel";
 
 export const dynamic = "force-dynamic";
 
@@ -61,6 +65,11 @@ export default async function EtfsPage() {
     };
   });
 
+  const spotlight = await loadEtfSpotlight(rows).catch(() => ({
+    picks: [] as ScreenerRow[],
+    basis: "quality" as const,
+  }));
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 md:px-6">
       <header className="mb-6">
@@ -69,10 +78,19 @@ export default async function EtfsPage() {
           Quality-scored UK and US income ETFs.
         </p>
       </header>
-      <EtfConcentrationCard userId={user.id} />
-      <div className="mt-6">
-        <EtfScreener rows={rows} />
+      <div className="mb-6">
+        <EtfSearch rows={rows} />
       </div>
+      <div className="mb-6">
+        <EtfSpotlightStrip picks={spotlight.picks} basis={spotlight.basis} />
+      </div>
+      <div className="mb-6">
+        <EtfComparePanel rows={rows} />
+      </div>
+      <div className="mb-6">
+        <EtfScreener rows={rows} defaultLimit={20} />
+      </div>
+      <EtfConcentrationCard userId={user.id} />
     </div>
   );
 }
