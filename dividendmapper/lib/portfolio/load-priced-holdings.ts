@@ -143,15 +143,13 @@ export async function loadPricedHoldings(userId: string): Promise<PricedHoldings
           currency: r.current_price_currency,
           ticker: r.ticker,
         });
-        if (price > 0) {
-          priceByTicker[r.ticker] = {
-            price,
-            currency: displayCurrency({
-              currency: r.current_price_currency,
-              ticker: r.ticker,
-            }),
-          };
-        }
+        priceByTicker[r.ticker] = {
+          price,
+          currency: displayCurrency({
+            currency: r.current_price_currency,
+            ticker: r.ticker,
+          }),
+        };
       }
     }
 
