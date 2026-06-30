@@ -429,3 +429,37 @@ export interface FmpCalendarDividend {
 export async function getDividendsCalendar(from: string, to: string): Promise<FmpCalendarDividend[]> {
   return (await fetchEndpoint("dividends-calendar", { from, to })) as FmpCalendarDividend[];
 }
+
+export interface FmpEtfInfo {
+  symbol: string;
+  name: string;
+  description?: string;
+  isin?: string;
+  assetClass?: string;
+  domicile?: string;
+  website?: string;
+  etfCompany?: string;
+  expenseRatio?: number;
+  assetsUnderManagement?: number;
+  avgVolume?: number;
+  inceptionDate?: string;
+  nav?: number;
+  navCurrency?: string;
+  holdingsCount?: number;
+  sectorsList?: Array<{ industry: string; exposure: number }>;
+  updatedAt?: string;
+  [k: string]: unknown;
+}
+
+export async function getEtfInfo(symbol: string): Promise<FmpEtfInfo[]> {
+  return (await fetchEndpoint("etf/info", { symbol })) as FmpEtfInfo[];
+}
+
+export interface FmpEtfCountryWeight {
+  country: string;
+  weightPercentage: string;
+}
+
+export async function getEtfCountryWeights(symbol: string): Promise<FmpEtfCountryWeight[]> {
+  return (await fetchEndpoint("etf/country-weightings", { symbol })) as FmpEtfCountryWeight[];
+}
