@@ -18,13 +18,33 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import * as Sentry from "@sentry/nextjs";
-import { getEtfInfo, getEtfCountryWeights } from "@/lib/scoring/fmp-client";
+import { getEtfInfo, getEtfCountryWeights, getDividends } from "@/lib/scoring/fmp-client";
 import { resolveHoldings } from "@/lib/etf/holdings-resolver";
+import { detectCadence } from "@/lib/scoring/project-dividends";
+import { computeEtfQuality } from "@/lib/scoring/compute-etf-quality";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 // 80 tickers × ~5s = 400s baseline; pad headroom for AV/Yahoo slow paths.
 export const maxDuration = 800;
+
+// Cadence detector returns 'monthly' | 'quarterly' | 'semi' | 'annual' |
+// 'irregular' | 'unknown'. We collapse to the 3 ETF Quality tiers.
+async function classifyCadence(ticker: string): Promise<"regular" | "semi-irregular" | "irregular"> {
+  const divs = await getDividends(ticker, 40);
+  const cad = detectCadence(
+    divs.map((d) => ({
+      exDate: d.date,
+      amount: d.adjDividend ?? d.dividend,
+    })),
+  );
+  if (cad === "monthly" || cad === "quarterly" || cad === "semi" || cad === "annual") {
+    return "regular";
+  }
+  // 'irregular' and 'unknown' both fall here. 'semi-irregular' never produced
+  // by the current detector but is a valid Tier value the score module accepts.
+  return "irregular";
+}
 
 async function handle(req: Request): Promise<Response> {
   const cronSecret = process.env.CRON_SECRET;
@@ -94,6 +114,41 @@ async function handle(req: Request): Promise<Response> {
           );
           sectorOk++;
         }
+
+        // --- Income Quality scoring ---
+        let cadenceTier: "regular" | "semi-irregular" | "irregular" = "irregular";
+        try {
+          cadenceTier = await classifyCadence(u.ticker);
+        } catch (e) {
+          // dividend fetch can 429 / 404 - degrade to 'irregular' rather than abort
+          console.warn(`[refresh-etf-cache] cadence ${u.ticker}: ${(e as Error).message}`);
+        }
+        const { data: uniRow } = await sb
+          .from("etf_universe")
+          .select("distribution_policy")
+          .eq("ticker", u.ticker)
+          .maybeSingle();
+        const policy = (uniRow?.distribution_policy ?? "Unknown") as
+          | "Distributing"
+          | "Accumulating"
+          | "Unknown";
+        const quality = computeEtfQuality({
+          ter: info.expenseRatio ?? null,
+          aum: info.assetsUnderManagement ?? null,
+          inception_date: info.inceptionDate ?? null,
+          distribution_policy: policy,
+          cadenceTier,
+          yieldStabilityTier: "moderate", // placeholder until TTM CV refinement
+        });
+        await sb
+          .from("etf_facts")
+          .update({
+            quality_headline: quality.headline,
+            quality_cost: quality.pillars.cost,
+            quality_process: quality.pillars.process,
+            quality_income: quality.pillars.income,
+          })
+          .eq("ticker", u.ticker);
       }
 
       const countries = await getEtfCountryWeights(u.ticker);
