@@ -1,24 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { resolveRowValue, scoringPrice } from "@/lib/portfolio/row-value";
+import { resolveRowValue } from "@/lib/portfolio/row-value";
+
+// scoringPrice unit-test coverage lives in row-value.currency.test.ts. It
+// got a breaking signature change (now returns a plain number, takes an
+// args object) when we made it currency-aware. The null/zero/negative guard
+// moved up to the callsite in load-priced-holdings.ts.
 
 const row = (ticker: string, quantity: number | string) => ({ ticker, quantity });
-
-describe("scoringPrice", () => {
-  it("passes a US price through as USD", () => {
-    expect(scoringPrice("MSFT", 400)).toEqual({ price: 400, currency: "USD" });
-  });
-
-  it("converts an LSE price from pence (GBX) to GBP (÷100)", () => {
-    // W7L.L current_price is stored in pence, like dividend_per_share.
-    expect(scoringPrice("W7L.L", 450)).toEqual({ price: 4.5, currency: "GBP" });
-  });
-
-  it("returns null for a null or non-positive price", () => {
-    expect(scoringPrice("MSFT", null)).toBeNull();
-    expect(scoringPrice("MSFT", 0)).toBeNull();
-    expect(scoringPrice("W7L.L", -1)).toBeNull();
-  });
-});
 
 describe("resolveRowValue", () => {
   it("computes quantity × price in the price's currency", () => {
