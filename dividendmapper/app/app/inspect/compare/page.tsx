@@ -90,6 +90,11 @@ export default async function AppComparePage({
     // Free users: keep them in the app shell but show an upgrade nudge.
     return (
       <article className="mx-auto max-w-3xl px-4 py-12 md:px-6">
+        <nav aria-label="Breadcrumb" className="mb-2 text-sm text-muted-foreground">
+          <a href="/app/etfs" className="hover:text-foreground">ETFs</a>
+          <span className="px-2">/</span>
+          <span className="text-foreground">Compare</span>
+        </nav>
         <h1 className="mb-3 font-mono text-2xl">Compare ETFs</h1>
         <p className="mb-4 text-sm text-muted-foreground">
           Pairwise ETF overlap is a Pro feature.
@@ -107,11 +112,21 @@ export default async function AppComparePage({
   if (!a || !b) {
     return (
       <article className="mx-auto max-w-3xl px-4 py-12 md:px-6">
+        <nav aria-label="Breadcrumb" className="mb-2 text-sm text-muted-foreground">
+          <a href="/app/etfs" className="hover:text-foreground">ETFs</a>
+          <span className="px-2">/</span>
+          <span className="text-foreground">Compare</span>
+        </nav>
         <h1 className="mb-3 font-mono text-2xl">Compare ETFs</h1>
         <p className="text-sm text-muted-foreground">
           Pass two tickers as <code>?a=X&amp;b=Y</code>. Example:{" "}
           <a className="text-foreground underline" href="/app/inspect/compare?a=VWRL.L&b=VHYL.L">
             /app/inspect/compare?a=VWRL.L&amp;b=VHYL.L
+          </a>
+        </p>
+        <p className="mt-6 text-sm">
+          <a href="/app/etfs" className="text-muted-foreground hover:text-foreground">
+            ← Browse more ETFs
           </a>
         </p>
       </article>
@@ -137,6 +152,11 @@ export default async function AppComparePage({
 
   return (
     <article className="mx-auto max-w-6xl px-4 py-8 md:px-6">
+      <nav aria-label="Breadcrumb" className="mb-2 text-sm text-muted-foreground">
+        <a href="/app/etfs" className="hover:text-foreground">ETFs</a>
+        <span className="px-2">/</span>
+        <span className="text-foreground">Compare</span>
+      </nav>
       <header className="mb-6">
         <h1 className="font-mono text-2xl">
           {bundleA.ticker} <span className="text-muted-foreground">vs</span> {bundleB.ticker}
@@ -164,6 +184,12 @@ export default async function AppComparePage({
         <h2 className="mb-3 text-sm font-medium">Field comparison</h2>
         <CompareDifferencesToggle rows={buildCompareRows(bundleA, bundleB)} />
       </section>
+
+      <p className="mt-6 text-sm">
+        <a href="/app/etfs" className="text-muted-foreground hover:text-foreground">
+          ← Browse more ETFs
+        </a>
+      </p>
     </article>
   );
 }
