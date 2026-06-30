@@ -148,6 +148,15 @@ interface BuildArgs {
    * spread evenly across the next 12 future months. Tagged `fmp-estimate`
    * so the UI can dim it. */
   forwardDpsByTicker?: Record<string, { dps: number; currency: string }>;
+  /** Optional per-ticker ETF distribution policy. Holdings whose policy is
+   * "Accumulating" contribute zero events in either direction — the ETF
+   * reinvests distributions internally and never pays the user cash, so any
+   * projected or confirmed forecast would paint phantom income on the
+   * calendar. Real user_dividends actuals are NOT filtered (they represent
+   * broker-reported cash received). Absent map (or absent ticker) means no
+   * skipping — preserves prior behaviour for non-ETF tickers and tests that
+   * don't care about policy. Mirrors `aggregatePortfolioIncome`'s skip. */
+  policyByTicker?: Readonly<Record<string, string>>;
 }
 
 const PAST_MONTHS = 6;
@@ -239,7 +248,17 @@ export function buildIncomeCalendar(args: BuildArgs): IncomeCalendarResult {
     wrapperFilter = "all",
     nameByTicker = {},
     cadenceByTicker = {},
+    policyByTicker,
   } = args;
+
+  // Accumulating ETFs reinvest distributions internally; they never pay the
+  // user cash. So forward forecasts (confirmed + projected + FMP fallback)
+  // and backward projections must skip them — otherwise the calendar paints
+  // phantom income for holdings like VWRP.L. Real user_dividends actuals
+  // are NOT filtered: those are broker-reported receipts and represent
+  // ground truth, not a projection.
+  const isAccumulating = (ticker: string): boolean =>
+    policyByTicker?.[ticker] === "Accumulating";
 
   const primaryCurrency: "GBP" | "USD" = locale === "us" ? "USD" : "GBP";
 
@@ -294,6 +313,7 @@ export function buildIncomeCalendar(args: BuildArgs): IncomeCalendarResult {
 
   for (const h of holdings) {
     if (!passesWrapperFilter(h.wrapper, wrapperFilter)) continue;
+    if (isAccumulating(h.ticker)) continue;
     const ex = exDivByTicker[h.ticker];
     if (!ex || !ex.pay_date) continue;
     const key = ymFromIso(ex.pay_date);
@@ -331,6 +351,7 @@ export function buildIncomeCalendar(args: BuildArgs): IncomeCalendarResult {
   if (args.projectedNext12mByTicker) {
     for (const h of holdings) {
       if (!passesWrapperFilter(h.wrapper, wrapperFilter)) continue;
+      if (isAccumulating(h.ticker)) continue;
       const confirmedPayKey = (() => {
         const ex = exDivByTicker[h.ticker];
         return ex?.pay_date ? ymFromIso(ex.pay_date) : null;
@@ -377,6 +398,7 @@ export function buildIncomeCalendar(args: BuildArgs): IncomeCalendarResult {
   const tickersWithProjection = new Set<string>();
   for (const h of holdings) {
     if (!passesWrapperFilter(h.wrapper, wrapperFilter)) continue;
+    if (isAccumulating(h.ticker)) continue;
     const rows = args.projectedNext12mByTicker?.[h.ticker] ?? [];
     if (rows.length > 0) tickersWithProjection.add(h.ticker);
   }
@@ -387,6 +409,7 @@ export function buildIncomeCalendar(args: BuildArgs): IncomeCalendarResult {
     const bucketCount = futureBuckets.length;
     for (const h of holdings) {
       if (!passesWrapperFilter(h.wrapper, wrapperFilter)) continue;
+      if (isAccumulating(h.ticker)) continue;
       if (tickersWithProjection.has(h.ticker)) continue;
       const fmp = args.forwardDpsByTicker[h.ticker];
       if (!fmp || !fmp.dps || fmp.dps <= 0) continue;
@@ -423,6 +446,7 @@ export function buildIncomeCalendar(args: BuildArgs): IncomeCalendarResult {
     const sixMoFloorIso = dateMinusMonths(now, 6);
     for (const h of holdings) {
       if (!passesWrapperFilter(h.wrapper, wrapperFilter)) continue;
+      if (isAccumulating(h.ticker)) continue;
       const createdAtIso = (h.created_at ?? sixMoFloorIso).slice(0, 10);
       const floorIso = createdAtIso > sixMoFloorIso ? createdAtIso : sixMoFloorIso;
       const rows = args.projectedHistorical12mByTicker[h.ticker] ?? [];
@@ -471,6 +495,7 @@ export function buildIncomeCalendar(args: BuildArgs): IncomeCalendarResult {
   const candidates: IncomeCalendarNextEx[] = [];
   for (const h of holdings) {
     if (!passesWrapperFilter(h.wrapper, wrapperFilter)) continue;
+    if (isAccumulating(h.ticker)) continue;
     const ex = exDivByTicker[h.ticker];
     if (!ex || !ex.ex_date) continue;
     if (ex.ex_date < todayIso) continue;
@@ -503,6 +528,7 @@ export function buildIncomeCalendar(args: BuildArgs): IncomeCalendarResult {
   const contributed = new Set<string>();
   for (const h of holdings) {
     if (!passesWrapperFilter(h.wrapper, wrapperFilter)) continue;
+    if (isAccumulating(h.ticker)) continue;
     const ex = exDivByTicker[h.ticker];
     if (ex && ex.pay_date) {
       const k = ymFromIso(ex.pay_date);
@@ -532,7 +558,12 @@ export function buildIncomeCalendar(args: BuildArgs): IncomeCalendarResult {
       continue;
     }
   }
-  const distinctTickers = [...new Set(holdings.map((h) => h.ticker))];
+  // Accumulators are excluded from "unprojected" — they're intentionally
+  // skipped, not unfortunately missing data, so showing "N holdings not yet
+  // projected" for a VWRP.L would be misleading.
+  const distinctTickers = [...new Set(holdings.map((h) => h.ticker))].filter(
+    (t) => !isAccumulating(t),
+  );
   const unprojectedTickers = distinctTickers.filter((t) => !contributed.has(t));
 
   return {

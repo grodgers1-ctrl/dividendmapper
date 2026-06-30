@@ -191,6 +191,81 @@ describe("buildIncomeCalendar", () => {
     expect(augBucket?.gbp).toBe(0);
     expect(result.nextThree).toHaveLength(0);
   });
+
+  it("skips accumulating ETFs from calendar events (forward + backward + nextThree)", () => {
+    // VWRL.L = Distributing, must paint future + past projections.
+    // VWRP.L = Accumulating, reinvests internally — must contribute zero
+    // events in any direction even though FMP has confirmed ex-divs,
+    // projected_next_12m, projected_historical_12m, and forward DPS for it.
+    const holdings = [
+      { ticker: "VWRL.L", quantity: 60, wrapper: "isa" as const, created_at: "2024-01-01" },
+      { ticker: "VWRP.L", quantity: 10, wrapper: "isa" as const, created_at: "2024-01-01" },
+    ];
+    const exDivByTicker = {
+      "VWRL.L": { ex_date: "2026-07-15", pay_date: "2026-08-14", amount: 100, currency: "GBp" },
+      "VWRP.L": { ex_date: "2026-07-20", pay_date: "2026-08-20", amount: 200, currency: "GBp" },
+    };
+    const projectedNext12mByTicker = {
+      "VWRL.L": [
+        { ex_date: "2026-10-15", pay_date: "2026-11-14", per_share_amount: 100, currency: "GBp", confidence: "cadence" as const },
+      ],
+      "VWRP.L": [
+        { ex_date: "2026-10-20", pay_date: "2026-11-20", per_share_amount: 200, currency: "GBp", confidence: "cadence" as const },
+      ],
+    };
+    const projectedHistorical12mByTicker = {
+      "VWRL.L": [
+        { ex_date: "2026-03-15", pay_date: "2026-04-14", per_share_amount: 100, currency: "GBp", confidence: "cadence" as const },
+      ],
+      "VWRP.L": [
+        { ex_date: "2026-03-20", pay_date: "2026-04-20", per_share_amount: 200, currency: "GBp", confidence: "cadence" as const },
+      ],
+    };
+    const forwardDpsByTicker = {
+      "VWRL.L": { dps: 4, currency: "GBP" },
+      "VWRP.L": { dps: 8, currency: "GBP" },
+    };
+
+    const result = buildIncomeCalendar({
+      userDividends: [],
+      holdings,
+      exDivByTicker,
+      ratesToGbp,
+      now,
+      locale: "uk",
+      projectedNext12mByTicker,
+      projectedHistorical12mByTicker,
+      forwardDpsByTicker,
+      policyByTicker: { "VWRP.L": "Accumulating", "VWRL.L": "Distributing" },
+    });
+
+    // No VWRP.L event should appear anywhere — forward confirmed,
+    // forward projection, backward projection, or nextThree.
+    const allTickers = new Set<string>();
+    for (const payments of Object.values(result.paymentsByMonth)) {
+      for (const p of payments) allTickers.add(p.ticker);
+    }
+    expect(allTickers.has("VWRP.L")).toBe(false);
+    expect(allTickers.has("VWRL.L")).toBe(true);
+
+    // nextThree mustn't surface the Accumulating ex-div.
+    expect(result.nextThree.map((n) => n.ticker)).not.toContain("VWRP.L");
+    expect(result.nextThree.map((n) => n.ticker)).toContain("VWRL.L");
+
+    // Accumulator must not show up as "unprojected" either — it's
+    // intentionally excluded, not missing data.
+    expect(result.unprojectedTickers).not.toContain("VWRP.L");
+
+    // VWRL.L (Distributing) keeps painting in all three windows.
+    const augBucket = result.months.find((m) => m.ym === "2026-08");
+    expect(augBucket?.gbp).toBeCloseTo(60 * 100 * 0.01, 2); // 60
+    const novBucket = result.months.find((m) => m.ym === "2026-11");
+    expect(novBucket?.gbp).toBeCloseTo(60 * 100 * 0.01, 2); // 60
+    // Back-projection buckets by ex_date (not pay_date), so 2026-03-15 lands
+    // in March's bucket. VWRL.L paints there; VWRP.L (Accumulating) must not.
+    const marBucket = result.months.find((m) => m.ym === "2026-03");
+    expect(marBucket?.gbp).toBeCloseTo(60 * 100 * 0.01, 2); // 60
+  });
 });
 
 describe("buildIncomeCalendar — v2 segments + wrapper aggregation", () => {

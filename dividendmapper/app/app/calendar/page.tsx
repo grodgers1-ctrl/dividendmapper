@@ -76,6 +76,10 @@ export default async function CalendarPage() {
     nameByTicker,
     cadenceByTicker,
     forwardDpsByTicker,
+    // Phase 9.3: skip Accumulating ETFs from every forecast/projection bucket
+    // so VWRP.L et al don't paint phantom income on the calendar. Matches
+    // the same filter applied in aggregatePortfolioIncome (Phase 9.2).
+    policyByTicker: priced.policyByTicker,
   });
 
   // Assemble per-ticker inputs for the future-projection card. dps0 prefers
@@ -84,6 +88,9 @@ export default async function CalendarPage() {
   const projectionTickers: ProjectionTickerInput[] = [];
   for (const h of priced.allHoldings) {
     const t = h.ticker;
+    // Phase 9.3: Accumulating ETFs reinvest internally, so they never feed
+    // the future-projection card either. Skip before any cache/FMP lookup.
+    if (priced.policyByTicker[t] === "Accumulating") continue;
     const cacheRows = projectedNext12mByTicker[t] ?? [];
     const dpsFromCache = cacheRows.reduce((s, r) => s + (r.per_share_amount ?? 0), 0);
     const cacheCurrency = cacheRows[0]?.currency;
