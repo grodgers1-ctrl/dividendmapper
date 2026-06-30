@@ -17,6 +17,7 @@ export interface EtfBundle {
     holdings_count: number | null;
     isin: string | null;
     nav_currency: string | null;
+    domicile: string | null;
     quality_headline: number | null;
     quality_cost: number | null;
     quality_process: number | null;
