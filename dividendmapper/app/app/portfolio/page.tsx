@@ -11,6 +11,7 @@ import { ArchivedHoldings } from "./_components/archived-holdings";
 import { AddHoldingLauncher } from "./_components/add-holding-launcher";
 import { ImportCsvLauncher } from "./_components/import-csv-launcher";
 import { PortfolioIncomeChart } from "./_components/portfolio-income-chart";
+import { EtfConcentrationCard } from "./_components/etf-concentration-card";
 import { FREE_TIER_LIMIT } from "./_components/free-tier-copy";
 
 export const metadata: Metadata = {
@@ -179,6 +180,9 @@ export default async function PortfolioPage({
             <ArchivedHoldings rows={archived} />
           </div>
         )}
+        <div className="mt-6">
+          <EtfConcentrationCard userId={user.id} />
+        </div>
       </div>
     </div>
   );
