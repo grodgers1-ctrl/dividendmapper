@@ -14,6 +14,19 @@
 //
 // Auth: Authorization: Bearer ${CRON_SECRET} (Vercel Cron sends it). Per-ticker
 // failures are caught + Sentry-captured but never abort the run.
+//
+// === Vercel Hobby tier (60s cap) chunking ===
+// The route picks the N stalest tickers per invocation (oldest refreshed_at
+// first, NULLs/unseeded first, alphabetical tie-breaker for deterministic
+// debugging). A soft 50s deadline is enforced inside the per-ticker loop so
+// the response always returns inside the 60s function cap. Callers (Vercel
+// cron with ?limit=10, or the local smoke loop) re-invoke until the response
+// shows processed < requestedLimit, which means the queue is drained.
+//
+// Idempotency note: two overlapping invocations would race on the DELETE+INSERT
+// for the same ticker. A weekly Monday 03:00 cron + a chunked manual smoke
+// won't collide in practice, but if this ever fans out to per-hour we'd want
+// an advisory lock per ticker.
 
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
@@ -25,8 +38,13 @@ import { computeEtfQuality } from "@/lib/scoring/compute-etf-quality";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-// 80 tickers × ~5s = 400s baseline; pad headroom for AV/Yahoo slow paths.
-export const maxDuration = 800;
+// Vercel Hobby tier caps function execution at 60s. Chunked via ?limit=N.
+export const maxDuration = 60;
+
+const DEFAULT_LIMIT = 10;
+const MAX_LIMIT = 50;
+// Leave ~10s headroom for the JSON response + any in-flight cleanup.
+const SOFT_DEADLINE_MS = 50_000;
 
 // Cadence detector returns 'monthly' | 'quarterly' | 'semi' | 'annual' |
 // 'irregular' | 'unknown'. We collapse to the 3 ETF Quality tiers.
@@ -69,22 +87,76 @@ async function handle(req: Request): Promise<Response> {
 
   const startedAt = Date.now();
 
-  const { data: universe, error: uErr } = await sb
-    .from("etf_universe")
-    .select("ticker, domicile");
-  if (uErr) {
-    Sentry.captureException(uErr, { extra: { stage: "etf_universe" } });
+  // Parse + clamp the limit query param (default 10, 1..50).
+  const url = new URL(req.url);
+  const rawLimit = Number(url.searchParams.get("limit") ?? DEFAULT_LIMIT);
+  const requestedLimit = Math.max(
+    1,
+    Math.min(MAX_LIMIT, Number.isFinite(rawLimit) ? Math.floor(rawLimit) : DEFAULT_LIMIT),
+  );
+
+  // Cursor: two simple queries + JS-side sort. Bulletproof and avoids
+  // PostgREST embed-join gotchas. NULLs (unseeded tickers) come first, then
+  // oldest refreshed_at, with alphabetical ticker as the tie-breaker.
+  const [universeRes, factsRes] = await Promise.all([
+    sb.from("etf_universe").select("ticker, domicile"),
+    sb.from("etf_facts").select("ticker, refreshed_at"),
+  ]);
+  if (universeRes.error) {
+    console.error("[refresh-etf-cache] etf_universe query failed", universeRes.error);
+    Sentry.captureException(universeRes.error, { extra: { stage: "etf_universe" } });
     return NextResponse.json({ error: "query_failed" }, { status: 500 });
   }
-  const rows = (universe ?? []) as { ticker: string; domicile: string | null }[];
+  if (factsRes.error) {
+    console.error("[refresh-etf-cache] etf_facts query failed", factsRes.error);
+    Sentry.captureException(factsRes.error, { extra: { stage: "etf_facts" } });
+    return NextResponse.json({ error: "query_failed" }, { status: 500 });
+  }
+
+  const refreshedByTicker = new Map<string, string | null>(
+    (factsRes.data ?? []).map((r: { ticker: string; refreshed_at: string | null }) => [
+      r.ticker,
+      r.refreshed_at,
+    ]),
+  );
+  const totalUniverse = universeRes.data?.length ?? 0;
+  const rows = (universeRes.data ?? [])
+    .map((u: { ticker: string; domicile: string | null }) => ({
+      ticker: u.ticker,
+      domicile: u.domicile,
+      refreshed_at: refreshedByTicker.get(u.ticker) ?? null,
+    }))
+    .sort((a, b) => {
+      // NULLs first (unseeded tickers).
+      if (a.refreshed_at === null && b.refreshed_at === null) {
+        return a.ticker.localeCompare(b.ticker);
+      }
+      if (a.refreshed_at === null) return -1;
+      if (b.refreshed_at === null) return 1;
+      // Oldest refreshed_at first; alphabetical tie-breaker.
+      const cmp = a.refreshed_at.localeCompare(b.refreshed_at);
+      return cmp !== 0 ? cmp : a.ticker.localeCompare(b.ticker);
+    })
+    .slice(0, requestedLimit);
 
   let infoOk = 0;
   let holdingsOk = 0;
   let sectorOk = 0;
   let countryOk = 0;
+  let processed = 0;
+  let deadlineHit = false;
   const errors: string[] = [];
 
   for (const u of rows) {
+    // Deadline check at the TOP of each iteration so we never start a
+    // ticker we can't finish before the 60s cap.
+    if (Date.now() - startedAt > SOFT_DEADLINE_MS) {
+      deadlineHit = true;
+      console.warn(
+        `[refresh-etf-cache] deadline hit after ${processed} tickers; bailing with ${rows.length - processed} remaining in this chunk`,
+      );
+      break;
+    }
     try {
       const info = (await getEtfInfo(u.ticker))[0];
       if (info) {
@@ -179,6 +251,7 @@ async function handle(req: Request): Promise<Response> {
         );
         holdingsOk++;
       }
+      processed++;
     } catch (e) {
       const msg = `${u.ticker}: ${(e as Error).message}`;
       errors.push(msg);
@@ -186,12 +259,18 @@ async function handle(req: Request): Promise<Response> {
       Sentry.captureException(e, {
         extra: { ticker: u.ticker, stage: "refresh-etf-cache" },
       });
+      // Count it as processed so the caller doesn't loop forever on a poison ticker.
+      processed++;
     }
   }
 
   return NextResponse.json({
     ok: true,
+    requestedLimit,
+    processed,
+    deadlineHit,
     tickerCount: rows.length,
+    universeSize: totalUniverse,
     infoOk,
     holdingsOk,
     sectorOk,

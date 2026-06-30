@@ -33,7 +33,7 @@
       "schedule": "0 9 * * *"
     },
     {
-      "path": "/api/internal/refresh-etf-cache",
+      "path": "/api/internal/refresh-etf-cache?limit=10",
       "schedule": "0 3 * * 1"
     }
   ]
