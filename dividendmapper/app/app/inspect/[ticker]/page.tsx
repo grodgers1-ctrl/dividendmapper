@@ -9,6 +9,7 @@ import {
   type LoadResult,
 } from "@/app/(public)/inspect/_shared/load-inspect-page-data";
 import { InspectTickerBody } from "@/app/(public)/inspect/_shared/inspect-ticker-body";
+import { EtfInspectBody } from "@/app/(public)/inspect/_components/etf-inspect-body";
 
 // In-app mirror of /inspect/[ticker]. Same body, rendered inside DrawerShell
 // (the /app layout owns the sidebar + topbar chrome). Reading the user's
@@ -32,7 +33,22 @@ export default async function AppInspectTickerPage({
   // requireUser() itself because layout guards don't re-run on soft navs.
   const user = await requireUser(`/app/inspect/${ticker}`);
 
+  // Hoisted: reused for the asset_type branch and the tier lookup below so
+  // we don't double-instantiate the server client per request.
   const supabase = await createSupabaseServerClient();
+
+  // ETF branch: when tickers.asset_type='etf', skip the equity bundle fetch
+  // entirely and render the dedicated ETF body. /app shell chrome (drawer +
+  // topbar) wraps it via the layout — no per-page chrome needed.
+  const { data: tickerRow } = await supabase
+    .from("tickers")
+    .select("asset_type")
+    .eq("ticker", ticker)
+    .maybeSingle<{ asset_type: string }>();
+  if (tickerRow?.asset_type === "etf") {
+    return <EtfInspectBody ticker={ticker} />;
+  }
+
   const { data: profileRow } = await supabase
     .from("profiles")
     .select("tier")

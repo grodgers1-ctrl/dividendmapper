@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { SITE_URL } from "@/lib/site";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { normalizeTicker } from "@/lib/scoring/load-score";
 import {
   loadInspectBundleResult,
@@ -8,6 +9,7 @@ import {
   type LoadResult,
 } from "../_shared/load-inspect-page-data";
 import { InspectTickerBody } from "../_shared/inspect-ticker-body";
+import { EtfInspectBody } from "../_components/etf-inspect-body";
 
 // Inspect bundles refresh nightly via the API route's fall-through to FMP.
 // An hour of ISR keeps the page cheap to crawl, and the cached HTML serves
@@ -48,6 +50,19 @@ export default async function InspectTickerPage({
 }) {
   const ticker = normalizeTicker((await params).ticker);
   if (!ticker) notFound();
+
+  // ETF branch: when tickers.asset_type='etf', skip the equity bundle fetch
+  // entirely and render the dedicated ETF body. Single extra round-trip per
+  // page load; still ISR-cacheable (no auth in this lookup).
+  const sb = await createSupabaseServerClient();
+  const { data: tickerRow } = await sb
+    .from("tickers")
+    .select("asset_type")
+    .eq("ticker", ticker)
+    .maybeSingle<{ asset_type: string }>();
+  if (tickerRow?.asset_type === "etf") {
+    return <EtfInspectBody ticker={ticker} />;
+  }
 
   const [result, profile] = await Promise.all([
     loadInspectBundleResult(ticker).catch((): LoadResult | null => null),
