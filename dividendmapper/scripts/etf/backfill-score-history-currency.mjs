@@ -12,7 +12,17 @@
 //
 // Pacing: 80ms between FMP calls = ~12 rps, well under the 750/min Premium quota.
 
+import { readFileSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
+
+// --- env: autoload .env.local so the script "just works" without a shell
+// preamble (PowerShell has no `set -a && source` equivalent). Existing
+// process.env values win, matching the sibling backfill scripts.
+const envPath = new URL("../../.env.local", import.meta.url);
+for (const line of readFileSync(envPath, "utf8").split("\n")) {
+  const m = line.match(/^([A-Z0-9_]+)=(.*)$/);
+  if (m) process.env[m[1]] ??= m[2].trim();
+}
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
