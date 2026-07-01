@@ -5,9 +5,11 @@ import { requireUser } from "@/lib/auth/server";
 import { isPricingPublic } from "@/lib/flags/pricing";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { loadUserPreferences } from "@/lib/scoring/preferences";
+import { SITE_URL } from "@/lib/site";
 import { PageHeader } from "../_components/page-header/page-header";
 import { DeleteAccount } from "./_components/delete-account";
 import { FoundingCodeCard } from "./_components/founding-code-card";
+import { ReferralCodeCard } from "./_components/referral-code-card";
 import { WelcomeRefresh } from "./_components/welcome-refresh";
 import { AccountWizardEntry } from "./_components/account-wizard-entry";
 import { BrokerConnection, type BrokerConnectionState } from "./_components/broker-connection";
@@ -20,7 +22,7 @@ export const metadata: Metadata = {
 type ProfileRow = {
   email: string;
   tier: "free" | "pro" | "premium";
-  tier_source: "free" | "stripe" | "founding_member";
+  tier_source: "free" | "stripe" | "founding_member" | "trial";
   tier_expires_at: string | null;
   founding_member: boolean;
   stripe_customer_id: string | null;
@@ -31,6 +33,14 @@ type FoundingCodeRow = {
   code: string;
   redeemed_at: string | null;
   redeemed_by_user_id: string | null;
+};
+
+type GrantCodeRow = {
+  id: string;
+  code: string;
+  redemption_count: number;
+  max_redemptions: number;
+  grant_redemptions: { redeemed_at: string }[];
 };
 
 const TIER_LABEL: Record<ProfileRow["tier"], string> = {
@@ -47,7 +57,11 @@ async function signOut() {
 }
 
 interface AccountPageProps {
-  searchParams: Promise<{ welcome?: string; billing_error?: string }>;
+  searchParams: Promise<{
+    welcome?: string;
+    billing_error?: string;
+    trial?: string;
+  }>;
 }
 
 export default async function AccountPage({ searchParams }: AccountPageProps) {
@@ -61,12 +75,14 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
   const params = await searchParams;
   const showWelcome = params.welcome === "1";
   const billingError = typeof params.billing_error === "string";
+  const trialFlag = params.trial;
   const pricingPublic = isPricingPublic();
 
   // Founding-member codes are RLS-readable by the owner (member_user_id =
   // auth.uid()), so the standard SSR client picks them up. Parallel with the
   // profile read since neither depends on the other.
-  const [profileResult, codesResult, prefs, brokerResult] = await Promise.all([
+  const [profileResult, codesResult, prefs, brokerResult, grantResult] =
+    await Promise.all([
     supabase
       .from("profiles")
       .select(
@@ -97,10 +113,30 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
           last_sync_error: string | null;
         }[]
       >(),
+    // A Pro user has at most one 'pro_referral' grant code, minted by the
+    // day-21 cron. RLS lets the SSR client read the issuer's own code and its
+    // redemptions, so no service-role client is needed here.
+    supabase
+      .from("grant_codes")
+      .select(
+        "id, code, redemption_count, max_redemptions, grant_redemptions(redeemed_at)",
+      )
+      .eq("issuer_user_id", user.id)
+      .eq("kind", "pro_referral")
+      .maybeSingle<GrantCodeRow>(),
   ]);
 
   const profile = profileResult.data;
   const foundingCodes = codesResult.data ?? [];
+  const referralCode = grantResult.data ?? null;
+  const referralRedeemed = referralCode
+    ? referralCode.redemption_count >= referralCode.max_redemptions
+    : false;
+  const referralRedeemedAt =
+    referralCode?.grant_redemptions?.[0]?.redeemed_at ?? null;
+  const referralUrl = referralCode
+    ? `${SITE_URL}/refer/${referralCode.code}`
+    : null;
   const brokerConnections: BrokerConnectionState[] = (brokerResult.data ?? []).map((row) => ({
     id: row.id,
     provider: row.provider,
@@ -152,6 +188,35 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
           </div>
           {stripeActivating && <WelcomeRefresh />}
         </>
+      )}
+
+      {trialFlag === "1" && (
+        <div
+          role="status"
+          className="mt-6 rounded-xl border border-brand-500/30 bg-brand-50 p-5 dark:border-brand-400/20 dark:bg-brand-900/20 md:mt-8 md:p-6"
+        >
+          <p className="font-display text-base font-semibold text-foreground">
+            Your 7-day Pro trial is active.
+          </p>
+          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+            Enjoy the full portfolio view for the next week. No card needed.
+          </p>
+        </div>
+      )}
+
+      {trialFlag === "error" && (
+        <div
+          role="status"
+          className="mt-6 rounded-xl border border-border bg-background p-5 md:mt-8 md:p-6"
+        >
+          <p className="font-display text-base font-semibold text-foreground">
+            We could not apply that invite.
+          </p>
+          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+            It may have expired or already been used. Email
+            hello@dividendmapper.com if you think this is a mistake.
+          </p>
+        </div>
       )}
 
       <dl className="mt-8 space-y-6 rounded-xl border border-border bg-card p-5 md:mt-10 md:p-6">
@@ -284,6 +349,25 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
                 hello@dividendmapper.com.
               </p>
             )}
+          </div>
+        )}
+
+        {referralCode !== null && (
+          <div className="border-t border-border pt-6">
+            <dt className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Your referral link
+            </dt>
+            <dd className="mt-3 space-y-3">
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                Share this with a friend. They get 7 days of Pro, free. One use,
+                yours to give.
+              </p>
+              <ReferralCodeCard
+                url={referralUrl!}
+                redeemed={referralRedeemed}
+                redeemedAt={referralRedeemedAt}
+              />
+            </dd>
           </div>
         )}
       </dl>
