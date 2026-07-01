@@ -286,12 +286,24 @@ async function handleSubscriptionUpsert(
   // cancellation) apart from a renewal / plan-change. No prior row → first
   // activation; prior row that wasn't 'active' (e.g. 'canceled') → reactivation;
   // prior 'active' → renewal/plan-change (not genuine).
-  const { data: priorSub } = await supabase
+  const { data: priorSub, error: priorSubError } = await supabase
     .from("subscriptions")
     .select("status")
     .eq("user_id", profile.id)
     .maybeSingle<{ status: string }>();
-  const isGenuineNewActivation = !priorSub || priorSub.status !== "active";
+  if (priorSubError) {
+    // Fail-safe: a transient read failure must NOT be treated as "no prior
+    // row", which would mis-classify a renewal as a genuine activation and
+    // fire a false founder ping. We also can't throw here — the outer catch
+    // would flip an already-committed webhook to 500 and trigger a Stripe
+    // retry. A missed ping is far cheaper than a false one, so suppress it.
+    console.error(
+      "[webhooks/stripe] priorSub read failed; treating as non-genuine activation",
+      priorSubError,
+    );
+  }
+  const isGenuineNewActivation =
+    !priorSubError && (!priorSub || priorSub.status !== "active");
 
   const item = sub.items.data[0];
   const lookupKey = item?.price.lookup_key ?? null;
@@ -399,5 +411,5 @@ async function handleSubscriptionDeleted(
     heading: "A Pro subscription just canceled",
     lines: [`Customer: ${customerId}`],
   });
-  await captureServerEvent(profile.id, "subscription_canceled", {});
+  await captureServerEvent(profile.id, "subscription_canceled");
 }
