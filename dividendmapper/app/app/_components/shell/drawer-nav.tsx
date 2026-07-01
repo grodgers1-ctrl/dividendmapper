@@ -1,5 +1,6 @@
 "use client";
 
+import { Fragment } from "react";
 import Link from "next/link";
 import { Tooltip } from "@base-ui/react/tooltip";
 import { PinIcon } from "./pin-icon";
@@ -34,12 +35,18 @@ export function DrawerNav({
         aria-label="Application navigation"
         className="flex-1 space-y-1 overflow-y-auto p-3"
       >
-        {items.map((item) => {
+        {items.map((item, i) => {
           const active = item.exact
             ? currentPath === item.href
             : currentPath === item.href ||
               currentPath.startsWith(`${item.href}/`);
           const Icon = item.icon;
+
+          // First item of a named group gets a section label (expanded) or a
+          // hairline divider (collapsed). Groups are contiguous in
+          // DEFAULT_NAV_ITEMS, so comparing to the previous item is enough.
+          const prevGroup = i > 0 ? items[i - 1]!.group : undefined;
+          const startsGroup = Boolean(item.group) && item.group !== prevGroup;
 
           const baseClass = active
             ? "relative flex h-9 items-center rounded-md bg-[var(--surface-2)] text-sm font-medium text-[var(--text)]"
@@ -77,19 +84,26 @@ export function DrawerNav({
             </Link>
           );
 
-          if (!collapsed) {
-            return <div key={item.href}>{link}</div>;
-          }
-
-          // Collapsed: wrap each row in a tooltip so the icon-rail keeps the
-          // label discoverable. Tooltips mount only in this branch.
-          return (
-            <Tooltip.Root key={item.href}>
-              <Tooltip.Trigger
-                render={
-                  <div className="relative">{link}</div>
-                }
+          const groupSeparator = startsGroup ? (
+            collapsed ? (
+              <div
+                aria-hidden
+                className="mx-2 mt-2 mb-1 border-t border-[var(--border-subtle)]"
               />
+            ) : (
+              <p className="px-3 pb-1 pt-3 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)]">
+                {item.group}
+              </p>
+            )
+          ) : null;
+
+          // Expanded rows are plain; collapsed rows wrap in a tooltip so the
+          // icon rail keeps the label discoverable. Tooltips mount only here.
+          const row = !collapsed ? (
+            <div>{link}</div>
+          ) : (
+            <Tooltip.Root>
+              <Tooltip.Trigger render={<div className="relative">{link}</div>} />
               <Tooltip.Portal>
                 <Tooltip.Positioner side="right" sideOffset={8}>
                   <Tooltip.Popup className="rounded-md border border-[var(--border-subtle)] bg-[var(--surface)] px-2 py-1 text-xs font-medium text-[var(--text)] shadow-sm">
@@ -98,6 +112,13 @@ export function DrawerNav({
                 </Tooltip.Positioner>
               </Tooltip.Portal>
             </Tooltip.Root>
+          );
+
+          return (
+            <Fragment key={item.href}>
+              {groupSeparator}
+              {row}
+            </Fragment>
           );
         })}
       </nav>

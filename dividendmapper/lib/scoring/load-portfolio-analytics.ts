@@ -27,6 +27,7 @@ import {
   buildIncomeCalendar,
   type IncomeCalendarResult,
   type IncomeCalendarExDiv,
+  type ProjectedPaymentRow,
 } from "@/lib/portfolio/income-calendar";
 import type { HoldingRow } from "@/lib/portfolio/load-priced-holdings";
 
@@ -92,9 +93,20 @@ export async function loadPortfolioAnalytics(args: {
   visibleRows: HoldingRow[];
   quotes: Map<string, QuoteResult>;
   quotesByTicker: Record<string, QuoteResult>;
+  // ETF distribution policy per ticker (from loadPricedHoldings). Feeds the
+  // income calendar so Accumulating ETFs don't paint phantom forecast income.
+  policyByTicker?: Record<string, string>;
   lens?: boolean;
 }): Promise<PortfolioAnalytics> {
-  const { userId, allHoldings, visibleRows, quotes, quotesByTicker, lens = false } = args;
+  const {
+    userId,
+    allHoldings,
+    visibleRows,
+    quotes,
+    quotesByTicker,
+    policyByTicker,
+    lens = false,
+  } = args;
   const supabase = await createSupabaseServerClient();
 
   // Personalisation: posture answers tune the Reinvest filter + action-hint
@@ -105,11 +117,20 @@ export async function loadPortfolioAnalytics(args: {
   // Collect the distinct currencies of priced quotes so we can resolve GBP
   // multipliers before computing concentration weights.
   const pricedCurrencies = [
-    ...new Set(
-      [...quotes.values()]
+    ...new Set([
+      // Static anchors: GBp/GBX (pence) are included unconditionally because
+      // the income-calendar projection cache writes UK rows in pence,
+      // regardless of how quotes report currency. Without these keys every
+      // pence projection row silently drops in convertToPrimary and the
+      // dashboard forecast bars stay flat. Mirrors load-calendar-data.
+      "GBP",
+      "USD",
+      "GBp",
+      "GBX",
+      ...[...quotes.values()]
         .map((q) => (q.ok ? q.data.currency : null))
         .filter((c): c is string => c !== null),
-    ),
+    ]),
   ];
   const ratesToGbp = await ratesToGbpFor(pricedCurrencies);
   const concentration = computeConcentration(allHoldings, quotes, ratesToGbp);
@@ -132,7 +153,7 @@ export async function loadPortfolioAnalytics(args: {
     supabase
       .from("equity_scores")
       .select(
-        "ticker, buy_score, trim_score, risk_score, buy_failed_gates, data_quality, next_ex_div_date, next_ex_div_amount, next_ex_div_pay_date, sector, forward_pe, payout_ratio",
+        "ticker, buy_score, trim_score, risk_score, buy_failed_gates, data_quality, next_ex_div_date, next_ex_div_amount, next_ex_div_pay_date, sector, forward_pe, payout_ratio, projected_next_12m_payments, projected_historical_12m_payments",
       )
       .in("ticker", tickers)
       .returns<
@@ -143,6 +164,8 @@ export async function loadPortfolioAnalytics(args: {
           sector: string | null;
           forward_pe: number | null;
           payout_ratio: number | null;
+          projected_next_12m_payments: ProjectedPaymentRow[] | null;
+          projected_historical_12m_payments: ProjectedPaymentRow[] | null;
         })[]
       >(),
     supabase
@@ -291,6 +314,8 @@ export async function loadPortfolioAnalytics(args: {
   // ratesToGbp, and allHoldings; only the user_dividends fetch is new.
   // Currency heuristic matches build-card: .L => GBp, else USD.
   const calendarExDivByTicker: Record<string, IncomeCalendarExDiv> = {};
+  const projectedNext12mByTicker: Record<string, ProjectedPaymentRow[]> = {};
+  const projectedHistorical12mByTicker: Record<string, ProjectedPaymentRow[]> = {};
   for (const row of scoresRes.data ?? []) {
     if (row.next_ex_div_date) {
       calendarExDivByTicker[row.ticker] = {
@@ -299,6 +324,27 @@ export async function loadPortfolioAnalytics(args: {
         amount: row.next_ex_div_amount ?? 0,
         currency: row.ticker.toUpperCase().endsWith(".L") ? "GBp" : "USD",
       };
+    }
+    // Projection caches drive the forecast bars. Without these the dashboard
+    // card showed £0 for every future month (flat bars). Mirrors /app/calendar
+    // via loadCalendarData — same equity_scores columns, read from the query
+    // this loader already runs.
+    if (Array.isArray(row.projected_next_12m_payments)) {
+      projectedNext12mByTicker[row.ticker] = row.projected_next_12m_payments;
+    }
+    if (Array.isArray(row.projected_historical_12m_payments)) {
+      projectedHistorical12mByTicker[row.ticker] = row.projected_historical_12m_payments;
+    }
+  }
+
+  // FMP forward-DPS fallback for tickers without a projection cache — mirrors
+  // /app/calendar. Built from the quotes already resolved for concentration.
+  const forwardDpsByTicker: Record<string, { dps: number; currency: string }> = {};
+  for (const [ticker, quote] of Object.entries(quotesByTicker)) {
+    if (!quote.ok) continue;
+    const { dividend, currency } = quote.data;
+    if (typeof dividend === "number" && dividend > 0 && currency) {
+      forwardDpsByTicker[ticker] = { dps: dividend, currency };
     }
   }
 
@@ -319,6 +365,12 @@ export async function loadPortfolioAnalytics(args: {
     ratesToGbp,
     now,
     locale: "uk",
+    projectedNext12mByTicker,
+    projectedHistorical12mByTicker,
+    forwardDpsByTicker,
+    // Skip Accumulating ETFs from every forecast bucket so funds like VWRP.L
+    // don't paint phantom income (matches /app/calendar's Phase 9.3 filter).
+    policyByTicker,
   });
 
   return {

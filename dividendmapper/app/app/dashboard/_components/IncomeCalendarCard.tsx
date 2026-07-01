@@ -1,9 +1,9 @@
 "use client";
 
-// Dashboard "Income calendar" lite-preview card. Slice A drops it from a
-// full surface to a chart + next-3 list with an "Open full calendar →" link
-// to /app/calendar. The inline ReinvestCard moves to the calendar drill-down
-// in Slice B.
+// Dashboard "Income calendar" band. A full-width row under the projected-income
+// hero: a rolling received/forecast chart on the left and the next-3
+// ex-dividends on the right, with an "Open full calendar →" link to
+// /app/calendar. The inline ReinvestCard moved to the calendar drill-down.
 
 import Link from "next/link";
 import type { IncomeCalendarResult } from "@/lib/portfolio/income-calendar";
@@ -33,33 +33,34 @@ export interface IncomeCalendarCardProps {
 
 export function IncomeCalendarCard({ calendar }: IncomeCalendarCardProps) {
   return (
-    <div className="card-surface flex h-full flex-col">
+    <div className="card-surface">
       <div className="flex items-baseline justify-between">
         <p className="text-xs uppercase tracking-[0.08em] text-[var(--text-muted)]">
           Income calendar
         </p>
         <Link
           href="/app/calendar"
-          className="text-[10px] text-[var(--brand)] hover:underline"
+          className="text-xs text-[var(--brand)] hover:underline"
         >
           Open full calendar →
         </Link>
       </div>
 
-      <div className="mt-3">
-        <IncomeCalendarChart months={calendar.months} />
-      </div>
+      <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <div>
+          <IncomeCalendarChart months={calendar.months} />
+        </div>
 
-      <div className="mt-4">
-        <p className="text-[10px] uppercase tracking-[0.06em] text-[var(--text-muted)]">
-          Next 3 ex-dividends
-        </p>
-        <ul className="mt-2">
-          {calendar.nextThree.length === 0 ? (
-            <li className="text-xs text-[var(--text-muted)]">
-              No upcoming ex-dividends in your portfolio yet.
-            </li>
-          ) : (
+        <div className="lg:border-l lg:border-[var(--border-subtle)] lg:pl-6">
+          <p className="text-[10px] uppercase tracking-[0.06em] text-[var(--text-muted)]">
+            Next 3 ex-dividends
+          </p>
+          <ul className="mt-2">
+            {calendar.nextThree.length === 0 ? (
+              <li className="text-xs text-[var(--text-muted)]">
+                No upcoming ex-dividends in your portfolio yet.
+              </li>
+            ) : (
             calendar.nextThree.map((row, i) => (
               <li
                 key={`${row.ticker}-${row.exDate}`}
@@ -81,7 +82,8 @@ export function IncomeCalendarCard({ calendar }: IncomeCalendarCardProps) {
               </li>
             ))
           )}
-        </ul>
+          </ul>
+        </div>
       </div>
     </div>
   );

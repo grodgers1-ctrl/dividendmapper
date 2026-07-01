@@ -63,6 +63,7 @@ export default async function DashboardPage() {
         visibleRows,
         quotes,
         quotesByTicker,
+        policyByTicker: priced.policyByTicker,
       })
     : null;
 
@@ -213,6 +214,19 @@ export default async function DashboardPage() {
           )}
         </div>
 
+        {/* Row 1.25 — Income calendar (Pro): full-width band directly under the
+            projected-income hero, so "your annual income → how it lands across
+            the months" reads top-to-bottom. Free tier skips analytics, so the
+            band is absent for them (unchanged). */}
+        {isPro && analytics && (
+          <div className="col-span-12">
+            <IncomeCalendarCard
+              calendar={analytics.incomeCalendar}
+              reinvestCard={analytics.reinvestCard}
+            />
+          </div>
+        )}
+
         {/* Row 1.5 — Investment vehicle income (left, 2/3, Pro + qualifying
             holdings) paired with Position performance (right, 1/3, Pro). When
             Anchors is hidden, Position performance takes the full row. */}
@@ -253,25 +267,16 @@ export default async function DashboardPage() {
           </div>
         )}
 
-        {/* Row 3 — Pro: quadrant + reinvest planner; Free omitted entirely */}
+        {/* Row 3 — Pro: Quality vs Risk quadrant, full-width now that the
+            income calendar has moved up to its own band. Free omitted. */}
         {isPro && (
-          <>
-            <div className="col-span-12 md:col-span-8">
-              <QuadrantSnapshotCard
-                points={quadrant.points}
-                excluded={quadrant.excluded}
-                isBeta={beta}
-              />
-            </div>
-            <div className="col-span-12 md:col-span-4">
-              {analytics && (
-                <IncomeCalendarCard
-                  calendar={analytics.incomeCalendar}
-                  reinvestCard={analytics.reinvestCard}
-                />
-              )}
-            </div>
-          </>
+          <div className="col-span-12">
+            <QuadrantSnapshotCard
+              points={quadrant.points}
+              excluded={quadrant.excluded}
+              isBeta={beta}
+            />
+          </div>
         )}
 
         {/* Row 3 — top 5 holdings, both tiers */}

@@ -80,4 +80,32 @@ describe("<DrawerNav>", () => {
     render(<DrawerNav items={SAMPLE_ITEMS} currentPath="/app/dashboard" />);
     expect(screen.getByRole("navigation")).toBeInTheDocument();
   });
+
+  it("renders a section label once before the first item of a named group", () => {
+    const grouped: readonly NavItem[] = [
+      { href: "/app/dashboard", label: "Dashboard", icon: () => null },
+      {
+        href: "/app/tools/dcf-calculator",
+        label: "DCF calculator",
+        icon: () => null,
+        group: "Tools",
+      },
+      {
+        href: "/app/tools/retirement-calculator",
+        label: "Retirement calculator",
+        icon: () => null,
+        group: "Tools",
+      },
+    ];
+    render(<DrawerNav items={grouped} currentPath="/app/dashboard" />);
+    // Label shows exactly once (only the first Tools item starts the group).
+    expect(screen.getAllByText("Tools")).toHaveLength(1);
+    // Both grouped items still render as navigable links.
+    expect(
+      screen.getByRole("link", { name: /DCF calculator/ }),
+    ).toHaveAttribute("href", "/app/tools/dcf-calculator");
+    expect(
+      screen.getByRole("link", { name: /Retirement calculator/ }),
+    ).toHaveAttribute("href", "/app/tools/retirement-calculator");
+  });
 });

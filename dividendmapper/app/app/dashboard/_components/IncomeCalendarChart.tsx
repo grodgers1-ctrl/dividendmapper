@@ -43,7 +43,7 @@ export function IncomeCalendarChart({ months }: IncomeCalendarChartProps) {
       <section
         role="figure"
         aria-label={chartLabel}
-        className="relative h-[130px] flex items-end gap-1.5 border-b border-[var(--border-subtle)]"
+        className="relative h-[150px] flex items-end gap-1.5 border-b border-[var(--border-subtle)]"
       >
         {months.map((m) => {
           const heightPct = max > 0 ? Math.max(4, (m.gbp / max) * 100) : 4;
@@ -74,10 +74,8 @@ export function IncomeCalendarChart({ months }: IncomeCalendarChartProps) {
       </section>
       <div className="mt-2 flex gap-1.5">
         {months.map((m) => (
-          // The dashboard sits in a 1/3-width column at every viewport, so
-          // there's never room for 19 horizontal month labels above bars
-          // ~14px wide. Rotating labels vertically gives each one ~12px of
-          // line-box width — fits its bar slot, no overflow, all 19 align.
+          // The card is a full-width band now, so month labels sit horizontally
+          // under each bar: one per bar slot, centred, all aligned.
           <span
             key={m.ym}
             className={`flex min-w-0 flex-1 justify-center ${
@@ -86,7 +84,7 @@ export function IncomeCalendarChart({ months }: IncomeCalendarChartProps) {
                 : "text-[var(--text-muted)]"
             }`}
           >
-            <span className="text-[10px] leading-none tabular-nums [writing-mode:vertical-rl] [transform:rotate(180deg)]">
+            <span className="text-[10px] leading-none tabular-nums">
               {monthName(m.ym)}
             </span>
           </span>

@@ -70,7 +70,14 @@ const US_DEFAULTS: DcfInputs = {
   currency: null,
 };
 
-export function DcfCalculator() {
+// `showSaveCard` is false when the calculator is embedded inside the signed-in
+// app shell (/app/tools/*), where the "save your inputs and sign in" prompt is
+// redundant. Public marketing pages keep the default (true).
+export function DcfCalculator({
+  showSaveCard = true,
+}: {
+  showSaveCard?: boolean;
+} = {}) {
   const { config } = useLocale();
   const [inputs, setInputs] = React.useState<DcfInputs>(UK_DEFAULTS);
   const [lookup, setLookup] = React.useState<LookupState>({ status: "idle" });
@@ -117,12 +124,14 @@ export function DcfCalculator() {
         setLookup={setLookup}
         onReset={handleReset}
       />
-      <SaveInputsCard
-        tool="dcf"
-        inputs={inputs}
-        onRehydrate={handleRehydrate}
-        currentPath="/tools/dcf-calculator"
-      />
+      {showSaveCard && (
+        <SaveInputsCard
+          tool="dcf"
+          inputs={inputs}
+          onRehydrate={handleRehydrate}
+          currentPath="/tools/dcf-calculator"
+        />
+      )}
       <ResultCard inputs={inputs} result={result} tickerName={tickerName} />
       <YieldOnCostCard inputs={inputs} result={result} />
       <PvDecomposition inputs={inputs} result={result} />

@@ -56,7 +56,14 @@ const US_DEFAULTS: RetirementInputs = {
   propertyGrowthRate: 0.03, // US long-run nominal ≈ 3%
 };
 
-export function RetirementCalculator() {
+// `showSaveCard` is false when embedded in the signed-in app shell
+// (/app/tools/*), where the "save your inputs and sign in" prompt is redundant.
+// Public marketing pages keep the default (true).
+export function RetirementCalculator({
+  showSaveCard = true,
+}: {
+  showSaveCard?: boolean;
+} = {}) {
   const { config } = useLocale();
   const [inputs, setInputs] = React.useState<RetirementInputs>(UK_DEFAULTS);
 
@@ -108,12 +115,14 @@ export function RetirementCalculator() {
     <div className="space-y-6">
       <MobileLiveSummary result={result} retirementAge={inputs.retirementAge} />
       <InputsPanel inputs={inputs} setInputs={setInputs} onReset={handleReset} />
-      <SaveInputsCard
-        tool="retirement"
-        inputs={inputs}
-        onRehydrate={handleRehydrate}
-        currentPath="/tools/retirement-calculator"
-      />
+      {showSaveCard && (
+        <SaveInputsCard
+          tool="retirement"
+          inputs={inputs}
+          onRehydrate={handleRehydrate}
+          currentPath="/tools/retirement-calculator"
+        />
+      )}
       <FireCard
         result={result}
         currentPortfolio={inputs.currentPortfolio}

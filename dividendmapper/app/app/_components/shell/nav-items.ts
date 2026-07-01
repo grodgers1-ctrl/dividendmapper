@@ -7,6 +7,8 @@ import {
   ListFilter,
   Layers,
   Search,
+  Calculator,
+  PiggyBank,
   User,
   ShieldCheck,
   type LucideIcon,
@@ -56,6 +58,20 @@ export const DEFAULT_NAV_ITEMS: readonly NavItem[] = [
     requiresPro: true,
   },
   { href: "/app/inspect", label: "Inspect", icon: Search },
+  // Tools group — the public /tools/* calculators surfaced inside the shell so
+  // signed-in users (any tier) can reach them without the marketing top nav.
+  {
+    href: "/app/tools/dcf-calculator",
+    label: "DCF calculator",
+    icon: Calculator,
+    group: "Tools",
+  },
+  {
+    href: "/app/tools/retirement-calculator",
+    label: "Retirement calculator",
+    icon: PiggyBank,
+    group: "Tools",
+  },
   { href: "/app/account", label: "Account", icon: User },
   {
     href: "/app/admin/scoring/audit",

@@ -6,7 +6,7 @@ import {
 } from "../nav-items";
 
 describe("DEFAULT_NAV_ITEMS", () => {
-  it("declares the ten drawer items in display order (Calendar, Income vehicles, ETFs, and Inspect included)", () => {
+  it("declares the twelve drawer items in display order (Tools group before Account)", () => {
     expect(DEFAULT_NAV_ITEMS.map((i) => i.href)).toEqual([
       "/app/dashboard",
       "/app/calendar",
@@ -16,6 +16,8 @@ describe("DEFAULT_NAV_ITEMS", () => {
       "/app/etfs",
       "/app/portfolio/watchlist",
       "/app/inspect",
+      "/app/tools/dcf-calculator",
+      "/app/tools/retirement-calculator",
       "/app/account",
       "/app/admin/scoring/audit",
     ]);
@@ -51,7 +53,7 @@ describe("DEFAULT_NAV_ITEMS", () => {
 });
 
 describe("filterNavItems", () => {
-  it("free non-admin → 5 items (Dashboard, Ledger, ETFs, Inspect, Account)", () => {
+  it("free non-admin → 7 items (free items + the two free Tools before Account)", () => {
     const items = filterNavItems(DEFAULT_NAV_ITEMS, {
       tier: "free",
       isAdmin: false,
@@ -61,16 +63,18 @@ describe("filterNavItems", () => {
       "/app/portfolio",
       "/app/etfs",
       "/app/inspect",
+      "/app/tools/dcf-calculator",
+      "/app/tools/retirement-calculator",
       "/app/account",
     ]);
   });
 
-  it("pro non-admin → 9 items (adds Calendar + Portfolio Manager + Income vehicles + Watchlist + Inspect)", () => {
+  it("pro non-admin → 11 items (Pro items + the two free Tools)", () => {
     const items = filterNavItems(DEFAULT_NAV_ITEMS, {
       tier: "pro",
       isAdmin: false,
     });
-    expect(items).toHaveLength(9);
+    expect(items).toHaveLength(11);
     expect(items.map((i) => i.href)).toEqual([
       "/app/dashboard",
       "/app/calendar",
@@ -80,6 +84,8 @@ describe("filterNavItems", () => {
       "/app/etfs",
       "/app/portfolio/watchlist",
       "/app/inspect",
+      "/app/tools/dcf-calculator",
+      "/app/tools/retirement-calculator",
       "/app/account",
     ]);
   });
@@ -89,21 +95,21 @@ describe("filterNavItems", () => {
       tier: "premium",
       isAdmin: false,
     });
-    expect(items).toHaveLength(9);
+    expect(items).toHaveLength(11);
     expect(items.map((i) => i.href)).toContain("/app/calendar");
     expect(items.map((i) => i.href)).toContain("/app/income-vehicles");
   });
 
-  it("admin pro → 10 items (adds Admin)", () => {
+  it("admin pro → 12 items (adds Admin)", () => {
     const items = filterNavItems(DEFAULT_NAV_ITEMS, {
       tier: "pro",
       isAdmin: true,
     });
-    expect(items).toHaveLength(10);
+    expect(items).toHaveLength(12);
     expect(items.map((i) => i.href)).toContain("/app/admin/scoring/audit");
   });
 
-  it("admin free → 6 items (Dashboard, Ledger, ETFs, Inspect, Account, Admin) — Pro items still hidden", () => {
+  it("admin free → 8 items (free items + the two Tools + Admin) — Pro items still hidden", () => {
     const items = filterNavItems(DEFAULT_NAV_ITEMS, {
       tier: "free",
       isAdmin: true,
@@ -113,6 +119,8 @@ describe("filterNavItems", () => {
       "/app/portfolio",
       "/app/etfs",
       "/app/inspect",
+      "/app/tools/dcf-calculator",
+      "/app/tools/retirement-calculator",
       "/app/account",
       "/app/admin/scoring/audit",
     ]);
@@ -147,5 +155,34 @@ describe("nav-items v2 — Calendar", () => {
     expect(filteredFree.find((i) => i.label === "Calendar")).toBeUndefined();
     const filteredPro = filterNavItems(DEFAULT_NAV_ITEMS, { tier: "pro", isAdmin: false });
     expect(filteredPro.find((i) => i.label === "Calendar")).toBeDefined();
+  });
+});
+
+describe("nav-items — Tools group", () => {
+  const byHref = Object.fromEntries(
+    DEFAULT_NAV_ITEMS.map((i) => [i.href, i] as const),
+  );
+
+  it("surfaces both calculators tagged into the Tools group", () => {
+    expect(byHref["/app/tools/dcf-calculator"].group).toBe("Tools");
+    expect(byHref["/app/tools/retirement-calculator"].group).toBe("Tools");
+  });
+
+  it("keeps the Tools calculators free for every signed-in tier", () => {
+    expect(byHref["/app/tools/dcf-calculator"].requiresPro).toBeFalsy();
+    expect(byHref["/app/tools/retirement-calculator"].requiresPro).toBeFalsy();
+    const free = filterNavItems(DEFAULT_NAV_ITEMS, { tier: "free", isAdmin: false });
+    expect(free.map((i) => i.href)).toContain("/app/tools/dcf-calculator");
+    expect(free.map((i) => i.href)).toContain("/app/tools/retirement-calculator");
+  });
+
+  it("places the Tools group immediately before Account", () => {
+    const hrefs = DEFAULT_NAV_ITEMS.map((i) => i.href);
+    expect(hrefs.indexOf("/app/tools/retirement-calculator")).toBe(
+      hrefs.indexOf("/app/account") - 1,
+    );
+    expect(hrefs.indexOf("/app/tools/dcf-calculator")).toBe(
+      hrefs.indexOf("/app/tools/retirement-calculator") - 1,
+    );
   });
 });
