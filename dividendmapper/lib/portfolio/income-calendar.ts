@@ -105,6 +105,10 @@ export interface IncomeCalendarPayment {
 export interface IncomeCalendarResult {
   months: IncomeCalendarMonth[];
   nextThree: IncomeCalendarNextEx[];
+  /** Soonest upcoming ex-dividend per held ticker — confirmed (declared) AND
+   * projected (estimated), one row per ticker, sorted by ex-date. Richer than
+   * nextThree, which only sees confirmed next_ex_div rows. */
+  upcoming: IncomeCalendarPayment[];
   primaryCurrency: "GBP" | "USD";
   /** Drilldown lookup keyed by YYYY-MM. All known payments (received / declared
    * / estimated) bucketed by paid_on (actuals) or pay_date (forecasts). */
@@ -523,6 +527,33 @@ export function buildIncomeCalendar(args: BuildArgs): IncomeCalendarResult {
     );
   }
 
+  // Upcoming ex-dividends for the dashboard "next" list: future ex-dates drawn
+  // from both confirmed (declared) and projected (estimated) payments — richer
+  // than nextThree, which only sees confirmed next_ex_div rows. Deduped to one
+  // row per ticker (its soonest) so a monthly payer doesn't fill every slot;
+  // confirmed wins over estimated on a same-date tie.
+  const upcomingStatusRank = (s: IncomeCalendarPayment["status"]): number =>
+    s === "declared" ? 0 : 1;
+  const upcomingCandidates: IncomeCalendarPayment[] = [];
+  for (const ym of Object.keys(paymentsByMonth)) {
+    for (const p of paymentsByMonth[ym]) {
+      if (p.status === "received") continue;
+      if (p.exDate < todayIso) continue;
+      upcomingCandidates.push(p);
+    }
+  }
+  upcomingCandidates.sort((a, b) => {
+    if (a.exDate !== b.exDate) return a.exDate < b.exDate ? -1 : 1;
+    return upcomingStatusRank(a.status) - upcomingStatusRank(b.status);
+  });
+  const seenUpcoming = new Set<string>();
+  const upcoming: IncomeCalendarPayment[] = [];
+  for (const p of upcomingCandidates) {
+    if (seenUpcoming.has(p.ticker)) continue;
+    seenUpcoming.add(p.ticker);
+    upcoming.push(p);
+  }
+
   // Tickers whose forward contributions are still zero after both the
   // cache and the FMP fallback ran. Surfaced by StatSidebar (γ).
   const contributed = new Set<string>();
@@ -569,6 +600,7 @@ export function buildIncomeCalendar(args: BuildArgs): IncomeCalendarResult {
   return {
     months: Array.from(buckets.values()),
     nextThree: candidates.slice(0, 3),
+    upcoming,
     primaryCurrency,
     paymentsByMonth,
     unprojectedTickers,

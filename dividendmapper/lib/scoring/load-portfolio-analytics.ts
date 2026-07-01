@@ -96,6 +96,9 @@ export async function loadPortfolioAnalytics(args: {
   // ETF distribution policy per ticker (from loadPricedHoldings). Feeds the
   // income calendar so Accumulating ETFs don't paint phantom forecast income.
   policyByTicker?: Record<string, string>;
+  // Display name per ticker (from loadPricedHoldings). Enriches the income
+  // calendar's upcoming-payments rows with company names for logo alt text.
+  nameByTicker?: Record<string, string>;
   lens?: boolean;
 }): Promise<PortfolioAnalytics> {
   const {
@@ -105,6 +108,7 @@ export async function loadPortfolioAnalytics(args: {
     quotes,
     quotesByTicker,
     policyByTicker,
+    nameByTicker,
     lens = false,
   } = args;
   const supabase = await createSupabaseServerClient();
@@ -371,6 +375,8 @@ export async function loadPortfolioAnalytics(args: {
     // Skip Accumulating ETFs from every forecast bucket so funds like VWRP.L
     // don't paint phantom income (matches /app/calendar's Phase 9.3 filter).
     policyByTicker,
+    // Enriches upcoming-payments rows with company names for logo alt text.
+    nameByTicker,
   });
 
   return {

@@ -70,4 +70,10 @@ describe("IncomeCalendarChart", () => {
     const { queryByTestId } = render(<IncomeCalendarChart months={noPartial} />);
     expect(queryByTestId("today-divider")).toBeNull();
   });
+
+  it("renders a GBP Y-axis with the peak monthly value as the top tick", () => {
+    // Fixture peak is £55 (2026-07).
+    const { getByText } = render(<IncomeCalendarChart months={fixture()} />);
+    expect(getByText("£55")).toBeInTheDocument();
+  });
 });

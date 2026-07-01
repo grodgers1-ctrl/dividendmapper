@@ -64,6 +64,7 @@ export default async function DashboardPage() {
         quotes,
         quotesByTicker,
         policyByTicker: priced.policyByTicker,
+        nameByTicker,
       })
     : null;
 

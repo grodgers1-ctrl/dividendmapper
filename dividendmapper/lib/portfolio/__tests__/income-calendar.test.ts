@@ -46,6 +46,55 @@ describe("buildIncomeCalendar", () => {
     expect(junBucket?.gbp).toBe(10);
   });
 
+  it("upcoming: one row per ticker from confirmed + projected, future ex-dates only, sorted", () => {
+    const holdings = [
+      { ticker: "AAA", quantity: 10, wrapper: "gia" as const, created_at: "2024-01-01" },
+      { ticker: "BBB.L", quantity: 100, wrapper: "isa" as const, created_at: "2024-01-01" },
+    ];
+    // AAA has a confirmed next ex-div (→ declared). BBB.L has only projected
+    // cadence rows (→ estimated), three of them — it must appear ONCE.
+    const exDivByTicker = {
+      AAA: { ex_date: "2026-07-10", pay_date: "2026-08-01", amount: 1.0, currency: "USD" },
+    };
+    const projectedNext12mByTicker = {
+      "BBB.L": [
+        { ex_date: "2026-07-05", pay_date: "2026-07-20", per_share_amount: 2, currency: "GBp", confidence: "cadence" as const },
+        { ex_date: "2026-08-05", pay_date: "2026-08-20", per_share_amount: 2, currency: "GBp", confidence: "cadence" as const },
+        { ex_date: "2026-09-05", pay_date: "2026-09-20", per_share_amount: 2, currency: "GBp", confidence: "cadence" as const },
+      ],
+    };
+    const result = buildIncomeCalendar({
+      userDividends: [
+        // A received actual in the past — must NOT appear in upcoming.
+        { paid_on: "2026-05-10", amount: 5, currency: "GBP", wrapper: "isa" as const },
+      ],
+      holdings,
+      exDivByTicker,
+      ratesToGbp,
+      now,
+      locale: "uk",
+      projectedNext12mByTicker,
+    });
+
+    const up = result.upcoming;
+    // BBB.L appears exactly once (its soonest projected row).
+    const bbb = up.filter((p) => p.ticker === "BBB.L");
+    expect(bbb).toHaveLength(1);
+    expect(bbb[0].exDate).toBe("2026-07-05");
+    expect(bbb[0].status).toBe("estimated");
+    // AAA appears once, as a confirmed (declared) row.
+    const aaa = up.filter((p) => p.ticker === "AAA");
+    expect(aaa).toHaveLength(1);
+    expect(aaa[0].status).toBe("declared");
+    // Sorted by ex-date: BBB.L (07-05) before AAA (07-10).
+    expect(up.findIndex((p) => p.ticker === "BBB.L")).toBeLessThan(
+      up.findIndex((p) => p.ticker === "AAA"),
+    );
+    // No received actuals and no past ex-dates leak in.
+    expect(up.every((p) => p.status !== "received")).toBe(true);
+    expect(up.every((p) => p.exDate >= "2026-06-23")).toBe(true);
+  });
+
   it("excludes current-month forecast contributions from the partial bucket", () => {
     const holdings = [
       { ticker: "AAPL", quantity: 15, wrapper: "gia" as const, created_at: "2024-01-01" },

@@ -25,6 +25,13 @@ function calendarFixture(): IncomeCalendarResult {
       { ticker: "ARCC",  exDate: "2026-07-28", payDate: "2026-09-30", gbp: 8.15, wrapper: "gia", perShareNative: 0.48, nativeCurrency: "USD", quantity: 21 },
       { ticker: "TW.L",  exDate: "2026-08-14", payDate: "2026-11-07", gbp: 15.4, wrapper: "isa", perShareNative: 4.62, nativeCurrency: "GBp", quantity: 333 },
     ],
+    // The card renders `upcoming` (confirmed + projected). ARCC is estimated
+    // (→ "est." tag); TW.L has no pay date (→ pay clause omitted).
+    upcoming: [
+      { ticker: "PHP.L", name: "Primary Health Properties", exDate: "2026-07-02", payDate: "2026-08-14", perShareNative: 1.68, nativeCurrency: "GBp", quantity: 180, primaryAmount: 3.02, wrapper: "isa", status: "declared" },
+      { ticker: "ARCC",  name: "Ares Capital",              exDate: "2026-07-28", payDate: "2026-09-30", perShareNative: 0.48, nativeCurrency: "USD", quantity: 21,  primaryAmount: 8.15, wrapper: "gia", status: "estimated" },
+      { ticker: "TW.L",  name: "Taylor Wimpey",             exDate: "2026-08-14", payDate: null,         perShareNative: 4.62, nativeCurrency: "GBp", quantity: 333, primaryAmount: 15.4, wrapper: "isa", status: "declared" },
+    ],
     paymentsByMonth: {},
     unprojectedTickers: [],
   };
@@ -86,5 +93,22 @@ describe("IncomeCalendarCard", () => {
     expect(getByText("~£3")).toBeInTheDocument();
     expect(getByText("~£8")).toBeInTheDocument();
     expect(getByText("~£15")).toBeInTheDocument();
+  });
+
+  it("tags estimated (projected) upcoming rows with an 'est.' marker", () => {
+    const { getAllByText } = render(
+      <IncomeCalendarCard calendar={calendarFixture()} reinvestCard={null} />,
+    );
+    // ARCC is the only estimated row in the fixture.
+    expect(getAllByText("est.")).toHaveLength(1);
+  });
+
+  it("omits the pay-date clause when a row has no pay date", () => {
+    const { getByText } = render(
+      <IncomeCalendarCard calendar={calendarFixture()} reinvestCard={null} />,
+    );
+    // TW.L has payDate null → shows just its ex-date, no "· pay …".
+    const twRow = getByText("TW.L").closest("li");
+    expect(twRow?.textContent).not.toContain("pay");
   });
 });
