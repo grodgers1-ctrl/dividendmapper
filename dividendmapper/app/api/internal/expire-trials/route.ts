@@ -79,7 +79,12 @@ async function handle(req: Request): Promise<Response> {
 
       expired++;
 
-      await sendIdempotent({
+      // sendIdempotent returns { ok: false, reason } rather than throwing, so
+      // the try/catch above never sees a failed send. The profile is already
+      // downgraded, so a dropped email is never retried on the next run — route
+      // genuine failures to Sentry for operator visibility. already_sent is a
+      // non-error no-op (a prior run already sent it), so don't report it.
+      const res = await sendIdempotent({
         to: profile.email,
         subject: "Your 7-day Pro trial has ended",
         template: "trial_expired",
@@ -88,6 +93,14 @@ async function handle(req: Request): Promise<Response> {
         body: TrialExpiredEmail({ pricingUrl: `${site}/pricing` }),
         supabase,
       });
+      if (!res.ok && res.reason !== "already_sent") {
+        Sentry.captureException(
+          res.reason === "resend_error" || res.reason === "db_error"
+            ? res.error
+            : new Error(res.reason),
+          { extra: { userId: profile.id, sendReason: res.reason } },
+        );
+      }
 
       await captureServerEvent(profile.id, "trial_expired", {});
     } catch (err) {
