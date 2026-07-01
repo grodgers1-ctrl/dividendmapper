@@ -14,9 +14,12 @@ function ctx(over: Partial<SkipContext> = {}): SkipContext {
 
 describe("evalSkipGate", () => {
   describe("welcome_free", () => {
-    it("never skips", () => {
+    it("does not skip a free user", () => {
       expect(evalSkipGate("welcome_free", ctx())).toBe(false);
       expect(evalSkipGate("welcome_free", ctx({ holdingsCount: 99 }))).toBe(false);
+    });
+    it("skips if user is already Pro", () => {
+      expect(evalSkipGate("welcome_free", ctx({ tier: "pro" }))).toBe(true);
     });
   });
 
@@ -27,6 +30,9 @@ describe("evalSkipGate", () => {
     it("does not skip if user has zero holdings", () => {
       expect(evalSkipGate("activation_nudge", ctx({ holdingsCount: 0 }))).toBe(false);
     });
+    it("skips if user is already Pro", () => {
+      expect(evalSkipGate("activation_nudge", ctx({ holdingsCount: 0, tier: "pro" }))).toBe(true);
+    });
   });
 
   describe("score_explainer", () => {
@@ -35,6 +41,9 @@ describe("evalSkipGate", () => {
     });
     it("does not skip if user has at least one holding", () => {
       expect(evalSkipGate("score_explainer", ctx({ holdingsCount: 1 }))).toBe(false);
+    });
+    it("skips if user is already Pro", () => {
+      expect(evalSkipGate("score_explainer", ctx({ holdingsCount: 1, tier: "pro" }))).toBe(true);
     });
   });
 

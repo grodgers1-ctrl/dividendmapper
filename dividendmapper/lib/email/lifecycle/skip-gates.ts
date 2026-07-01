@@ -28,12 +28,14 @@ export function evalSkipGate(key: LifecycleStepKey, ctx: SkipContext): boolean {
 
   switch (key) {
     case "welcome_free":
-      return false;
+      return ctx.tier !== "free";
 
     case "activation_nudge":
+      if (ctx.tier !== "free") return true;
       return ctx.holdingsCount >= 1;
 
     case "score_explainer":
+      if (ctx.tier !== "free") return true;
       return ctx.holdingsCount === 0;
 
     case "pro_pitch_1":

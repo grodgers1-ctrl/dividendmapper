@@ -21,8 +21,8 @@ export function WelcomePaidEmail({
         portfolio income view across every wrapper, and all the calculators.
       </Text>
       <Text style={EMAIL_STYLES.text}>
-        Broker sync and the dividend calendar land through summer 2026. They
-        roll out to your account automatically when they ship.
+        Broker sync and the dividend calendar are both live too, so your
+        holdings and upcoming payouts stay current without manual entry.
       </Text>
       <Text style={{ ...EMAIL_STYLES.text, margin: "24px 0" }}>
         <Button href={portfolioUrl} style={EMAIL_STYLES.button}>
@@ -30,8 +30,8 @@ export function WelcomePaidEmail({
         </Button>
       </Text>
       <Text style={EMAIL_STYLES.textMuted}>
-        Cancel any time by replying to this email. The self-serve dashboard
-        ships in a couple of weeks.
+        Manage or cancel your billing any time from your account page, or
+        just reply to this email if you&apos;d rather we sort it.
       </Text>
       <Text style={EMAIL_STYLES.signature}>Glenn at DividendMapper</Text>
     </EmailLayout>
