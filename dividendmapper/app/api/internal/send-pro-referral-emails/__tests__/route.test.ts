@@ -29,9 +29,16 @@ const DAY_MS = 24 * 3600 * 1000;
 const DUE_CREATED = new Date(FIXED_NOW.getTime() - 30 * DAY_MS).toISOString();
 const EARLY_CREATED = new Date(FIXED_NOW.getTime() - 10 * DAY_MS).toISOString();
 
-// Two-query cohort: active subscriptions, then profiles by id. Both users are
-// paying Pro (tier='pro', tier_source='stripe'); the founding member u3 is
-// filtered out in JS. sent_emails has no prior row for anyone.
+// Two-query cohort: active subscriptions, then profiles by id.
+//   u1 = paying Pro (stripe), 30 days ago  -> DUE, should send
+//   u2 = paying Pro (stripe), 10 days ago  -> under the 21-day gate, no send
+//   u3 = founding member, 30 days ago      -> excluded by tier_source filter
+//   u4 = trial user, 30 days ago           -> excluded by tier_source filter
+// u3 and u4 both have an active subscription AND a due created_at, so they clear
+// the no-subscription guard and the time gate. The ONLY thing dropping them is
+// the tier_source==='stripe' eligibility filter — so if that filter were
+// removed, u3/u4 would send and the assertions below would fail. sent_emails
+// has no prior row for anyone.
 function makeSupabase() {
   const from = vi.fn((table: string) => {
     if (table === "subscriptions") {
@@ -42,6 +49,11 @@ function makeSupabase() {
               data: [
                 { user_id: "u1", created_at: DUE_CREATED },
                 { user_id: "u2", created_at: EARLY_CREATED },
+                // u3/u4 are due on time and DO have an active subscription, so
+                // they pass the no-subscription guard and the time gate. Only
+                // the tier_source filter drops them.
+                { user_id: "u3", created_at: DUE_CREATED },
+                { user_id: "u4", created_at: DUE_CREATED },
               ],
               error: null,
             }),
@@ -56,8 +68,10 @@ function makeSupabase() {
               data: [
                 { id: "u1", email: "due@b.com", tier: "pro", tier_source: "stripe" },
                 { id: "u2", email: "early@b.com", tier: "pro", tier_source: "stripe" },
-                // Founding member with a stray active subscription -> excluded.
+                // Founding member: due on time, but tier_source excludes it.
                 { id: "u3", email: "founder@b.com", tier: "pro", tier_source: "founding_member" },
+                // Trial user: due on time, but tier_source excludes it.
+                { id: "u4", email: "trial@b.com", tier: "pro", tier_source: "trial" },
               ],
               error: null,
             }),
@@ -106,7 +120,7 @@ describe("send-pro-referral-emails route", () => {
     expect(res.status).toBe(401);
   });
 
-  it("sends to the due user only, and issues a code just for them", async () => {
+  it("sends only to the due stripe-Pro user; excludes founding member and trial", async () => {
     createClient.mockReturnValue(makeSupabase());
     const { GET } = await import("../route");
     const res = await GET(makeReq());
@@ -114,7 +128,9 @@ describe("send-pro-referral-emails route", () => {
 
     expect(json).toEqual({ ok: true, sent: 1 });
 
-    // Only the due user got a code minted and an email.
+    // Only u1 (due, tier_source='stripe') got a code minted and an email. u3
+    // (founding member) and u4 (trial) are due on time but blocked by the
+    // tier_source filter; u2 is stripe-Pro but under the 21-day gate.
     expect(issueReferralCodeForUser).toHaveBeenCalledTimes(1);
     expect(issueReferralCodeForUser.mock.calls[0][1]).toEqual({
       userId: "u1",
@@ -131,5 +147,11 @@ describe("send-pro-referral-emails route", () => {
       referralUrl: "https://dividendmapper.com/refer/CODE-1",
       accountUrl: "https://dividendmapper.com/app/account",
     });
+
+    // Guard against the exclusion regressing: the founding member and trial
+    // emails must never be issued a code or sent to.
+    const sentTo = sendIdempotent.mock.calls.map((c) => c[0].to);
+    expect(sentTo).not.toContain("founder@b.com");
+    expect(sentTo).not.toContain("trial@b.com");
   });
 });

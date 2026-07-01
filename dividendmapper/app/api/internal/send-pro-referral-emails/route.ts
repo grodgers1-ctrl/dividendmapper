@@ -73,7 +73,9 @@ async function handle(req: Request): Promise<Response> {
   const userIds = Array.from(subByUser.keys());
 
   // 2. Fetch those profiles, then filter to paying Pro (tier_source='stripe'),
-  // excluding founding members and trials.
+  // excluding founding members and trials. userIds is the set of active paying
+  // subscriptions, comfortably under PostgREST's 1000-row .in() cap at current
+  // scale — if the paid base ever nears that, page this fetch.
   const { data: profileData, error: profErr } = await supabase
     .from("profiles")
     .select("id, email, tier, tier_source")
