@@ -60,7 +60,7 @@ export function IncomeCalendarChart({ months }: IncomeCalendarChartProps) {
         <section
           role="figure"
           aria-label={chartLabel}
-          className="relative flex flex-1 items-end gap-1.5 border-b border-[var(--border-subtle)]"
+          className="relative flex min-w-0 flex-1 items-end gap-1 border-b border-[var(--border-subtle)] md:gap-1.5"
           style={{ height: `${CHART_HEIGHT}px` }}
         >
           {/* Two faint scale lines (max + mid), aligned to the Y-axis ticks.
@@ -111,7 +111,7 @@ export function IncomeCalendarChart({ months }: IncomeCalendarChartProps) {
           width; horizontal on md+ where there's room. */}
       <div className="mt-2 flex gap-2">
         <div aria-hidden className="hidden w-9 shrink-0 sm:block" />
-        <div className="flex flex-1 gap-1.5">
+        <div className="flex min-w-0 flex-1 gap-1 md:gap-1.5">
           {months.map((m) => (
             <span
               key={m.ym}

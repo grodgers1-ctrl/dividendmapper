@@ -49,12 +49,17 @@ export function IncomeCalendarCard({ calendar }: IncomeCalendarCardProps) {
         </Link>
       </div>
 
-      <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-        <div>
+      {/* Explicit grid-cols-1 on mobile (not just implicit auto): the chart's
+          19 vertical month labels have a max-content width that would push an
+          `auto` track a few px past the card, spilling the bars and the
+          right-aligned amounts into the gutter. minmax(0,1fr) + min-w-0 cells
+          cap the track at the card width. */}
+      <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <div className="min-w-0">
           <IncomeCalendarChart months={calendar.months} />
         </div>
 
-        <div className="lg:border-l lg:border-[var(--border-subtle)] lg:pl-6">
+        <div className="min-w-0 lg:border-l lg:border-[var(--border-subtle)] lg:pl-6">
           <p className="text-[10px] uppercase tracking-[0.06em] text-[var(--text-muted)]">
             Next 3 ex-dividends
           </p>
