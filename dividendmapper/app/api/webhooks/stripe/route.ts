@@ -4,6 +4,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { getStripe } from "@/lib/billing/stripe";
 import { sendIdempotent } from "@/lib/email/send";
 import { captureServerEvent } from "@/lib/analytics/posthog-server";
+import { notifyFounders } from "@/lib/founder/notify";
 import { WelcomePaidEmail } from "@/emails/welcome-paid";
 import { SITE_URL } from "@/lib/site";
 
@@ -173,6 +174,10 @@ async function handleCheckoutCompleted(
       { recipientEmail, subscriptionId },
     );
   }
+
+  await captureServerEvent(userId, "checkout_completed", {
+    subscription_id: subscriptionId,
+  });
 }
 
 async function handleRedemption(
@@ -276,6 +281,18 @@ async function handleSubscriptionUpsert(
     throw new Error(`profile not yet linked for customer ${customerId}`);
   }
 
+  // Capture the prior subscription status BEFORE the upsert overwrites it, so
+  // we can tell a genuine new activation (first-ever or reactivation after a
+  // cancellation) apart from a renewal / plan-change. No prior row → first
+  // activation; prior row that wasn't 'active' (e.g. 'canceled') → reactivation;
+  // prior 'active' → renewal/plan-change (not genuine).
+  const { data: priorSub } = await supabase
+    .from("subscriptions")
+    .select("status")
+    .eq("user_id", profile.id)
+    .maybeSingle<{ status: string }>();
+  const isGenuineNewActivation = !priorSub || priorSub.status !== "active";
+
   const item = sub.items.data[0];
   const lookupKey = item?.price.lookup_key ?? null;
   const mapping = lookupKey ? LOOKUP_KEY_TO_TIER[lookupKey] : null;
@@ -318,6 +335,26 @@ async function handleSubscriptionUpsert(
   if (profileUpdateError) {
     throw new Error(`profile tier update failed: ${profileUpdateError.message}`);
   }
+
+  // Real-time founder ping + analytics, only on a genuine new activation and
+  // only when the incoming subscription is actually active (skip incomplete /
+  // past_due first events). The sub.id-scoped sendKey makes the ping idempotent
+  // across webhook replays.
+  if (isGenuineNewActivation && sub.status === "active") {
+    await notifyFounders(supabase, {
+      sendKey: `founder_new_pro_${sub.id}`,
+      subject: "New Pro conversion",
+      heading: "Someone just went Pro",
+      lines: [
+        `Customer: ${customerId}`,
+        `Plan: ${mapping.tier} (${mapping.billingPeriod})`,
+      ],
+    });
+    await captureServerEvent(profile.id, "pro_conversion", {
+      tier: mapping.tier,
+      billing_period: mapping.billingPeriod,
+    });
+  }
 }
 
 async function handleSubscriptionDeleted(
@@ -355,4 +392,12 @@ async function handleSubscriptionDeleted(
   if (profileError) {
     throw new Error(`profile downgrade failed: ${profileError.message}`);
   }
+
+  await notifyFounders(supabase, {
+    sendKey: `founder_canceled_${sub.id}`,
+    subject: "Subscription canceled",
+    heading: "A Pro subscription just canceled",
+    lines: [`Customer: ${customerId}`],
+  });
+  await captureServerEvent(profile.id, "subscription_canceled", {});
 }
