@@ -65,6 +65,13 @@ create table public.grant_redemptions (
 create unique index grant_redemptions_code_user_uniq
   on public.grant_redemptions(grant_code_id, redeemed_by_user_id);
 
+-- Single-column index on the user FK (mirrors founding_member_codes indexing
+-- member_user_id). The composite unique index above leads with grant_code_id,
+-- so it can't serve per-user lookups — the app's one-trial-per-user guard and
+-- the founder digest's "new trials" count both filter on redeemed_by_user_id.
+create index grant_redemptions_user_idx
+  on public.grant_redemptions(redeemed_by_user_id);
+
 alter table public.grant_redemptions enable row level security;
 
 create policy grant_redemptions_self_select
@@ -97,8 +104,8 @@ create policy grant_redemptions_issuer_select
 --    NOTE FOR GLENN: this is destructive DDL (drop then re-add a CHECK
 --    constraint). Please double-check the constraint name against the live
 --    schema before running this migration, e.g.:
---      select conname from information_schema.check_constraints
---      where constraint_name = 'profiles_tier_source_check';
+--      select conname from pg_constraint
+--      where conrelid = 'public.profiles'::regclass and contype = 'c';
 --    or via the Supabase dashboard (Database > Tables > profiles >
 --    constraints). `drop constraint if exists` below is a no-op-safe guard
 --    if the name is somehow already gone, but it will NOT save you if the
@@ -128,6 +135,17 @@ alter table public.profiles
 --      grant_code_expired    — code_expires_at has passed
 --      grant_code_exhausted  — redemption_count already at max_redemptions
 --      grant_code_already_redeemed — this user already redeemed this code
+--      profile_not_found     — no profiles row for p_user_id
+--      profile_ineligible_tier — user is already stripe/founding_member; a
+--                                trial would flip them to tier_source='trial'
+--                                and the expire-trials cron would later
+--                                downgrade a genuine paying customer
+--
+--    SECURITY: this function is security definer (runs as definer, bypasses
+--    RLS) and takes a caller-supplied p_user_id, so it MUST NOT be callable
+--    by anon/authenticated — otherwise any signed-in user could flip another
+--    account to trial. EXECUTE is revoked from those roles at the end of this
+--    file; it is only reachable via the service-role redemption route.
 --
 --    On success: inserts the grant_redemptions row, increments
 --    grant_codes.redemption_count, upgrades the redeemer's profile
@@ -142,6 +160,7 @@ set search_path = public
 as $$
 declare
   v_grant_code   public.grant_codes%rowtype;
+  v_tier_source  text;
   v_expires_at   timestamptz;
 begin
   -- Lock the row for the duration of this transaction so concurrent
@@ -174,6 +193,25 @@ begin
     raise exception 'grant_code_already_redeemed';
   end if;
 
+  -- Guard the profile tier flip BEFORE any write, so an ineligible redemption
+  -- wastes nothing (no grant_redemptions row, no redemption_count increment).
+  -- A paying (stripe) or founding_member user must never be flipped to
+  -- tier_source='trial' — the expire-trials cron would later downgrade a
+  -- genuine paying customer. tier_source='trial' is deliberately NOT blocked
+  -- here: repeat-trial is already prevented by the per-user unique index and
+  -- the app-layer one-trial-ever check.
+  select tier_source into v_tier_source
+    from public.profiles
+   where id = p_user_id;
+
+  if v_tier_source is null then
+    raise exception 'profile_not_found';
+  end if;
+
+  if v_tier_source in ('stripe','founding_member') then
+    raise exception 'profile_ineligible_tier';
+  end if;
+
   v_expires_at := now() + (v_grant_code.grants_days || ' days')::interval;
 
   insert into public.grant_redemptions (grant_code_id, redeemed_by_user_id, tier_expires_at)
@@ -192,3 +230,10 @@ begin
   return query select v_expires_at;
 end;
 $$;
+
+-- Service-role only. This function is security definer + takes a
+-- caller-supplied p_user_id, so leaving it callable by anon/authenticated
+-- (Supabase's default grant) would let any signed-in user flip an arbitrary
+-- account to trial. Same intent as the "no client write policies" on the
+-- tables above — redemption is reachable only via the service-role route.
+revoke execute on function public.redeem_grant_code(text, uuid) from anon, authenticated;
