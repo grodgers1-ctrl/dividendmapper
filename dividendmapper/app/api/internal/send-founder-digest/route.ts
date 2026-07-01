@@ -139,7 +139,7 @@ async function handle(req: Request): Promise<Response> {
   for (const recipient of FOUNDER_EMAILS) {
     const res = await sendIdempotent({
       to: recipient,
-      subject: `DividendMapper daily — ${dateLabel}`,
+      subject: `DividendMapper daily: ${dateLabel}`,
       template: "founder_digest",
       sendKey: `founder_digest_${dateLabel}_${recipient}`,
       userId: null,
