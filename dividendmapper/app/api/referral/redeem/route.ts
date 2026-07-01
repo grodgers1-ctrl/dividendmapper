@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { redeemGrantCode, type RedeemResult } from "@/lib/billing/redeem-grant-code";
+import { createRateLimiter } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -10,8 +11,16 @@ export const dynamic = "force-dynamic";
 //
 // Manual code entry by an already-signed-in user (e.g. "I have a referral
 // code" box). JSON transport. All real logic lives in redeemGrantCode; this
-// route only authenticates the session, builds a service-role client, and maps
-// the RedeemResult to a status code.
+// route only authenticates the session, rate-limits, builds a service-role
+// client, and maps the RedeemResult to a status code.
+
+// Grant-of-paid-access endpoint, so it gets the same in-memory limiter the rest
+// of the API tier uses. Keyed on the authenticated userId (not IP): the request
+// is session-authed, and the scarce resource is one-trial-per-user, so userId
+// is the natural, more precise key. 10 attempts/min/user never bothers a real
+// user but caps hammering. Module-scope so the bucket map survives across
+// requests within a warm instance.
+const redeemLimiter = createRateLimiter({ limit: 10, windowMs: 60_000 });
 
 // Maps a failure reason to an HTTP status. self_redemption is a client mistake
 // (400); already_redeemed / ineligible_tier are conflicts with existing state
@@ -40,6 +49,15 @@ export async function POST(req: Request) {
   const userId = claimsData?.claims?.sub as string | undefined;
   if (!userId) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+
+  const { allowed, resetAt } = redeemLimiter(userId, Date.now());
+  if (!allowed) {
+    const retryAfter = Math.max(1, Math.ceil((resetAt - Date.now()) / 1000));
+    return NextResponse.json(
+      { error: "rate_limited" },
+      { status: 429, headers: { "Retry-After": String(retryAfter) } },
+    );
   }
 
   let code: unknown;

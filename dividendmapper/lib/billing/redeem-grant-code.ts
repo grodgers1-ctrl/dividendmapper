@@ -44,6 +44,15 @@ interface GrantCodeRow {
 // surfaces in the supabase rpc error's .message) onto RedeemResult reasons.
 // The RPC is the single source of truth for the expired/exhausted/per-code
 // checks — we deliberately do NOT re-check those in app code (avoids TOCTOU).
+//
+// COUPLING: the string literals below (grant_code_not_found, grant_code_expired,
+// grant_code_exhausted, grant_code_already_redeemed, profile_ineligible_tier,
+// profile_not_found) MUST stay in sync with the exact `raise exception '...'`
+// messages in supabase/migrations/0031_referral_trials.sql. There is no shared
+// constant possible across the SQL/TS boundary. Renaming a sentinel in the
+// migration without updating it here silently degrades that case to reason
+// "error" — the fail-closed direction (redemption is rejected, never wrongly
+// granted), so it's safe, but it does mask the true reason from callers.
 function mapRpcError(message: string): RedeemResult {
   if (message.includes("grant_code_not_found")) return { ok: false, reason: "not_found" };
   if (message.includes("grant_code_expired")) return { ok: false, reason: "expired" };
