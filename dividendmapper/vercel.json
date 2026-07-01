@@ -43,6 +43,10 @@
     {
       "path": "/api/internal/send-founder-digest",
       "schedule": "30 8 * * *"
+    },
+    {
+      "path": "/api/internal/send-pro-referral-emails",
+      "schedule": "0 8 * * *"
     }
   ]
 }
