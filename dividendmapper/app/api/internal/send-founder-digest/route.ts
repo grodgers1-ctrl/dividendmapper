@@ -95,8 +95,17 @@ async function handle(req: Request): Promise<Response> {
   // --- Supabase business counts (each scoped to the [start, end) window) ---
   const signups = await countInWindow(supabase, "profiles", "created_at", startIso, endIso);
   const trials = await countInWindow(supabase, "grant_redemptions", "redeemed_at", startIso, endIso);
-  // Approximate: counts new active subscriptions created yesterday. Does NOT
-  // re-derive genuine-conversion vs renewal; fine for a rough daily number.
+  // Directional, NOT exact event counts. `subscriptions` is one-row-per-user
+  // (the Stripe webhook upserts with onConflict: "user_id"), so both numbers are
+  // snapshot-derived off that table rather than an event log:
+  //   - conversions (created_at in window + status active) only counts first-ever
+  //     subscribers. A user who cancelled then RE-subscribes reuses the same row
+  //     (updated_at bumps, created_at does not), so reactivations are invisible.
+  //   - cancellations (updated_at in window + status='canceled') is a final-state
+  //     snapshot. Cancel-then-resubscribe same day leaves the row 'active', so
+  //     that churn vanishes from the count.
+  // Also does NOT re-derive genuine-conversion vs renewal. Fine as a rough daily
+  // signal; do not read these as precise event counts.
   const conversions = await countInWindow(supabase, "subscriptions", "created_at", startIso, endIso, {
     column: "status",
     value: "active",
@@ -112,7 +121,8 @@ async function handle(req: Request): Promise<Response> {
   const { data: activeSubs, error: subsErr } = await supabase
     .from("subscriptions")
     .select("billing_period")
-    .eq("status", "active");
+    .eq("status", "active")
+    .eq("tier", "pro"); // Pro-only pricing assumed
   if (subsErr) {
     Sentry.captureException(subsErr, { extra: { stage: "mrr" } });
   } else {

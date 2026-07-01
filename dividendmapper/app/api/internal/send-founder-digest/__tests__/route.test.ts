@@ -55,18 +55,26 @@ function makeSupabase() {
             resolve({ count: 2, error: null });
           return c;
         }
-        // MRR select
-        return {
-          eq: () =>
-            Promise.resolve({
-              data: [
-                { billing_period: "monthly" },
-                { billing_period: "monthly" },
-                { billing_period: "annual" },
-              ],
-              error: null,
-            }),
-        };
+        // MRR select. Chained as .select("billing_period").eq("status","active")
+        // .eq("tier","pro"), so .eq must be chainable AND thenable (resolves to
+        // the data on await, whichever .eq is the last one in the chain).
+        const m: Record<string, unknown> = {};
+        m.eq = () => m;
+        m.then = (
+          resolve: (v: {
+            data: { billing_period: string }[];
+            error: null;
+          }) => unknown,
+        ) =>
+          resolve({
+            data: [
+              { billing_period: "monthly" },
+              { billing_period: "monthly" },
+              { billing_period: "annual" },
+            ],
+            error: null,
+          });
+        return m;
       };
       return b;
     }
