@@ -235,5 +235,12 @@ $$;
 -- caller-supplied p_user_id, so leaving it callable by anon/authenticated
 -- (Supabase's default grant) would let any signed-in user flip an arbitrary
 -- account to trial. Same intent as the "no client write policies" on the
--- tables above — redemption is reachable only via the service-role route.
+-- tables above: redemption is reachable only via the service-role route.
+--
+-- MUST revoke from PUBLIC, not just anon/authenticated: CREATE FUNCTION grants
+-- EXECUTE to PUBLIC by default, and anon/authenticated inherit it via PUBLIC
+-- rather than a direct grant, so `revoke ... from anon, authenticated` alone is
+-- a no-op (verified against the live proacl). Revoking PUBLIC removes it for
+-- every client role while service_role keeps its own explicit Supabase grant.
+revoke execute on function public.redeem_grant_code(text, uuid) from public;
 revoke execute on function public.redeem_grant_code(text, uuid) from anon, authenticated;
