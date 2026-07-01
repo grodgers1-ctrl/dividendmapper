@@ -94,12 +94,11 @@ async function handle(req: Request): Promise<Response> {
         supabase,
       });
       if (!res.ok && res.reason !== "already_sent") {
-        Sentry.captureException(
-          res.reason === "resend_error" || res.reason === "db_error"
-            ? res.error
-            : new Error(res.reason),
-          { extra: { userId: profile.id, sendReason: res.reason } },
-        );
+        // Only db_error / resend_error remain after excluding already_sent;
+        // both variants carry an .error.
+        Sentry.captureException(res.error, {
+          extra: { userId: profile.id, sendReason: res.reason },
+        });
       }
 
       await captureServerEvent(profile.id, "trial_expired", {});
